@@ -1,0 +1,17 @@
+{
+  "name": "보장분석 · 5대 우선순위 상담 가이드",
+  "short_name": "보장분석",
+  "description": "손해보험 설계사 현장 상담용 보장분석과 5대 담보(암·뇌·심장·수술비·간병비) 우선순위 가이드",
+  "lang": "ko-KR",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f6fb",
+  "theme_color": "#0b2545",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
