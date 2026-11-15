@@ -216,37 +216,48 @@ def main():
             check("리모델링 3카드(A/B/C)", pm.count("A ·") == 1 and pm.count("B ·") == 1 and pm.count("C ·") == 1)
             page.screenshot(path=os.path.join(OUT, "08-premium.png"), full_page=False)
 
-            # ---------- 5. 고객 30장 슬라이드 ----------
+            # ---------- 5. 고객 30장 슬라이드 (30장 전수) ----------
             page.click("#btn-home")
-            page.wait_for_timeout(400)
+            page.wait_for_timeout(350)
             page.click('[data-home-go="client"]')
             page.wait_for_timeout(900)
             total = page.inner_text("#deck-total")
             check("30장 슬라이드", total == "30", total)
-            no_overflow = page.evaluate("""() => {
-              const out = [];
-              document.querySelectorAll('.slide').forEach(sl => {
-                if (sl.scrollWidth > sl.clientWidth + 2) out.push('slide' + sl.dataset.no + ' sw=' + sl.scrollWidth + ' cw=' + sl.clientWidth);
-                const inner = sl.querySelector('.sl-inner');
-                if (!inner) return;
-                const ib = inner.getBoundingClientRect();
-                inner.querySelectorAll('*').forEach(el => {
-                  const b = el.getBoundingClientRect();
-                  if (b.width === 0) return;
-                  if (b.right > ib.right + 1.5 || b.left < ib.left - 1.5) out.push('slide' + sl.dataset.no + ':' + el.className.toString().slice(0, 24) + ' right=' + Math.round(b.right - ib.right));
-                });
-              });
-              return out.slice(0, 12);
-            }""")
-            check("슬라이드 가로 넘침 0", len(no_overflow) == 0, no_overflow)
+            slide_bad = []
+            slide_metric = []
+            for no in range(1, 31):
+                page.evaluate("n => window.BojangDeck.goTo(n)", no)
+                page.wait_for_timeout(60)
+                m = page.evaluate("""(n) => {
+                  const sl = document.querySelector('.slide[data-no="' + n + '"]');
+                  const inner = sl.querySelector('.sl-inner');
+                  const stage = document.getElementById('deck-stage');
+                  const ib = inner.getBoundingClientRect();
+                  let xover = 0;
+                  inner.querySelectorAll('*').forEach((el) => {
+                    const b = el.getBoundingClientRect();
+                    if (b.width && (b.right > ib.right + 1 || b.left < ib.left - 1)) xover++;
+                  });
+                  return { no: n, inner: inner.scrollHeight, stage: stage.clientHeight, xover, sw: sl.scrollWidth, cw: sl.clientWidth };
+                }""", no)
+                slide_metric.append(m)
+                if m["xover"] or m["sw"] > m["cw"] + 2 or m["inner"] > m["stage"] * 1.12:
+                    slide_bad.append((m["no"], m["inner"], m["stage"], m["xover"]))
+            check("30장 전수 가로·세로 넘침 0", len(slide_bad) == 0, slide_bad[:5])
+            worst = max((round(m["inner"] / m["stage"], 3), m["no"]) for m in slide_metric)
+            check("슬라이드 최대 세로 배율 1.12 이하", worst[0] <= 1.12, worst)
             for no in [12, 13, 16, 19]:
                 page.evaluate("n => window.BojangDeck.goTo(n)", no)
-                page.wait_for_timeout(350)
+                page.wait_for_timeout(250)
                 txt = page.inner_text(f".slide[data-no='{no}']")
-                if no in (12, 13):
-                    check(f"{no}장 뇌 진단비 3단계", "뇌 진단비 3단계" in txt or "뇌혈관질환" in txt)
+                if no == 12:
+                    check("12장 뇌 진단비 3단계 금액", "뇌 진단비 3단계" in txt and "2,000만원" in txt and "뇌경색(I63)" in txt)
+                elif no == 13:
+                    check("13장 뇌 코드표 갱신", "I60~I63·I65~I66" in txt)
+                elif no == 16:
+                    check("16장 심장 진단비 2단계 금액", "심장 진단비 2단계" in txt and "허혈성심장" in txt)
                 else:
-                    check(f"{no}장 심장 진단비", "심장" in txt and ("허혈성" in txt or "급성심근경색" in txt))
+                    check("19장 3대 질병 금액 비교", "심장" in txt and "허혈성" in txt and "만원" in txt)
                 page.screenshot(path=os.path.join(OUT, f"09-slide{no}.png"))
             radar_clip = page.evaluate("""() => {
               const out = [];
@@ -263,9 +274,26 @@ def main():
             }""")
             check("레이더 축 라벨 잘림 0", len(radar_clip) == 0, radar_clip[:4])
 
-            # ---------- 6. PDF 1·10·30장 ----------
+            # ---------- 5-b. 모든 화면 🏠 메인 복귀 ----------
+            def home_ok():
+                return page.evaluate("() => document.querySelector('#view-home').classList.contains('is-active')")
             page.click("#deck-home")
             page.wait_for_timeout(400)
+            views = ["analysis", "quick", "guide", "toolkit", "live", "codes", "silson", "disclose", "premium"]
+            back_bad = []
+            for v in views:
+                page.click(f'[data-home-go="{v}"]')
+                page.wait_for_timeout(320)
+                tops = page.eval_on_selector_all(f"#view-{v} [data-home]", "els => els.length")
+                page.eval_on_selector(f"#view-{v} [data-home]", "el => el.click()")
+                page.wait_for_timeout(320)
+                if tops < 2:
+                    back_bad.append([v, "홈버튼 " + str(tops) + "개"])
+                elif not home_ok():
+                    back_bad.append([v, "복귀 실패"])
+            check("9개 서브화면 상·하단 홈버튼·복귀", len(back_bad) == 0, back_bad)
+
+            # ---------- 6. PDF 1·10·30장 ----------
             for kind, pages in (("summary", 1), ("detail", 10), ("advisor", 30)):
                 out = page.evaluate("""async (kind) => {
                   const App = window.BojangApp;

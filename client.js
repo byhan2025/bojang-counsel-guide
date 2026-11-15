@@ -453,19 +453,12 @@
         <div class="t5-rows">${bDxSubs.map(dxRow).join('')}</div>
         <div class="dx-scen-inline">${(bDx.scenarios || []).map((sc) => `<span><em>${esc(sc.label)}</em>${won(sc.sum)}만원</span>`).join('')}</div>
       </div>
-      <div class="t5">
-        <div class="t5-head"><b>뇌 주요치료비 3종</b><span>합계 ${won(bT.val)}만원 / 권장 ${won(bT.rec)}만원 · ${subN(bT)}/3종</span></div>
-        <div class="t5-rows">
-          ${bTs.map((s) => `
-            <div class="t5-row${s.val > 0 ? '' : ' is-off'}">
-              <span class="t5-l">${esc(s.label)}</span>
-              <span class="t5-v">${s.val > 0 ? `${won(s.val)}만원` : '없음'}</span>
-              <div class="t5-bar"><i style="width:${Math.max(2, Math.min(100, s.pct))}%;background:${s.pct >= 100 ? '#12A594' : s.pct > 0 ? '#E8952E' : '#E05B52'}"></i></div>
-              <b class="t5-p" style="color:${s.pct >= 100 ? '#0a6b57' : s.pct > 0 ? '#a5620f' : '#b3261e'}">${s.pct}%</b>
-            </div>`).join('')}
-        </div>
+      <div class="sl-treatline">
+        <b>뇌 주요치료비 3종</b>
+        <span>${subN(bT)}/3종 · ${won(bT.val)}만원 <em>/ 권장 ${won(bT.rec)}만원</em></span>
+        <i>${bTs.filter((s) => !(s.val > 0)).map((s) => esc(s.label)).join(' · ') || '3종 모두 보유'}</i>
       </div>
-      ${bDx.gapWarn ? noteBox(`⚠ 범위 공백 — 뇌혈관질환 진단비가 0원입니다. 뇌경색(I63)은 뇌졸중 금액만 받고, 뇌혈관 후유증(I69)은 지급되지 않습니다.`, 'warn') : noteBox('진단 시 금액은 범위별로 합산됩니다. 뇌경색(I63) = 뇌혈관 + 뇌졸중, 뇌출혈(I61) = 세 담보 모두. 혈전용해제(tPA)는 별도 담보이고 기계적 혈전제거술은 그 치료에서 제외됩니다.', 'info')}`, { need: needOf('brain') });
+      ${bDx.gapWarn ? noteBox(`⚠ 범위 공백 — 뇌혈관질환 진단비가 0원입니다. 뇌경색(I63)은 뇌졸중 금액만 받고, 뇌혈관 후유증(I69)은 지급되지 않습니다.`, 'warn') : noteBox('진단 금액은 범위별 합산 — 뇌경색(I63)은 뇌혈관+뇌졸중, 뇌출혈(I61)은 세 담보. 혈전용해제(tPA)·기계적 혈전제거술은 별도 담보입니다.', 'info')}`, { need: needOf('brain') });
 
     /* ---------- 13 뇌 코드 비교 ---------- */
     add(13, 'brain', 'brain', `

@@ -2339,3 +2339,14 @@ body{
 .cb-heart{color:#F3B4B0;}
 .cover-values{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:18px;padding:11px 0 0;border-top:1px solid rgba(255,255,255,.16);font-size:10px;font-weight:800;color:#EFD8D5;letter-spacing:-0.02em;}
 .cover-values i{width:1px;height:9px;background:rgba(246,201,196,.4);}
+
+/* 슬라이드 12 — 한 화면에 들어오도록 동심원·간격 압축 */
+.slide[data-no="12"] .sl-inner{gap:10px;}
+.slide[data-no="12"] .concentric-wrap{gap:8px;}
+.slide[data-no="12"] .concentric-wrap .sl-concentric{max-width:238px;}
+.slide[data-no="12"] .sl-head p{font-size:11.6px;}
+.sl-treatline{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:9px 11px;border:1px solid #F3DCDB;border-radius:12px;background:#FFFBFB;}
+.sl-treatline b{font-size:11.4px;font-weight:800;color:var(--ink);}
+.sl-treatline span{font-size:10.6px;font-weight:800;color:#A8494F;}
+.sl-treatline span em{font-style:normal;font-weight:600;color:#8B7A7B;}
+.sl-treatline i{font-style:normal;font-size:9.6px;font-weight:600;color:#9B9091;margin-left:auto;}
