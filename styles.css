@@ -227,6 +227,7 @@ body.is-client .prow-jump{display:none;}
   border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;letter-spacing:-0.01em;
 }
 .quick:active{background:var(--point-soft);border-color:var(--point);}
+.quick.is-on{background:var(--navy-800);border-color:var(--navy-800);color:#fff;}
 
 .badge{
   flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:-0.02em;

@@ -461,6 +461,7 @@
         refreshBadges(); saveSession();
       });
     });
+    syncQuickStates();
   }
 
   function refreshBadges() {
@@ -500,7 +501,27 @@
     });
     renderSummary();
     renderClientStrip();
+    syncQuickStates();
     if (state.analyzed) analyze();
+  }
+
+  /* 직접입력 값과 같은 빠른 선택 칭을 켜 둔다 (입력 ↔ 칭 상호 확인) */
+  function syncQuickStates() {
+    $$('#wiz-panels .quick[data-set]').forEach((b) => {
+      const it = b.dataset.item, pt = b.dataset.part, sb = b.dataset.sub;
+      let v = 0;
+      if (sb) {
+        const box = state.cov[it] && state.cov[it][pt];
+        v = box && typeof box === 'object' ? Number(box[sb] || 0) : 0;
+      } else {
+        v = Number((state.cov[it] || {})[pt] || 0);
+      }
+      b.classList.toggle('is-on', Number(b.dataset.set) === v);
+      b.setAttribute('aria-pressed', String(Number(b.dataset.set) === v));
+    });
+    $$('#premium-quick .quick[data-premium]').forEach((b) => {
+      b.classList.toggle('is-on', Number(b.dataset.premium) === Number(state.premium));
+    });
   }
   function refreshAll() { refreshBadges(); }
 
@@ -1396,14 +1417,14 @@
 
     $('#premium').addEventListener('input', (e) => {
       state.premium = clamp(Number(e.target.value || 0), 0, 300);
-      renderSummary(); renderClientStrip(); saveSession();
+      renderSummary(); renderClientStrip(); syncQuickStates(); saveSession();
       if (state.analyzed) analyze();
     });
     $$('#premium-quick .quick[data-premium]').forEach((b) => {
       b.addEventListener('click', () => {
         state.premium = Number(b.dataset.premium);
         $('#premium').value = state.premium;
-        renderSummary(); renderClientStrip(); saveSession();
+        renderSummary(); renderClientStrip(); syncQuickStates(); saveSession();
         if (state.analyzed) analyze();
       });
     });
