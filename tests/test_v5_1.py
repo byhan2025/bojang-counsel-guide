@@ -6,19 +6,53 @@
       리모델링 Before/After 계산과 비교표 · 화이트라벨(상호·연락처·테마 → 헤더·표지·PDF) ·
       1장 PDF 워터마크 · PDF 1/10/30장 넘침 0 · 30장 전수 넘침 0 · 콘솔 오류 0.
 """
+import functools
+import http.server
 import os
 import socket
+import socketserver
 import sys
+import threading
 import time
 
-sys.path.insert(0, "/workspace/reports/bojang-guide")
-import harness  # noqa: F401  (LD_LIBRARY_PATH for the bundled chromium)
+# 이 환경의 번들 Chromium은 별도 공유 라이브러리가 필요합니다(없으면 시스템 기본값 사용).
+for _libs in ("/workspace/tmp/libs/usr/lib/x86_64-linux-gnu", "/workspace/.pwlibs/root/usr/lib/x86_64-linux-gnu"):
+    if os.path.isdir(_libs):
+        os.environ.setdefault("LD_LIBRARY_PATH", _libs)
+        break
 
 from playwright.sync_api import sync_playwright
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "tests", "out")
 os.makedirs(OUT, exist_ok=True)
+
+
+class Quiet(http.server.SimpleHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+
+def start_server(root):
+    handler = functools.partial(Quiet, directory=root)
+    socketserver.TCPServer.allow_reuse_address = True
+    for _ in range(30):
+        s = socket.socket()
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+        s.close()
+        try:
+            httpd = socketserver.TCPServer(("127.0.0.1", port), handler)
+        except OSError:
+            continue
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        for _ in range(50):
+            try:
+                with socket.create_connection(("127.0.0.1", port), timeout=0.2):
+                    return httpd, f"http://127.0.0.1:{port}"
+            except OSError:
+                time.sleep(0.05)
+    raise RuntimeError("server start failed")
 
 results = []
 
@@ -30,7 +64,7 @@ def check(name, ok, detail=""):
 
 
 def main():
-    httpd, base = harness.start_server(ROOT)
+    httpd, base = start_server(ROOT)
     url = base + "/index.html"
     errors = []
     try:
