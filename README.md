@@ -31,7 +31,7 @@
 
 ### 5) 검증
 - `sw.js` 캐시 `bojang-guide-v5.1`, 단일 파일 `dist/bojang-guide.single.html` 재생성(**외부 요청 0건**).
-- Playwright `tests/test_v5_1.py` — **66개 항목 전부 통과**(Free 잠금 8종·페이월·Pro 전환·30장 전수 넘침 0·PDF 1/10/30장 넘침 0·리모델링 계산/PDF·화이트라벨 헤더/표지/PDF·콘솔 오류 0).
+- Playwright `tests/test_v5_1.py` — **68개 항목 전부 통과**(Free 잠금 8종·페이월·Pro 전환·30장 전수 넘침 0·PDF 1/10/30장 넘침 0·리모델링 계산/PDF·화이트라벨 헤더/표지/PDF·콘솔 오류 0).
 
 ## v5.0에서 달라진 것 — 「보험에 반하다」 브랜드 에디션 + 뇌·심장 진단비 3단계 + FC 실무 도우미 4종
 
@@ -189,7 +189,7 @@ live.js         라이브 상담 모드(5단계)
 tools.js        FC 실무 도우미 4종(질병코드·실손 비교·고지/청구·적정 보험료)
 monetize.js     v5.1 수익화(Free/Pro·페이월) · 리모델링 비교기 · 화이트라벨
 app.js          입력·화면·PDF 실행·저장
-tests/test_v5_1.py v5.1 Playwright 검증(66항목)
+tests/test_v5_1.py v5.1 Playwright 검증(68항목)
 docs/backend-architecture.md  로그인·결제(Supabase·토스/포트원) 설계서
 manifest.json   PWA 매니페스트
 sw.js           서비스 워커(앱 셸 캐시 → 오프라인 동작)
@@ -247,7 +247,7 @@ python3 build_single.py          # 단일 HTML 생성 → dist/bojang-guide.sing
 
 ## 검증
 
-`tests/test_v5_1.py` — v5.1 검증(66항목, 전부 통과). 실행:
+`tests/test_v5_1.py` — v5.1 검증(68항목, 전부 통과). 실행:
 ```bash
 python3 tests/test_v5_1.py        # 로컬 http 서버를 스스로 띄워 검증
 ```

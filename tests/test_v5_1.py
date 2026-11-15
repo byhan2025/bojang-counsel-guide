@@ -92,6 +92,14 @@ def main():
             # =========================================================
             page.click('[data-home-go="analysis"]')
             page.wait_for_timeout(400)
+            check("상담자 탭 리모델링 바로가기", page.is_visible("#view-analysis .rm-jump"), page.inner_text("#view-analysis .rm-jump"))
+            page.click("#view-analysis .rm-jump")
+            page.wait_for_timeout(500)
+            check("상담자 탭 → 리모델링 이동", page.is_visible("#view-remodel"), page.is_visible("#view-remodel"))
+            page.click("#view-remodel .home-back")
+            page.wait_for_timeout(300)
+            page.click('[data-home-go="analysis"]')
+            page.wait_for_timeout(300)
             page.click("#btn-analyze")
             page.wait_for_timeout(800)
             out = page.evaluate("""async () => {
