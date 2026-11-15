@@ -1,4 +1,6 @@
-/* 보장분석 상담 가이드 — 화면 로직 (v2: 위저드 · PDF 리포트 · 통계) */
+/* 보장분석 상담 가이드 v3 — 화면 로직
+   진단은 model.js, 리포트는 report.js/pdfkit.js, 라이브 상담은 live.js가 맡고
+   이 파일은 입력·화면·저장·배포 동작을 연결합니다. */
 (function () {
   'use strict';
 
@@ -7,13 +9,16 @@
   const won = (n) => Number(n || 0).toLocaleString('ko-KR');
   const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const cv = (item, part) => (state.cov[item] && state.cov[item][part]);
+  const cv = (item, part) => (state.cov[item.key] && state.cov[item.key][part.key]);
 
-  const HKEY = 'bojang.history.v2';
+  const HKEY = 'bojang.history.v3';
   const VKEY = 'bojang.viewmode.v1';
+  const SKEY = 'bojang.session.v3';
 
   const DEFAULT = {
     age: '40', gender: '여', job: '1', silson: '4', premium: 22,
+    client: { name: '홍길동', birth: '', consultant: '' },
+    contracts: [],
     cov: {
       cancer: { general: 3000, similar: 0, treatment: 0, recur: false },
       brain: { scope: 'vascular', treat: true },
@@ -24,23 +29,31 @@
     flags: { savings: false, renew: true, manyRiders: false }
   };
 
+  function todayLabel() {
+    const d = new Date();
+    return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+  }
+
   const state = {
     age: DEFAULT.age, gender: DEFAULT.gender, job: DEFAULT.job, silson: DEFAULT.silson, premium: DEFAULT.premium,
+    client: Object.assign({}, DEFAULT.client, { dateLabel: todayLabel() }),
+    contracts: [],
     cov: JSON.parse(JSON.stringify(DEFAULT.cov)),
     flags: Object.assign({}, DEFAULT.flags),
-    guide: 'cancer', view: 'advisor', step: 1, expanded: false,
-    analyzed: false, label: '', history: []
+    guide: 'cancer', view: 'advisor', step: 1, expanded: false, tab: 'analysis',
+    analyzed: false, lastResult: null, label: '', history: []
   };
+  window.__bojangState = state;
 
   const CLAIM_SHORT = {
     cancer: ['진단서 + 조직검사(병리) 결과지', '유사암은 담보별 1회한 문구 확인'],
     brain: ['진단서 + MRI·CT 판독지', 'I64는 추가 서류를 요구하는 경우 있음'],
     heart: ['심전도 · 트로포닌 · 관상동맥조영술', 'I20(협심증)과 I21(심근경색) 구분'],
     surgery: ['수술확인서(수술명·수술방법)', '수술명이 약관 분류표와 일치해야'],
-    care: ['간병인 이용확인서 · 계약서 · 영수증', '장기요양은 인정서(등급판정서)']
+    care: ['간병인 이용확인서 · 계약서 · 영수증', '장기요양은 인정서(등급정서)']
   };
 
-  /* ================= 저장 유틸 ================= */
+  /* ================= 저장 ================= */
   function lsGet(key, fallback) {
     try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
     catch (e) { return fallback; }
@@ -49,6 +62,24 @@
     try { localStorage.setItem(key, JSON.stringify(value)); return true; }
     catch (e) { return false; }
   }
+  function saveSession() {
+    lsSet(SKEY, {
+      client: state.client, contracts: state.contracts, age: state.age, gender: state.gender,
+      job: state.job, silson: state.silson, premium: state.premium, cov: state.cov, flags: state.flags
+    });
+  }
+  function loadSession() {
+    const s = lsGet(SKEY, null);
+    if (!s) return;
+    if (s.client) state.client = Object.assign(state.client, s.client, { dateLabel: todayLabel() });
+    if (Array.isArray(s.contracts)) state.contracts = s.contracts;
+    ['age', 'gender', 'job', 'silson', 'premium'].forEach((k) => { if (s[k] != null) state[k] = s[k]; });
+    if (s.cov) state.cov = Object.assign(state.cov, s.cov);
+    if (s.flags) state.flags = Object.assign(state.flags, s.flags);
+  }
+
+  /* ================= 모델 ================= */
+  function model() { return BojangModel.full(state); }
 
   /* ================= 세그먼트 ================= */
   function buildSeg(el, items, current, onPick) {
@@ -72,28 +103,89 @@
 
   function renderSegments() {
     buildSeg($('#seg-age'), AGES.map((a) => ({ value: a, label: a + '대' })), state.age, (v) => {
-      state.age = v; renderCoverageCards(); refreshAll(); renderSummary();
+      state.age = v; state.ageAuto = false; renderCoverageCards(); refreshAll(); saveSession();
     });
     buildSeg($('#seg-gender'), [{ value: '남', label: '남성' }, { value: '여', label: '여성' }], state.gender, (v) => {
-      state.gender = v; refreshAll(); renderSummary();
+      state.gender = v; refreshAll(); saveSession();
     });
     buildSeg($('#seg-job'), [{ value: '1', label: '1급' }, { value: '2', label: '2급' }, { value: '3', label: '3급' }], state.job, (v) => {
-      state.job = v; $('#job-hint').textContent = JOB_HINTS[v]; refreshAll(); renderSummary();
+      state.job = v; $('#job-hint').textContent = JOB_HINTS[v]; refreshAll(); saveSession();
     });
     buildSeg($('#seg-silson'), [
       { value: 'none', label: '없음' }, { value: '1', label: '1세대' }, { value: '2', label: '2세대' },
       { value: '3', label: '3세대' }, { value: '4', label: '4세대' }, { value: '5', label: '5세대' }
     ], state.silson, (v) => {
-      state.silson = v; refreshAll(); renderSummary();
+      state.silson = v; refreshAll(); saveSession();
     });
     $('#job-hint').textContent = JOB_HINTS[state.job];
     $('#premium').value = state.premium;
   }
 
+  /* ================= 고객 정보 ================= */
+  function renderClientFields() {
+    $('#client-name').value = state.client.name === '홍길동' ? '' : state.client.name;
+    $('#client-name').placeholder = '홍길동';
+    $('#client-birth').value = state.client.birth || '';
+    $('#consultant').value = state.client.consultant || '';
+    updateBirthNote();
+    renderClientStrip();
+  }
+
+  function updateBirthNote() {
+    const note = $('#birth-note');
+    const ad = state.client.birth ? BojangModel.nextAgeDay(state.client.birth) : null;
+    const ia = state.client.birth ? BojangModel.insuranceAge(state.client.birth) : null;
+    if (ad) {
+      note.textContent = `보험나이 ${ia}세 · 상령일 ${ad.label} (D-${ad.days}) · 그날 지나면 보험나이 ${ad.insuranceAgeAfter}세`;
+      note.classList.add('is-on');
+    } else {
+      note.textContent = '입력하면 보험나이와 상령일 D-day가 계산됩니다.';
+      note.classList.remove('is-on');
+    }
+    renderClientStrip();
+  }
+
+  function renderClientStrip() {
+    const m = state.client;
+    $('#cs-name').textContent = (m.name || '홍길동') + '님';
+    const ia = m.birth ? BojangModel.insuranceAge(m.birth) : null;
+    const bits = [];
+    bits.push(ia != null ? `보험나이 ${ia}세` : `연령대 ${state.age}대`);
+    bits.push(`${state.gender} · ${state.job}급`);
+    bits.push(`실손 ${SILSON_LABEL[state.silson]}`);
+    bits.push(`월 ${won(state.premium)}만원`);
+    if (state.contracts.length) bits.push(`계약 ${state.contracts.length}건`);
+    $('#cs-meta').textContent = bits.join(' · ');
+    const ad = m.birth ? BojangModel.nextAgeDay(m.birth) : null;
+    const badge = $('#cs-dday');
+    if (ad) {
+      badge.hidden = false;
+      badge.textContent = `상령일 D-${ad.days}`;
+      badge.classList.toggle('is-soon', ad.days <= 30);
+    } else badge.hidden = true;
+  }
+
+  function onBirthChange() {
+    state.client.birth = $('#client-birth').value || '';
+    if (state.client.birth) {
+      const band = BojangModel.ageBandFromBirth(state.client.birth);
+      if (band && band !== state.age) {
+        state.age = band; state.ageAuto = true;
+        syncSegments();
+        renderCoverageCards();
+        refreshAll();
+        if ($('#age-hint')) $('#age-hint').textContent = '보험나이로 자동選択';
+      }
+    }
+    updateBirthNote();
+    saveSession();
+    if (state.analyzed) analyze();
+  }
+
   /* ================= 담보 입력 카드 ================= */
   function partBadge(stateKey, part) {
     const item = PRIORITY.find((p) => p.key === stateKey);
-    const r = evalItem(item);
+    const r = BojangModel.evalItem(state, item);
     const pr = r.parts.find((p) => p.key === part.key);
     const pct = Math.round(pr.fill * 100);
     const tone = pr.fill >= 1 ? 'ok' : pr.fill >= 0.5 ? 'need' : 'gap';
@@ -102,7 +194,7 @@
 
   function amountRowHTML(item, part) {
     const rec = Math.round(item.rec[state.age] * part.factor);
-    const val = cv(item.key, part.key) || 0;
+    const val = cv(item, part) || 0;
     return `
       <div class="part" data-part="${part.key}">
         <div class="part-head">
@@ -122,7 +214,7 @@
   }
 
   function scaleRowHTML(item, part) {
-    const cur = cv(item.key, part.key) || 'none';
+    const cur = cv(item, part) || 'none';
     return `
       <div class="part" data-part="${part.key}">
         <div class="part-head">
@@ -141,7 +233,7 @@
   }
 
   function boolRowHTML(item, part) {
-    const on = !!cv(item.key, part.key);
+    const on = !!cv(item, part);
     return `
       <label class="switch-row" data-part="${part.key}">
         <div class="part-label"><strong>${part.label}</strong>${part.hint ? `<span>${part.hint}</span>` : ''}</div>
@@ -151,7 +243,7 @@
   }
 
   function cardHTML(item, extra) {
-    const r = evalItem(item);
+    const r = BojangModel.evalItem(state, item);
     return `
       <div class="card cov-card" data-item="${item.key}">
         <div class="card-title">
@@ -169,7 +261,6 @@
     $('#card-cancer').innerHTML = cardHTML(cancer, '');
     $('#card-brain').innerHTML = cardHTML(brain, '');
     $('#card-heart').innerHTML = cardHTML(heart, '');
-
     const careMode = state.cov.care.mode || 'normal';
     $('#card-surgery').innerHTML = cardHTML(surgery, '');
     $('#card-care').innerHTML = cardHTML(care, `
@@ -180,7 +271,6 @@
           <button type="button" class="seg-btn${careMode === 'step' ? ' is-on' : ''}" data-caremode="step">체증형</button>
         </div>
       </div>`);
-
     bindCoverageInputs();
   }
 
@@ -189,7 +279,7 @@
       input.addEventListener('input', () => {
         const it = input.dataset.item, pt = input.dataset.part;
         state.cov[it][pt] = clamp(Number(input.value || 0), 0, 100000);
-        refreshBadges();
+        refreshBadges(); saveSession();
       });
     });
     $$('#wiz-panels .quick[data-set]').forEach((b) => {
@@ -198,7 +288,7 @@
         state.cov[it][pt] = v;
         const input = $(`input[data-item="${it}"][data-part="${pt}"]`);
         if (input) input.value = v;
-        refreshBadges();
+        refreshBadges(); saveSession();
       });
     });
     $$('#wiz-panels .scale-opt').forEach((b) => {
@@ -206,151 +296,96 @@
         const it = b.dataset.item, pt = b.dataset.part;
         state.cov[it][pt] = b.dataset.val;
         $$(`.scale-opt[data-item="${it}"][data-part="${pt}"]`).forEach((x) => x.classList.toggle('is-on', x === b));
-        refreshBadges();
+        refreshBadges(); saveSession();
       });
     });
     $$('#wiz-panels input[type="checkbox"][data-item]').forEach((cb) => {
       cb.addEventListener('change', () => {
         state.cov[cb.dataset.item][cb.dataset.part] = cb.checked;
-        refreshBadges();
+        refreshBadges(); saveSession();
       });
     });
     $$('[data-caremode]').forEach((b) => {
       b.addEventListener('click', () => {
         state.cov.care.mode = b.dataset.caremode;
         $$('[data-caremode]').forEach((x) => x.classList.toggle('is-on', x === b));
-        refreshBadges();
+        refreshBadges(); saveSession();
       });
     });
   }
 
   function refreshBadges() {
     PRIORITY.forEach((item) => {
-      const r = evalItem(item);
+      const r = BojangModel.evalItem(state, item);
       const card = $(`.cov-card[data-item="${item.key}"]`);
-      if (card) {
-        const b = $('.card-title .badge', card);
-        b.className = 'badge badge-' + r.level;
-        b.textContent = r.label;
-        r.parts.forEach((p) => {
-          const row = $(`.part[data-part="${p.key}"]`, card);
-          if (!row) return;
-          const badge = $('.mini-badge', row);
-          if (badge) {
-            const pct = Math.round(p.fill * 100);
-            badge.className = 'mini-badge tone-' + (p.fill >= 1 ? 'ok' : p.fill >= 0.5 ? 'need' : 'gap');
-            badge.textContent = pct + '%';
-          }
-        });
-      }
+      if (!card) return;
+      const b = $('.card-title .badge', card);
+      b.className = 'badge badge-' + r.level;
+      b.textContent = r.label;
+      r.parts.forEach((p) => {
+        const row = $(`.part[data-part="${p.key}"]`, card);
+        if (!row) return;
+        const badge = $('.mini-badge', row);
+        if (badge) {
+          const pct = Math.round(p.fill * 100);
+          badge.className = 'mini-badge tone-' + (p.fill >= 1 ? 'ok' : p.fill >= 0.5 ? 'need' : 'gap');
+          badge.textContent = pct + '%';
+        }
+      });
     });
     renderSummary();
+    renderClientStrip();
     if (state.analyzed) analyze();
   }
+  function refreshAll() { refreshBadges(); }
 
-  function refreshAll() {
-    refreshBadges();
-  }
-
-  /* ================= 평가 ================= */
-  function evalItem(item) {
-    const baseRec = item.rec[state.age] || 0;
-    const parts = item.parts.map((p) => {
-      let fill = 0, rec = 0, val = 0, option = null;
-      if (p.type === 'amount') {
-        rec = Math.round(baseRec * p.factor);
-        val = Number(cv(item.key, p.key) || 0);
-        fill = rec > 0 ? clamp(val / rec, 0, 1) : 0;
-      } else if (p.type === 'scale') {
-        const v = cv(item.key, p.key) || 'none';
-        option = p.options.find((o) => o.v === v) || p.options[0];
-        fill = option.score;
-      } else {
-        val = !!cv(item.key, p.key);
-        fill = val ? 1 : 0;
-      }
-      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option };
-    });
-    const fill = parts.reduce((a, p) => a + p.weight * p.fill, 0);
-    const primary = parts[0].fill;
-    let level, label;
-    if (primary <= 0) { level = 'gap'; label = '공백 위험'; }
-    else if (fill >= 0.9) { level = 'ok'; label = '적정'; }
-    else { level = 'need'; label = '보강 필요'; }
-    return { item, baseRec, parts, fill, level, label, primary };
-  }
-
-  function summaryOf(item, r) {
-    const c = state.cov[item.key] || {};
-    if (item.key === 'cancer') {
-      const bits = [`일반암 ${won(c.general)}만원`];
-      bits.push(c.similar > 0 ? `유사암 ${won(c.similar)}만원` : '유사암 없음');
-      bits.push(c.treatment > 0 ? `치료비 ${won(c.treatment)}만원` : '치료비 없음');
-      if (c.recur) bits.push('재진단 보장');
-      return bits.join(' · ');
+  /* ================= 계약 목록 ================= */
+  function renderContracts() {
+    const host = $('#contract-list');
+    if (!host) return;
+    if (!state.contracts.length) {
+      host.innerHTML = '<p class="ct-empty">아직 추가한 계약이 없습니다. 있어야 10장 PDF의 포트폴리오 표가 채워집니다.</p>';
+    } else {
+      host.innerHTML = state.contracts.map((c, i) => `
+        <div class="ct-row" data-i="${i}">
+          <div class="ct-main">
+            <div class="ct-ins">${esc(c.insurer || '보험사 미입력')} <span class="ct-tag ${c.renew ? '' : 'no'}">${c.renew ? '갱신형' : '비갱신'}</span></div>
+            <div class="ct-prod">${esc(c.product || '상품명 미입력')}</div>
+          </div>
+          <span class="ct-prem">${won(c.premium)}만원</span>
+          <button type="button" class="ct-del" data-del="${i}" aria-label="삭제">×</button>
+        </div>`).join('');
+      $$('[data-del]', host).forEach((b) => {
+        b.addEventListener('click', () => {
+          state.contracts.splice(Number(b.dataset.del), 1);
+          renderContracts(); renderClientStrip(); saveSession();
+          if (state.analyzed) analyze();
+        });
+      });
     }
-    if (item.key === 'brain' || item.key === 'heart') {
-      const p = r.parts[0];
-      const opt = p.option || { label: '미보유' };
-      return `${opt.label}${opt.hint ? '(' + opt.hint + ')' : ''}` + (state.cov[item.key][item.key === 'brain' ? 'treat' : 'surgery'] ? ' · 수술비 보유' : '');
+    const total = state.contracts.reduce((a, c) => a + Number(c.premium || 0), 0);
+    const el = $('#contract-total');
+    if (el) {
+      el.textContent = state.contracts.length
+        ? `계약 ${state.contracts.length}건 · 합계 월 ${won(total)}만원${Math.abs(total - Number(state.premium)) >= 1 ? ` (입력한 월 보험료 ${won(state.premium)}만원과 다릅니다)` : ''}`
+        : '계약을 추가하면 10장 PDF의 포트폴리오 표가 채워집니다.';
     }
-    if (item.key === 'surgery') {
-      const bits = [`질병 5종 ${won(c.disease)}만원`];
-      bits.push(c.nDae ? 'N대 보유' : 'N대 없음');
-      if (c.injury) bits.push('상해 보유');
-      return bits.join(' · ');
-    }
-    const bits = [`일당 ${won(c.daily)}만원`, c.mode === 'step' ? '체증형' : '일반형'];
-    if (c.nursing) bits.push('간호간병');
-    if (c.ltc) bits.push('장기요양');
-    return bits.join(' · ');
   }
 
-  /* ================= 점수 ================= */
-  function weights() {
-    const w = Object.assign({}, SCORE_MODEL.base);
-    const ageAdj = SCORE_MODEL.ageAdj[state.age] || {};
-    const jobAdj = SCORE_MODEL.jobAdj[state.job] || {};
-    Object.keys(ageAdj).forEach((k) => { w[k] = Math.max(4, w[k] + ageAdj[k]); });
-    Object.keys(jobAdj).forEach((k) => { w[k] = Math.max(4, w[k] + jobAdj[k]); });
-    return w;
+  function addContract() {
+    const insurer = ($('#ct-insurer').value || '').trim();
+    const product = ($('#ct-product').value || '').trim();
+    const premium = clamp(Number($('#ct-premium').value || 0), 0, 300);
+    const renew = $('#ct-renew').checked;
+    if (!insurer && !product) { toast('보험사나 상품명을 입력해 주세요'); return; }
+    state.contracts.push({ insurer, product, premium, renew });
+    $('#ct-insurer').value = ''; $('#ct-product').value = ''; $('#ct-premium').value = ''; $('#ct-renew').checked = false;
+    renderContracts(); renderClientStrip(); saveSession();
+    if (state.analyzed) analyze();
+    toast('계약을 추가했습니다');
   }
 
-  function computeScore(rows) {
-    const w = weights();
-    let sum = 0, wsum = 0;
-    rows.forEach(({ item, r }) => {
-      const ww = w[item.key] || 0;
-      sum += ww * clamp(r.fill, 0, 1);
-      wsum += ww;
-    });
-    let score = wsum ? (sum / wsum) * 100 : 0;
-    const penalty = [];
-    if (state.silson === 'none') { score += SCORE_MODEL.penalty.silsonNone; penalty.push({ v: SCORE_MODEL.penalty.silsonNone, t: '실손 공백' }); }
-    if (state.silson === '5') { score += SCORE_MODEL.penalty.silson5; penalty.push({ v: SCORE_MODEL.penalty.silson5, t: '5세대 비중증 축소' }); }
-    if (state.flags.renew) { score += SCORE_MODEL.penalty.renew; penalty.push({ v: SCORE_MODEL.penalty.renew, t: '갱신형 중심' }); }
-    score = Math.round(clamp(score, 0, 100));
-    const grade = SCORE_MODEL.grades.find((g) => score >= g.min) || SCORE_MODEL.grades[SCORE_MODEL.grades.length - 1];
-    return { score, grade, penalty, w };
-  }
-
-  function weightComments(rows) {
-    const out = [];
-    const jobAdj = SCORE_MODEL.jobAdj[state.job] || {};
-    if (jobAdj.surgery) out.push({ t: `직업 ${state.job}급 — 상해·수술 위험을 반영해 수술비 가중치를 올렸습니다.`, internal: false });
-    if (state.age === '20' || state.age === '30') out.push({ t: '젊은 연령대 — 수술·상해 비중을 높이고 간병 비중은 낮췄습니다.', internal: false });
-    if (state.age === '50') out.push({ t: '50대 — 암 발생 구간에 들어 수술비 비중을 줄이고 암·간병을 올렸습니다.', internal: false });
-    if (state.age === '60' || state.age === '70') out.push({ t: '노후 구간 — 간병·장기요양 가중치를 가장 크게 높였습니다.', internal: false });
-    if (state.silson === 'none') out.push({ t: '실손 공백 — 기본 의료비 축이 비어 점수에서 감점했습니다.', internal: true });
-    if (state.silson === '1' || state.silson === '2') out.push({ t: '실손 1·2세대 — 기본 의료비 축이 넓어 구조적으로 유리합니다.', internal: false });
-    if (state.silson === '5') out.push({ t: '실손 5세대 — 비중증 비급여 축소를 감점에 반영했습니다.', internal: true });
-    if (state.flags.renew) out.push({ t: '갱신형 중심 — 갱신 시점 보험료 리스크를 감점에 반영했습니다.', internal: true });
-    const cancer = rows.find((x) => x.item.key === 'cancer');
-    if (cancer && cancer.r.level !== 'ok') out.push({ t: '1순위 암이 가장 크게 비어 있어 점수를 끌어내리고 있습니다.', internal: true });
-    return out;
-  }
-
-  /* ================= 레이더 차트 ================= */
+  /* ================= 점수·레이더·통계 ================= */
   function radarSVG(rows) {
     const cx = 116, cy = 108, R = 74;
     const n = rows.length;
@@ -380,25 +415,19 @@
     return `<div class="radar-wrap">${s}</div>`;
   }
 
-  /* ================= 통계 카드 ================= */
-  function fmtVal(v, unit) {
-    return won(v) + (unit || '');
-  }
+  function fmtVal(v, unit) { return won(v) + (unit || ''); }
 
   function statsHTML() {
     return STATS.map((st) => {
       if (st.stacked) {
         const total = st.stacked.reduce((a, b) => a + b.value, 0);
+        const tones = ['#0b2545', '#1b4a78', '#3f7ba6', '#6fa3c4', '#a8c8dc', '#d3e2ee'];
         const segs = st.stacked.map((s, i) => {
           const w = (s.value / total) * 100;
-          const tones = ['#0b2545', '#1b4a78', '#3f7ba6', '#6fa3c4', '#a8c8dc', '#d3e2ee'];
           const dark = i >= 3;
           return `<span class="stk-seg${dark ? ' is-light' : ''}" style="width:${w.toFixed(2)}%;background:${tones[i % tones.length]}" title="${s.label} ${s.value}%"><b>${s.value >= 8 ? s.value + '%' : ''}</b></span>`;
         }).join('');
-        const legend = st.stacked.map((s, i) => {
-          const tones = ['#0b2545', '#1b4a78', '#3f7ba6', '#6fa3c4', '#a8c8dc', '#d3e2ee'];
-          return `<span class="stk-li"><i style="background:${tones[i % tones.length]}"></i>${s.label} ${s.value}%</span>`;
-        }).join('');
+        const legend = st.stacked.map((s, i) => `<span class="stk-li"><i style="background:${tones[i % tones.length]}"></i>${s.label} ${s.value}%</span>`).join('');
         return `
           <div class="stat-card">
             <div class="stat-head"><strong>${st.title}</strong><span class="stat-badge">${st.headlineValue}</span></div>
@@ -432,34 +461,31 @@
 
   /* ================= 진단 ================= */
   function analyze() {
-    const rows = PRIORITY.map((item) => ({ item, r: evalItem(item) }));
-    const needCount = rows.filter((x) => x.r.level !== 'ok').length;
-    const first = rows.find((x) => x.r.level !== 'ok');
-    const totalDiag = Number(state.cov.cancer.general || 0) + Number(state.cov.brain.scope !== 'none' ? 0 : 0);
-    const totalSum = rows.reduce((a, x) => a + (x.r.parts[0].type === 'amount' ? Number(x.r.parts[0].val || 0) : 0), 0);
-    const annual = Number(state.premium || 0) * 12;
-    const sc = computeScore(rows);
+    const m = model();
+    const rows = m.rows;
+    const sc = { score: m.score, grade: m.grade, penalty: m.penalty, w: m.weights };
+    const totalSum = m.totalSum, annual = m.annual;
+    const R = 52, Cc = 2 * Math.PI * R;
+    const dash = Cc * (1 - sc.score / 100);
 
-    const R = 52, C = 2 * Math.PI * R;
-    const dash = C * (1 - sc.score / 100);
     $('#result-hero').innerHTML = `
       <div class="hero-top">
         <span class="hero-eyebrow">COVERAGE SCORE</span>
-        <span class="hero-input">${state.age}대 ${state.gender} · ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]}</span>
+        <span class="hero-input">${state.client.name}님 · ${state.age}대 ${state.gender} · ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]}</span>
       </div>
       <div class="score-wrap">
         <div class="ring-box">
           <svg viewBox="0 0 120 120" class="ring" aria-hidden="true">
             <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8ff0dc"/><stop offset="100%" stop-color="#0fb093"/></linearGradient></defs>
             <circle cx="60" cy="60" r="${R}" class="ring-bg"/>
-            <circle cx="60" cy="60" r="${R}" class="ring-fg" stroke="url(#ringGrad)" style="stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${dash.toFixed(1)}"/>
+            <circle cx="60" cy="60" r="${R}" class="ring-fg" stroke="url(#ringGrad)" style="stroke-dasharray:${Cc.toFixed(1)};stroke-dashoffset:${dash.toFixed(1)}"/>
           </svg>
           <div class="ring-text"><strong>${sc.score}</strong><span>/100</span></div>
         </div>
         <div class="score-copy">
-          <span class="score-grade tone-${sc.grade.tone}">${sc.grade.label}</span>
+          <span class="score-grade tone-${sc.grade.tone}">${sc.grade.label} · ${m.letter}</span>
           <h3>${sc.grade.line}</h3>
-          <p>${first ? `1순위 착수 — ${first.item.name} · ${summaryOf(first.item, first.r)}` : '5대 담보가 모두 기준선을 넘었습니다'}</p>
+          <p>${BojangModel.oneLine(state, m)}</p>
         </div>
       </div>
       <div class="hero-stats">
@@ -468,7 +494,7 @@
         <div><span>연 보험료 대비</span><strong>${annual > 0 ? (totalSum / annual).toFixed(1) + '배' : '—'}</strong></div>
       </div>
       <div class="weight-notes">
-        ${weightComments(rows).filter((c) => state.view === 'advisor' || !c.internal).map((c) => `<span class="${c.internal ? 'internal' : ''}">${c.t}</span>`).join('')}
+        ${weightNotes(m).filter((c) => state.view === 'advisor' || !c.internal).map((c) => `<span class="${c.internal ? 'internal' : ''}">${c.t}</span>`).join('')}
       </div>
       <div class="score-formula">${state.view === 'advisor'
         ? '가중치 ' + PRIORITY.map((p) => `${p.name} ${sc.w[p.key]}`).join(' · ') + (sc.penalty.length ? ' / 감점 ' + sc.penalty.map((p) => `${p.t} ${p.v}`).join(', ') : '')
@@ -480,146 +506,359 @@
 
     const rowsHost = $('#result-rows');
     rowsHost.innerHTML = '';
-    rows.forEach(({ item, r }) => {
-      const pct = Math.round(clamp(r.fill, 0, 1) * 100);
+    rows.forEach(({ item, r, pct, level, label, summary, gaps }) => {
       const el = document.createElement('div');
       el.className = 'prow';
-      const gaps = r.parts.filter((p) => p.type === 'amount' && p.val < p.rec && p.rec > 0);
-      const tail = summaryOf(item, r) + (gaps.length ? ` · 부족 ${gaps.map((g) => won(g.rec - g.val) + '만원').join(', ')}` : '');
+      const tail = summary + (gaps.length ? ` · 부족 ${gaps.map((g) => won(g.need) + '만원').join(', ')}` : '');
       el.innerHTML = `
         <div class="prow-head">
           <span class="prow-rank">${item.rank}</span>
           <div class="prow-name"><strong>${item.name}</strong><span>${item.sub}</span></div>
-          <span class="prow-pct tone-${r.level}">${pct}<i>%</i></span>
-          <span class="badge badge-${r.level}">${r.label}</span>
+          <span class="prow-pct tone-${level}">${pct}<i>%</i></span>
+          <span class="badge badge-${level}">${label}</span>
         </div>
-        <div class="gauge"><div class="gauge-track"><i class="gauge-fill tone-bg-${r.level}" style="width:${pct === 0 ? 0 : Math.max(3, pct)}%"></i></div>
+        <div class="gauge"><div class="gauge-track"><i class="gauge-fill tone-bg-${level}" style="width:${pct === 0 ? 0 : Math.max(3, pct)}%"></i></div>
           <div class="gauge-scale"><span>0</span><span>기준선 100%</span></div></div>
         <div class="prow-tail"><span>${tail}</span><button type="button" class="prow-jump" data-jump="${item.key}">가이드 ›</button></div>
       `;
       rowsHost.appendChild(el);
     });
 
-    const cps = buildCheckpoints(rows, totalSum, annual);
-    $('#result-checkpoints').innerHTML = cps.map((c) => `
+    $('#result-checkpoints').innerHTML = m.checkpoints.map((c) => `
       <div class="cp cp-${c.level}"><div class="cp-title">${c.title}</div><p>${c.body}</p></div>`).join('');
 
-    const steps = buildSteps(rows);
-    $('#result-steps').innerHTML = steps.map((s, i) => `
+    $('#result-steps').innerHTML = m.steps.map((s, i) => `
       <div class="step"><div class="step-no">${i + 1}</div><div class="step-body"><strong>${s.title}</strong><p>${s.body}</p></div></div>`).join('');
 
     $('#claim-guide').innerHTML = PRIORITY.map((item) => `
       <div class="claim-row"><span class="cr-rank">${item.rank}</span><strong>${item.name}</strong><span>${CLAIM_SHORT[item.key].join(' · ')}</span></div>`).join('');
 
-    $('#ph-client').textContent = `${state.age}대 ${state.gender} · ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]}`;
-    const d = new Date();
-    $('#ph-date').textContent = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    $('#ph-client').textContent = `${m.client.name} · ${state.age}대 ${state.gender} · ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]}`;
+    $('#ph-date').textContent = m.dateLabel;
 
-    state.lastResult = { rows, needCount, first, totalSum, annual, cps, steps, score: sc };
+    state.lastResult = { rows, m, needCount: m.needList.length, first: m.first, totalSum, annual, score: sc };
     state.analyzed = true;
     $('#result').hidden = false;
     $('#save-bar').hidden = false;
+    if (window.BojangLive) window.BojangLive.markDirty();
   }
 
-  function buildCheckpoints(rows, totalSum, annual) {
-    const cps = [];
-    if (state.silson === 'none') {
-      cps.push({ level: 'danger', title: '실손 공백', body: '입원·통원 기본부터 막혀 있습니다. 진단비보다 실손이 먼저입니다.' });
-    } else if (state.silson === '1' || state.silson === '2') {
-      cps.push({ level: 'info', title: '실손 1·2세대 — 보험료를 줄일 두 갈래', body: '2026년 11월부터 ①선택형 할인 특약(30~40% 할인) ②5세대 전환(3년간 50% 추가 할인, 6개월 한시) 중 선택할 수 있습니다. 5세대는 비중증 비급여 한도 1,000만원·자기부담 50%로 줄고 5년 재가입이 생깁니다.' });
-    } else if (state.silson === '3' || state.silson === '4') {
-      cps.push({ level: 'ok', title: `실손 ${state.silson}세대 — 유지 판단`, body: '비급여 한도·자기부담 구조가 5세대보다 넓습니다. 의료 이용이 적다면 보험료 차이를 비교해 볼 수 있지만 서두를 이유는 없습니다.' });
-    } else {
-      cps.push({ level: 'ok', title: '실손 5세대 — 구조 확인', body: '중증(특약1)과 비중증(특약2)이 분리돼 있습니다. 특약2는 연 1,000만원·자기부담 50%이므로 도수·비급여 주사는 사실상 자기부담입니다.' });
-    }
-
-    const get = (k) => rows.find((x) => x.item.key === k);
-    const cancer = get('cancer'), brain = get('brain'), heart = get('heart'), surgery = get('surgery'), care = get('care');
-
-    if (state.cov.cancer.similar <= 0) {
-      cps.push({ level: 'warn', title: '유사암 담보 없음', body: '갑상선암(C73)·기타피부암(C44)·제자리암(D00~D09)·경계성종양(D37~D48)은 일반암에서 빠져 별도 담보로 지급됩니다. 이 담보가 없으면 지급액이 0이거나 아주 작습니다.' });
-    }
-    if (state.cov.cancer.treatment <= 0) {
-      cps.push({ level: 'info', title: '암 주요치료비 없음', body: '표적·면역항암·비급여 치료는 진단비와 별도 축입니다. 진단비만 있으면 장기 치료에서 공백이 생깁니다.' });
-    }
-    if (state.cov.brain.scope === 'bleed') {
-      cps.push({ level: 'danger', title: '뇌 보장이 뇌출혈에 갇혀 있습니다', body: '뇌경색(I63)은 뇌졸중·뇌혈관질환 담보에만 들어갑니다. 공식 통계에서도 뇌경색 환자가 뇌내출혈보다 약 5.1배 많습니다.' });
-    } else if (state.cov.brain.scope === 'stroke' || state.cov.brain.scope === 'vascular') {
-      if (!state.cov.brain.treat) cps.push({ level: 'warn', title: '뇌혈관 수술·혈전용해치료비 없음', body: '혈전용해술·스텐트는 약관상 "수술"이 아닌 처치로 분류될 수 있어, 진단비 외 치료비 담보가 따로 필요합니다.' });
-    }
-    if (state.cov.heart.scope === 'mi') {
-      cps.push({ level: 'danger', title: '심장이 급성심근경색에 갇혀 있습니다', body: '협심증(I20)은 허혈성심장질환(I20~I25) 담보에만 들어갑니다. 스텐트 시술은 협심증 단계에서 많이 이뤄집니다.' });
-    }
-    if (state.cov.heart.scope !== 'none' && !state.cov.heart.surgery) {
-      cps.push({ level: 'warn', title: '심혈관 수술비 없음', body: '스텐트·관상동맥우회술 등 심혈관 수술비 담보가 따로 있는지 확인하세요.' });
-    }
-    if (!state.cov.surgery.nDae) {
-      cps.push({ level: 'info', title: 'N대 수술비 없음', body: '1~5종만 있으면 큰 수술에서 금액이 부족합니다. N대 수술비는 질환별 한도를 따로 둡니다.' });
-    }
-    if (!state.cov.surgery.injury) {
-      cps.push({ level: 'info', title: '상해수술비 없음', body: '질병 수술비만 있으면 사고로 다쳐 수술해도 지급되지 않습니다.' });
-    }
-    if (!state.cov.care.ltc) {
-      cps.push({ level: 'warn', title: '장기요양등급 보장 없음', body: '공식 통계상 장기요양 인정자의 87.4%가 3~5등급·인지지원입니다. 1~2등급만 대비하면 대부분의 구간이 비어 있습니다.' });
-    }
-    if (!state.cov.care.nursing) {
-      cps.push({ level: 'info', title: '간호간병통합서비스 미보장', body: '보호자 없는 병동은 별도 특약이 있어야 지급되는 경우가 많습니다.' });
-    }
-
-    if (state.flags.savings) cps.push({ level: 'info', title: '적립(저축)성 특약 확인', body: '보장 대비 저축 비중이 크면 같은 보험료로 보장을 더 넓힐 수 있습니다.' });
-    if (state.flags.renew) cps.push({ level: 'warn', title: '갱신형 중심 구조', body: '갱신 시점에 보험료가 크게 오르고, 재가입 심사에서 가입이 막힐 수 있습니다. 갱신 연령과 예상 보험료를 표로 보여 주세요.' });
-    if (state.flags.manyRiders) cps.push({ level: 'info', title: '특약 정리 여지', body: '중복·미사용 특약(예: 유사암 중복, 이미 소진된 1회한 담보)을 확인해 우선순위 보강에 배분합니다.' });
-    if (Number(state.premium) >= 40) cps.push({ level: 'warn', title: `월 ${won(state.premium)}만원 — 구성 점검 우선`, body: '보험료 절대액이 큽니다. 해지가 아니라 배분 문제로 접근하세요.' });
-    if (annual > 0 && totalSum / annual < 12) cps.push({ level: 'warn', title: '보험료 대비 진단비가 얇습니다', body: `연 보험료 ${won(annual)}만원에 주요 진단비 합계 ${won(totalSum)}만원입니다. 적립·중복을 덜어 진단비로 옮기는 재배치를 검토하세요.` });
-    if (Number(state.age) >= 60 && care.r.level !== 'ok') cps.push({ level: 'danger', title: '60대 이상 — 간병이 최대 리스크', body: '이 연령대에서 실제로 돈이 새는 곳은 간병입니다. 장기요양등급과 간병 일당을 함께 확인하세요.' });
-
-    if (!cps.length) cps.push({ level: 'ok', title: '구조적 구멍 없음', body: '5대 담보와 실손 구성이 기준선을 넘습니다. 이제는 금액 조정과 갱신 대비가 남은 과제입니다.' });
-    return cps;
+  function weightNotes(m) {
+    const out = [];
+    const jobAdj = SCORE_MODEL.jobAdj[state.job] || {};
+    if (jobAdj.surgery) out.push({ t: `직업 ${state.job}급 — 상해·수술 위험을 반영해 수술비 가중치를 올렸습니다.`, internal: false });
+    if (state.age === '20' || state.age === '30') out.push({ t: '젊은 연령대 — 수술·상해 비중을 높이고 간병 비중은 낮췄습니다.', internal: false });
+    if (state.age === '50') out.push({ t: '50대 — 암 발생 구간에 들어 수술비 비중을 줄이고 암·간병을 올렸습니다.', internal: false });
+    if (state.age === '60' || state.age === '70') out.push({ t: '노후 구간 — 간병·장기요양 가중치를 가장 크게 높였습니다.', internal: false });
+    if (state.silson === 'none') out.push({ t: '실손 공백 — 기본 의료비 축이 비어 점수에서 감점했습니다.', internal: true });
+    if (state.silson === '1' || state.silson === '2') out.push({ t: '실손 1·2세대 — 기본 의료비 축이 넓어 구조적으로 유리합니다.', internal: false });
+    if (state.silson === '5') out.push({ t: '실손 5세대 — 비중증 비급여 축소를 감점에 반영했습니다.', internal: true });
+    if (state.flags.renew) out.push({ t: '갱신형 중심 — 갱신 시점 보험료 리스크를 감점에 반영했습니다.', internal: true });
+    if (m.first) out.push({ t: `${m.first.item.rank}순위 ${m.first.item.name}이 ${m.first.pct}%로 가장 크게 비어 있습니다.`, internal: true });
+    return out;
   }
 
-  function buildSteps(rows) {
-    const targets = rows.filter((x) => x.r.level !== 'ok').slice(0, 3);
-    const targetText = targets.length
-      ? targets.map((x) => `${x.item.name}(${Math.round(x.r.fill * 100)}%)`).join(' → ')
-      : '없음 (금액 조정만)';
-    return [
-      { title: '기존 핵심 사수', body: '지금 가진 암·뇌·심장 진단비 중 가장 두꺼운 담보는 해지하지 않습니다. 나이와 병력 때문에 같은 조건으로 다시 들 수 없습니다.' },
-      { title: '배서 다이어트', body: `적립(저축)성·중복·미사용 특약을 정리해 보험료를 확보합니다.${state.silson === '1' || state.silson === '2' ? ' 실손은 선택형 할인 특약과 5세대 전환을 같은 표에 놓고 비교하세요.' : ' 갱신형은 다음 갱신 시점의 예상 보험료까지 확인합니다.'}` },
-      { title: '우선순위별 핀셋 보강', body: `1순위부터 부족분만 채웁니다. 보강 대상: ${targetText}. 한 번에 다 하지 말고 1순위 한 칸씩, 예산 안에서 끝내세요.` }
-    ];
-  }
-
-  /* ================= 카톡 · 인쇄 ================= */
+  /* ================= 카톡 ================= */
   function kakaoText() {
     const res = state.lastResult;
     if (!res) return '';
+    const m = res.m;
     const L = [];
-    L.push('[보장분석 요약]');
+    L.push(`[${m.client.name}님 보장분석 요약]`);
     L.push(`${state.age}대 ${state.gender} · 직업 ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]}`);
-    L.push(`종합 보장 밸런스 ${res.score.score}점 (${res.score.grade.label})`);
+    L.push(`종합 보장등급 ${m.letter} · ${m.score}점 (${m.grade.label})`);
+    if (m.client.ageDay) L.push(`보험나이 ${m.client.insuranceAge}세 · 상령일 ${m.client.ageDay.label} (D-${m.client.ageDay.days})`);
     L.push('');
     L.push('■ 5대 담보 진단');
-    res.rows.forEach(({ item, r }) => {
-      L.push(`${item.rank}. ${item.name} — ${r.label} (${summaryOf(item, r)})`);
-    });
+    m.rows.forEach(({ item, r, label, summary }) => L.push(`${item.rank}. ${item.name} — ${label} (${summary})`));
     L.push('');
-    const targets = res.rows.filter((x) => x.r.level !== 'ok');
     L.push('■ 먼저 채울 곳');
-    if (!targets.length) L.push('· 지금 구조 유지 + 금액 조정');
-    else targets.slice(0, 3).forEach((x, i) => L.push(`${i + 1}) ${x.item.name} — ${summaryOf(x.item, x.r)}`));
+    if (!m.needList.length) L.push('· 지금 구조 유지 + 금액 조정');
+    else m.needList.slice(0, 3).forEach((x, i) => L.push(`${i + 1}) ${x.item.name} — ${x.summary}${x.gaps.length ? ` (${won(x.gaps.reduce((a, g) => a + g.need, 0))}만원 부족)` : ''}`));
     L.push('');
-    L.push('■ 리모델링 3단계');
-    res.steps.forEach((s, i) => L.push(`${i + 1}단계 ${s.title} — ${s.body.replace(/\s+/g, ' ').slice(0, 80)}${s.body.length > 80 ? '…' : ''}`));
+    L.push('■ 실행 로드맵 3단계');
+    m.steps.forEach((s, i) => L.push(`${i + 1}단계 ${s.title} — ${s.body.replace(/\s+/g, ' ').slice(0, 70)}${s.body.length > 70 ? '…' : ''}`));
     L.push('');
     L.push('※ 상담 참고용 요약입니다. 실제 지급 여부와 금액은 가입하신 상품의 약관과 증권을 기준으로 안내드립니다.');
     return L.join('\n');
   }
 
-  function doPrint() {
-    if (!state.analyzed) analyze();
-    toast('인쇄 화면을 준비합니다 · 공유 시트에서 "PDF 저장"을 선택하세요');
-    setTimeout(() => { window.print(); }, 350);
+  /* ================= PDF ================= */
+  const PDF_LABEL = { summary: '고객용 1장 요약', detail: '고객용 10장 상세', advisor: '설계사용 30장 플랜' };
+
+  function overlay(show, title, msg, pct) {
+    const ov = $('#pdf-overlay');
+    if (!show) { ov.hidden = true; return; }
+    ov.hidden = false;
+    if (title != null) $('#pdf-title').textContent = title;
+    if (msg != null) $('#pdf-msg').textContent = msg;
+    if (pct != null) $('#pdf-bar').style.width = Math.round(pct * 100) + '%';
+    $('#pdf-cancel').hidden = true;
   }
+
+  async function buildPdfBlob(kind) {
+    const started = performance.now();
+    const build = BojangReport.build(kind, state);
+    const overflow = [];
+    const memoOpts = BojangReport.MEMO[kind] || {};
+    const blob = await PDFKit.renderPages(build.pages, {
+      quality: kind === 'summary' ? 0.92 : kind === 'detail' ? 0.86 : 0.83,
+      overflow,
+      memo: kind !== 'summary',
+      memoMax: memoOpts.memoMax,
+      memoLabels: memoOpts.memoLabels,
+      meta: { title: `${build.m.client.name}_${PDF_LABEL[kind]}` },
+      onProgress: (done, total) => {
+        overlay(true, `${PDF_LABEL[kind]} PDF 생성 중`, `${total}페이지 중 ${done}페이지를 그렸습니다`, done / total);
+      }
+    });
+    const filename = PDFKit.fileName(kind, build.m.client.name, isoDate(build.m.dateLabel));
+    return { blob, filename, pages: build.pages.length, overflow, ms: Math.round(performance.now() - started), model: build.m };
+  }
+  window.BojangApp = { buildPdfBlob, doPdf, state, analyze, cursorModel: model };
+
+  function isoDate(label) {
+    const m = /(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/.exec(label || '');
+    if (m) return `${m[1]}${String(m[2]).padStart(2, '0')}${String(m[3]).padStart(2, '0')}`;
+    const d = new Date();
+    return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  async function doPdf(kind) {
+    if (!state.analyzed) analyze();
+    const btn = $(`.pdf-btn[data-pdf="${kind}"]`);
+    if (btn) btn.disabled = true;
+    overlay(true, `${PDF_LABEL[kind]} PDF 생성 중`, '페이지를 그리는 중…', 0.02);
+    try {
+      const out = await buildPdfBlob(kind);
+      if (out.overflow.length) console.warn('[PDF] 넘침 페이지', out.overflow);
+      overlay(false);
+      await deliver(out.blob, out.filename, kind, out);
+    } catch (e) {
+      console.error(e);
+      overlay(true, 'PDF를 만들지 못했습니다', (e && e.message ? e.message : '알 수 없는 오류') + ' · 다시 시도해 주세요', 0);
+      $('#pdf-cancel').hidden = false;
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  async function deliver(blob, filename, kind, out) {
+    const file = new File([blob], filename, { type: 'application/pdf' });
+    const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+    const sizeMb = (blob.size / 1048576).toFixed(1);
+    if (canShare) {
+      // iOS/Android: 공유 시트는 사용자 제스처가 필요하므로 버튼을 한 번 더 받습니다.
+      overlay(true, 'PDF가 준비됐습니다', `${filename} · ${out.pages}페이지 · ${sizeMb}MB`, 1);
+      const msg = $('#pdf-msg');
+      msg.innerHTML = '';
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:grid;gap:8px;margin-top:14px;';
+      const bShare = document.createElement('button');
+      bShare.type = 'button'; bShare.className = 'pdf-cancel';
+      bShare.style.cssText = 'background:#0a1d33;color:#fff;border-color:#0a1d33;margin:0;padding:12px;font-weight:800;';
+      bShare.textContent = '공유하기 (파일 앱 · 문자 · 카톡)';
+      bShare.addEventListener('click', async () => {
+        try {
+          await navigator.share({ files: [file], title: filename, text: `${state.client.name}님 ${PDF_LABEL[kind]} 리포트` });
+          overlay(false);
+          toast('공유했습니다');
+        } catch (e) {
+          if (e && e.name === 'AbortError') { toast('공유를 취소했습니다'); return; }
+          const r = await PDFKit.saveBlob(blob, filename, { share: false });
+          overlay(false);
+          toast(r === 'download' ? '파일로 저장했습니다 (다운로드 폴더/파일 앱)' : '저장했습니다');
+        }
+      });
+      const bSave = document.createElement('button');
+      bSave.type = 'button'; bSave.className = 'pdf-cancel';
+      bSave.textContent = '기기에 저장 (다운로드)';
+      bSave.addEventListener('click', async () => {
+        await PDFKit.saveBlob(blob, filename, { share: false });
+        overlay(false);
+        toast('PDF를 저장했습니다');
+      });
+      const bClose = document.createElement('button');
+      bClose.type = 'button'; bClose.className = 'pdf-cancel';
+      bClose.textContent = '닫기';
+      bClose.addEventListener('click', () => overlay(false));
+      wrap.appendChild(bShare); wrap.appendChild(bSave); wrap.appendChild(bClose);
+      msg.appendChild(wrap);
+      $('#pdf-title').textContent = 'PDF가 준비됐습니다';
+      return;
+    }
+    const res = await PDFKit.saveBlob(blob, filename, { picker: false, title: filename });
+    if (res === 'cancel') toast('저장을 취소했습니다');
+    else toast(res === 'saved' ? 'PDF를 저장했습니다' : `PDF를 저장했습니다 · ${out.pages}페이지 ${sizeMb}MB`);
+  }
+
+  /* ================= 상담 저장 ================= */
+  function loadHistory() {
+    const list = lsGet(HKEY, []);
+    state.history = Array.isArray(list) ? list.slice(0, 5) : [];
+    renderHistory();
+  }
+
+  function saveConsult() {
+    if (!state.lastResult) { toast('먼저 진단해 주세요'); return; }
+    const label = ($('#cust-label').value || '').trim() || `${state.client.name} · ${state.age}대 ${state.gender}`;
+    const entry = {
+      id: 'c' + Date.now(), label, savedAt: new Date().toISOString(),
+      score: state.lastResult.m.score, letter: state.lastResult.m.letter,
+      client: Object.assign({}, state.client),
+      contracts: JSON.parse(JSON.stringify(state.contracts)),
+      inputs: {
+        age: state.age, gender: state.gender, job: state.job, silson: state.silson,
+        premium: state.premium, cov: JSON.parse(JSON.stringify(state.cov)), flags: Object.assign({}, state.flags)
+      }
+    };
+    const next = [entry].concat(state.history).slice(0, 5);
+    if (lsSet(HKEY, next)) {
+      state.history = next; renderHistory(); toast('최근 상담에 저장했습니다 (최대 5건)');
+    } else toast('저장 공간을 쓸 수 없습니다');
+  }
+
+  function renderHistory() {
+    const host = $('#history-list');
+    if (!host) return;
+    if (!state.history.length) {
+      host.innerHTML = `<p class="empty">저장된 상담이 없습니다. 진단 후 "상담 저장"을 누르면 이 기기에만 기록됩니다.</p>`;
+      return;
+    }
+    host.innerHTML = state.history.map((h) => {
+      const d = new Date(h.savedAt);
+      const when = `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      return `
+        <div class="hist" data-id="${h.id}">
+          <div class="hist-main"><strong>${esc(h.label)}</strong>
+            <span>${when} · ${h.inputs.age}대 ${h.inputs.gender} · 실손 ${SILSON_LABEL[h.inputs.silson]}</span></div>
+          <span class="hist-score">${h.score}<i>점</i></span>
+          <button type="button" class="hist-load" data-load="${h.id}">불러오기</button>
+          <button type="button" class="hist-del" data-del="${h.id}" aria-label="삭제">×</button>
+        </div>`;
+    }).join('');
+    $$('[data-load]', host).forEach((b) => {
+      b.addEventListener('click', () => {
+        const h = state.history.find((x) => x.id === b.dataset.load);
+        if (!h) return;
+        applyInputs(h.inputs);
+        if (h.client) { state.client = Object.assign(state.client, h.client, { dateLabel: todayLabel() }); renderClientFields(); }
+        if (Array.isArray(h.contracts)) { state.contracts = h.contracts; renderContracts(); }
+        analyze();
+        $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        toast(`"${h.label}" 상담을 불러왔습니다`);
+      });
+    });
+    $$('[data-del]', host).forEach((b) => {
+      b.addEventListener('click', () => {
+        const next = state.history.filter((x) => x.id !== b.dataset.del);
+        if (lsSet(HKEY, next)) { state.history = next; renderHistory(); toast('삭제했습니다'); }
+      });
+    });
+  }
+
+  function applyInputs(inputs) {
+    state.age = inputs.age; state.gender = inputs.gender; state.job = inputs.job;
+    state.silson = inputs.silson; state.premium = inputs.premium;
+    state.cov = JSON.parse(JSON.stringify(inputs.cov));
+    state.flags = Object.assign({}, state.flags, inputs.flags);
+    syncSegments();
+    renderCoverageCards();
+    renderFlags();
+    renderSummary();
+    $('#premium').value = state.premium;
+    saveSession();
+  }
+
+  function syncSegments() {
+    const map = { '#seg-age': state.age, '#seg-gender': state.gender, '#seg-job': state.job, '#seg-silson': state.silson };
+    Object.keys(map).forEach((sel) => {
+      $$('.seg-btn', $(sel)).forEach((b) => {
+        const on = b.dataset.value === String(map[sel]);
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+    });
+    $('#job-hint').textContent = JOB_HINTS[state.job];
+  }
+
+  /* ================= 보험료 구성 ================= */
+  const FLAGS = [
+    { key: 'savings', label: '적립(저축)성 특약이 포함돼 있다' },
+    { key: 'renew', label: '갱신형 담보가 중심이다' },
+    { key: 'manyRiders', label: '특약이 6개 이상으로 많다' }
+  ];
+
+  function renderFlags() {
+    const host = $('#premium-flags');
+    host.innerHTML = '';
+    FLAGS.forEach((f) => {
+      const l = document.createElement('label');
+      l.className = 'check';
+      l.innerHTML = `<input type="checkbox" data-flag="${f.key}" ${state.flags[f.key] ? 'checked' : ''}><span>${f.label}</span>`;
+      const cb = $('input', l);
+      cb.addEventListener('change', () => { state.flags[f.key] = cb.checked; saveSession(); if (state.analyzed) analyze(); });
+      host.appendChild(l);
+    });
+  }
+
+  /* ================= 화면 모드 ================= */
+  function applyView() {
+    document.body.classList.toggle('is-client', state.view === 'client');
+    $$('.viewswitch button').forEach((b) => {
+      const on = b.dataset.mode === state.view;
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    if (state.view === 'client') {
+      const active = $('.view.is-active');
+      if (active && (active.id === 'view-toolkit' || active.id === 'view-live')) switchView('analysis');
+      const liveTab = $('#tab-live'); if (liveTab) liveTab.style.display = 'none';
+    } else {
+      const liveTab = $('#tab-live'); if (liveTab) liveTab.style.display = '';
+    }
+    renderGuideChips();
+    renderGuideBody();
+    if (state.analyzed) analyze();
+    renderHistory();
+  }
+
+  /* ================= 복사 · 토스트 ================= */
+  let toastTimer = null;
+  function toast(msg) {
+    const el = $('#toast');
+    el.textContent = msg;
+    el.classList.add('is-on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('is-on'), 2400);
+  }
+
+  async function copy(text, okMsg) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text);
+      else {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.top = '-1000px';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      }
+      toast(okMsg || '복사했습니다');
+    } catch (e) { toast('복사가 막혔습니다. 길게 눌러 직접 선택해 주세요'); }
+  }
+  window.__bojangCopy = copy;
+
+  /* ================= 탭 전환 ================= */
+  function switchView(name) {
+    state.tab = name;
+    $$('.view').forEach((v) => v.classList.toggle('is-active', v.id === 'view-' + name));
+    $$('.tab').forEach((t) => {
+      const on = t.dataset.view === name;
+      t.classList.toggle('is-active', on);
+      t.setAttribute('aria-selected', String(on));
+    });
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    if (name === 'live' && window.BojangLive) window.BojangLive.render();
+  }
+
 
   /* ================= SVG 도식 ================= */
   function dgContain(tiers) {
@@ -846,6 +1085,7 @@
     });
   }
 
+
   /* ================= 위저드 ================= */
   function setStep(n, silent) {
     state.step = clamp(n, 1, 5);
@@ -875,178 +1115,27 @@
     const el = $('#wiz-summary');
     if (!el) return;
     const rows = PRIORITY.map((item) => {
-      const r = evalItem(item);
-      return `<div class="sum-row"><span class="sr-rank">${item.rank}</span><strong>${item.name}</strong><span class="sr-val">${summaryOf(item, r)}</span><span class="badge badge-${r.level}">${r.label}</span></div>`;
+      const r = BojangModel.evalItem(state, item);
+      return `<div class="sum-row"><span class="sr-rank">${item.rank}</span><strong>${item.name}</strong><span class="sr-val">${BojangModel.summaryOf(state, item, r)}</span><span class="badge badge-${r.level}">${r.label}</span></div>`;
     }).join('');
+    const ad = state.client.birth ? BojangModel.nextAgeDay(state.client.birth) : null;
     el.innerHTML = `
-      <div class="sum-top">${state.age}대 ${state.gender} · 직업 ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]} · 월 ${won(state.premium)}만원</div>
+      <div class="sum-top">${esc(state.client.name)} · ${state.age}대 ${state.gender} · 직업 ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]} · 월 ${won(state.premium)}만원</div>
+      ${ad ? `<div class="sum-top">보험나이 ${BojangModel.insuranceAge(state.client.birth)}세 · 상령일 ${ad.label} (D-${ad.days})</div>` : ''}
       ${rows}
-      <p class="sum-note">위 내용으로 진단하면 점수와 리포트가 만들어집니다.</p>`;
-  }
-
-  /* ================= 상담 저장 / 불러오기 ================= */
-  function loadHistory() {
-    const list = lsGet(HKEY, []);
-    state.history = Array.isArray(list) ? list.slice(0, 5) : [];
-    renderHistory();
-  }
-
-  function saveConsult() {
-    if (!state.lastResult) { toast('먼저 진단해 주세요'); return; }
-    const label = ($('#cust-label').value || '').trim() || `${state.age}대 ${state.gender}`;
-    const entry = {
-      id: 'c' + Date.now(), label, savedAt: new Date().toISOString(),
-      score: state.lastResult.score.score, grade: state.lastResult.score.grade.label,
-      inputs: {
-        age: state.age, gender: state.gender, job: state.job, silson: state.silson,
-        premium: state.premium, cov: JSON.parse(JSON.stringify(state.cov)), flags: Object.assign({}, state.flags)
-      }
-    };
-    const next = [entry].concat(state.history).slice(0, 5);
-    if (lsSet(HKEY, next)) {
-      state.history = next; renderHistory(); toast('최근 상담에 저장했습니다 (최대 5건)');
-    } else toast('저장 공간을 쓸 수 없습니다');
-  }
-
-  function renderHistory() {
-    const host = $('#history-list');
-    if (!host) return;
-    if (!state.history.length) {
-      host.innerHTML = `<p class="empty">저장된 상담이 없습니다. 진단 후 "상담 저장"을 누르면 이 기기에만 기록됩니다.</p>`;
-      return;
-    }
-    host.innerHTML = state.history.map((h) => {
-      const d = new Date(h.savedAt);
-      const when = `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-      return `
-        <div class="hist" data-id="${h.id}">
-          <div class="hist-main"><strong>${esc(h.label)}</strong>
-            <span>${when} · ${h.inputs.age}대 ${h.inputs.gender} · 실손 ${SILSON_LABEL[h.inputs.silson]}</span></div>
-          <span class="hist-score">${h.score}<i>점</i></span>
-          <button type="button" class="hist-load" data-load="${h.id}">불러오기</button>
-          <button type="button" class="hist-del" data-del="${h.id}" aria-label="삭제">×</button>
-        </div>`;
-    }).join('');
-    $$('[data-load]', host).forEach((b) => {
-      b.addEventListener('click', () => {
-        const h = state.history.find((x) => x.id === b.dataset.load);
-        if (!h) return;
-        applyInputs(h.inputs);
-        analyze();
-        $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        toast(`"${h.label}" 상담을 불러왔습니다`);
-      });
-    });
-    $$('[data-del]', host).forEach((b) => {
-      b.addEventListener('click', () => {
-        const next = state.history.filter((x) => x.id !== b.dataset.del);
-        if (lsSet(HKEY, next)) { state.history = next; renderHistory(); toast('삭제했습니다'); }
-      });
-    });
-  }
-
-  function applyInputs(inputs) {
-    state.age = inputs.age; state.gender = inputs.gender; state.job = inputs.job;
-    state.silson = inputs.silson; state.premium = inputs.premium;
-    state.cov = JSON.parse(JSON.stringify(inputs.cov));
-    state.flags = Object.assign({}, state.flags, inputs.flags);
-    syncSegments();
-    renderCoverageCards();
-    renderFlags();
-    renderSummary();
-    $('#premium').value = state.premium;
-  }
-
-  function syncSegments() {
-    const map = { '#seg-age': state.age, '#seg-gender': state.gender, '#seg-job': state.job, '#seg-silson': state.silson };
-    Object.keys(map).forEach((sel) => {
-      $$('.seg-btn', $(sel)).forEach((b) => {
-        const on = b.dataset.value === String(map[sel]);
-        b.classList.toggle('is-on', on);
-        b.setAttribute('aria-pressed', String(on));
-      });
-    });
-    $('#job-hint').textContent = JOB_HINTS[state.job];
-  }
-
-  /* ================= 보험료 구성 ================= */
-  const FLAGS = [
-    { key: 'savings', label: '적립(저축)성 특약이 포함돼 있다' },
-    { key: 'renew', label: '갱신형 담보가 중심이다' },
-    { key: 'manyRiders', label: '특약이 6개 이상으로 많다' }
-  ];
-
-  function renderFlags() {
-    const host = $('#premium-flags');
-    host.innerHTML = '';
-    FLAGS.forEach((f) => {
-      const l = document.createElement('label');
-      l.className = 'check';
-      l.innerHTML = `<input type="checkbox" data-flag="${f.key}" ${state.flags[f.key] ? 'checked' : ''}><span>${f.label}</span>`;
-      const cb = $('input', l);
-      cb.addEventListener('change', () => { state.flags[f.key] = cb.checked; if (state.analyzed) analyze(); });
-      host.appendChild(l);
-    });
-  }
-
-  /* ================= 화면 모드 ================= */
-  function applyView() {
-    document.body.classList.toggle('is-client', state.view === 'client');
-    $$('.viewswitch button').forEach((b) => {
-      const on = b.dataset.mode === state.view;
-      b.classList.toggle('is-on', on);
-      b.setAttribute('aria-pressed', String(on));
-    });
-    if (state.view === 'client') {
-      const active = $('.view.is-active');
-      if (active && active.id === 'view-toolkit') switchView('analysis');
-    }
-    renderGuideChips();
-    renderGuideBody();
-    if (state.analyzed) analyze();
-    renderHistory();
-  }
-
-  /* ================= 복사 · 토스트 ================= */
-  let toastTimer = null;
-  function toast(msg) {
-    const el = $('#toast');
-    el.textContent = msg;
-    el.classList.add('is-on');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('is-on'), 2200);
-  }
-
-  async function copy(text, okMsg) {
-    try {
-      if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text);
-      else {
-        const ta = document.createElement('textarea');
-        ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.top = '-1000px';
-        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-      }
-      toast(okMsg || '복사했습니다');
-    } catch (e) { toast('복사가 막혔습니다. 길게 눌러 직접 선택해 주세요'); }
-  }
-
-  /* ================= 탭 전환 ================= */
-  function switchView(name) {
-    $$('.view').forEach((v) => v.classList.toggle('is-active', v.id === 'view-' + name));
-    $$('.tab').forEach((t) => {
-      const on = t.dataset.view === name;
-      t.classList.toggle('is-active', on);
-      t.setAttribute('aria-selected', String(on));
-    });
-    window.scrollTo({ top: 0, behavior: 'auto' });
+      <p class="sum-note">위 내용으로 진단하면 점수 · 1장/10장/30장 PDF가 만들어집니다.</p>`;
   }
 
   /* ================= 초기화 ================= */
   function init() {
     state.view = lsGet(VKEY, 'advisor') === 'client' ? 'client' : 'advisor';
+    loadSession();
 
+    renderClientFields();
     renderSegments();
     renderCoverageCards();
     renderFlags();
+    renderContracts();
     renderGuideChips();
     renderGuideBody();
     renderToolkit();
@@ -1055,9 +1144,23 @@
     setStep(1, true);
     renderSummary();
 
+    $('#client-name').addEventListener('input', (e) => {
+      state.client.name = (e.target.value || '').trim() || '홍길동';
+      renderClientStrip(); renderSummary(); saveSession();
+      if (state.analyzed) analyze();
+    });
+    $('#client-birth').addEventListener('change', onBirthChange);
+    $('#consultant').addEventListener('input', (e) => {
+      state.client.consultant = (e.target.value || '').trim();
+      saveSession();
+      if (state.analyzed) analyze();
+    });
+    $('#ct-add').addEventListener('click', addContract);
+    $('#ct-premium').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addContract(); } });
+
     $('#premium').addEventListener('input', (e) => {
       state.premium = clamp(Number(e.target.value || 0), 0, 300);
-      renderSummary();
+      renderSummary(); renderClientStrip(); saveSession();
       if (state.analyzed) analyze();
     });
 
@@ -1075,20 +1178,26 @@
     });
 
     $('#btn-kakao').addEventListener('click', () => copy(kakaoText(), '카톡 요약을 복사했습니다'));
-    $('#btn-pdf').addEventListener('click', doPrint);
     $('#btn-save').addEventListener('click', saveConsult);
     $('#btn-reset').addEventListener('click', () => {
       applyInputs({
         age: DEFAULT.age, gender: DEFAULT.gender, job: DEFAULT.job, silson: DEFAULT.silson,
         premium: DEFAULT.premium, cov: DEFAULT.cov, flags: DEFAULT.flags
       });
+      state.client = Object.assign({}, DEFAULT.client, { dateLabel: todayLabel() });
+      state.contracts = [];
+      renderClientFields(); renderContracts();
       $('#cust-label').value = '';
       state.analyzed = false; state.lastResult = null;
       $('#result').hidden = true;
       setStep(1, true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      saveSession();
       toast('새 상담을 시작합니다');
     });
+
+    $$('.pdf-btn').forEach((b) => b.addEventListener('click', () => doPdf(b.dataset.pdf)));
+    $('#pdf-cancel').addEventListener('click', () => overlay(false));
 
     $$('.viewswitch button').forEach((b) => {
       b.addEventListener('click', () => {
@@ -1113,6 +1222,13 @@
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
       window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
     }
+    const syncHeaderHeight = () => {
+      const h = document.querySelector('.app-header');
+      if (h) document.documentElement.style.setProperty('--hdr', Math.round(h.getBoundingClientRect().height) + 'px');
+    };
+    syncHeaderHeight();
+    window.addEventListener('resize', syncHeaderHeight);
+    if (window.BojangLive) window.BojangLive.init(state, { copy, toast });
   }
 
   document.addEventListener('DOMContentLoaded', init);

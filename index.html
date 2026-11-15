@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 · 5대 우선순위 상담 가이드</title>
-<meta name="description" content="손해보험 설계사를 위한 현장 상담용 보장분석과 5대 담보(암·뇌·심장·수술비·간병비) 우선순위 가이드">
+<title>보장분석 상담 가이드 v3 · 1장·10장·30장 PDF</title>
+<meta name="description" content="손해보험 설계사를 위한 현장 상담용 보장분석. 고객용 1장 요약·10장 상세 PDF와 설계사용 30장 상담 플랜북을 앱에서 바로 저장·공유합니다.">
 <meta name="theme-color" content="#0a1d33">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
@@ -27,8 +27,8 @@
         </svg>
       </span>
       <div class="brand-text">
-        <h1>보장분석 상담 가이드</h1>
-        <p>암 · 뇌 · 심장 · 수술비 · 간병비</p>
+        <h1>보장분석 상담 가이드 <em class="ver">v3</em></h1>
+        <p>1장·10장·30장 PDF 리포트</p>
       </div>
     </div>
     <div class="viewswitch" role="group" aria-label="화면 모드">
@@ -42,6 +42,12 @@
       </button>
     </div>
   </div>
+  <div class="client-strip" id="client-strip">
+    <span class="cs-name" id="cs-name">홍길동</span>
+    <span class="cs-dot"></span>
+    <span class="cs-meta" id="cs-meta">연령대 미입력</span>
+    <span class="cs-badge" id="cs-dday" hidden>상령일 D-</span>
+  </div>
 </header>
 
 <div class="client-banner" aria-live="polite">
@@ -54,9 +60,9 @@
   <section id="view-analysis" class="view is-active" aria-labelledby="tab-analysis">
 
     <div class="intro-card no-print">
-      <div class="intro-eyebrow">BOJANG ANALYSIS</div>
-      <h2>5대 담보를 한 장으로<br>진단하고 리모델링합니다</h2>
-      <p>입력값은 서버로 전송되지 않고 이 화면 안에서만 계산됩니다.</p>
+      <div class="intro-eyebrow">BOJANG ANALYSIS V3</div>
+      <h2>한 장 요약부터<br>30장 플랜북까지</h2>
+      <p>입력값은 서버로 전송되지 않고 이 화면 안에서만 계산됩니다. PDF는 이 기기에서 직접 만들어 저장·공유합니다.</p>
     </div>
 
     <!-- ---------- 위저드 ---------- -->
@@ -73,10 +79,29 @@
       <div class="wiz-panels" id="wiz-panels">
 
         <div class="wiz-panel is-active" data-step="1">
-          <div class="wiz-panel-title"><span class="n">1</span>기본 정보<em>연령대 · 성별 · 직업급수 · 실손 · 보험료</em></div>
+          <div class="wiz-panel-title"><span class="n">1</span>기본 정보<em>고객 · 생년월일 · 실손 · 보험료</em></div>
+
           <div class="card">
+            <div class="card-title"><span class="eyebrow">CLIENT</span> 고객 정보 <span class="card-sub">PDF 표지에 그대로 들어갑니다</span></div>
             <div class="field">
-              <label class="field-label">연령대</label>
+              <label class="field-label" for="client-name">고객명</label>
+              <input id="client-name" type="text" class="text-input" placeholder="홍길동" maxlength="20" autocomplete="off">
+            </div>
+            <div class="field">
+              <label class="field-label" for="client-birth">생년월일 <span class="hint">선택 · 보험나이·상령일 자동 계산</span></label>
+              <input id="client-birth" type="date" class="text-input" max="2026-12-31">
+              <p class="field-note" id="birth-note">입력하면 보험나이와 상령일 D-day가 계산됩니다.</p>
+            </div>
+            <div class="field">
+              <label class="field-label" for="consultant">담당 컨설턴트</label>
+              <input id="consultant" type="text" class="text-input" placeholder="담당 컨설턴트" maxlength="24" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><span class="eyebrow">PROFILE</span> 상담 기준</div>
+            <div class="field">
+              <label class="field-label">연령대 <span class="hint" id="age-hint">보험나이로 자동 선택됩니다</span></label>
               <div class="seg" id="seg-age" role="group" aria-label="연령대"></div>
             </div>
             <div class="field">
@@ -120,9 +145,24 @@
         </div>
 
         <div class="wiz-panel" data-step="5">
-          <div class="wiz-panel-title"><span class="n">5</span>계약 형태<em>적립 · 갱신 · 특약 점검</em></div>
+          <div class="wiz-panel-title"><span class="n">5</span>계약 · 보험료<em>보유 계약 · 적립 · 갱신 · 특약</em></div>
+
           <div class="card">
-            <div class="card-title"><span class="eyebrow">03 · PREMIUM</span> 보험료 구성 <span class="card-sub">해당 항목만 체크</span></div>
+            <div class="card-title"><span class="eyebrow">CONTRACT</span> 보유 계약 목록
+              <span class="card-sub">보험사 · 상품명 · 월 보험료 · 갱신</span></div>
+            <div id="contract-list" class="contracts"></div>
+            <div class="contract-add">
+              <input type="text" id="ct-insurer" class="text-input sm" placeholder="보험사" maxlength="16" autocomplete="off">
+              <input type="text" id="ct-product" class="text-input sm" placeholder="상품명" maxlength="30" autocomplete="off">
+              <input type="number" id="ct-premium" class="text-input sm" placeholder="월(만원)" min="0" max="300" step="1" inputmode="numeric">
+              <label class="ct-renew"><input type="checkbox" id="ct-renew"><span>갱신형</span></label>
+              <button type="button" id="ct-add" class="btn-ghost">추가</button>
+            </div>
+            <p class="field-note" id="contract-total">계약을 추가하면 10장 PDF의 포트폴리오 표가 채워집니다.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><span class="eyebrow">PREMIUM</span> 보험료 구성 <span class="card-sub">해당 항목만 체크</span></div>
             <div class="checks" id="premium-flags"></div>
           </div>
           <div class="card wiz-summary">
@@ -143,7 +183,7 @@
       보장분석 진단하기
     </button>
 
-    <!-- ---------- 결과 (인쇄 리포트 본문) ---------- -->
+    <!-- ---------- 결과 ---------- -->
     <div id="result" class="result" hidden aria-live="polite">
       <div class="print-head">
         <div class="ph-kicker">BOJANG ANALYSIS REPORT</div>
@@ -163,7 +203,7 @@
         <div id="stats" class="stats"></div>
       </div>
 
-      <div class="card print-break">
+      <div class="card">
         <div class="card-title"><span class="eyebrow">PRIORITY</span> 5대 우선순위 진단</div>
         <div id="result-rows" class="priority-rows"></div>
       </div>
@@ -183,11 +223,32 @@
         <div id="result-checkpoints" class="checkpoints"></div>
       </div>
 
-      <div class="save-bar no-print" id="save-bar">
-        <button class="btn-pdf" id="btn-pdf" type="button">
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 13h4M10 17h4"/></svg>
-          PDF 저장 / 리포트 출력
+      <!-- ---------- PDF 3종 ---------- -->
+      <div class="pdf-panel no-print" id="pdf-panel">
+        <div class="pdf-panel-head">
+          <span class="eyebrow">PDF</span>
+          <strong>리포트 저장 · 공유</strong>
+          <span class="pdf-sub">인쇄 없이 실제 PDF 파일로 저장합니다</span>
+        </div>
+        <button type="button" class="pdf-btn" data-pdf="summary">
+          <span class="pb-ico">📄</span>
+          <span class="pb-label">고객용 1장 요약 PDF</span>
+          <span class="pb-sub">한눈에 보는 압축 리포트 · 등급·도넛·5대 우선순위·로드맵</span>
         </button>
+        <button type="button" class="pdf-btn" data-pdf="detail">
+          <span class="pb-ico">📚</span>
+          <span class="pb-label">고객용 10장 상세 PDF</span>
+          <span class="pb-sub">표지·진단·포트폴리오·암·뇌심장·수술간병·갱신·Summary·로드맵</span>
+        </button>
+        <button type="button" class="pdf-btn" data-pdf="advisor">
+          <span class="pb-ico">📘</span>
+          <span class="pb-label">설계사용 30장 상담 플랜 PDF</span>
+          <span class="pb-sub">오프닝부터 클로징까지 · 질문·화법·함정·설계안·반론 풀스크립트</span>
+        </button>
+        <p class="pdf-hint" id="pdf-hint">PC는 저장 위치를 고르거나 다운로드 폴더로, 아이폰은 공유 시트에서 <b>파일 앱 저장 · 문자 · 카카오톡</b>으로 바로 보낼 수 있습니다.</p>
+      </div>
+
+      <div class="save-bar no-print" id="save-bar">
         <button class="btn-kakao" id="btn-kakao" type="button">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 3C6.9 3 3 6.2 3 10.1c0 2.5 1.6 4.7 4 6.1-.2.7-.7 2.4-.8 2.8 0 .4.2.4.4.3.3-.2 2.3-1.6 3.2-2.2.7.1 1.4.2 2.2.2 5.1 0 9-3.2 9-7.2S17.1 3 12 3z"/></svg>
           고객 카톡 요약 복사
@@ -198,7 +259,7 @@
         </div>
       </div>
 
-      <p class="disclaimer">종합 점수·권장선은 상담 보조용 자체 산식입니다. 통계는 각 출처의 공표 수치이며, 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.</p>
+      <p class="disclaimer">종합 점수·권장선은 상담 보조용 자체 산식입니다. 통계는 통계청 2024 · 중앙암등록본부 2023 · 중앙심뇌혈관질환센터 2023 · 건보공단 2025 공표 수치이며, 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.</p>
     </div>
 
     <div class="card internal no-print">
@@ -215,7 +276,23 @@
     <div id="guide-body" class="guide-body"></div>
   </section>
 
-  <!-- ================= TAB 3 : 현장 툴킷 ================= -->
+  <!-- ================= TAB 3 : 라이브 상담 ================= -->
+  <section id="view-live" class="view" aria-labelledby="tab-live">
+    <div class="live-shell">
+      <div class="live-top no-print">
+        <div class="live-progress" id="live-progress"></div>
+        <div class="live-timer"><span id="live-stage-label">오프닝</span><b id="live-clock">00:00</b></div>
+      </div>
+      <div id="live-body" class="live-body"></div>
+      <div class="live-nav no-print">
+        <button type="button" class="live-prev" id="live-prev">‹ 이전</button>
+        <span class="live-count" id="live-count">1 / 5</span>
+        <button type="button" class="live-next" id="live-next">다음 단계 ›</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TAB 4 : 현장 툴킷 ================= -->
   <section id="view-toolkit" class="view internal" aria-labelledby="tab-toolkit">
 
     <div class="card">
@@ -274,6 +351,10 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3.5-4.5 3 2.5L20 6"/></svg>
     <span>보장분석</span>
   </button>
+  <button class="tab internal" id="tab-live" data-view="live" role="tab" aria-selected="false" aria-controls="view-live">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 003-3V6a3 3 0 10-6 0v6a3 3 0 003 3z"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v4"/></svg>
+    <span>라이브 상담</span>
+  </button>
   <button class="tab" id="tab-guide" data-view="guide" role="tab" aria-selected="false" aria-controls="view-guide">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.7l5.9-.8L12 3.5z"/></svg>
     <span>5대 담보</span>
@@ -286,7 +367,22 @@
 
 <div class="toast no-print" id="toast" role="status" aria-live="polite"></div>
 
+<div class="pdf-overlay" id="pdf-overlay" hidden>
+  <div class="pdf-modal" role="status" aria-live="polite">
+    <div class="pdf-spin" aria-hidden="true"></div>
+    <strong id="pdf-title">PDF를 만들고 있습니다</strong>
+    <div class="pdf-bar"><i id="pdf-bar"></i></div>
+    <p id="pdf-msg">페이지를 그리는 중…</p>
+    <button type="button" class="pdf-cancel" id="pdf-cancel" hidden>닫기</button>
+  </div>
+</div>
+
 <script src="./content.js"></script>
+<script src="./playbook.js"></script>
+<script src="./model.js"></script>
+<script src="./pdfkit.js"></script>
+<script src="./report.js"></script>
+<script src="./live.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>
