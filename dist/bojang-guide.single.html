@@ -4726,13 +4726,6 @@ const PLAN_FRONT = {
         s.text(`말 — ${t.script.replace(/^"|"$/g, '')}`, s.ML + 10, y + 27, { size: 6, color: C.blue });
         y += 42;
       });
-      y = s.sectionHead(s.ML, y + 4, s.CW, null, '뇌 담보 확인 순서', null);
-      y = s.checks(s.ML, y, s.CW, [
-        '담보명이 "뇌출혈"인지 "뇌졸중"인지 "뇌혈관질환"인지',
-        '괄호 안 코드 범위(I60~I62 / I60~I64 / I60~I69)',
-        '수술·혈전용해치료비 특약 유무',
-        '후유장해 담보와 지급률 표'
-      ], { size: 7, rowH: 14 });
       y = docOrder(s, y + 6, PLAN_EXTRA.brain.docOrder);
       foot(s, 14, '2순위 뇌 · 코드');
     });
