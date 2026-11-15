@@ -160,7 +160,9 @@
       }
     }
     const gap = Math.max(0, rec - val);
-    return { rec, val, ratio, level, label, note, gap };
+    const auxOk = item.aux ? !!state.flags[item.aux.key] : true;
+    const fillRatio = clamp(ratio, 0, 1) * (auxOk ? 1 : 0.8);
+    return { rec, val, ratio, level, label, note, gap, auxOk, fillRatio };
   }
 
   function updateBadge(item) {
@@ -210,7 +212,7 @@
     let sum = 0, wsum = 0;
     const parts = rows.map(({ item, r }) => {
       const ww = w[item.key] || 0;
-      const fill = clamp(r.val / (r.rec || 1), 0, 1);
+      const fill = r.fillRatio != null ? r.fillRatio : clamp(r.val / (r.rec || 1), 0, 1);
       sum += ww * fill;
       wsum += ww;
       return { key: item.key, w: ww, fill };
@@ -299,16 +301,14 @@
     const rowsHost = $('#result-rows');
     rowsHost.innerHTML = '';
     rows.forEach(({ item, r }, i) => {
-      const scaleMax = Math.max(r.rec * 1.5, r.val || 0);
-      const fillPct = clamp((r.val / scaleMax) * 100, 0, 100);
-      const gapPct = clamp((r.rec / scaleMax) * 100, 0, 100);
-      const pct = Math.round(clamp((r.val / (r.rec || 1)) * 100, 0, 999));
+      const fillPct = clamp(Math.round((r.fillRatio != null ? r.fillRatio : r.val / (r.rec || 1)) * 100), 0, 100);
+      const pct = fillPct;
       const el = document.createElement('div');
       el.className = 'prow';
       let tail;
-      if (r.val <= 0) tail = `권장 ${won(r.rec)}${item.unit} · 미보유`;
-      else if (r.gap > 0) tail = `${won(r.val)} / 권장 ${won(r.rec)}${item.unit} · 부족 ${won(r.gap)}${item.unit}`;
-      else tail = `${won(r.val)} / 권장 ${won(r.rec)}${item.unit}${r.note ? ' · ' + r.note : ''}`;
+      if (r.val <= 0) tail = `미보유 · 권장 ${won(r.rec)}${item.unit}`;
+      else if (r.gap > 0) tail = `보유 ${won(r.val)}${item.unit} · 부족 ${won(r.gap)}${item.unit}`;
+      else tail = `보유 ${won(r.val)}${item.unit}${r.note ? ' · ' + r.note : ' · 기준선 충족'}`;
       el.innerHTML = `
         <div class="prow-head">
           <span class="prow-rank">${item.rank}</span>
@@ -318,8 +318,7 @@
         </div>
         <div class="gauge">
           <div class="gauge-track">
-            <i class="gauge-fill tone-bg-${r.level}" style="width:${r.val <= 0 ? 0 : Math.max(2, fillPct)}%"></i>
-            <u class="gauge-target" style="left:${gapPct}%" title="권장선"></u>
+            <i class="gauge-fill tone-bg-${r.level}" style="width:${r.val <= 0 ? 0 : Math.max(3, fillPct)}%"></i>
           </div>
           <div class="gauge-scale"><span>0</span><span>권장 ${won(r.rec)}${item.unit}</span></div>
         </div>
@@ -476,15 +475,15 @@
       const yy = y + i * (bh + gap);
       const fill = t.tone === 'deep' ? 'url(#gDeep)' : t.tone === 'mid' ? 'url(#gMid)' : 'url(#gLight)';
       out += `<rect x="${x}" y="${yy}" width="${w}" height="${bh}" rx="12" fill="${fill}"/>`;
-      out += `<text x="${x + 14}" y="${yy + 19}" class="dg-l">${esc(t.label)}</text>`;
-      out += `<text x="${x + 14}" y="${yy + 33}" class="dg-s">${esc(t.note)}</text>`;
-      out += `<text x="${x + w - 14}" y="${yy + 24}" text-anchor="end" class="dg-c">${esc(t.code)}</text>`;
+      out += `<text x="${x + 14}" y="${yy + 20}" class="dg-l light">${esc(t.label)}</text>`;
+      out += `<text x="${x + 14}" y="${yy + 34}" class="dg-s on-dark">${esc(t.note)}</text>`;
+      out += `<text x="${x + w - 14}" y="${yy + 24}" text-anchor="end" class="dg-code">${esc(t.code)}</text>`;
     });
     // 포함 화살표
     const ax = 16;
     out += `<path d="M${ax} ${y + bh + 4} L${ax} ${y + 2 * (bh + gap) + bh - 4}" stroke="#9fb8cf" stroke-width="1.2" fill="none" stroke-dasharray="3 3"/>`;
     out += `<path d="M${ax - 3.5} ${y + bh + 8} L${ax} ${y + bh + 2} L${ax + 3.5} ${y + bh + 8}" fill="none" stroke="#9fb8cf" stroke-width="1.2"/>`;
-    out += `<text x="${ax}" y="${y + bh + 46}" class="dg-t" transform="rotate(-90 ${ax} ${y + bh + 46})" text-anchor="middle">포함</text>`;
+    out += `<text x="${ax + 8}" y="${H - 8}" class="dg-t">⊂ 포함</text>`;
     out += `<text x="${W - 6}" y="${H - 8}" text-anchor="end" class="dg-s">바깥으로 갈수록 넓은 담보</text>`;
     out += `</svg>`;
     return out;
@@ -527,25 +526,24 @@
   }
 
   function dgSurgery() {
-    return `<svg viewBox="0 0 340 244" class="dg" role="img" aria-label="수술비 두 축 도식">
-      <circle cx="126" cy="96" r="80" fill="#eef4fb" stroke="#b9cde4" stroke-width="1.2"/>
-      <circle cx="214" cy="96" r="80" fill="#fdf6e6" stroke="#e8c777" stroke-width="1.2"/>
-      <text x="86" y="70" text-anchor="middle" class="dg-l dark">1~5종</text>
-      <text x="86" y="88" text-anchor="middle" class="dg-s dark">수술비</text>
-      <text x="86" y="106" text-anchor="middle" class="dg-s dark">질병 / 상해</text>
-      <text x="254" y="70" text-anchor="middle" class="dg-l dark">N대</text>
-      <text x="254" y="88" text-anchor="middle" class="dg-s dark">수술비</text>
-      <text x="254" y="106" text-anchor="middle" class="dg-s dark">질환별 한도</text>
-      <text x="170" y="86" text-anchor="middle" class="dg-s dark">한 수술이</text>
-      <text x="170" y="102" text-anchor="middle" class="dg-s dark">양쪽에 해당</text>
-      <text x="170" y="118" text-anchor="middle" class="dg-s dark">가능</text>
-      <path d="M170 128 L170 150" stroke="#8ba0b8" stroke-width="1.2" fill="none"/>
-      <rect x="26" y="154" width="288" height="34" rx="10" fill="#fff" stroke="#cfdaea"/>
-      <text x="38" y="175" class="dg-l dark">같은 수술 · 각 담보에서 청구</text>
-      <text x="302" y="175" text-anchor="end" class="dg-s dark">약관 확인</text>
-      <rect x="26" y="196" width="288" height="42" rx="10" fill="#0f2a49"/>
-      <text x="38" y="214" class="dg-s on-dark">종수가 낮을수록 고액</text>
-      <text x="38" y="230" class="dg-l light">1종 관혈적  &gt;  5종 내시경·카테터</text>
+    return `<svg viewBox="0 0 340 266" class="dg" role="img" aria-label="수술비 두 축 도식">
+      <circle cx="106" cy="84" r="76" fill="#eef4fb" stroke="#b7cbe3" stroke-width="1.2"/>
+      <circle cx="234" cy="84" r="76" fill="#fdf6e6" stroke="#e5c37a" stroke-width="1.2"/>
+      <text x="78" y="70" text-anchor="middle" class="dg-l dark">1~5종</text>
+      <text x="78" y="88" text-anchor="middle" class="dg-s dark">수술비</text>
+      <text x="78" y="104" text-anchor="middle" class="dg-s dark">질병 · 상해</text>
+      <text x="262" y="70" text-anchor="middle" class="dg-l dark">N대</text>
+      <text x="262" y="88" text-anchor="middle" class="dg-s dark">수술비</text>
+      <text x="262" y="104" text-anchor="middle" class="dg-s dark">질환별 한도</text>
+      <text x="170" y="76" text-anchor="middle" class="dg-s dark">중복</text>
+      <text x="170" y="90" text-anchor="middle" class="dg-s dark">가능</text>
+      <path d="M170 162 L170 180" stroke="#9fb8cf" stroke-width="1.2" fill="none"/>
+      <path d="M165.5 176 L170 182 L174.5 176" fill="none" stroke="#9fb8cf" stroke-width="1.2"/>
+      <rect x="20" y="184" width="300" height="34" rx="10" fill="#fff" stroke="#cfdaea"/>
+      <text x="32" y="205" class="dg-l dark">같은 수술 · 두 담보에서 각각 청구</text>
+      <text x="308" y="205" text-anchor="end" class="dg-s dark">약관 확인</text>
+      <rect x="20" y="226" width="300" height="34" rx="10" fill="#0f2a49"/>
+      <text x="32" y="247" class="dg-l light">종수가 낮을수록 고액 · 1종 관혈 &gt; 5종 내시경</text>
     </svg>`;
   }
 
@@ -664,6 +662,14 @@
       </div>`).join('');
 
     const rowKeys = ['급여', '비급여', '자기부담', '재가입', '특징'];
+    const cards = $('#silson-cards');
+    if (cards) {
+      cards.innerHTML = SILSON_GENERATIONS.map((g) => `
+        <div class="silson-card${g.gen === '5세대' ? ' is-current' : ''}">
+          <div class="sg-head"><strong>${g.gen}</strong><span>${g.period}</span></div>
+          <dl>${rowKeys.map((k) => `<div><dt>${k}</dt><dd>${g.rows[k]}</dd></div>`).join('')}</dl>
+        </div>`).join('');
+    }
     $('#silson-table').innerHTML = `
       <thead>
         <tr><th class="sticky-col">구분</th>${SILSON_GENERATIONS.map((g) => `<th><strong>${g.gen}</strong><span>${g.period}</span></th>`).join('')}</tr>

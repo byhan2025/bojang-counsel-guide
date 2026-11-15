@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+"""단일 파일 번들 생성기 — index.html/styles.css/content.js/app.js를 하나의 HTML로 인라인.
+
+사용: python3 build_single.py
+결과: dist/bojang-guide.single.html  (파일 탐색기/메일 첨부로 바로 열람 가능)
+"""
+import base64
+import os
+import re
+
+ROOT = os.path.dirname(os.path.abspath(__file__))
+OUT_DIR = os.path.join(ROOT, "dist")
+
+
+def read(name):
+    with open(os.path.join(ROOT, name), encoding="utf-8") as f:
+        return f.read()
+
+
+def build():
+    html = read("index.html")
+    css = read("styles.css")
+    content = read("content.js")
+    app = read("app.js")
+
+    # 파비콘/터치 아이콘을 data URI로 (단일 파일에서도 아이콘 표시)
+    def data_uri(path, mime):
+        with open(os.path.join(ROOT, path), "rb") as f:
+            b = base64.b64encode(f.read()).decode("ascii")
+        return f"data:{mime};base64,{b}"
+
+    icon_192 = data_uri("icons/icon-192.png", "image/png")
+    icon_180 = data_uri("icons/apple-touch-icon.png", "image/png")
+
+    html = html.replace('<link rel="stylesheet" href="./styles.css">',
+                        "<style>\n" + css + "\n</style>")
+    html = html.replace('<link rel="manifest" href="./manifest.json">', "")
+    html = html.replace('<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">',
+                        f'<link rel="apple-touch-icon" href="{icon_180}">')
+    html = html.replace('<link rel="icon" href="./icons/icon-192.png" sizes="192x192">',
+                        f'<link rel="icon" href="{icon_192}" sizes="192x192">')
+    html = html.replace('<script src="./content.js"></script>\n<script src="./app.js"></script>',
+                        "<script>\n" + content + "\n</script>\n<script>\n" + app + "\n</script>")
+
+    os.makedirs(OUT_DIR, exist_ok=True)
+    out = os.path.join(OUT_DIR, "bojang-guide.single.html")
+    with open(out, "w", encoding="utf-8") as f:
+        f.write(html)
+    size = os.path.getsize(out) / 1024
+    left = re.findall(r'(?:src|href)="\./', html)
+    print(f"built {out} ({size:.0f} KB), 외부 참조 {len(left)}개")
+    return out
+
+
+if __name__ == "__main__":
+    build()
