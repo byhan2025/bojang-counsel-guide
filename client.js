@@ -166,6 +166,9 @@
           <div><dt>상담일</dt><dd>${esc(m.dateLabel || '-')}</dd></div>
           <div><dt>담당</dt><dd>${esc(m.client.consultant)}</dd></div>
         </dl>
+        <div class="cover-values">
+          <span>보장분석</span><i></i><span>맞춤설계</span><i></i><span>가족보장</span><i></i><span>든든한미래</span>
+        </div>
         <div class="cover-foot">이 리포트는 상담 참고용이며, 실제 지급 여부와 금액은 가입한 상품의 약관과 증권이 기준입니다.</div>
       </div>`, {});
 
