@@ -6,6 +6,10 @@
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
   const won = (n) => Number(n || 0).toLocaleString('ko-KR');
   const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  const HKEY = 'bojang.history.v1';
+  const VKEY = 'bojang.viewmode.v1';
 
   const state = {
     age: '40',
@@ -16,10 +20,25 @@
     cov: { cancer: 3000, brain: 2000, heart: 0, surgery: 300, care: 10 },
     flags: { nDae: false, longTerm: false, savings: false, renew: true, manyRiders: false },
     guide: 'cancer',
-    analyzed: false
+    view: 'advisor',
+    analyzed: false,
+    label: '',
+    history: []
   };
 
-  /* ---------------- 공통: 세그먼트 버튼 ---------------- */
+  /* ================= 유틸 ================= */
+  function lsGet(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) { return fallback; }
+  }
+  function lsSet(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+    catch (e) { return false; }
+  }
+
+  /* ================= 세그먼트 ================= */
   function buildSeg(el, items, current, onPick) {
     el.innerHTML = '';
     items.forEach((it) => {
@@ -28,7 +47,6 @@
       b.className = 'seg-btn' + (String(it.value) === String(current) ? ' is-on' : '');
       b.dataset.value = it.value;
       b.textContent = it.label;
-      if (it.hint) b.title = it.hint;
       b.setAttribute('aria-pressed', String(it.value) === String(current));
       b.addEventListener('click', () => {
         $$('.seg-btn', el).forEach((x) => {
@@ -43,14 +61,6 @@
     });
   }
 
-  function syncSeg(el, value) {
-    $$('.seg-btn', el).forEach((b) => {
-      const on = b.dataset.value === String(value);
-      b.classList.toggle('is-on', on);
-      b.setAttribute('aria-pressed', String(on));
-    });
-  }
-
   function renderSegments() {
     buildSeg($('#seg-age'), AGES.map((a) => ({ value: a, label: a + '대' })), state.age, (v) => {
       state.age = v;
@@ -62,29 +72,24 @@
       if (state.analyzed) analyze();
     });
     buildSeg($('#seg-job'), [
-      { value: '1', label: '1급', hint: JOB_HINTS['1'] },
-      { value: '2', label: '2급', hint: JOB_HINTS['2'] },
-      { value: '3', label: '3급', hint: JOB_HINTS['3'] }
+      { value: '1', label: '1급' }, { value: '2', label: '2급' }, { value: '3', label: '3급' }
     ], state.job, (v) => {
       state.job = v;
       $('#job-hint').textContent = JOB_HINTS[v];
       if (state.analyzed) analyze();
     });
     buildSeg($('#seg-silson'), [
-      { value: 'none', label: '없음' },
-      { value: '1', label: '1세대' },
-      { value: '2', label: '2세대' },
-      { value: '3', label: '3세대' },
-      { value: '4', label: '4세대' },
-      { value: '5', label: '5세대' }
+      { value: 'none', label: '없음' }, { value: '1', label: '1세대' }, { value: '2', label: '2세대' },
+      { value: '3', label: '3세대' }, { value: '4', label: '4세대' }, { value: '5', label: '5세대' }
     ], state.silson, (v) => {
       state.silson = v;
       if (state.analyzed) analyze();
     });
     $('#job-hint').textContent = JOB_HINTS[state.job];
+    $('#premium').value = state.premium;
   }
 
-  /* ---------------- 담보 입력 ---------------- */
+  /* ================= 담보 입력 ================= */
   function renderCoverageInputs() {
     const host = $('#coverage-inputs');
     host.innerHTML = '';
@@ -103,8 +108,9 @@
           <span class="badge badge-idle" data-badge>미입력</span>
         </div>
         <div class="input-row">
-          <input type="number" id="cov-${item.key}" inputmode="numeric" min="0" step="${item.step}" value="${state.cov[item.key]}" aria-label="${item.inputLabel} (${item.unit})">
-            <span class="unit">${item.unit}</span>
+          <input type="number" id="cov-${item.key}" inputmode="numeric" min="0" step="${item.step}"
+                 value="${state.cov[item.key]}" aria-label="${item.inputLabel} (${item.unit})">
+          <span class="unit">${item.unit}</span>
         </div>
         <div class="quick-row">
           ${item.quick.map((q) => `<button type="button" class="quick" data-set="${q}">${q === 0 ? '없음' : won(q)}</button>`).join('')}
@@ -140,21 +146,11 @@
     const rec = item.rec[state.age] || 0;
     const val = Number(state.cov[item.key] || 0);
     const ratio = rec > 0 ? val / rec : 1;
-    let level;
-    let label;
-    if (val <= 0) {
-      level = 'gap';
-      label = '공백 위험';
-    } else if (ratio < 0.5) {
-      level = 'gap';
-      label = '공백 위험';
-    } else if (ratio < 1) {
-      level = 'need';
-      label = '보강 필요';
-    } else {
-      level = 'ok';
-      label = '적정';
-    }
+    let level, label;
+    if (val <= 0) { level = 'gap'; label = '공백 위험'; }
+    else if (ratio < 0.5) { level = 'gap'; label = '공백 위험'; }
+    else if (ratio < 1) { level = 'need'; label = '보강 필요'; }
+    else { level = 'ok'; label = '적정'; }
     let note = '';
     if (item.aux) {
       const has = !!state.flags[item.aux.key];
@@ -176,7 +172,7 @@
     b.textContent = r.label;
   }
 
-  /* ---------------- 보험료 구성 체크 ---------------- */
+  /* ================= 보험료 구성 ================= */
   const FLAGS = [
     { key: 'savings', label: '적립(저축)성 특약이 포함돼 있다' },
     { key: 'renew', label: '갱신형 담보가 중심이다' },
@@ -199,7 +195,53 @@
     });
   }
 
-  /* ---------------- 진단 ---------------- */
+  /* ================= 점수 ================= */
+  function weights() {
+    const w = Object.assign({}, SCORE_MODEL.base);
+    const ageAdj = SCORE_MODEL.ageAdj[state.age] || {};
+    const jobAdj = SCORE_MODEL.jobAdj[state.job] || {};
+    Object.keys(ageAdj).forEach((k) => { w[k] = Math.max(4, w[k] + ageAdj[k]); });
+    Object.keys(jobAdj).forEach((k) => { w[k] = Math.max(4, w[k] + jobAdj[k]); });
+    return w;
+  }
+
+  function computeScore(rows) {
+    const w = weights();
+    let sum = 0, wsum = 0;
+    const parts = rows.map(({ item, r }) => {
+      const ww = w[item.key] || 0;
+      const fill = clamp(r.val / (r.rec || 1), 0, 1);
+      sum += ww * fill;
+      wsum += ww;
+      return { key: item.key, w: ww, fill };
+    });
+    let score = wsum ? (sum / wsum) * 100 : 0;
+    const penalty = [];
+    if (state.silson === 'none') { score += SCORE_MODEL.penalty.silsonNone; penalty.push({ v: SCORE_MODEL.penalty.silsonNone, t: '실손 공백' }); }
+    if (state.silson === '5') { score += SCORE_MODEL.penalty.silson5; penalty.push({ v: SCORE_MODEL.penalty.silson5, t: '5세대 비중증 축소' }); }
+    if (state.flags.renew) { score += SCORE_MODEL.penalty.renew; penalty.push({ v: SCORE_MODEL.penalty.renew, t: '갱신형 중심' }); }
+    score = Math.round(clamp(score, 0, 100));
+    const grade = SCORE_MODEL.grades.find((g) => score >= g.min) || SCORE_MODEL.grades[SCORE_MODEL.grades.length - 1];
+    return { score, grade, parts, penalty, w };
+  }
+
+  function weightComments(rows) {
+    const out = [];
+    const jobAdj = SCORE_MODEL.jobAdj[state.job] || {};
+    if (jobAdj.surgery) out.push({ t: `직업 ${state.job}급 — 상해·수술 위험을 반영해 수술비 가중치를 올렸습니다.`, internal: false });
+    if (state.age === '20' || state.age === '30') out.push({ t: '젊은 연령대 — 수술·상해 비중을 높이고 간병 비중은 낮췄습니다.', internal: false });
+    if (state.age === '50') out.push({ t: '50대 — 암 발생 구간에 들어 수술비 비중을 줄이고 암·간병을 올렸습니다.', internal: false });
+    if (state.age === '60' || state.age === '70') out.push({ t: '노후 구간 — 간병·장기요양 가중치를 가장 크게 높였습니다.', internal: false });
+    if (state.silson === 'none') out.push({ t: '실손 공백 — 기본 의료비 축이 비어 점수에서 감점했습니다.', internal: true });
+    if (state.silson === '1' || state.silson === '2') out.push({ t: '실손 1·2세대 — 기본 의료비 축이 넓어 구조적으로 유리합니다.', internal: false });
+    if (state.silson === '5') out.push({ t: '실손 5세대 — 비중증 비급여 축소를 감점에 반영했습니다.', internal: true });
+    if (state.flags.renew) out.push({ t: '갱신형 중심 — 갱신 시점 보험료 리스크를 감점에 반영했습니다.', internal: true });
+    const cancer = rows.find((x) => x.item.key === 'cancer');
+    if (cancer && cancer.r.level !== 'ok') out.push({ t: '1순위 암이 가장 크게 비어 있어 점수를 끌어내리고 있습니다.', internal: true });
+    return out;
+  }
+
+  /* ================= 진단 ================= */
   function analyze() {
     const rows = PRIORITY.map((item) => ({ item, r: evalCoverage(item) }));
     const needCount = rows.filter((x) => x.r.level !== 'ok').length;
@@ -207,39 +249,62 @@
     const first = rows.find((x) => x.r.level !== 'ok');
     const totalDiag = Number(state.cov.cancer) + Number(state.cov.brain) + Number(state.cov.heart);
     const annual = Number(state.premium || 0) * 12;
+    const sc = computeScore(rows);
 
-    // hero
-    let heroTitle;
-    if (needCount === 0) heroTitle = '5대 담보 모두 적정선입니다';
-    else if (gapCount >= 2) heroTitle = `${needCount}개 보강 · 공백 ${gapCount}곳`;
-    else heroTitle = `${needCount}개 보강이 필요합니다`;
-
-    let heroSub;
-    if (!first) heroSub = '지금 구조를 유지하면서 보험료 구성만 점검하세요.';
-    else if (first.item.key === 'cancer') heroSub = `1순위 착수: 암 — ${first.r.gap > 0 ? `부족 ${won(first.r.gap)}만원` : first.r.note}`;
-    else heroSub = `1순위 착수: ${first.item.name} — ${first.r.gap > 0 ? `부족 ${won(first.r.gap)}만원` : first.r.note}`;
-
+    // 점수 히어로
+    const R = 52, C = 2 * Math.PI * R;
+    const dash = C * (1 - sc.score / 100);
     $('#result-hero').innerHTML = `
       <div class="hero-top">
-        <span class="hero-tag">진단 요약</span>
-        <span class="hero-input">${state.age}대 ${state.gender} · ${state.job}급 · 실손 ${state.silson === 'none' ? '없음' : state.silson + '세대'}</span>
+        <span class="hero-eyebrow">COVERAGE SCORE</span>
+        <span class="hero-input">${state.age}대 ${state.gender} · ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]}</span>
       </div>
-      <h3>${heroTitle}</h3>
-      <p>${heroSub}</p>
+      <div class="score-wrap">
+        <div class="ring-box">
+          <svg viewBox="0 0 120 120" class="ring" aria-hidden="true">
+            <defs>
+              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#8ff0dc"/><stop offset="100%" stop-color="#0fb093"/>
+              </linearGradient>
+            </defs>
+            <circle cx="60" cy="60" r="${R}" class="ring-bg"/>
+            <circle cx="60" cy="60" r="${R}" class="ring-fg" stroke="url(#ringGrad)"
+                    style="stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${dash.toFixed(1)}"/>
+          </svg>
+          <div class="ring-text">
+            <strong>${sc.score}</strong><span>/100</span>
+          </div>
+        </div>
+        <div class="score-copy">
+          <span class="score-grade tone-${sc.grade.tone}">${sc.grade.label}</span>
+          <h3>${sc.grade.line}</h3>
+          <p>${first ? `1순위 착수 — ${first.item.name}${first.r.gap > 0 ? ' · 부족 ' + won(first.r.gap) + first.item.unit : ' · ' + (first.r.note || '구성 보완')}` : '5대 담보가 모두 기준선을 넘었습니다'}</p>
+        </div>
+      </div>
       <div class="hero-stats">
         <div><span>총 진단비</span><strong>${won(totalDiag)}만원</strong></div>
         <div><span>월 보험료</span><strong>${won(state.premium)}만원</strong></div>
         <div><span>연 보험료 대비</span><strong>${annual > 0 ? (totalDiag / annual).toFixed(1) + '배' : '—'}</strong></div>
       </div>
+      <div class="weight-notes">
+        ${weightComments(rows).filter((c) => state.view === 'advisor' || !c.internal)
+          .map((c) => `<span class="${c.internal ? 'internal' : ''}">${c.t}</span>`).join('')}
+      </div>
+      <div class="score-formula">${state.view === 'advisor'
+        ? '가중치 ' + PRIORITY.map((p) => `${p.name} ${sc.w[p.key]}`).join(' · ') + (sc.penalty.length ? ' / 감점 ' + sc.penalty.map((p) => `${p.t} ${p.v}`).join(', ') : '')
+        : '연령대·직업급수·실손 세대를 반영한 가중 평균 (자체 산식)'}</div>
     `;
 
-    // rows
+    // 우선순위 게이지
     const rowsHost = $('#result-rows');
     rowsHost.innerHTML = '';
-    rows.forEach(({ item, r }) => {
+    rows.forEach(({ item, r }, i) => {
+      const scaleMax = Math.max(r.rec * 1.5, r.val || 0);
+      const fillPct = clamp((r.val / scaleMax) * 100, 0, 100);
+      const gapPct = clamp((r.rec / scaleMax) * 100, 0, 100);
+      const pct = Math.round(clamp((r.val / (r.rec || 1)) * 100, 0, 999));
       const el = document.createElement('div');
       el.className = 'prow';
-      const pct = clamp((r.val / (r.rec || 1)) * 100, 0, 100);
       let tail;
       if (r.val <= 0) tail = `권장 ${won(r.rec)}${item.unit} · 미보유`;
       else if (r.gap > 0) tail = `${won(r.val)} / 권장 ${won(r.rec)}${item.unit} · 부족 ${won(r.gap)}${item.unit}`;
@@ -248,15 +313,45 @@
         <div class="prow-head">
           <span class="prow-rank">${item.rank}</span>
           <div class="prow-name"><strong>${item.name}</strong><span>${item.need}</span></div>
+          <span class="prow-pct tone-${r.level}">${pct}<i>%</i></span>
           <span class="badge badge-${r.level}">${r.label}</span>
         </div>
-        <div class="bar"><i class="bar-fill bar-${r.level}" style="width:${r.val <= 0 ? 0 : Math.max(6, pct)}%"></i></div>
+        <div class="gauge">
+          <div class="gauge-track">
+            <i class="gauge-fill tone-bg-${r.level}" style="width:${r.val <= 0 ? 0 : Math.max(2, fillPct)}%"></i>
+            <u class="gauge-target" style="left:${gapPct}%" title="권장선"></u>
+          </div>
+          <div class="gauge-scale"><span>0</span><span>권장 ${won(r.rec)}${item.unit}</span></div>
+        </div>
         <div class="prow-tail"><span>${tail}</span><button type="button" class="prow-jump" data-jump="${item.key}">가이드 ›</button></div>
       `;
       rowsHost.appendChild(el);
     });
 
-    // checkpoints
+    // 체크포인트 (상담자 전용)
+    const cps = buildCheckpoints(rows, totalDiag, annual);
+    const cpHost = $('#result-checkpoints');
+    cpHost.innerHTML = cps.map((c) => `
+      <div class="cp cp-${c.level}">
+        <div class="cp-title">${c.title}</div>
+        <p>${c.body}</p>
+      </div>`).join('');
+
+    // 리모델링 3단계
+    const steps = buildSteps(rows);
+    $('#result-steps').innerHTML = steps.map((s, i) => `
+      <div class="step">
+        <div class="step-no">${i + 1}</div>
+        <div class="step-body"><strong>${s.title}</strong><p>${s.body}</p></div>
+      </div>`).join('');
+
+    state.lastResult = { rows, needCount, gapCount, first, totalDiag, annual, cps, steps, score: sc };
+    state.analyzed = true;
+    $('#result').hidden = false;
+    $('#save-bar').hidden = false;
+  }
+
+  function buildCheckpoints(rows, totalDiag, annual) {
     const cps = [];
     if (state.silson === 'none') {
       cps.push({ level: 'danger', title: '실손 공백', body: '입원·통원 기본부터 막혀 있습니다. 진단비보다 실손이 먼저입니다(건강보험 본인부담·비급여 대비).' });
@@ -308,25 +403,7 @@
     if (cps.length === 0) {
       cps.push({ level: 'ok', title: '구조적 구멍 없음', body: '5대 담보와 실손 구성이 기준선을 넘습니다. 이제는 금액 조정과 갱신 대비가 남은 과제입니다.' });
     }
-
-    const cpHost = $('#result-checkpoints');
-    cpHost.innerHTML = cps.map((c) => `
-      <div class="cp cp-${c.level}">
-        <div class="cp-title">${c.title}</div>
-        <p>${c.body}</p>
-      </div>`).join('');
-
-    // steps
-    const steps = buildSteps(rows);
-    $('#result-steps').innerHTML = steps.map((s, i) => `
-      <div class="step">
-        <div class="step-no">${i + 1}단계</div>
-        <div class="step-body"><strong>${s.title}</strong><p>${s.body}</p></div>
-      </div>`).join('');
-
-    state.lastResult = { rows, needCount, gapCount, first, totalDiag, annual, cps, steps };
-    state.analyzed = true;
-    $('#result').hidden = false;
+    return cps;
   }
 
   function buildSteps(rows) {
@@ -337,7 +414,7 @@
     return [
       {
         title: '기존 핵심 사수',
-        body: '지금 가진 암·뇌·심장 진단비 중 가장 두꺼운 담보는 절대 해지하지 않습니다. 나이와 병력 때문에 같은 조건으로 다시 들 수 없습니다. 먼저 "무엇을 지킬지"를 정하고 시작하세요.'
+        body: '지금 가진 암·뇌·심장 진단비 중 가장 두꺼운 담보는 해지하지 않습니다. 나이와 병력 때문에 같은 조건으로 다시 들 수 없습니다. 먼저 "무엇을 지킬지"를 정하고 시작하세요.'
       },
       {
         title: '배서 다이어트',
@@ -350,14 +427,14 @@
     ];
   }
 
-  /* ---------------- 카톡 요약 ---------------- */
+  /* ================= 카톡 요약 ================= */
   function kakaoText() {
     const res = state.lastResult;
     if (!res) return '';
     const L = [];
     L.push('[보장분석 요약]');
-    L.push(`${state.age}대 ${state.gender} · 직업 ${state.job}급 · 실손 ${state.silson === 'none' ? '없음' : state.silson + '세대'}`);
-    L.push(`월 보험료 ${won(state.premium)}만원`);
+    L.push(`${state.age}대 ${state.gender} · 직업 ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]}`);
+    L.push(`종합 보장 밸런스 ${res.score.score}점 (${res.score.grade.label})`);
     L.push('');
     L.push('■ 5대 담보 진단');
     res.rows.forEach(({ item, r }) => {
@@ -371,25 +448,137 @@
     L.push('');
     const targets = res.rows.filter((x) => x.r.level !== 'ok');
     L.push('■ 먼저 채울 곳');
-    if (!targets.length) {
-      L.push('· 지금 구조 유지 + 금액 조정');
-    } else {
-      targets.slice(0, 3).forEach((x, i) => {
-        L.push(`${i + 1}) ${x.item.name} — ${x.r.gap > 0 ? `${won(x.r.gap)}${x.item.unit} 보강` : x.r.note || '구성 보완'}`);
-      });
-    }
+    if (!targets.length) L.push('· 지금 구조 유지 + 금액 조정');
+    else targets.slice(0, 3).forEach((x, i) => {
+      L.push(`${i + 1}) ${x.item.name} — ${x.r.gap > 0 ? `${won(x.r.gap)}${x.item.unit} 보강` : x.r.note || '구성 보완'}`);
+    });
     L.push('');
     L.push('■ 리모델링 3단계');
     res.steps.forEach((s, i) => L.push(`${i + 1}단계 ${s.title} — ${s.body.replace(/\s+/g, ' ').slice(0, 90)}${s.body.length > 90 ? '…' : ''}`));
-    L.push('');
-    L.push('■ 보험료 점검');
-    res.cps.slice(0, 3).forEach((c) => L.push(`· ${c.title}`));
     L.push('');
     L.push('※ 상담 참고용 요약입니다. 실제 지급 여부와 금액은 가입하신 상품의 약관과 증권을 기준으로 안내드립니다.');
     return L.join('\n');
   }
 
-  /* ---------------- 탭 2: 5대 담보 ---------------- */
+  /* ================= SVG 도식 ================= */
+  function dgContain(tiers) {
+    const H = 196, W = 340, bh = 44, gap = 14;
+    let y = 18;
+    let out = `<svg viewBox="0 0 ${W} ${H}" class="dg" role="img" aria-label="보장 범위 포함관계 도식">`;
+    out += `<defs>
+      <linearGradient id="gDeep" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#122f52"/><stop offset="100%" stop-color="#0a1d33"/></linearGradient>
+      <linearGradient id="gMid" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1b4a78"/><stop offset="100%" stop-color="#0f3155"/></linearGradient>
+      <linearGradient id="gLight" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2b6f8f"/><stop offset="100%" stop-color="#1a4f6b"/></linearGradient>
+    </defs>`;
+    tiers.forEach((t, i) => {
+      const w = t.width;
+      const x = (W - w) / 2;
+      const yy = y + i * (bh + gap);
+      const fill = t.tone === 'deep' ? 'url(#gDeep)' : t.tone === 'mid' ? 'url(#gMid)' : 'url(#gLight)';
+      out += `<rect x="${x}" y="${yy}" width="${w}" height="${bh}" rx="12" fill="${fill}"/>`;
+      out += `<text x="${x + 14}" y="${yy + 19}" class="dg-l">${esc(t.label)}</text>`;
+      out += `<text x="${x + 14}" y="${yy + 33}" class="dg-s">${esc(t.note)}</text>`;
+      out += `<text x="${x + w - 14}" y="${yy + 24}" text-anchor="end" class="dg-c">${esc(t.code)}</text>`;
+    });
+    // 포함 화살표
+    const ax = 16;
+    out += `<path d="M${ax} ${y + bh + 4} L${ax} ${y + 2 * (bh + gap) + bh - 4}" stroke="#9fb8cf" stroke-width="1.2" fill="none" stroke-dasharray="3 3"/>`;
+    out += `<path d="M${ax - 3.5} ${y + bh + 8} L${ax} ${y + bh + 2} L${ax + 3.5} ${y + bh + 8}" fill="none" stroke="#9fb8cf" stroke-width="1.2"/>`;
+    out += `<text x="${ax}" y="${y + bh + 46}" class="dg-t" transform="rotate(-90 ${ax} ${y + bh + 46})" text-anchor="middle">포함</text>`;
+    out += `<text x="${W - 6}" y="${H - 8}" text-anchor="end" class="dg-s">바깥으로 갈수록 넓은 담보</text>`;
+    out += `</svg>`;
+    return out;
+  }
+
+  function dgCancer() {
+    const out = [];
+    out.push(`<svg viewBox="0 0 340 250" class="dg" role="img" aria-label="암 보장 구조 도식">
+      <defs>
+        <linearGradient id="cNavy" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#153a60"/><stop offset="100%" stop-color="#0a1d33"/></linearGradient>
+      </defs>
+      <rect x="8" y="10" width="324" height="140" rx="14" fill="#f7f9fc" stroke="#cfdaea" stroke-dasharray="5 4"/>
+      <text x="20" y="30" class="dg-s">악성신생물 분류표 · C00~C97</text>
+
+      <rect x="20" y="42" width="138" height="94" rx="10" fill="url(#cNavy)"/>
+      <text x="32" y="66" class="dg-l light">일반암</text>
+      <text x="32" y="84" class="dg-s on-dark">C00~C97 − 유사암</text>
+      <text x="32" y="104" class="dg-s on-dark">진단비 100% 기준</text>
+      <text x="32" y="122" class="dg-s on-dark">(상품별 지급액)</text>
+
+      <rect x="170" y="42" width="150" height="94" rx="10" fill="#fdf6e6" stroke="#e8c777" stroke-dasharray="4 3"/>
+      <text x="182" y="60" class="dg-l dark">유사암 4종</text>
+      <rect x="182" y="68" width="60" height="20" rx="6" fill="#fff" stroke="#e8d3a4"/><text x="212" y="82" text-anchor="middle" class="dg-c dark">C73 갑상선</text>
+      <rect x="246" y="68" width="62" height="20" rx="6" fill="#fff" stroke="#e8d3a4"/><text x="277" y="82" text-anchor="middle" class="dg-c dark">C44 피부</text>
+      <rect x="182" y="92" width="60" height="20" rx="6" fill="#fff" stroke="#e8d3a4"/><text x="212" y="106" text-anchor="middle" class="dg-c dark">D00~09 제자리</text>
+      <rect x="246" y="92" width="62" height="20" rx="6" fill="#fff" stroke="#e8d3a4"/><text x="277" y="106" text-anchor="middle" class="dg-c dark">D37~48 경계성</text>
+      <text x="182" y="128" class="dg-s dark">일반암보다 낮은 금액 · 별도 담보</text>
+
+      <path d="M245 142 L245 160" stroke="#c9a44c" stroke-width="1.4" fill="none"/>
+      <path d="M240 156 L245 162 L250 156" fill="none" stroke="#c9a44c" stroke-width="1.4"/>
+      <rect x="8" y="164" width="324" height="34" rx="10" fill="#fff" stroke="#e4d3a8"/>
+      <text x="20" y="185" class="dg-l dark">유사암 진단비</text>
+      <text x="320" y="185" text-anchor="end" class="dg-s dark">별도 한도 · "유사암 제외" 문구 확인</text>
+
+      <rect x="8" y="208" width="324" height="34" rx="10" fill="#eef4fb" stroke="#cfdaea"/>
+      <text x="20" y="229" class="dg-l dark">암 주요치료비</text>
+      <text x="320" y="229" text-anchor="end" class="dg-s dark">항암약물 · 방사선 · 수술 — 진단비와 별도 축</text>
+    </svg>`);
+    return out.join('');
+  }
+
+  function dgSurgery() {
+    return `<svg viewBox="0 0 340 244" class="dg" role="img" aria-label="수술비 두 축 도식">
+      <circle cx="126" cy="96" r="80" fill="#eef4fb" stroke="#b9cde4" stroke-width="1.2"/>
+      <circle cx="214" cy="96" r="80" fill="#fdf6e6" stroke="#e8c777" stroke-width="1.2"/>
+      <text x="86" y="70" text-anchor="middle" class="dg-l dark">1~5종</text>
+      <text x="86" y="88" text-anchor="middle" class="dg-s dark">수술비</text>
+      <text x="86" y="106" text-anchor="middle" class="dg-s dark">질병 / 상해</text>
+      <text x="254" y="70" text-anchor="middle" class="dg-l dark">N대</text>
+      <text x="254" y="88" text-anchor="middle" class="dg-s dark">수술비</text>
+      <text x="254" y="106" text-anchor="middle" class="dg-s dark">질환별 한도</text>
+      <text x="170" y="86" text-anchor="middle" class="dg-s dark">한 수술이</text>
+      <text x="170" y="102" text-anchor="middle" class="dg-s dark">양쪽에 해당</text>
+      <text x="170" y="118" text-anchor="middle" class="dg-s dark">가능</text>
+      <path d="M170 128 L170 150" stroke="#8ba0b8" stroke-width="1.2" fill="none"/>
+      <rect x="26" y="154" width="288" height="34" rx="10" fill="#fff" stroke="#cfdaea"/>
+      <text x="38" y="175" class="dg-l dark">같은 수술 · 각 담보에서 청구</text>
+      <text x="302" y="175" text-anchor="end" class="dg-s dark">약관 확인</text>
+      <rect x="26" y="196" width="288" height="42" rx="10" fill="#0f2a49"/>
+      <text x="38" y="214" class="dg-s on-dark">종수가 낮을수록 고액</text>
+      <text x="38" y="230" class="dg-l light">1종 관혈적  &gt;  5종 내시경·카테터</text>
+    </svg>`;
+  }
+
+  function dgCare() {
+    const cols = [
+      { x: 8, title: '간병인 사용일당', tag: '입원 중', lines: ['실제 간병인 고용', '1일당 정액', '이용확인서·영수증'] },
+      { x: 118, title: '간호간병통합', tag: '입원 중', lines: ['보호자 없는 병동', '일당 또는 정액', '별도 특약 필요'] },
+      { x: 228, title: '장기요양등급', tag: '퇴원 후', lines: ['1~5등급·인지지원', '월 단위 요양비', '등급 판정 필요'] }
+    ];
+    let out = `<svg viewBox="0 0 340 210" class="dg" role="img" aria-label="간병비 세 가지 방식 도식">
+      <defs><linearGradient id="careG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#173c63"/><stop offset="100%" stop-color="#0b2440"/></linearGradient></defs>`;
+    cols.forEach((c, i) => {
+      const fill = i === 2 ? 'url(#careG)' : '#fff';
+      const stroke = i === 2 ? 'none' : '#cfdaea';
+      const cls = i === 2 ? 'on-dark' : 'dark';
+      out += `<rect x="${c.x}" y="10" width="104" height="130" rx="12" fill="${fill}" stroke="${stroke}"/>`;
+      out += `<text x="${c.x + 12}" y="32" class="dg-s ${cls}">${c.tag}</text>`;
+      out += `<text x="${c.x + 12}" y="52" class="dg-l ${i === 2 ? 'light' : 'dark'}">${c.title}</text>`;
+      c.lines.forEach((l, j) => {
+        out += `<text x="${c.x + 12}" y="${76 + j * 18}" class="dg-s ${cls}">· ${l}</text>`;
+      });
+      if (i === 2) out += `<text x="${c.x + 12}" y="130" class="dg-s on-dark">노후 핵심</text>`;
+    });
+    out += `<path d="M16 168 L318 168" stroke="#8ba0b8" stroke-width="1.2" stroke-dasharray="4 4"/>`;
+    out += `<path d="M312 163 L320 168 L312 173" fill="none" stroke="#8ba0b8" stroke-width="1.2"/>`;
+    out += `<text x="16" y="188" class="dg-s dark">입원 중</text>`;
+    out += `<text x="320" y="188" text-anchor="end" class="dg-s dark">퇴원 후 · 노후</text>`;
+    out += `<text x="170" y="188" text-anchor="middle" class="dg-s dark">진단비로 대체되지 않는 매일의 비용</text>`;
+    out += `</svg>`;
+    return out;
+  }
+
+  /* ================= 탭 2 ================= */
   function renderGuideChips() {
     const host = $('#guide-chips');
     host.innerHTML = PRIORITY.map((p) => `
@@ -401,8 +590,7 @@
         state.guide = c.dataset.key;
         renderGuideChips();
         renderGuideBody();
-        const body = $('#guide-body');
-        if (body) window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     });
   }
@@ -412,22 +600,14 @@
     const host = $('#guide-body');
     if (!g) return;
 
-    const rangeHtml = g.range ? `
-      <div class="range-block">
-        <div class="range-note">${g.range.note}</div>
-        ${g.range.tiers.map((t) => `
-          <div class="range-row">
-            <div class="range-head">
-              <span class="range-label">${t.label}</span>
-              <span class="range-value">${t.value}</span>
-            </div>
-            <div class="bar bar-lg"><i class="bar-fill bar-range" style="width:${t.pct}%"></i></div>
-            <div class="range-sub"><code>${t.code}</code> ${t.desc}</div>
-          </div>`).join('')}
-      </div>` : '';
+    let diagram = '';
+    if (g.diagram === 'contain') diagram = dgContain(g.tiers);
+    else if (g.diagram === 'cancer') diagram = dgCancer();
+    else if (g.diagram === 'surgery') diagram = dgSurgery();
+    else if (g.diagram === 'care') diagram = dgCare();
 
     const structHtml = g.structures ? `
-      <div class="range-block">
+      <div class="struct-list">
         ${g.structures.map((s) => `
           <div class="struct-card">
             <div class="struct-head"><strong>${s.label}</strong><span class="tag">${s.tag}</span></div>
@@ -435,40 +615,28 @@
           </div>`).join('')}
       </div>` : '';
 
+    const sections = [
+      {
+        key: 'range', title: g.diagram === 'cancer' ? '암 보장 구조' : g.diagram === 'surgery' ? '수술비 두 축' : g.diagram === 'care' ? '간병비 세 갈래' : '보장 범위 포함관계',
+        html: `<div class="diagram-wrap">${diagram}</div>${structHtml}<p class="diagram-note">${g.diagramNote || ''}</p>`,
+        internal: false
+      },
+      { key: 'talk', title: '고객 1분 설명 화법', html: `<div class="talk-list">${g.talk.map((t, i) => `<div class="talk"><p>${t}</p><button type="button" class="copy-mini" data-copy="${i}">복사</button></div>`).join('')}</div>`, internal: true },
+      { key: 'traps', title: '증권 분석 함정', html: `<ul class="trap-list">${g.traps.map((t) => `<li>${t}</li>`).join('')}</ul>`, internal: true },
+      { key: 'claim', title: '청구 · 약관 주의사항', html: `<ul class="claim-list">${g.claim.map((t) => `<li>${t}</li>`).join('')}</ul>`, internal: false }
+    ].filter((s) => state.view === 'advisor' || !s.internal);
+
     host.innerHTML = `
       <div class="guide-head">
         <div class="guide-rank">${g.title}</div>
         <h2>${g.head}</h2>
         <p>${g.lead}</p>
       </div>
-
-      <details class="acc" open>
-        <summary><span class="acc-no">1</span>보장 범위 비교</summary>
-        <div class="acc-body">${rangeHtml}${structHtml}</div>
-      </details>
-
-      <details class="acc">
-        <summary><span class="acc-no">2</span>고객 1분 설명 화법</summary>
-        <div class="acc-body">
-          <div class="talk-list">
-            ${g.talk.map((t, i) => `<div class="talk"><p>${t}</p><button type="button" class="copy-mini" data-copy="${i}">복사</button></div>`).join('')}
-          </div>
-        </div>
-      </details>
-
-      <details class="acc">
-        <summary><span class="acc-no">3</span>증권 분석 함정</summary>
-        <div class="acc-body">
-          <ul class="trap-list">${g.traps.map((t) => `<li>${t}</li>`).join('')}</ul>
-        </div>
-      </details>
-
-      <details class="acc">
-        <summary><span class="acc-no">4</span>청구 · 약관 주의사항</summary>
-        <div class="acc-body">
-          <ul class="claim-list">${g.claim.map((t) => `<li>${t}</li>`).join('')}</ul>
-        </div>
-      </details>
+      ${sections.map((s, i) => `
+        <details class="acc"${i === 0 ? ' open' : ''}>
+          <summary><span class="acc-no">${i + 1}</span>${s.title}</summary>
+          <div class="acc-body">${s.html}</div>
+        </details>`).join('')}
     `;
 
     $$('.copy-mini', host).forEach((b) => {
@@ -476,31 +644,27 @@
         e.preventDefault();
         e.stopPropagation();
         const i = Number(b.dataset.copy);
-        const raw = g.talk[i].replace(/^"|"$/g, '');
-        copy(raw, '화법을 복사했습니다');
+        copy(g.talk[i].replace(/^"|"$/g, ''), '화법을 복사했습니다');
       });
     });
   }
 
-  /* ---------------- 탭 3: 툴킷 ---------------- */
+  /* ================= 탭 3 ================= */
   function renderToolkit() {
-    const gen = $('#disclosure-general');
-    gen.innerHTML = DISCLOSURE_GENERAL.map((d) => `
+    $('#disclosure-general').innerHTML = DISCLOSURE_GENERAL.map((d) => `
       <div class="disc-row">
         <div class="disc-period">${d.period}</div>
         <ul>${d.items.map((i) => `<li>${i}</li>`).join('')}</ul>
       </div>`).join('');
 
-    const sim = $('#disclosure-simple');
-    sim.innerHTML = DISCLOSURE_SIMPLE.map((d) => `
+    $('#disclosure-simple').innerHTML = DISCLOSURE_SIMPLE.map((d) => `
       <div class="disc-row">
         <div class="disc-period">${d.period}</div>
         <ul>${d.items.map((i) => `<li>${i}</li>`).join('')}</ul>
       </div>`).join('');
 
     const rowKeys = ['급여', '비급여', '자기부담', '재가입', '특징'];
-    const t = $('#silson-table');
-    t.innerHTML = `
+    $('#silson-table').innerHTML = `
       <thead>
         <tr><th class="sticky-col">구분</th>${SILSON_GENERATIONS.map((g) => `<th><strong>${g.gen}</strong><span>${g.period}</span></th>`).join('')}</tr>
       </thead>
@@ -540,14 +704,133 @@
     });
   }
 
-  /* ---------------- 복사 · 토스트 ---------------- */
+  /* ================= 상담 저장 / 불러오기 ================= */
+  function loadHistory() {
+    const list = lsGet(HKEY, []);
+    state.history = Array.isArray(list) ? list.slice(0, 5) : [];
+    renderHistory();
+  }
+
+  function saveConsult() {
+    if (!state.lastResult) { toast('먼저 진단해 주세요'); return; }
+    const label = ($('#cust-label').value || '').trim() || `${state.age}대 ${state.gender}`;
+    const entry = {
+      id: 'c' + Date.now(),
+      label,
+      savedAt: new Date().toISOString(),
+      score: state.lastResult.score.score,
+      grade: state.lastResult.score.grade.label,
+      inputs: {
+        age: state.age, gender: state.gender, job: state.job, silson: state.silson,
+        premium: state.premium, cov: Object.assign({}, state.cov), flags: Object.assign({}, state.flags)
+      }
+    };
+    const next = [entry].concat(state.history).slice(0, 5);
+    if (lsSet(HKEY, next)) {
+      state.history = next;
+      renderHistory();
+      toast('최근 상담에 저장했습니다 (최대 5건)');
+    } else {
+      toast('저장 공간을 쓸 수 없습니다');
+    }
+  }
+
+  function renderHistory() {
+    const host = $('#history-list');
+    if (!host) return;
+    if (!state.history.length) {
+      host.innerHTML = `<p class="empty">저장된 상담이 없습니다. 진단 후 "상담 저장"을 누르면 이 기기에만 기록됩니다.</p>`;
+      return;
+    }
+    host.innerHTML = state.history.map((h) => {
+      const d = new Date(h.savedAt);
+      const when = `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      return `
+        <div class="hist" data-id="${h.id}">
+          <div class="hist-main">
+            <strong>${esc(h.label)}</strong>
+            <span>${when} · ${h.inputs.age}대 ${h.inputs.gender} · 실손 ${SILSON_LABEL[h.inputs.silson]}</span>
+          </div>
+          <span class="hist-score">${h.score}<i>점</i></span>
+          <button type="button" class="hist-load" data-load="${h.id}">불러오기</button>
+          <button type="button" class="hist-del" data-del="${h.id}" aria-label="삭제">×</button>
+        </div>`;
+    }).join('');
+
+    $$('[data-load]', host).forEach((b) => {
+      b.addEventListener('click', () => {
+        const h = state.history.find((x) => x.id === b.dataset.load);
+        if (!h) return;
+        applyInputs(h.inputs);
+        analyze();
+        $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        toast(`"${h.label}" 상담을 불러왔습니다`);
+      });
+    });
+    $$('[data-del]', host).forEach((b) => {
+      b.addEventListener('click', () => {
+        const next = state.history.filter((x) => x.id !== b.dataset.del);
+        if (lsSet(HKEY, next)) {
+          state.history = next;
+          renderHistory();
+          toast('삭제했습니다');
+        }
+      });
+    });
+  }
+
+  function applyInputs(inputs) {
+    state.age = inputs.age;
+    state.gender = inputs.gender;
+    state.job = inputs.job;
+    state.silson = inputs.silson;
+    state.premium = inputs.premium;
+    state.cov = Object.assign({}, inputs.cov);
+    state.flags = Object.assign({}, state.flags, inputs.flags);
+    syncSegments();
+    renderCoverageInputs();
+    renderFlags();
+    $('#premium').value = state.premium;
+  }
+
+  function syncSegments() {
+    const map = { '#seg-age': state.age, '#seg-gender': state.gender, '#seg-job': state.job, '#seg-silson': state.silson };
+    Object.keys(map).forEach((sel) => {
+      $$('.seg-btn', $(sel)).forEach((b) => {
+        const on = b.dataset.value === String(map[sel]);
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+    });
+    $('#job-hint').textContent = JOB_HINTS[state.job];
+  }
+
+  /* ================= 화면 모드 ================= */
+  function applyView() {
+    document.body.classList.toggle('is-client', state.view === 'client');
+    $$('.viewswitch button').forEach((b) => {
+      const on = b.dataset.mode === state.view;
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    if (state.view === 'client') {
+      const active = $('.view.is-active');
+      if (active && active.id === 'view-toolkit') switchView('analysis');
+    }
+    renderGuideChips();
+    renderGuideBody();
+    if (state.analyzed) analyze();
+    renderHistory();
+  }
+
+  /* ================= 복사 · 토스트 ================= */
   let toastTimer = null;
   function toast(msg) {
     const el = $('#toast');
     el.textContent = msg;
     el.classList.add('is-on');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('is-on'), 1900);
+    toastTimer = setTimeout(() => el.classList.remove('is-on'), 2000);
   }
 
   async function copy(text, okMsg) {
@@ -571,7 +854,7 @@
     }
   }
 
-  /* ---------------- 탭 전환 ---------------- */
+  /* ================= 탭 전환 ================= */
   function switchView(name) {
     $$('.view').forEach((v) => v.classList.toggle('is-active', v.id === 'view-' + name));
     $$('.tab').forEach((t) => {
@@ -579,17 +862,21 @@
       t.classList.toggle('is-active', on);
       t.setAttribute('aria-selected', String(on));
     });
-    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
-  /* ---------------- 초기화 ---------------- */
+  /* ================= 초기화 ================= */
   function init() {
+    state.view = lsGet(VKEY, 'advisor') === 'client' ? 'client' : 'advisor';
+
     renderSegments();
     renderCoverageInputs();
     renderFlags();
     renderGuideChips();
     renderGuideBody();
     renderToolkit();
+    loadHistory();
+    applyView();
 
     $('#premium').addEventListener('input', (e) => {
       state.premium = clamp(Number(e.target.value || 0), 0, 300);
@@ -599,15 +886,23 @@
     $('#btn-analyze').addEventListener('click', () => {
       analyze();
       $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      toast('진단을 완료했습니다');
     });
 
-    $('#btn-kakao').addEventListener('click', () => {
-      copy(kakaoText(), '카톡 요약을 복사했습니다');
+    $('#btn-kakao').addEventListener('click', () => copy(kakaoText(), '카톡 요약을 복사했습니다'));
+    $('#btn-save').addEventListener('click', saveConsult);
+
+    $$('.viewswitch button').forEach((b) => {
+      b.addEventListener('click', () => {
+        state.view = b.dataset.mode;
+        lsSet(VKEY, state.view);
+        applyView();
+        toast(state.view === 'client' ? '고객 공유 화면으로 전환했습니다' : '상담자 화면으로 전환했습니다');
+      });
     });
 
     $$('.tab').forEach((t) => t.addEventListener('click', () => switchView(t.dataset.view)));
 
-    // 탭2 딥링크: 진단 결과에서 담보로 이동
     document.addEventListener('click', (e) => {
       const j = e.target.closest('[data-jump]');
       if (!j) return;
