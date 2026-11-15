@@ -214,29 +214,37 @@
 
   function designTable(m, row) {
     const k = row.item.key;
+    const PK = (key) => row.r.parts.find((p) => p.key === key) || { val: 0, rec: 0, subs: [], option: null };
+    const subHave = (p) => (p.subs || []).filter((s) => s.val > 0).length;
     const rows = [];
     if (k === 'cancer') {
-      rows.push(['일반암 진단비', `${won(m.state.cov.cancer.general)}만원`, `${won(row.r.parts[0].rec)}만원`]);
-      rows.push(['유사암 진단비', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `${won(row.r.parts[1].rec)}만원`]);
-      rows.push(['주요치료비 5종', `${won(row.r.parts[2].val)}만원 (${row.r.parts[2].subs.filter((s) => s.val > 0).length}/5종)`, `${won(row.r.parts[2].rec)}만원`]);
-      row.r.parts[2].subs.forEach((s) => rows.push([`　${s.label}`, s.val ? `${won(s.val)}만원` : '없음', `${won(s.rec)}만원`]));
+      rows.push(['일반암 진단비', `${won(m.state.cov.cancer.general)}만원`, `${won(PK('general').rec)}만원 (최소 3,000·충분 1억)`]);
+      rows.push(['유사암 진단비', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `${won(PK('similar').rec)}만원`]);
+      rows.push(['주요치료비 5종', `${won(PK('treatment').val)}만원 (${subHave(PK('treatment'))}/5종)`, `${won(PK('treatment').rec)}만원`]);
+      (PK('treatment').subs || []).forEach((s) => rows.push([`　${s.label}`, s.val ? `${won(s.val)}만원` : '없음', `${won(s.rec)}만원`]));
       rows.push(['재진단·전이', m.state.cov.cancer.recur ? '보유' : '없음', '보유 권장']);
-    } else if (k === 'brain') {
-      rows.push(['보장 범위', row.r.parts[0].option ? row.r.parts[0].option.label : '미보유', '뇌혈관질환 I60~I69']);
-      rows.push(['진단비 금액', '—', `권장 ${won(row.baseRec)}만원`]);
-      rows.push(['수술·혈전용해', m.state.cov.brain.treat ? '보유' : '없음', '보유 권장']);
-    } else if (k === 'heart') {
-      rows.push(['보장 범위', row.r.parts[0].option ? row.r.parts[0].option.label : '미보유', '허혈성심장 I20~I25']);
-      rows.push(['진단비 금액', '—', `권장 ${won(row.baseRec)}만원`]);
-      rows.push(['심혈관 수술비', m.state.cov.heart.surgery ? '보유' : '없음', '보유 권장']);
+    } else if (k === 'brain' || k === 'heart') {
+      const nm = k === 'brain' ? '뇌혈관질환 I60~I69' : '허혈성심장 I20~I25';
+      rows.push(['보장 범위', PK('scope').option ? PK('scope').option.label : '미보유', nm]);
+      rows.push(['진단비 기준', '—', `권장 ${won(row.baseRec)}만원 (최소 1,000·충분 3,000)`]);
+      rows.push(['주요치료비 3종', `${subHave(PK('treat'))}/3종 · ${won(PK('treat').val)}만원`, `${won(PK('treat').rec)}만원`]);
+      (PK('treat').subs || []).forEach((s) => rows.push([`　${s.label}`, s.val ? `${won(s.val)}만원` : '없음', `${won(s.rec)}만원`]));
     } else if (k === 'surgery') {
-      rows.push(['질병 1~5종', `${won(m.state.cov.surgery.disease)}만원`, `권장 ${won(row.baseRec)}만원`]);
-      rows.push(['N대 수술비', m.state.cov.surgery.nDae ? '보유' : '없음', '보유 권장']);
-      rows.push(['상해수술비', m.state.cov.surgery.injury ? '보유' : '없음', '보유 권장']);
+      const sg = m.state.cov.surgery;
+      rows.push(['질병수술비(일반)', `${won(sg.disease)}만원`, `권장 ${won(PK('disease').rec)}만원`]);
+      rows.push(['질병 1~5종', `${won(sg.disease15)}만원`, `권장 ${won(PK('disease15').rec)}만원`]);
+      rows.push(['질병 N대', sg.diseaseNdae ? `${won(sg.diseaseNdae)}만원` : '없음', `권장 ${won(PK('diseaseNdae').rec)}만원`]);
+      rows.push(['비급여 질병 수술', sg.diseaseNonPay ? `${won(sg.diseaseNonPay)}만원` : '없음', `권장 ${won(PK('diseaseNonPay').rec)}만원`]);
+      rows.push(['일반 상해수술', `${won(sg.injury)}만원`, `권장 ${won(PK('injury').rec)}만원`]);
+      rows.push(['상해 1~5종', `${won(sg.injury15)}만원`, `권장 ${won(PK('injury15').rec)}만원`]);
     } else {
-      rows.push(['간병 일당', `${won(m.state.cov.care.daily)}만원`, `권장 ${won(row.baseRec)}만원`]);
-      rows.push(['간호간병통합', m.state.cov.care.nursing ? '보유' : '없음', '보유 권장']);
-      rows.push(['장기요양', m.state.cov.care.ltc ? '보유' : '없음', '3~5등급·인지지원']);
+      const cg = m.state.cov.care;
+      rows.push(['일반병원 간병일당', `${won(cg.daily)}만원`, `권장 ${won(PK('daily').rec)}만원 (5~20만원)`]);
+      rows.push(['요양병원 간병일당', cg.nDaily ? `${won(cg.nDaily)}만원` : '없음', `권장 ${won(PK('nDaily').rec)}만원`]);
+      rows.push(['지급 기준', { time: '시간 기준(8시간)', money: '금액 기준(7~8만원)', unknown: '미확인' }[cg.basis], cg.basis === 'time' ? '유지' : '증권 확인']);
+      rows.push(['가족 간병', { yes: '인정', conditional: '업체등록·결제 필요', no: '불인정' }[cg.family], cg.family === 'yes' ? '유지' : '청구 조건 확인']);
+      rows.push(['간호간병통합', cg.nursing ? '보유' : '없음', '보유 권장']);
+      rows.push(['장기요양', cg.ltc ? '보유' : '없음', '3~5등급·인지지원']);
     }
     return `<div class="live-list">${rows.map((r) => `<div class="live-li"><i></i><span>${r[0]}: <b>${r[1]}</b> → ${r[2]}</span></div>`).join('')}</div>`;
   }

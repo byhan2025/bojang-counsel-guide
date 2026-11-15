@@ -2,9 +2,13 @@
    기준일 2026-11-15. 수치·제도는 공개 자료(금융위원회·금융감독원) 확인분이며,
    상품별 세부 조건은 가입 약관이 우선합니다. */
 
-/* 암 주요치료비 5종 세분화 (v4.1)
-   각 세부 항목 = 미가입(0) 또는 500만~3,000만원. 직접입력 허용.
-   factor = 연령대별 일반암 권장 진단비 기준선(rec) 대비 비중 → 세부 권장액(500~3,000만원, 100만원 단위). */
+/* v4.2 — 5대 담보 실전 기준점 (사용자 음성 브리핑 + 딥서치 검증 반영)
+   · 암 일반암 진단비: 최소 3,000 / 권장 5,000 / 충분 1억 (전 연령 공통 기준선)
+   · 뇌·심장 진단비: 최소 1,000 / 권장 2,000 / 충분 3,000(참고 상한, 과권장 금지)
+   · 뇌·심장 주요치료비 3종 신설: 혈전용해제 · 수술(관혈·비관혈) · 중환자실 입원
+   · 수술비: 질병 4축(일반·1~5종·N대·비급여) + 상해 2축(일반·1~5종)
+   · 간병비: 일반병원 / 요양병원 분리 + 시간·금액 기준 + 가족간병 인정 여부
+   금액 단위는 모두 만원입니다. */
 const CANCER_TREAT_MIN = 500;
 const CANCER_TREAT_MAX = 3000;
 const CANCER_TREAT_STEP = 500;
@@ -17,74 +21,177 @@ const CANCER_TREAT_SUBS = [
   { key: 'extra', label: '비급여 추가 치료비', hint: '비급여 주사·검사', factor: 0.18 }
 ];
 
+/* 뇌·심장 주요치료비 3종 (v4.2 신설)
+   진단비는 1회성이라 실제 지출은 치료비 구성에서 갈립니다.
+   · 혈전용해제 치료비: 뇌경색(I63)·급성심근경색(I21)에 혈전용해제(tPA 등)를 투여한 경우.
+     기계적 혈전제거술(카테터법)은 혈전용해치료에서 제외되므로 별도 담보로 확인해야 합니다.
+   · 수술비(관혈·비관혈): 개두·개흉(관혈)과 스텐트·색전술(비관혈)을 함께 봅니다.
+   · 중환자실 입원비: 중환자실 치료 기간의 일당·정액 담보.
+   공통: 대부분 최초 1회한 또는 연 1회한, 계약일부터 1년 미만은 50% 감액입니다. */
+const NEURO_TREAT_MIN = 500;
+const NEURO_TREAT_MAX = 3000;
+const NEURO_TREAT_QUICK = [0, 1000, 2000, 3000];
+const NEURO_TREAT_SUBS = [
+  { key: 'lysis', label: '혈전용해제 치료비', hint: 'tPA 투여 · 기계적 혈전제거술은 별도', factor: 0.5 },
+  { key: 'surgery', label: '수술비(관혈·비관혈)', hint: '개두·개흉 · 스텐트·색전술', factor: 0.75 },
+  { key: 'icu', label: '중환자실 입원비', hint: '중환자실 치료 일당', factor: 0.5 }
+];
+
 const PRIORITY = [
   {
     key: 'cancer', rank: 1, name: '암', sub: '진단비 · 치료비 5종', unit: '만원',
-    rec: { '20': 3000, '30': 3000, '40': 5000, '50': 5000, '60': 3000, '70': 2000 },
+    rec: { '20': 5000, '30': 5000, '40': 5000, '50': 5000, '60': 5000, '70': 5000 },
+    tiers: { min: 3000, rec: 5000, enough: 10000 },
+    tierNote: '최소 3,000 · 권장 5,000 · 충분 1억 (전 연령 동일 기준선)',
     weight: 30,
     parts: [
-      { key: 'general', type: 'amount', label: '일반암 진단비', weight: 0.55, factor: 1, step: 500, quick: [0, 1000, 3000, 5000, 10000] },
+      { key: 'general', type: 'amount', label: '일반암 진단비', hint: '최소 3,000 / 권장 5,000 / 충분 1억', weight: 0.5, factor: 1, step: 500, quick: [0, 3000, 5000, 10000], tiers: { min: 3000, rec: 5000, enough: 10000 } },
       { key: 'similar', type: 'amount', label: '유사암 진단비', hint: '갑상선·기타피부·제자리·경계성', weight: 0.15, factor: 0.2, step: 100, quick: [0, 200, 500, 1000, 2000] },
-      { key: 'treatment', type: 'group', label: '암 주요치료비 5종', hint: '암수술 · 항암약물 · 항암방사선 · 중환자실 · 비급여', weight: 0.2, subs: CANCER_TREAT_SUBS, min: CANCER_TREAT_MIN, max: CANCER_TREAT_MAX, step: CANCER_TREAT_STEP, quick: CANCER_TREAT_QUICK },
+      { key: 'treatment', type: 'group', label: '암 주요치료비 5종', hint: '암수술 · 항암약물 · 항암방사선 · 중환자실 · 비급여', weight: 0.25, subs: CANCER_TREAT_SUBS, min: CANCER_TREAT_MIN, max: CANCER_TREAT_MAX, step: CANCER_TREAT_STEP, quick: CANCER_TREAT_QUICK },
       { key: 'recur', type: 'bool', label: '재진단·전이암 보장', weight: 0.1 }
     ]
   },
   {
-    key: 'brain', rank: 2, name: '뇌', sub: '뇌혈관', unit: '만원',
-    rec: { '20': 2000, '30': 2000, '40': 3000, '50': 3000, '60': 2000, '70': 2000 },
+    key: 'brain', rank: 2, name: '뇌', sub: '뇌혈관 · 치료비 3종', unit: '만원',
+    rec: { '20': 2000, '30': 2000, '40': 2000, '50': 2000, '60': 2000, '70': 2000 },
+    tiers: { min: 1000, rec: 2000, enough: 3000 },
+    tierNote: '최소 1,000 · 권장 2,000 · 3,000은 참고 상한(과권장 금지)',
     weight: 22,
     parts: [
-      { key: 'scope', type: 'scale', label: '보장 범위', weight: 0.7, options: [
+      { key: 'scope', type: 'scale', label: '보장 범위', hint: '진단비 — 1회성', weight: 0.55, options: [
         { v: 'none', label: '미보유', score: 0 },
         { v: 'bleed', label: '뇌출혈', hint: 'I60~I62', score: 0.45 },
         { v: 'stroke', label: '뇌졸중', hint: 'I60~I64', score: 0.72 },
         { v: 'vascular', label: '뇌혈관질환', hint: 'I60~I69', score: 1 }
       ] },
-      { key: 'treat', type: 'bool', label: '뇌혈관 수술·혈전용해치료비', weight: 0.3 }
+      { key: 'treat', type: 'group', label: '뇌 주요치료비 3종', hint: '혈전용해제 · 수술 · 중환자실', weight: 0.45, subs: NEURO_TREAT_SUBS, min: NEURO_TREAT_MIN, max: NEURO_TREAT_MAX, step: 500, quick: NEURO_TREAT_QUICK }
     ]
   },
   {
-    key: 'heart', rank: 3, name: '심장', sub: '허혈성심장', unit: '만원',
-    rec: { '20': 1000, '30': 1000, '40': 2000, '50': 2000, '60': 1000, '70': 1000 },
+    key: 'heart', rank: 3, name: '심장', sub: '허혈성심장 · 치료비 3종', unit: '만원',
+    rec: { '20': 2000, '30': 2000, '40': 2000, '50': 2000, '60': 2000, '70': 2000 },
+    tiers: { min: 1000, rec: 2000, enough: 3000 },
+    tierNote: '최소 1,000 · 권장 2,000 · 3,000은 참고 상한(과권장 금지)',
     weight: 18,
     parts: [
-      { key: 'scope', type: 'scale', label: '보장 범위', weight: 0.7, options: [
+      { key: 'scope', type: 'scale', label: '보장 범위', hint: '진단비 — 1회성', weight: 0.55, options: [
         { v: 'none', label: '미보유', score: 0 },
         { v: 'mi', label: '급성심근경색', hint: 'I21~I22', score: 0.45 },
         { v: 'ischemic', label: '허혈성심장', hint: 'I20~I25', score: 0.8 },
         { v: 'cardiac', label: '심장질환', hint: '부정맥·판막·심부전', score: 1 }
       ] },
-      { key: 'surgery', type: 'bool', label: '심혈관 수술비', weight: 0.3 }
+      { key: 'treat', type: 'group', label: '심장 주요치료비 3종', hint: '혈전용해제 · 수술 · 중환자실', weight: 0.45, subs: NEURO_TREAT_SUBS, min: NEURO_TREAT_MIN, max: NEURO_TREAT_MAX, step: 500, quick: NEURO_TREAT_QUICK }
     ]
   },
   {
-    key: 'surgery', rank: 4, name: '수술비', sub: '종수 · N대', unit: '만원',
-    rec: { '20': 500, '30': 500, '40': 500, '50': 500, '60': 300, '70': 300 },
+    key: 'surgery', rank: 4, name: '수술비', sub: '질병 4축 · 상해 2축', unit: '만원',
+    rec: { '20': 500, '30': 500, '40': 500, '50': 500, '60': 500, '70': 500 },
     weight: 15,
     parts: [
-      { key: 'disease', type: 'amount', label: '질병 1~5종 수술비', hint: '5종 기준 1회당', weight: 0.5, factor: 1, step: 100, quick: [0, 100, 300, 500, 1000] },
-      { key: 'nDae', type: 'bool', label: 'N대 질병수술비', hint: '21·22·30대 등', weight: 0.3 },
-      { key: 'injury', type: 'bool', label: '상해수술비', weight: 0.2 }
+      { key: 'disease', type: 'amount', label: '질병수술비(일반·매회)', hint: '수술 1회당 정액', weight: 0.18, factor: 0.2, step: 10, quick: [0, 30, 50, 100, 200] },
+      { key: 'disease15', type: 'amount', label: '질병 1~5종 수술비', hint: '1종 기준액', weight: 0.18, factor: 0.6, step: 50, quick: [0, 100, 300, 500, 1000] },
+      { key: 'diseaseNdae', type: 'amount', label: '질병 N대 수술비', hint: '21·22·30·33대 등 질환별', weight: 0.20, factor: 1, step: 100, quick: [0, 300, 500, 1000, 2000] },
+      { key: 'diseaseNonPay', type: 'amount', label: '비급여 질병 수술비', hint: '비급여 1~5종 / 비급여 N대', weight: 0.16, factor: 1, step: 100, quick: [0, 300, 500, 1000, 2000] },
+      { key: 'injury', type: 'amount', label: '일반 상해수술비', hint: '사고 수술 1회당', weight: 0.14, factor: 0.2, step: 10, quick: [0, 30, 50, 100, 200] },
+      { key: 'injury15', type: 'amount', label: '상해 1~5종 수술비', hint: '1종 기준액', weight: 0.14, factor: 0.6, step: 50, quick: [0, 100, 300, 500, 1000] }
     ]
   },
   {
-    key: 'care', rank: 5, name: '간병비', sub: '일당 · 요양', unit: '만원',
-    rec: { '20': 8, '30': 8, '40': 10, '50': 10, '60': 10, '70': 10 },
+    key: 'care', rank: 5, name: '간병비', sub: '일반·요양 분리 · 약관 요건', unit: '만원',
+    rec: { '20': 10, '30': 10, '40': 10, '50': 10, '60': 10, '70': 10 },
+    tiers: { min: 5, rec: 10, enough: 20 },
+    tierNote: '일당 5만~20만원 · 통상 10만원 이상',
     weight: 15,
     parts: [
-      { key: 'daily', type: 'amount', label: '간병인 사용일당', hint: '1일당', weight: 0.45, factor: 1, step: 1, quick: [0, 5, 8, 10, 15] },
-      { key: 'nursing', type: 'bool', label: '간호간병통합서비스', weight: 0.25 },
-      { key: 'ltc', type: 'bool', label: '장기요양등급(1~5·인지지원)', weight: 0.3 }
+      { key: 'daily', type: 'amount', label: '일반병원 간병인 사용일당', hint: '요양병원 제외 · 5~20만원', weight: 0.28, factor: 1, step: 1, quick: [0, 5, 10, 15, 20], tiers: { min: 5, rec: 10, enough: 20 }, min: 5, max: 20 },
+      { key: 'nDaily', type: 'amount', label: '요양병원 간병인 사용일당', hint: '0~20만원 · 통상 5~6만원대', weight: 0.12, factor: 0.6, step: 1, quick: [0, 5, 6, 10, 15, 20], min: 0, max: 20 },
+      { key: 'basis', type: 'scale', label: '지급 기준 유형', hint: '약관 확인', weight: 0.10, options: [
+        { v: 'time', label: '시간 기준', hint: '일 8시간 이상', score: 1 },
+        { v: 'money', label: '금액 기준', hint: '일 7~8만원 이상', score: 0.9 },
+        { v: 'unknown', label: '무조건·미확인', hint: '증권 확인 필요', score: 0.3 }
+      ] },
+      { key: 'family', type: 'scale', label: '가족 간병 인정 여부', hint: '청구 가능성', weight: 0.10, options: [
+        { v: 'yes', label: '인정', hint: '가족 간병도 지급', score: 1 },
+        { v: 'conditional', label: '업체등록·결제 필수', hint: '미확인 · 증빙 조건', score: 0.5 },
+        { v: 'no', label: '불인정(면책)', hint: '가족 간병 지급 불가', score: 0.15 }
+      ] },
+      { key: 'nursing', type: 'bool', label: '간호·간병통합서비스 일당', weight: 0.15 },
+      { key: 'ltc', type: 'bool', label: '장기요양등급(1~5·인지지원)', weight: 0.25 }
     ]
   }
 ];
 
+/* 연령대별 추천 프리셋 — 원터치로 표준 분석 샘플을 채웁니다 (v4.2)
+   값은 상담 연습·시연용 표준 예시이며, 실제 증권 값이 아닙니다. */
+const PRESETS = {
+  '20': {
+    label: '20대 표준 분석 샘플', premium: 12, silson: '4', gender: '여', job: '1',
+    cov: {
+      cancer: { general: 3000, similar: 500, treatment: { surgery: 500, drug: 500, radio: 500, icu: 0, extra: 0 }, recur: false },
+      brain: { scope: 'stroke', treat: { lysis: 1000, surgery: 0, icu: 0 } },
+      heart: { scope: 'mi', treat: { lysis: 0, surgery: 1000, icu: 0 } },
+      surgery: { disease: 30, disease15: 100, diseaseNdae: 0, diseaseNonPay: 0, injury: 50, injury15: 100 },
+      care: { daily: 0, nDaily: 0, basis: 'unknown', family: 'conditional', nursing: false, ltc: false, mode: 'normal' }
+    }
+  },
+  '30': {
+    label: '30대 표준 분석 샘플', premium: 18, silson: '4', gender: '여', job: '1',
+    cov: {
+      cancer: { general: 5000, similar: 1000, treatment: { surgery: 1000, drug: 1000, radio: 500, icu: 0, extra: 500 }, recur: true },
+      brain: { scope: 'vascular', treat: { lysis: 1000, surgery: 500, icu: 0 } },
+      heart: { scope: 'ischemic', treat: { lysis: 0, surgery: 1000, icu: 0 } },
+      surgery: { disease: 50, disease15: 300, diseaseNdae: 300, diseaseNonPay: 0, injury: 50, injury15: 300 },
+      care: { daily: 5, nDaily: 0, basis: 'money', family: 'conditional', nursing: true, ltc: false, mode: 'normal' }
+    }
+  },
+  '40': {
+    label: '40대 표준 분석 샘플', premium: 27, silson: '3', gender: '남', job: '1',
+    cov: {
+      cancer: { general: 5000, similar: 1000, treatment: { surgery: 1000, drug: 1500, radio: 600, icu: 0, extra: 500 }, recur: true },
+      brain: { scope: 'vascular', treat: { lysis: 1000, surgery: 1500, icu: 0 } },
+      heart: { scope: 'ischemic', treat: { lysis: 0, surgery: 1500, icu: 500 } },
+      surgery: { disease: 50, disease15: 300, diseaseNdae: 500, diseaseNonPay: 0, injury: 50, injury15: 300 },
+      care: { daily: 10, nDaily: 0, basis: 'time', family: 'conditional', nursing: true, ltc: false, mode: 'normal' }
+    }
+  },
+  '50': {
+    label: '50대 표준 분석 샘플', premium: 35, silson: '2', gender: '남', job: '2',
+    cov: {
+      cancer: { general: 5000, similar: 2000, treatment: { surgery: 1000, drug: 2000, radio: 1000, icu: 500, extra: 1000 }, recur: true },
+      brain: { scope: 'vascular', treat: { lysis: 1000, surgery: 2000, icu: 1000 } },
+      heart: { scope: 'cardiac', treat: { lysis: 1000, surgery: 2000, icu: 1000 } },
+      surgery: { disease: 100, disease15: 500, diseaseNdae: 1000, diseaseNonPay: 300, injury: 100, injury15: 500 },
+      care: { daily: 15, nDaily: 5, basis: 'time', family: 'no', nursing: true, ltc: true, mode: 'step' }
+    }
+  },
+  '60': {
+    label: '60대 표준 분석 샘플', premium: 42, silson: '1', gender: '남', job: '2',
+    cov: {
+      cancer: { general: 3000, similar: 1000, treatment: { surgery: 1000, drug: 1500, radio: 500, icu: 500, extra: 500 }, recur: false },
+      brain: { scope: 'stroke', treat: { lysis: 1000, surgery: 1000, icu: 0 } },
+      heart: { scope: 'ischemic', treat: { lysis: 1000, surgery: 1000, icu: 0 } },
+      surgery: { disease: 100, disease15: 300, diseaseNdae: 500, diseaseNonPay: 300, injury: 100, injury15: 300 },
+      care: { daily: 20, nDaily: 6, basis: 'time', family: 'conditional', nursing: true, ltc: true, mode: 'step' }
+    }
+  },
+  '70': {
+    label: '70대 표준 분석 샘플', premium: 48, silson: '1', gender: '여', job: '3',
+    cov: {
+      cancer: { general: 3000, similar: 500, treatment: { surgery: 500, drug: 1000, radio: 500, icu: 0, extra: 500 }, recur: false },
+      brain: { scope: 'stroke', treat: { lysis: 1000, surgery: 500, icu: 0 } },
+      heart: { scope: 'mi', treat: { lysis: 0, surgery: 1000, icu: 0 } },
+      surgery: { disease: 30, disease15: 100, diseaseNdae: 0, diseaseNonPay: 0, injury: 30, injury15: 100 },
+      care: { daily: 20, nDaily: 10, basis: 'money', family: 'no', nursing: false, ltc: true, mode: 'step' }
+    }
+  }
+};
+
 /* 단계별 위저드 구성 */
 const WIZARD = [
   { step: 1, key: 'profile', title: '기본 정보', desc: '연령대 · 성별 · 직업급수 · 가족력 · 실손 · 보험료' },
-  { step: 2, key: 'cancer', title: '암', desc: '일반암 · 유사암 · 주요치료비 5종 · 재진단' },
-  { step: 3, key: 'brainheart', title: '뇌 · 심장', desc: '보장 범위와 수술·치료비' },
-  { step: 4, key: 'surgerycare', title: '수술 · 간병', desc: '종수·N대, 일당·요양' },
+  { step: 2, key: 'cancer', title: '암', desc: '일반암(3천/5천/1억) · 유사암 · 주요치료비 5종 · 재진단' },
+  { step: 3, key: 'brainheart', title: '뇌 · 심장', desc: '보장 범위 + 주요치료비 3종(혈전용해제·수술·중환자실)' },
+  { step: 4, key: 'surgerycare', title: '수술 · 간병', desc: '질병 4축·상해 2축, 일반·요양 일당, 시간·가족간병' },
   { step: 5, key: 'contract', title: '계약 · 보험료', desc: '보유 계약 · 납입상태 · 만기 · 갱신 · 특약' },
   { step: 6, key: 'disclosure', title: '간편 고지', desc: '3개월 · 1년 · 5년 → 표준체 / 간편심사 판정' }
 ];

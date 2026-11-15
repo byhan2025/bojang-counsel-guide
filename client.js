@@ -64,12 +64,15 @@
 
   function radarSVG(axes, o) {
     o = o || {};
-    const size = o.size || 220, cx = size / 2, cy = size / 2 + 4, R = size * 0.32;
+    /* v4.2: viewBox 좌우·상하 여백을 넉넉히 잡아 축 라벨이 잘리지 않게 합니다.
+       라벨은 어두운 배경 위에서도 읽히도록 흰색(#FFFFFF) 계열로 그립니다. */
+    const W = o.w || 340, H = o.h || 300;
+    const cx = W / 2, cy = H / 2 - 10, R = Math.min(W, H) * 0.30;
     const n = axes.length;
     const ang = (i) => -Math.PI / 2 + (i * 2 * Math.PI) / n;
     const pt = (i, k) => [cx + Math.cos(ang(i)) * R * k, cy + Math.sin(ang(i)) * R * k];
     const ring = (k) => axes.map((_, i) => pt(i, k).map((v) => v.toFixed(1)).join(',')).join(' ');
-    let out = `<svg viewBox="0 0 ${size} ${size}" class="sl-radar" role="img" aria-label="보장 밸런스 레이더">`;
+    let out = `<svg viewBox="0 0 ${W} ${H}" class="sl-radar" role="img" aria-label="보장 밸런스 레이더">`;
     [0.25, 0.5, 0.75, 1].forEach((k) => { out += `<polygon points="${ring(k)}" fill="none" stroke="rgba(255,255,255,.13)" stroke-width="1"/>`; });
     axes.forEach((_, i) => {
       const p = pt(i, 1);
@@ -79,10 +82,10 @@
     out += `<polygon points="${dp.map((p) => p.map((v) => v.toFixed(1)).join(',')).join(' ')}" fill="rgba(143,240,220,.22)" stroke="#8ff0dc" stroke-width="2" stroke-linejoin="round"/>`;
     dp.forEach((p) => { out += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.4" fill="#8ff0dc"/>`; });
     axes.forEach((a, i) => {
-      const p = pt(i, 1.25);
+      const p = pt(i, 1.22);
       const anchor = p[0] < cx - 4 ? 'end' : p[0] > cx + 4 ? 'start' : 'middle';
-      out += `<text x="${p[0].toFixed(1)}" y="${(p[1] + 2).toFixed(1)}" text-anchor="${anchor}" class="sl-radar-label">${esc(a.label)}</text>`;
-      out += `<text x="${p[0].toFixed(1)}" y="${(p[1] + 13).toFixed(1)}" text-anchor="${anchor}" class="sl-radar-value">${Math.round(a.value * 100)}%</text>`;
+      out += `<text x="${p[0].toFixed(1)}" y="${(p[1] + 3).toFixed(1)}" text-anchor="${anchor}" class="sl-radar-label">${esc(a.label)}</text>`;
+      out += `<text x="${p[0].toFixed(1)}" y="${(p[1] + 17).toFixed(1)}" text-anchor="${anchor}" class="sl-radar-value">${Math.round(a.value * 100)}%</text>`;
     });
     out += `</svg>`;
     return out;
@@ -122,6 +125,20 @@
       return row ? row.level !== 'ok' : false;
     };
     const rowOf = (key) => m.rows.find((r) => r.item.key === key);
+    /* v4.2: 세부 항목은 위치가 아니라 키로 찾습니다 (수술·간병 축이 늘어나 위치가 바뀜) */
+    const PK = (row, key) => (row && row.r.parts.find((p) => p.key === key)) || { val: 0, rec: 0, fill: 0, subs: [], pct: 0, option: null };
+    const subN = (p) => (p.subs || []).filter((s) => s.val > 0).length;
+    const tierBox = (tiers, now, label) => tiers ? `
+      <div class="tier-mini">
+        <div class="tm-head"><span>${label}</span><b>${now != null ? won(now) + '만원' : ''}</b></div>
+        <div class="tm-track" aria-hidden="true">
+          <i style="left:0;width:${Math.max(2, Math.min(100, Math.round((Number(now || 0) / tiers.enough) * 100)))}%"></i>
+          <span class="tm-mark" style="left:${Math.round((tiers.min / tiers.enough) * 100)}%"><em>최소 ${won(tiers.min)}</em></span>
+          <span class="tm-mark" style="left:${Math.round((tiers.rec / tiers.enough) * 100)}%"><em>권장 ${won(tiers.rec)}</em></span>
+          <span class="tm-mark end" style="left:100%"><em>충분 ${won(tiers.enough)}</em></span>
+        </div>
+        <p class="tm-note">${label} 기준선 — 최소 ${won(tiers.min)} · 권장 ${won(tiers.rec)} · 충분 ${won(tiers.enough)}만원</p>
+      </div>` : '';
 
     /* ---------- 01 표지 ---------- */
     add(1, 'summary', null, `
@@ -260,15 +277,15 @@
       return r ? r.r.fill : 0;
     };
     const axes4 = [
-      { label: '진단비', value: (axis('cancer') + axis('brain') + axis('heart')) / 3 },
-      { label: '치료·수술', value: (rowOf('surgery').r.fill + rowOf('brain').r.parts[1].fill + rowOf('heart').r.parts[1].fill + rowOf('cancer').r.parts[2].fill) / 4 },
+      { label: '진단비', value: (PK(rowOf('cancer'), 'general').fill + PK(rowOf('brain'), 'scope').fill + PK(rowOf('heart'), 'scope').fill) / 3 },
+      { label: '치료·수술', value: (PK(rowOf('cancer'), 'treatment').fill + PK(rowOf('brain'), 'treat').fill + PK(rowOf('heart'), 'treat').fill + rowOf('surgery').r.fill) / 4 },
       { label: '실손', value: m.state.silson === 'none' ? 0 : 1 },
-      { label: '간병·요양', value: (axis('care') + (m.state.cov.care.ltc ? 1 : 0)) / 2 }
+      { label: '간병·요양', value: (PK(rowOf('care'), 'daily').fill + PK(rowOf('care'), 'ltc').fill + PK(rowOf('care'), 'nursing').fill) / 3 }
     ];
     add(6, 'summary', null, `
       <div class="sl-head"><span class="k">05 · 밸런스</span><h2>4축 보장 밸런스</h2>
         <p>한쪽만 두꺼우면 실제 지출 앞에서 빈틈이 생깁니다. 네 축을 함께 봅니다.</p></div>
-      <div class="radar-wrap">${radarSVG(axes4, { size: 300 })}</div>
+      <div class="radar-wrap">${radarSVG(axes4)}</div>
       <ul class="axis-list">
         ${axes4.map((a) => `<li><span>${a.label}</span>${bar(a.value, a.value >= 0.9 ? 'ok' : a.value >= 0.5 ? 'need' : 'gap')}<b>${Math.round(a.value * 100)}%</b></li>`).join('')}
       </ul>
@@ -276,16 +293,17 @@
 
     /* ---------- 07 암 현재 vs 권장 ---------- */
     const cr = rowOf('cancer');
-    const treat = cr.r.parts[2];
+    const treat = PK(cr, 'treatment');
     const tsubs = treat.subs || [];
     const treatHave = tsubs.filter((s) => s.val > 0).length;
     add(7, 'cancer', 'cancer', `
       <div class="sl-head"><span class="k">1순위 · 암</span><h2>암 보장, 지금 vs 권장</h2>
         <p>진단비(목돈)와 치료비(장기)를 나눠서 봅니다. 치료비는 5종으로 쪼개서 빈 칸을 찾습니다.</p></div>
+      ${tierBox(m.tiers.cancer, PK(cr, 'general').val, '일반암 진단비')}
       <div class="cmp-grid">
         ${[
-          { label: '일반암 진단비', p: cr.r.parts[0] },
-          { label: '유사암 진단비', p: cr.r.parts[1] }
+          { label: '일반암 진단비', p: PK(cr, 'general') },
+          { label: '유사암 진단비', p: PK(cr, 'similar') }
         ].map((c) => `
           <div class="cmp-card">
             <span class="cc-label">${c.label}</span>
@@ -295,9 +313,9 @@
           </div>`).join('')}
         <div class="cmp-card" style="grid-column:1 / -1;">
           <span class="cc-label">재진단·전이 보장</span>
-          <div class="cc-values"><b class="bool ${cr.r.parts[3].val ? 'on' : 'off'}">${cr.r.parts[3].val ? '보유' : '없음'}</b><span>두 번째 진단 대비</span></div>
-          ${bar(cr.r.parts[3].val ? 1 : 0, cr.r.parts[3].val ? 'ok' : 'gap')}
-          <span class="cc-pct">${cr.r.parts[3].val ? '준비됨' : '1회한이면 재발 시 지급 없음'}</span>
+          <div class="cc-values"><b class="bool ${PK(cr, 'recur').val ? 'on' : 'off'}">${PK(cr, 'recur').val ? '보유' : '없음'}</b><span>두 번째 진단 대비</span></div>
+          ${bar(PK(cr, 'recur').val ? 1 : 0, PK(cr, 'recur').val ? 'ok' : 'gap')}
+          <span class="cc-pct">${PK(cr, 'recur').val ? '준비됨' : '1회한이면 재발 시 지급 없음'}</span>
         </div>
       </div>
       <div class="t5">
@@ -376,9 +394,9 @@
       <div class="sl-head"><span class="k">1순위 · 암</span><h2>암 보완 방향</h2>
         <p>한 번에 다 채우지 않습니다. 지금 비어 있는 칸부터 순서대로.</p></div>
       <ol class="steps-list">
-        <li><b>① 유사암 칸</b><p>갑상선·제자리·경계성은 일반암에서 빠집니다. 별도 담보가 없으면 0원입니다.</p><em>${cr.r.parts[1].val ? `현재 ${won(cr.r.parts[1].val)}만원` : '현재 없음'} → 권장 ${won(cr.r.parts[1].rec)}만원</em></li>
+        <li><b>① 유사암 칸</b><p>갑상선·제자리·경계성은 일반암에서 빠집니다. 별도 담보가 없으면 0원입니다.</p><em>${PK(cr, 'similar').val ? `현재 ${won(PK(cr, 'similar').val)}만원` : '현재 없음'} → 권장 ${won(PK(cr, 'similar').rec)}만원</em></li>
         <li><b>② 치료비 5종</b><p>표적·면역항암 시대에는 진단비만으로 부족합니다. 암수술·항암약물·항암방사선·중환자실·비급여를 따로 봅니다.</p><em>5종 중 ${treatHave}종 · ${won(treat.val)}만원 → 권장 ${won(treat.rec)}만원</em></li>
-        <li><b>③ 재진단 칸</b><p>1회한 담보는 재발·전이 때 다시 나오지 않습니다. 두 번째 진단을 따로 준비합니다.</p><em>${cr.r.parts[3].val ? '보유' : '없음'} → 보유 권장</em></li>
+        <li><b>③ 재진단 칸</b><p>1회한 담보는 재발·전이 때 다시 나오지 않습니다. 두 번째 진단을 따로 준비합니다.</p><em>${PK(cr, 'recur').val ? '보유' : '없음'} → 보유 권장</em></li>
       </ol>
       ${treatHave < 5 ? noteBox(`비어 있는 치료비 — ${tsubs.filter((s) => !(s.val > 0)).map((s) => s.label).join(' · ')}`, 'warn') : noteBox('치료비 5종이 모두 채워졌습니다. 이제는 지급 횟수(1회한·재진단)와 가입 시점을 확인합니다.', 'ok')}
       ${noteBox('가입 직후 90일은 보장이 시작되지 않고, 1년 안에 진단되면 절반만 지급되는 상품이 많습니다. 시작 시점을 함께 확인합니다.', 'warn')}
@@ -386,7 +404,9 @@
 
     /* ---------- 12 뇌 현재 vs 권장 ---------- */
     const br = rowOf('brain');
-    const brainScope = br.r.parts[0].option || { label: '미보유' };
+    const brainScope = PK(br, 'scope').option || { label: '미보유' };
+    const bT = PK(br, 'treat');
+    const bTs = bT.subs || [];
     add(12, 'brain', 'brain', `
       <div class="sl-head"><span class="k">2순위 · 뇌</span><h2>뇌 보장, 어디까지 담았나</h2>
         <p>이름이 비슷한 세 담보가 있습니다. 뒤로 갈수록 보장 범위가 넓습니다.</p></div>
@@ -404,11 +424,24 @@
           <text x="150" y="168" text-anchor="middle" class="cg-s2">뇌경색 I63은 뇌졸중·뇌혈관에만</text>
         </svg>
         <div class="conc-side">
-          <div class="side-card"><span>현재 보장</span><b>${esc(brainScope.label)}</b><p>${esc(brainScope.hint || '')} ${br.r.parts[1].val ? '· 뇌혈관 수술·치료비 보유' : '· 수술·치료비 없음'}</p></div>
+          <div class="side-card"><span>현재 보장</span><b>${esc(brainScope.label)}</b><p>${esc(brainScope.hint || '')} · 진단비 최소 1,000 / 권장 2,000만원</p></div>
           <div class="side-card"><span>권장 범위</span><b>뇌혈관질환 I60~I69</b><p>가장 흔한 뇌경색과 후유증까지 담는 범위입니다.</p></div>
           <div class="side-card"><span>충족도</span><b>${br.pct}%</b>${bar(br.r.fill, br.level)}</div>
         </div>
-      </div>`, { need: needOf('brain') });
+      </div>
+      <div class="t5">
+        <div class="t5-head"><b>뇌 주요치료비 3종</b><span>합계 ${won(bT.val)}만원 / 권장 ${won(bT.rec)}만원 · ${subN(bT)}/3종</span></div>
+        <div class="t5-rows">
+          ${bTs.map((s) => `
+            <div class="t5-row${s.val > 0 ? '' : ' is-off'}">
+              <span class="t5-l">${esc(s.label)}</span>
+              <span class="t5-v">${s.val > 0 ? `${won(s.val)}만원` : '없음'}</span>
+              <div class="t5-bar"><i style="width:${Math.max(2, Math.min(100, s.pct))}%;background:${s.pct >= 100 ? '#12A594' : s.pct > 0 ? '#E8952E' : '#E05B52'}"></i></div>
+              <b class="t5-p" style="color:${s.pct >= 100 ? '#0a6b57' : s.pct > 0 ? '#a5620f' : '#b3261e'}">${s.pct}%</b>
+            </div>`).join('')}
+        </div>
+      </div>
+      ${noteBox('진단비는 1회성이라 치료비 구성이 핵심입니다. 혈전용해제(tPA)는 별도 담보이고, 기계적 혈전제거술(카테터법)은 그 치료에서 제외되어 또 다른 담보입니다.', 'info')}`, { need: needOf('brain') });
 
     /* ---------- 13 뇌 코드 비교 ---------- */
     add(13, 'brain', 'brain', `
@@ -451,14 +484,16 @@
         <p>금액보다 범위가 먼저입니다. 좁은 담보를 넓히는 것이 출발점입니다.</p></div>
       <ol class="steps-list">
         <li><b>① 범위 정렬</b><p>뇌출혈 → 뇌졸중 → 뇌혈관질환 순으로 넓힙니다. 같은 보험료에서 범위를 바꾸는 방법이 있습니다.</p><em>현재 ${esc(brainScope.label)} → 권장 뇌혈관질환 I60~I69</em></li>
-        <li><b>② 치료비 축</b><p>혈전용해술·스텐트는 약관상 "수술"이 아니어서 수술비가 안 나올 수 있습니다. 별도 치료비 담보가 필요합니다.</p><em>${br.r.parts[1].val ? '보유' : '없음'} → 보유 권장</em></li>
+        <li><b>② 치료비 축</b><p>혈전용해술·스텐트는 약관상 "수술"이 아니어서 수술비가 안 나올 수 있습니다. 혈전용해제·수술·중환자실 3종을 따로 봅니다.</p><em>3종 중 ${subN(bT)}종 · ${won(bT.val)}만원 → 권장 ${won(bT.rec)}만원</em></li>
         <li><b>③ 회복 구간</b><p>살아남아도 장해가 남으면 후유장해 담보로 지급률을 평가합니다. 재활·간병은 5순위와 연결됩니다.</p><em>후유장해·간병 담보 함께 확인</em></li>
       </ol>
       ${m.family.indexOf('brain') >= 0 ? noteBox('가족력에 뇌혈관이 있습니다. 생활 요인(혈압·혈당)과 함께 범위를 넓게 잡는 편이 안전합니다.', 'warn') : noteBox('가족력이 없어도 고혈압·당뇨·흡연으로 발생합니다. 지금 건강할 때 범위를 정리하는 것이 순서입니다.', 'info')}`, { need: needOf('brain') });
 
     /* ---------- 16 심장 현재 vs 권장 ---------- */
     const hr = rowOf('heart');
-    const heartScope = hr.r.parts[0].option || { label: '미보유' };
+    const heartScope = PK(hr, 'scope').option || { label: '미보유' };
+    const hT = PK(hr, 'treat');
+    const hTs = hT.subs || [];
     add(16, 'heart', 'heart', `
       <div class="sl-head"><span class="k">3순위 · 심장</span><h2>심장은 "막힌 혈관"이 기준</h2>
         <p>협심증과 급성심근경색은 같은 심장 질환이지만 보험에서는 다른 담보입니다.</p></div>
@@ -476,11 +511,24 @@
           <text x="150" y="168" text-anchor="middle" class="cg-s2">협심증 I20은 허혈성 담보에만</text>
         </svg>
         <div class="conc-side">
-          <div class="side-card"><span>현재 보장</span><b>${esc(heartScope.label)}</b><p>${esc(heartScope.hint || '')} ${hr.r.parts[1].val ? '· 심혈관 수술비 보유' : '· 수술비 없음'}</p></div>
+          <div class="side-card"><span>현재 보장</span><b>${esc(heartScope.label)}</b><p>${esc(heartScope.hint || '')} · 진단비 최소 1,000 / 권장 2,000만원</p></div>
           <div class="side-card"><span>권장 범위</span><b>허혈성심장질환 I20~I25</b><p>스텐트 시술이 이뤄지는 협심증 단계까지 담습니다.</p></div>
           <div class="side-card"><span>충족도</span><b>${hr.pct}%</b>${bar(hr.r.fill, hr.level)}</div>
         </div>
-      </div>`, { need: needOf('heart') });
+      </div>
+      <div class="t5">
+        <div class="t5-head"><b>심장 주요치료비 3종</b><span>합계 ${won(hT.val)}만원 / 권장 ${won(hT.rec)}만원 · ${subN(hT)}/3종</span></div>
+        <div class="t5-rows">
+          ${hTs.map((s) => `
+            <div class="t5-row${s.val > 0 ? '' : ' is-off'}">
+              <span class="t5-l">${esc(s.label)}</span>
+              <span class="t5-v">${s.val > 0 ? `${won(s.val)}만원` : '없음'}</span>
+              <div class="t5-bar"><i style="width:${Math.max(2, Math.min(100, s.pct))}%;background:${s.pct >= 100 ? '#12A594' : s.pct > 0 ? '#E8952E' : '#E05B52'}"></i></div>
+              <b class="t5-p" style="color:${s.pct >= 100 ? '#0a6b57' : s.pct > 0 ? '#a5620f' : '#b3261e'}">${s.pct}%</b>
+            </div>`).join('')}
+        </div>
+      </div>
+      ${noteBox('급성심근경색(I21)은 혈전용해제 치료비의 대상이지만, 스텐트·우회로는 수술비 담보에서 봅니다. 1년 미만 50% 감액 여부도 함께 확인하세요.', 'warn')}`, { need: needOf('heart') });
 
     /* ---------- 17 심장 위험요인 ---------- */
     add(17, 'heart', 'heart', `
@@ -504,7 +552,7 @@
         <p>범위를 넓히는 것이 먼저, 금액은 그다음입니다.</p></div>
       <ol class="steps-list">
         <li><b>① 범위</b><p>급성심근경색 → 허혈성심장질환(I20~I25)으로 넓힙니다. 같은 보험료 안에서 조정되는 경우가 많습니다.</p><em>현재 ${esc(heartScope.label)} → 권장 허혈성 I20~I25</em></li>
-        <li><b>② 수술비</b><p>스텐트·관상동맥우회술이 수술비 지급 대상인지 약관의 수술 분류표로 확인합니다.</p><em>${hr.r.parts[1].val ? '보유' : '없음'} → 보유 권장</em></li>
+        <li><b>② 수술비</b><p>스텐트·관상동맥우회술이 수술비 지급 대상인지 약관의 수술 분류표로 확인합니다.</p><em>3종 중 ${subN(hT)}종 · ${won(hT.val)}만원 → 권장 ${won(hT.rec)}만원</em></li>
         <li><b>③ 약값·관리</b><p>한 번 막히면 항혈전제를 오래 복용합니다. 진단비·수술비·약값을 함께 봅니다.</p><em>부정맥·판막·심부전 담보도 확인</em></li>
       </ol>
       ${m.family.indexOf('heart') >= 0 ? noteBox('가족력에 심장 질환이 있습니다. 스텐트 시술 구간이 담보에 들어 있는지가 핵심입니다.', 'warn') : noteBox('지금은 괜찮더라도, 괜찮을 때 넣어야 조건이 좋습니다. 범위만 넓히고 금액은 낮게 시작할 수 있습니다.', 'info')}`, { need: needOf('heart') });
@@ -531,8 +579,8 @@
     /* ---------- 20 수술비 현재 vs 권장 ---------- */
     const sr = rowOf('surgery');
     add(20, 'surgery', 'surgery', `
-      <div class="sl-head"><span class="k">4순위 · 수술비</span><h2>수술비, 두 축을 함께</h2>
-        <p>1~5종은 수술의 침습도로, N대는 질환별 한도로 지급됩니다. 서로 다른 계약입니다.</p></div>
+      <div class="sl-head"><span class="k">4순위 · 수술비</span><h2>수술비, 여섯 칸으로 본다</h2>
+        <p>질병 4축(일반·1~5종·N대·비급여)과 상해 2축(일반·1~5종)을 각각 봅니다. 서로 다른 계약입니다.</p></div>
       <div class="venn-wrap">
         <div class="venn">
           <div class="v-circle left"><b>1~5종</b><span>침습도 분류</span><em>1종 고액 ~ 5종 소액</em></div>
@@ -542,10 +590,14 @@
         <p class="venn-note">같은 수술에 두 담보가 각각 반응합니다. 한쪽만 있으면 큰 수술에서 금액이 얇아집니다.</p>
       </div>
       <div class="tile-grid three">
-        ${statTile('질병 1~5종', `${won(m.state.cov.surgery.disease)}<em>만원</em>`, `권장 ${won(sr.r.parts[0].rec)}만원`)}
-        ${statTile('N대 수술비', m.state.cov.surgery.nDae ? '보유' : '없음', '질환별 별도 한도')}
-        ${statTile('상해수술비', m.state.cov.surgery.injury ? '보유' : '없음', '사고 수술 별도')}
-      </div>`, { need: needOf('surgery') });
+        ${statTile('질병수술비(일반)', `${won(m.state.cov.surgery.disease)}<em>만원</em>`, `권장 ${won(PK(sr, 'disease').rec)}만원`)}
+        ${statTile('질병 1~5종', `${won(m.state.cov.surgery.disease15)}<em>만원</em>`, `권장 ${won(PK(sr, 'disease15').rec)}만원`)}
+        ${statTile('질병 N대', m.state.cov.surgery.diseaseNdae ? `${won(m.state.cov.surgery.diseaseNdae)}<em>만원</em>` : '없음', '질환 묶음별 한도')}
+        ${statTile('비급여 질병 수술', m.state.cov.surgery.diseaseNonPay ? `${won(m.state.cov.surgery.diseaseNonPay)}<em>만원</em>` : '없음', '5세대 실손 보완')}
+        ${statTile('일반 상해수술', `${won(m.state.cov.surgery.injury)}<em>만원</em>`, `권장 ${won(PK(sr, 'injury').rec)}만원`)}
+        ${statTile('상해 1~5종', `${won(m.state.cov.surgery.injury15)}<em>만원</em>`, `권장 ${won(PK(sr, 'injury15').rec)}만원`)}
+      </div>
+      ${noteBox('5세대 실손은 비중증 비급여 한도가 연 1,000만원·자기부담 50%입니다. 비급여 수술은 실손으로 다 메워지지 않아 정액 비급여 수술비가 보완합니다. 수술비 담보는 1년 미만이면 50%만 지급되는 상품이 흔합니다.', 'info')}`, { need: needOf('surgery') });
 
     /* ---------- 21 수술 사례 ---------- */
     add(21, 'surgery', 'surgery', `
@@ -561,31 +613,37 @@
       <div class="sl-head"><span class="k">4순위 · 수술비</span><h2>수술비 보완 방향</h2>
         <p>수술비는 보조입니다. 큰 그림은 진단비·치료비로 잡고, 수술비는 빈틈을 막습니다.</p></div>
       <ol class="steps-list">
-        <li><b>① 빈 축 찾기</b><p>1~5종만 있으면 N대를, N대만 있으면 1~5종을 채웁니다.</p><em>${sr.gaps.length ? sr.gaps.map((g) => g.label + ' ' + won(g.need) + '만원 부족').join(' · ') : '두 축이 모두 있습니다'}</em></li>
-        <li><b>② 상해 축</b><p>질병 수술비만 있으면 사고로 다쳐 수술해도 지급되지 않습니다.</p><em>${m.state.cov.surgery.injury ? '보유' : '없음'} → 보유 권장</em></li>
+        <li><b>① 빈 칸 찾기</b><p>질병 4축(일반·1~5종·N대·비급여) 중 빈 칸을 채우고, 상해는 일반·1~5종을 따로 봅니다. 회사별 질환 묶음(용종·체외추파 등)도 확인합니다.</p><em>${sr.gaps.length ? sr.gaps.map((g) => g.label + ' ' + won(g.need) + '만원 부족').join(' · ') : '모든 항목이 기준선을 넘었습니다'}</em></li>
+        <li><b>② 상해 축</b><p>질병 수술비만 있으면 사고로 다쳐 수술해도 지급되지 않습니다. 일반 상해수술비와 상해 1~5종을 함께 봅니다.</p><em>상해 ${['injury', 'injury15'].filter((k) => Number(PK(sr, k).val) > 0).length}/2축</em></li>
         <li><b>③ 청구 동행</b><p>수술 후 수술확인서·진단서를 받아 분류표와 맞는지 먼저 확인합니다.</p><em>청구 소멸시효 3년</em></li>
-      </ol>`, { need: needOf('surgery') });
+      </ol>
+      ${noteBox('비급여 수술은 5세대 실손의 비중증 한도(연 1,000만원·자기부담 50%)에 먼저 걸립니다. 정액 비급여 수술비를 따로 두면 그 구간을 메웁니다.', 'info')}
+      ${noteBox('수술비 담보는 계약일부터 1년 미만이면 50%만 지급되는 경우가 많습니다. 시작 시점을 함께 확인하세요.', 'warn')}`, { need: needOf('surgery') });
 
     /* ---------- 23 간병 3갈래 ---------- */
     const car = rowOf('care');
     add(23, 'care', 'care', `
-      <div class="sl-head"><span class="k">5순위 · 간병</span><h2>간병비, 세 가지 준비</h2>
-        <p>진단비는 한 번 나오는 돈, 간병비는 매일 나가는 돈입니다.</p></div>
+      <div class="sl-head"><span class="k">5순위 · 간병</span><h2>간병비, 여섯 칸으로 본다</h2>
+        <p>진단비는 한 번 나오는 돈, 간병비는 매일 나가는 돈입니다. 일반병원·요양병원과 지급 요건을 나눠 봅니다.</p></div>
       <div class="care-grid">
         ${[
-          { t: '간병인 사용일당', when: '입원 중', v: `${won(m.state.cov.care.daily)}만원`, note: m.state.cov.care.mode === 'step' ? '체증형 — 입원이 길수록 증액' : '일반형 — 일당 고정', fill: car.r.parts[0].fill },
-          { t: '간호간병통합', when: '입원 중', v: m.state.cov.care.nursing ? '보유' : '없음', note: '보호자 없는 병동 · 별도 특약', fill: car.r.parts[1].fill },
-          { t: '장기요양등급', when: '퇴원 후·노후', v: m.state.cov.care.ltc ? '보유' : '없음', note: '1~5등급 · 인지지원', fill: car.r.parts[2].fill }
-        ].map((c) => `<div class="care-card${c.v === '없음' ? ' is-empty' : ''}">
+          { t: '일반병원 간병일당', when: '입원 중', v: `${won(m.state.cov.care.daily)}만원`, note: '요양병원 제외 · 5~20만원', fill: PK(car, 'daily').fill },
+          { t: '요양병원 간병일당', when: '요양 입원', v: m.state.cov.care.nDaily > 0 ? `${won(m.state.cov.care.nDaily)}만원` : '없음', note: '통상 5~6만원대 · 별도 담보', fill: PK(car, 'nDaily').fill },
+          { t: '간호·간병통합서비스', when: '입원 중', v: m.state.cov.care.nursing ? '보유' : '없음', note: '보호자 없는 병동 · 별도 특약', fill: PK(car, 'nursing').fill },
+          { t: '지급 기준', when: '약관', v: { time: '시간 기준', money: '금액 기준', unknown: '미확인' }[m.state.cov.care.basis], note: '일 8시간 / 7~8만원', fill: PK(car, 'basis').fill },
+          { t: '가족 간병', when: '청구', v: { yes: '인정', conditional: '조건부', no: '불인정' }[m.state.cov.care.family], note: '업체등록·결제 필요', fill: PK(car, 'family').fill },
+          { t: '장기요양등급', when: '퇴원 후·노후', v: m.state.cov.care.ltc ? '보유' : '없음', note: '1~5등급 · 인지지원', fill: PK(car, 'ltc').fill }
+        ].map((c) => `<div class="care-card${c.v === '없음' || c.v === '미확인' ? ' is-empty' : ''}">
             <span class="cc-when">${c.when}</span><b>${c.t}</b>
             <strong>${c.v}</strong><span class="cc-note">${c.note}</span>
             ${bar(c.fill, c.fill >= 0.99 ? 'ok' : c.fill > 0 ? 'need' : 'gap')}
           </div>`).join('')}
       </div>
       <div class="cheung">
-        <b>체증형 vs 일반형</b>
-        <p><span>일반형</span> 입원일수와 무관하게 일당 고정 · 짧은 입원에 유리</p>
-        <p><span>체증형</span> 입원일수가 길어질수록 일당이 올라감 · 장기 입원 위험에 대비</p>
+        <b>2026년 7월 — 금액 기준 → 시간 기준 전환</b>
+        <p><span>시간 기준</span> 하루 8시간 이상 간병인을 써야 전액 지급 · 신규 상품 다수</p>
+        <p><span>금액 기준</span> 하루 7~8만원 이상 사용 시 지급 · 8만원 미만은 50% 감액</p>
+        <p><span>체증형</span> 입원일수가 길어질수록 일당이 올라가는 구조 · 장기 입원 위험에 대비</p>
       </div>`, { need: needOf('care') });
 
     /* ---------- 24 건보공단 통계 ---------- */
@@ -615,8 +673,9 @@
         <p>노후에 가장 오래 나가는 돈은 치료비가 아니라 돌봄 비용입니다.</p></div>
       <ol class="steps-list">
         <li><b>① 장기요양 등급</b><p>3~5등급·인지지원까지 담는지 확인합니다. 1~2등급만 담으면 87.4% 구간이 비어 있습니다.</p><em>${m.state.cov.care.ltc ? '보유 — 등급 범위 확인' : '없음 → 보유 권장'}</em></li>
-        <li><b>② 간병 일당</b><p>하반신 마비 등 장기 입원이 예상되면 체증형이 유리합니다. 실제 고용 증빙이 필요합니다.</p><em>현재 ${won(m.state.cov.care.daily)}만원 · 권장 ${won(car.r.parts[0].rec)}만원</em></li>
-        <li><b>③ 신청 시점</b><p>65세 미만도 노인성 질병이면 장기요양 신청이 가능합니다. 등급 판정이 전제입니다.</p><em>65세 전후로 미리 확인</em></li>
+        <li><b>② 간병 일당</b><p>하반신 마비 등 장기 입원이 예상되면 체증형이 유리하고, 요양병원 일당은 별도 담보입니다. 실제 고용 증빙이 필요합니다.</p><em>일반병원 ${won(m.state.cov.care.daily)}만원 · 요양병원 ${m.state.cov.care.nDaily ? won(m.state.cov.care.nDaily) + '만원' : '없음'} → 권장 ${won(PK(car, 'daily').rec)}만원</em></li>
+        <li><b>③ 지급 요건</b><p>2026년 7월부터 주요 손보사가 하루 8시간 기준으로 바꿨습니다. 가족 간병은 업체 등록·결제 증빙이 맞아야 인정됩니다.</p><em>${m.state.cov.care.basis === 'unknown' ? '지급 기준 미확인 → 증권 확인' : { time: '시간 기준', money: '금액 기준' }[m.state.cov.care.basis]} · 가족간병 ${ { yes: '인정', conditional: '조건부', no: '불인정' }[m.state.cov.care.family] }</em></li>
+        <li><b>④ 신청 시점</b><p>65세 미만도 노인성 질병이면 장기요양 신청이 가능합니다. 등급 판정이 전제입니다.</p><em>65세 전후로 미리 확인</em></li>
       </ol>
       ${m.family.indexOf('dementia') >= 0 ? noteBox('가족력에 치매가 있습니다. 장기요양과 간병 일당을 가장 우선해서 준비하는 편이 좋습니다.', 'warn') : noteBox('가입 연령 제한과 인수 조건이 있습니다. 나이가 들수록 선택지가 줄어듭니다.', 'info')}`, { need: needOf('care') });
 
@@ -842,6 +901,13 @@
           c[pt.key] = Math.max(Number(c[pt.key] || 0), Math.round(rec * f));
         } else if (pt.type === 'bool') {
           if (b >= 60) c[pt.key] = true;
+        } else if (pt.type === 'group') {
+          if (!c[pt.key] || typeof c[pt.key] !== 'object') c[pt.key] = {};
+          const brec = p.rec[S.age] || 0;
+          (pt.subs || []).forEach((sp) => {
+            const rec = BojangModel.subRec(brec, sp, pt);
+            c[pt.key][sp.key] = Math.max(Number(c[pt.key][sp.key] || 0), Math.round(rec * f));
+          });
         } else if (pt.type === 'scale') {
           const opts = pt.options;
           const idx = Math.min(opts.length - 1, Math.round((opts.length - 1) * f));
@@ -919,6 +985,8 @@
     });
     $('#deck-prev').addEventListener('click', prev);
     $('#deck-next').addEventListener('click', next);
+    const dHome = $('#deck-home');
+    if (dHome) dHome.addEventListener('click', () => { if (H && H.onHome) H.onHome(); });
     $('#deck-filter').addEventListener('click', () => applyFilter(!needOnly));
 
     const adv = $('#deck-advisor');

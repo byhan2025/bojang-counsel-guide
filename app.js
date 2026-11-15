@@ -16,17 +16,17 @@
   const SKEY = 'bojang.session.v4';
 
   const DEFAULT = {
-    age: '40', gender: '여', job: '1', silson: '4', premium: 22,
+    age: '40', gender: '남', job: '1', silson: '4', premium: 27,
     client: { name: '홍길동', birth: '', consultant: '' },
     contracts: [],
     family: [],
     disc: {},
     cov: {
-      cancer: { general: 3000, similar: 0, treatment: { surgery: 0, drug: 0, radio: 0, icu: 0, extra: 0 }, recur: false },
-      brain: { scope: 'vascular', treat: true },
-      heart: { scope: 'mi', surgery: false },
-      surgery: { disease: 300, nDae: false, injury: false },
-      care: { daily: 10, nursing: false, ltc: false, mode: 'normal' }
+      cancer: { general: 5000, similar: 1000, treatment: { surgery: 1000, drug: 1500, radio: 600, icu: 0, extra: 500 }, recur: true },
+      brain: { scope: 'vascular', treat: { lysis: 1000, surgery: 1500, icu: 0 } },
+      heart: { scope: 'ischemic', treat: { lysis: 0, surgery: 1500, icu: 500 } },
+      surgery: { disease: 50, disease15: 300, diseaseNdae: 500, diseaseNonPay: 0, injury: 50, injury15: 300 },
+      care: { daily: 10, nDaily: 0, basis: 'time', family: 'conditional', nursing: true, ltc: false, mode: 'normal' }
     },
     flags: { savings: false, renew: true, manyRiders: false }
   };
@@ -83,8 +83,8 @@
     ['age', 'gender', 'job', 'silson', 'premium'].forEach((k) => { if (s[k] != null) state[k] = s[k]; });
     if (s.cov) state.cov = Object.assign(state.cov, s.cov);
     if (s.flags) state.flags = Object.assign(state.flags, s.flags);
-    /* v4.1: 구버전 단일 치료비 숫자 → 5종으로 자동 변환 */
-    state.cancerMigration = BojangModel.normalizeCov(state);
+    /* v4.2: 구버전 구조(단일 치료비·boolean 치료비·종수/N대·간병 일당)를 새 구조로 자동 변환 */
+    state.migration = BojangModel.normalizeState(state);
   }
 
   /* ================= 모델 ================= */
@@ -278,14 +278,39 @@
     return `<span class="mini-badge tone-${tone}">${pct}%</span>`;
   }
 
+  /* v4.2: 최소 · 권장 · 충분 3단계 게이지 */
+  function tierGaugeHTML(pr) {
+    const t = pr.tiers;
+    if (!t || !pr.stage) return '';
+    const pos = (v) => Math.max(2, Math.min(100, Math.round((Number(v) / t.enough) * 100)));
+    const pct = pr.stage.pct;
+    return `
+      <div class="tier-gauge tone-${pr.stage.code === 'none' ? 'gap' : pr.stage.code === 'low' ? 'warn' : pr.stage.code === 'min' ? 'need' : 'ok'}">
+        <div class="tg-track">
+          <i style="width:${pct}%"></i>
+          <span class="tg-mark" style="left:${pos(t.min)}%"><em>최소</em></span>
+          <span class="tg-mark" style="left:${pos(t.rec)}%"><em>권장</em></span>
+          <span class="tg-mark end" style="left:100%"><em>충분</em></span>
+        </div>
+        <div class="tg-legend">
+          <span class="tg-state">${pr.stage.label}</span>
+          <span>최소 ${won(t.min)} · 권장 ${won(t.rec)} · 충분 ${won(t.enough)}${pr.part && pr.part.key === 'daily' ? '만원' : '만원'}</span>
+        </div>
+      </div>`;
+  }
+
   function amountRowHTML(item, part) {
-    const rec = Math.round(item.rec[state.age] * part.factor);
-    const val = cv(item, part) || 0;
+    const ev = BojangModel.evalItem(state, item);
+    const pr = ev.parts.find((p) => p.key === part.key) || { rec: 0, val: 0, fill: 0 };
+    const rec = pr.rec;
+    const val = pr.val || 0;
+    const lim = (part.min != null || part.max != null)
+      ? `<span class="rec-hint">${part.min != null ? won(part.min) + '~' : ''}${part.max != null ? won(part.max) : ''}만원</span>` : '';
     return `
       <div class="part" data-part="${part.key}">
         <div class="part-head">
           <div class="part-label"><strong>${part.label}</strong>${part.hint ? `<span>${part.hint}</span>` : ''}</div>
-          <div class="part-side">${partBadge(item.key, part)}</div>
+          <div class="part-side">${pr.stage ? `<span class="mini-badge tone-${pr.stage.code === 'none' ? 'gap' : pr.stage.code === 'low' ? 'warn' : pr.stage.code === 'min' ? 'need' : 'ok'}">${pr.stage.label}</span>` : ''}${partBadge(item.key, part)}</div>
         </div>
         <div class="input-row">
           <span class="di-tag">직접입력</span>
@@ -295,18 +320,20 @@
         </div>
         <div class="quick-row">
           ${part.quick.map((q) => `<button type="button" class="quick" data-set="${q}" data-item="${item.key}" data-part="${part.key}">${q === 0 ? '없음' : won(q)}</button>`).join('')}
-          <span class="rec-hint">권장 ${won(rec)}만원</span>
+          ${lim || `<span class="rec-hint">권장 ${won(rec)}만원</span>`}
         </div>
+        ${tierGaugeHTML(pr)}
       </div>`;
   }
 
-  /* v4.1: 암 주요치료비 5종 — 세부마다 직접입력 + 빠른 선택(500~3,000만원) */
+  /* v4.2: 주요치료비 그룹 — 암 5종 · 뇌/심장 3종 공통 */
   function groupRowHTML(item, part) {
     const baseRec = item.rec[state.age] || 0;
     const cur = cv(item, part);
     const src = (cur && typeof cur === 'object') ? cur : {};
-    const subs = (part.subs || BojangModel.TREAT_SUBS).map((sp) => {
-      const rec = BojangModel.treatRec(baseRec, sp);
+    const list = part.subs || BojangModel.TREAT_SUBS;
+    const subs = list.map((sp) => {
+      const rec = BojangModel.subRec(baseRec, sp, part);
       const val = Number(src[sp.key] || 0) || 0;
       const fill = rec > 0 ? clamp(val / rec, 0, 1) : 0;
       return { sp, rec, val, fill, pct: Math.round(fill * 100) };
@@ -314,6 +341,8 @@
     const valSum = subs.reduce((a, s) => a + s.val, 0);
     const recSum = subs.reduce((a, s) => a + s.rec, 0);
     const have = subs.filter((s) => s.val > 0).length;
+    const n = subs.length;
+    const lo = part.min || 500, hi = part.max || 3000;
     return `
       <div class="part treat-group" data-part="${part.key}">
         <div class="part-head">
@@ -321,7 +350,7 @@
           <div class="part-side">${partBadge(item.key, part)}</div>
         </div>
         <div class="treat-sum">
-          <span>5종 합계 <b>${won(valSum)}</b>만원<em>${have}/5종 보유</em></span>
+          <span>${n}종 합계 <b>${won(valSum)}</b>만원<em>${have}/${n}종 보유</em></span>
           <span class="ts-rec">권장 합계 ${won(recSum)}만원</span>
         </div>
         ${subs.map(({ sp, rec, val, pct }) => `
@@ -332,9 +361,9 @@
             </div>
             <div class="input-row">
               <span class="di-tag">직접입력</span>
-              <input type="number" inputmode="numeric" min="0" max="${part.max || BojangModel.TREAT_MAX}" step="${part.step || 500}"
+              <input type="number" inputmode="numeric" min="0" max="${hi}" step="${part.step || 500}"
                      data-item="${item.key}" data-part="${part.key}" data-sub="${sp.key}"
-                     value="${val}" placeholder="${part.min || 500}~${won(part.max || BojangModel.TREAT_MAX)}" aria-label="${sp.label} 직접입력 (만원)">
+                     value="${val}" placeholder="${lo}~${won(hi)}" aria-label="${sp.label} 직접입력 (만원)">
               <span class="unit">만원</span>
             </div>
             <div class="quick-row">
@@ -342,7 +371,7 @@
               <span class="rec-hint">권장 ${won(rec)}만원</span>
             </div>
           </div>`).join('')}
-        <p class="treat-note">각 항목 500만~3,000만원 · 미가입은 0 · 직접입력은 권장 범위 밖 값도 저장됩니다.</p>
+        <p class="treat-note">각 항목 ${won(lo)}만~${won(hi)}만원 · 미가입은 0 · 직접입력은 권장 범위 밖 값도 저장됩니다.${item.key === 'brain' || item.key === 'heart' ? ' 대부분 최초 1회한·연 1회한이고 1년 미만은 50% 감액됩니다. 혈전용해제를 투여하지 않은 기계적 혈전제거술은 별도 담보입니다.' : ''}</p>
       </div>`;
   }
 
@@ -493,15 +522,32 @@
           const sumEl = $('.treat-sum b', row);
           if (sumEl) sumEl.textContent = won(p.val);
           const emEl = $('.treat-sum em', row);
-          if (emEl) emEl.textContent = p.subs.filter((s) => s.val > 0).length + '/5종 보유';
+          if (emEl) emEl.textContent = p.subs.filter((s) => s.val > 0).length + '/' + p.subs.length + '종 보유';
           const recEl = $('.treat-sum .ts-rec', row);
           if (recEl) recEl.textContent = `권장 합계 ${won(p.rec)}만원`;
+        } else if (p.stage) {
+          const g = $('.tier-gauge', row);
+          if (g) {
+            const t = p.tiers;
+            const pos = (v) => Math.max(2, Math.min(100, Math.round((Number(v) / t.enough) * 100)));
+            g.className = 'tier-gauge tone-' + (p.stage.code === 'none' ? 'gap' : p.stage.code === 'low' ? 'warn' : p.stage.code === 'min' ? 'need' : 'ok');
+            const bar = $('.tg-track i', g);
+            if (bar) bar.style.width = p.stage.pct + '%';
+            const st = $('.tg-state', g);
+            if (st) st.textContent = p.stage.label;
+          }
+          const sb = $('.part-side .mini-badge', row);
+          if (sb) {
+            sb.className = 'mini-badge tone-' + (p.stage.code === 'none' ? 'gap' : p.stage.code === 'low' ? 'warn' : p.stage.code === 'min' ? 'need' : 'ok');
+            sb.textContent = p.stage.label;
+          }
         }
       });
     });
     renderSummary();
     renderClientStrip();
     syncQuickStates();
+    refreshQuickValues();
     if (state.analyzed) analyze();
   }
 
@@ -917,16 +963,14 @@
   }
 
   function renderHistory() {
-    const host = $('#history-list');
-    if (!host) return;
-    if (!state.history.length) {
-      host.innerHTML = `<p class="empty">저장된 상담이 없습니다. 진단 후 "상담 저장"을 누르면 이 기기에만 기록됩니다.</p>`;
-      return;
-    }
-    host.innerHTML = state.history.map((h) => {
-      const d = new Date(h.savedAt);
-      const when = `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-      return `
+    const hosts = $$('[id="history-list"], [id="history-list2"]');
+    if (!hosts.length) return;
+    const html = !state.history.length
+      ? `<p class="empty">저장된 상담이 없습니다. 진단 후 "상담 저장"을 누르면 이 기기에만 기록됩니다.</p>`
+      : state.history.map((h) => {
+        const d = new Date(h.savedAt);
+        const when = `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        return `
         <div class="hist" data-id="${h.id}">
           <div class="hist-main"><strong>${esc(h.label)}</strong>
             <span>${when} · ${h.inputs.age}대 ${h.inputs.gender} · 실손 ${SILSON_LABEL[h.inputs.silson]}</span></div>
@@ -934,32 +978,38 @@
           <button type="button" class="hist-load" data-load="${h.id}">불러오기</button>
           <button type="button" class="hist-del" data-del="${h.id}" aria-label="삭제">×</button>
         </div>`;
-    }).join('');
-    $$('[data-load]', host).forEach((b) => {
-      b.addEventListener('click', () => {
-        const h = state.history.find((x) => x.id === b.dataset.load);
-        if (!h) return;
-        applyInputs(h.inputs);
-        if (h.client) { state.client = Object.assign(state.client, h.client, { dateLabel: todayLabel() }); renderClientFields(); }
-        if (Array.isArray(h.contracts)) { state.contracts = h.contracts; renderContracts(); }
-        analyze();
-        $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        toast(`"${h.label}" 상담을 불러왔습니다`);
+      }).join('');
+    hosts.forEach((host) => {
+      host.innerHTML = html;
+      $$('[data-load]', host).forEach((b) => {
+        b.addEventListener('click', () => {
+          const h = state.history.find((x) => x.id === b.dataset.load);
+          if (!h) return;
+          applyInputs(h.inputs);
+          if (h.client) { state.client = Object.assign(state.client, h.client, { dateLabel: todayLabel() }); renderClientFields(); }
+          if (Array.isArray(h.contracts)) { state.contracts = h.contracts; renderContracts(); }
+          renderAllInputs();
+          analyze();
+          switchView('analysis');
+          $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          toast(`"${h.label}" 상담을 불러왔습니다`);
+        });
+      });
+      $$('[data-del]', host).forEach((b) => {
+        b.addEventListener('click', () => {
+          const next = state.history.filter((x) => x.id !== b.dataset.del);
+          if (lsSet(HKEY, next)) { state.history = next; renderHistory(); renderHome(); toast('삭제했습니다'); }
+        });
       });
     });
-    $$('[data-del]', host).forEach((b) => {
-      b.addEventListener('click', () => {
-        const next = state.history.filter((x) => x.id !== b.dataset.del);
-        if (lsSet(HKEY, next)) { state.history = next; renderHistory(); toast('삭제했습니다'); }
-      });
-    });
+    renderHome();
   }
 
   function applyInputs(inputs) {
     state.age = inputs.age; state.gender = inputs.gender; state.job = inputs.job;
     state.silson = inputs.silson; state.premium = inputs.premium;
     state.cov = JSON.parse(JSON.stringify(inputs.cov));
-    BojangModel.normalizeCov(state);
+    BojangModel.normalizeState(state);
     state.flags = Object.assign({}, state.flags, inputs.flags);
     if (Array.isArray(inputs.family)) state.family = inputs.family.slice();
     if (inputs.disc) state.disc = Object.assign({}, inputs.disc);
@@ -983,6 +1033,7 @@
     state.disc = {};
     state.client = Object.assign({}, DEFAULT.client, { dateLabel: todayLabel() });
     state.contracts = [];
+    state.migration = { migrated: false, notes: [] };
     syncSegments();
     renderClientFields();
     renderFamilyChips();
@@ -990,6 +1041,7 @@
     renderCoverageCards();
     renderFlags();
     renderContracts();
+    renderQuick();
     $('#cust-label').value = '';
     $('#premium').value = state.premium;
     state.analyzed = false; state.lastResult = null;
@@ -997,7 +1049,10 @@
     $('#save-bar').hidden = true;
     setStep(1, true);
     renderSummary();
+    renderClientStrip();
+    renderHome();
     if (window.BojangDeck) window.BojangDeck.refresh(state, { reset: true });
+    switchView('home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     saveSession();
     toast('새 상담을 시작합니다 — 입력값을 모두 비웠습니다');
@@ -1046,7 +1101,7 @@
     });
     if (isClient) {
       const active = $('.view.is-active');
-      if (active && (active.id === 'view-toolkit' || active.id === 'view-live')) switchView('analysis');
+      if (active && ['view-toolkit', 'view-live', 'view-home', 'view-quick'].indexOf(active.id) >= 0) switchView('analysis');
       const liveTab = $('#tab-live'); if (liveTab) liveTab.style.display = 'none';
       if (!state.analyzed) analyze();
       if (window.BojangDeck) window.BojangDeck.show(state);
@@ -1085,15 +1140,34 @@
 
   /* ================= 탭 전환 ================= */
   function switchView(name) {
+    name = name || 'home';
     state.tab = name;
-    $$('.view').forEach((v) => v.classList.toggle('is-active', v.id === 'view-' + name));
+    const viewId = 'view-' + name;
+    $$('.view').forEach((v) => v.classList.toggle('is-active', v.id === viewId));
+    const tabOf = { home: 'home', analysis: 'analysis', quick: 'analysis', guide: 'guide', live: 'live', toolkit: 'toolkit' };
+    const active = tabOf[name] || name;
     $$('.tab').forEach((t) => {
-      const on = t.dataset.view === name;
+      const on = t.dataset.view === active;
       t.classList.toggle('is-active', on);
       t.setAttribute('aria-selected', String(on));
     });
     window.scrollTo({ top: 0, behavior: 'auto' });
+    if (name === 'home') renderHome();
+    if (name === 'quick') renderQuick();
+    /* 다른 화면에서 값을 바꿨을 수 있으므로 위저드 입력칸을 상태와 맞춥니다 */
+    if (name === 'analysis') syncWizardInputs();
     if (name === 'live' && window.BojangLive) window.BojangLive.render();
+  }
+
+  function syncWizardInputs() {
+    renderClientFields();
+    syncSegments();
+    renderFamilyChips();
+    renderDisclosure();
+    renderCoverageCards();
+    renderContracts();
+    renderSummary();
+    renderClientStrip();
   }
 
 
@@ -1372,6 +1446,362 @@
       <p class="sum-note">위 내용으로 진단하면 점수 · 고객 30장 슬라이드 · 1장/10장/30장 PDF가 만들어집니다.</p>`;
   }
 
+  /* ================= v4.2 메인 허브 ================= */
+  function renderHome() {
+    const host = $('#home-client');
+    if (!host) return;
+    let m = null;
+    try { m = model(); } catch (e) { m = null; }
+    const ia = state.client.birth ? BojangModel.insuranceAge(state.client.birth) : null;
+    host.innerHTML = `
+      <div class="hc-avatar" aria-hidden="true">${esc((state.client.name || '홍').slice(0, 1))}</div>
+      <div class="hc-main">
+        <div class="hc-name">${esc(state.client.name || '홍길동')}님 <span>${ia != null ? `보험나이 ${ia}세` : `${state.age}대`} · ${state.gender} · ${state.job}급</span></div>
+        <div class="hc-meta">
+          <span>월 ${won(state.premium)}만원</span>
+          <span>실손 ${SILSON_LABEL[state.silson]}</span>
+          ${m ? `<span class="hc-score tone-${m.grade.tone}">${m.letter} · ${m.score}점</span>` : ''}
+          <span>계약 ${state.contracts.length}건</span>
+        </div>
+      </div>
+      ${state.migration && state.migration.notes && state.migration.notes.length
+        ? `<div class="mig-note">구버전 데이터를 새 구조로 옮겼습니다 · ${state.migration.notes.join(' / ')}</div>` : ''}`;
+    const hc = $('#home-hist-count');
+    if (hc) hc.textContent = state.history.length + '건';
+    renderPresets();
+  }
+
+  function renderPresets() {
+    const host = $('#preset-row');
+    if (!host) return;
+    host.innerHTML = AGES.map((a) => {
+      const p = PRESETS[a];
+      if (!p) return '';
+      return `<button type="button" class="preset${state.age === a ? ' is-on' : ''}" data-preset="${a}">
+        <b>${a}대</b><span>${p.label} · 월 ${won(p.premium)}만원</span></button>`;
+    }).join('') + `<button type="button" class="preset preset-clear" data-preset="none"><b>비우기</b><span>입력값 초기화</span></button>`;
+    $$('[data-preset]', host).forEach((b) => {
+      b.addEventListener('click', () => {
+        if (b.dataset.preset === 'none') { resetConsult(); return; }
+        applyPreset(b.dataset.preset);
+      });
+    });
+  }
+
+  function applyPreset(age) {
+    const p = PRESETS[age];
+    if (!p) return;
+    state.age = age;
+    state.premium = p.premium;
+    state.silson = p.silson;
+    state.gender = p.gender;
+    state.job = p.job;
+    state.cov = JSON.parse(JSON.stringify(p.cov));
+    BojangModel.normalizeState(state);
+    renderAllInputs();
+    saveSession();
+    analyze();
+    toast(`${p.label}를 채웠습니다 — 실제 증권 값으로 고쳐 쓰세요`);
+  }
+
+  function renderAllInputs() {
+    renderClientFields();
+    syncSegments();
+    renderFamilyChips();
+    renderDisclosure();
+    renderCoverageCards();
+    renderFlags();
+    renderContracts();
+    renderQuick();
+    renderSummary();
+    renderClientStrip();
+    renderHome();
+    $('#premium').value = state.premium;
+  }
+
+  /* ================= 한 화면 빠른 입력 (표 모드) ================= */
+  function qScaleChips(item, p, cur) {
+    return (p.options || []).map((o) => `<button type="button" class="qchip${cur === o.v ? ' is-on' : ''}" data-qscale="${o.v}" data-qitem="${item.key}" data-qpart="${p.key}">${o.label}${o.hint ? `<em>${o.hint}</em>` : ''}</button>`).join('');
+  }
+
+  function quickRow(item, p) {
+    const ev = BojangModel.evalItem(state, item);
+    const pr = ev.parts.find((x) => x.key === p.key) || { val: 0, rec: 0, fill: 0 };
+    const tone = pr.fill >= 1 ? 'ok' : pr.fill > 0 ? 'need' : 'gap';
+    if (p.type === 'amount') {
+      return `
+        <div class="qrow" data-qrow="${item.key}.${p.key}">
+          <span class="ql"><b>${p.label}</b>${p.hint ? `<em>${p.hint}</em>` : ''}</span>
+          <div class="qv">
+            <span class="di-tag">직접입력</span>
+            <input type="number" inputmode="numeric" min="0" step="${p.step}" data-qitem="${item.key}" data-qpart="${p.key}" value="${pr.val}" aria-label="${p.label} (만원)">
+            <span class="unit">만원</span>
+            <span class="qstate tone-${tone}">${pr.stage ? pr.stage.label : Math.round(pr.fill * 100) + '%'}</span>
+          </div>
+          <span class="qc">
+            ${(p.quick || []).map((q) => `<button type="button" class="quick" data-qset="${q}" data-qitem="${item.key}" data-qpart="${p.key}">${q === 0 ? '없음' : won(q)}</button>`).join('')}
+            <em class="qrec">권장 ${won(pr.rec)}</em>
+          </span>
+        </div>`;
+    }
+    if (p.type === 'group') {
+      const subs = pr.subs || [];
+      return `
+        <div class="qrow qgroup-head" data-qrow="${item.key}.${p.key}">
+          <span class="ql"><b>${p.label}</b><em>${p.hint || ''}</em></span>
+          <div class="qv"><span class="qsum">${won(pr.val)}<em>만원</em></span><span class="qstate tone-${tone}">${subs.filter((s) => s.val > 0).length}/${subs.length}종</span></div>
+          <span class="qc"><em class="qrec">권장 합계 ${won(pr.rec)}</em></span>
+        </div>
+        ${subs.map((s) => `
+          <div class="qrow qsub" data-qrow="${item.key}.${p.key}.${s.key}">
+            <span class="ql"><b>└ ${s.label}</b>${s.hint ? `<em>${s.hint}</em>` : ''}</span>
+            <div class="qv">
+              <span class="di-tag">직접입력</span>
+              <input type="number" inputmode="numeric" min="0" max="${s.max || 3000}" step="${p.step || 500}" data-qitem="${item.key}" data-qpart="${p.key}" data-qsub="${s.key}" value="${s.val}" aria-label="${s.label} (만원)">
+              <span class="unit">만원</span>
+              <span class="qstate tone-${s.fill >= 1 ? 'ok' : s.val > 0 ? 'need' : 'gap'}">${s.pct}%</span>
+            </div>
+            <span class="qc">
+              ${(p.quick || []).map((q) => `<button type="button" class="quick" data-qset="${q}" data-qitem="${item.key}" data-qpart="${p.key}" data-qsub="${s.key}">${q === 0 ? '없음' : won(q)}</button>`).join('')}
+              <em class="qrec">권장 ${won(s.rec)}</em>
+            </span>
+          </div>`).join('')}`;
+    }
+    if (p.type === 'scale') {
+      const cur = cv(item, p) || (p.options[0] && p.options[0].v);
+      return `
+        <div class="qrow" data-qrow="${item.key}.${p.key}">
+          <span class="ql"><b>${p.label}</b>${p.hint ? `<em>${p.hint}</em>` : ''}</span>
+          <div class="qv"><div class="qchips">${qScaleChips(item, p, cur)}</div></div>
+          <span class="qc"><span class="qstate tone-${tone}">${pr.option ? pr.option.label : ''}</span></span>
+        </div>`;
+    }
+    const on = !!cv(item, p);
+    return `
+      <div class="qrow" data-qrow="${item.key}.${p.key}">
+        <span class="ql"><b>${p.label}</b>${p.hint ? `<em>${p.hint}</em>` : ''}</span>
+        <div class="qv"><label class="qswitch"><input type="checkbox" data-qbool="1" data-qitem="${item.key}" data-qpart="${p.key}" ${on ? 'checked' : ''}><span class="sw" aria-hidden="true"></span><em>${on ? '보유' : '없음'}</em></label></div>
+        <span class="qc"></span>
+      </div>`;
+  }
+
+  function renderQuick() {
+    const host = $('#quick-tables');
+    if (!host) return;
+    host.innerHTML = PRIORITY.map((item) => {
+      const r = BojangModel.evalItem(state, item);
+      return `
+        <div class="quick-card" data-qcard="${item.key}">
+          <div class="quick-head"><span class="cov-rank">${item.rank}</span><b>${item.name}</b><span>${item.sub}</span>
+            <span class="badge badge-${r.level}">${r.label}</span>
+            <span class="qh-pct">${Math.round(r.fill * 100)}%</span></div>
+          ${item.parts.map((p) => quickRow(item, p)).join('')}
+          ${item.tiers ? `<p class="q-tier-note">${item.tierNote || ''}</p>` : ''}
+        </div>`;
+    }).join('');
+    bindQuickInputs();
+    fillQuickHeader();
+    refreshQuickValues();
+  }
+
+  function fillQuickHeader() {
+    const n = $('#q-name');
+    if (n) n.value = state.client.name === '홍길동' ? '' : state.client.name;
+    const pr = $('#q-premium');
+    if (pr) pr.value = state.premium;
+    const qc = $('#quick-client');
+    if (qc) qc.textContent = `${state.client.name} · ${state.age}대 ${state.gender} · 실손 ${SILSON_LABEL[state.silson]} · 월 ${won(state.premium)}만원`;
+    if ($('#q-age')) buildSeg($('#q-age'), AGES.map((a) => ({ value: a, label: a + '대' })), state.age, (v) => { state.age = v; state.ageAuto = false; renderAllInputs(); saveSession(); if (state.analyzed) analyze(); });
+    if ($('#q-gender')) buildSeg($('#q-gender'), [{ value: '남', label: '남' }, { value: '여', label: '여' }], state.gender, (v) => { state.gender = v; renderAllInputs(); saveSession(); if (state.analyzed) analyze(); });
+    if ($('#q-job')) buildSeg($('#q-job'), [{ value: '1', label: '1급' }, { value: '2', label: '2급' }, { value: '3', label: '3급' }], state.job, (v) => { state.job = v; renderAllInputs(); saveSession(); if (state.analyzed) analyze(); });
+    if ($('#q-silson')) buildSeg($('#q-silson'), [{ value: 'none', label: '없음' }, { value: '1', label: '1세대' }, { value: '2', label: '2세대' }, { value: '3', label: '3세대' }, { value: '4', label: '4세대' }, { value: '5', label: '5세대' }], state.silson, (v) => { state.silson = v; renderAllInputs(); saveSession(); if (state.analyzed) analyze(); });
+  }
+
+  function setCov(itemKey, partKey, val, subKey) {
+    const c = state.cov[itemKey];
+    if (!c) return;
+    if (subKey) {
+      if (!c[partKey] || typeof c[partKey] !== 'object') c[partKey] = (itemKey === 'cancer' ? BojangModel.emptyTreat() : BojangModel.emptyNeuro());
+      c[partKey][subKey] = val;
+    } else c[partKey] = val;
+  }
+
+  function bindQuickInputs() {
+    $$('#view-quick input[type="number"][data-qitem]').forEach((input) => {
+      input.addEventListener('input', () => {
+        const v = clamp(Number(input.value || 0), 0, 100000);
+        setCov(input.dataset.qitem, input.dataset.qpart, v, input.dataset.qsub);
+        refreshBadges(); saveSession();
+      });
+    });
+    $$('#view-quick .quick[data-qset]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const v = Number(b.dataset.qset);
+        setCov(b.dataset.qitem, b.dataset.qpart, v, b.dataset.qsub);
+        const sel = `#view-quick input[data-qitem="${b.dataset.qitem}"][data-qpart="${b.dataset.qpart}"]` + (b.dataset.qsub ? `[data-qsub="${b.dataset.qsub}"]` : ':not([data-qsub])');
+        const inp = $(sel);
+        if (inp) inp.value = v;
+        refreshBadges(); saveSession();
+      });
+    });
+    $$('#view-quick .qchip[data-qscale]').forEach((b) => {
+      b.addEventListener('click', () => {
+        setCov(b.dataset.qitem, b.dataset.qpart, b.dataset.qscale);
+        $$(`.qchip[data-qitem="${b.dataset.qitem}"][data-qpart="${b.dataset.qpart}"]`).forEach((x) => x.classList.toggle('is-on', x === b));
+        refreshBadges(); saveSession();
+      });
+    });
+    $$('#view-quick input[data-qbool]').forEach((cb) => {
+      cb.addEventListener('change', () => {
+        setCov(cb.dataset.qitem, cb.dataset.qpart, cb.checked);
+        const em = cb.parentElement.querySelector('em');
+        if (em) em.textContent = cb.checked ? '보유' : '없음';
+        refreshBadges(); saveSession();
+      });
+    });
+    const name = $('#q-name');
+    if (name) name.addEventListener('input', (e) => {
+      state.client.name = (e.target.value || '').trim() || '홍길동';
+      renderClientStrip(); renderSummary(); renderHome(); saveSession();
+      const qc = $('#quick-client');
+      if (qc) qc.textContent = `${state.client.name} · ${state.age}대 ${state.gender} · 실손 ${SILSON_LABEL[state.silson]} · 월 ${won(state.premium)}만원`;
+      if (state.analyzed) analyze();
+    });
+    const prem = $('#q-premium');
+    if (prem) prem.addEventListener('input', (e) => {
+      state.premium = clamp(Number(e.target.value || 0), 0, 300);
+      $('#premium').value = state.premium;
+      renderClientStrip(); renderHome(); syncQuickStates(); saveSession();
+      if (state.analyzed) analyze();
+    });
+  }
+
+  function refreshQuickValues() {
+    const host = $('#view-quick');
+    if (!host || host.hidden) return;
+    const active = document.activeElement;
+    $$('#view-quick input[type="number"][data-qitem]').forEach((input) => {
+      if (input === active) return;
+      let v = 0;
+      const c = state.cov[input.dataset.qitem] || {};
+      if (input.dataset.qsub) { const g = c[input.dataset.qpart]; v = (g && typeof g === 'object') ? Number(g[input.dataset.qsub] || 0) : 0; }
+      else v = Number(c[input.dataset.qpart] || 0) || 0;
+      if (String(v) !== input.value) input.value = v;
+    });
+    $$('#view-quick .quick[data-qset]').forEach((b) => {
+      const c = state.cov[b.dataset.qitem] || {};
+      let v = 0;
+      if (b.dataset.qsub) { const g = c[b.dataset.qpart]; v = (g && typeof g === 'object') ? Number(g[b.dataset.qsub] || 0) : 0; }
+      else v = Number(c[b.dataset.qpart] || 0) || 0;
+      b.classList.toggle('is-on', Number(b.dataset.qset) === v);
+    });
+    $$('#view-quick .qchip[data-qscale]').forEach((b) => {
+      const c = state.cov[b.dataset.qitem] || {};
+      b.classList.toggle('is-on', String(c[b.dataset.qpart]) === String(b.dataset.qscale));
+    });
+    $$('#view-quick input[data-qbool]').forEach((cb) => {
+      const c = state.cov[cb.dataset.qitem] || {};
+      cb.checked = !!c[cb.dataset.qpart];
+      const em = cb.parentElement.querySelector('em');
+      if (em) em.textContent = cb.checked ? '보유' : '없음';
+    });
+  }
+
+  /* ================= JSON 내보내기 / 가져오기 (PC ↔ 모바일) ================= */
+  function snapshotState() {
+    return {
+      age: state.age, gender: state.gender, job: state.job, silson: state.silson, premium: state.premium,
+      client: state.client, contracts: state.contracts, family: state.family, disc: state.disc,
+      cov: state.cov, flags: state.flags
+    };
+  }
+
+  function exportPayload() {
+    return {
+      app: 'bojang-guide', version: '4.2', exportedAt: new Date().toISOString(),
+      summary: { name: state.client.name, age: state.age, gender: state.gender, score: state.lastResult ? state.lastResult.m.score : null },
+      state: snapshotState()
+    };
+  }
+
+  async function exportJson() {
+    const text = JSON.stringify(exportPayload(), null, 2);
+    const filename = `보장분석_${(state.client.name || '고객').replace(/\s+/g, '')}_${isoDate(state.client.dateLabel)}.json`;
+    try {
+      const file = new File([text], filename, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: filename, text: `${state.client.name}님 보장분석 데이터` });
+        toast('JSON 파일을 공유했습니다');
+        return;
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') { toast('공유를 취소했습니다'); return; }
+    }
+    try {
+      const blob = new Blob([text], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      toast('JSON 파일을 내려받았습니다');
+    } catch (e) {
+      await copy(text, 'JSON을 복사했습니다 — 붙여넣기로 옮기세요');
+    }
+  }
+
+  function applyPayload(obj) {
+    const s = obj && obj.state ? obj.state : obj;
+    if (!s || !s.cov) throw new Error('보장분석 데이터가 아닙니다 (cov 없음)');
+    ['age', 'gender', 'job', 'silson', 'premium'].forEach((k) => { if (s[k] != null) state[k] = s[k]; });
+    if (s.client) state.client = Object.assign({}, state.client, s.client, { dateLabel: todayLabel() });
+    if (Array.isArray(s.contracts)) state.contracts = JSON.parse(JSON.stringify(s.contracts));
+    if (Array.isArray(s.family)) state.family = s.family.slice();
+    if (s.disc && typeof s.disc === 'object') state.disc = Object.assign({}, s.disc);
+    if (s.flags) state.flags = Object.assign({}, state.flags, s.flags);
+    state.cov = JSON.parse(JSON.stringify(s.cov));
+    state.migration = BojangModel.normalizeState(state);
+    renderAllInputs();
+    saveSession();
+    analyze();
+    switchView('analysis');
+    toast('JSON 데이터를 가져왔습니다');
+  }
+
+  function openJsonModal() {
+    $('#json-modal').hidden = false;
+    $('#jm-text').value = '';
+    $('#jm-msg').textContent = '';
+    $('#jm-file').value = '';
+  }
+  function closeJsonModal() { $('#json-modal').hidden = true; }
+
+  async function importFromModal() {
+    const text = ($('#jm-text').value || '').trim();
+    const msg = $('#jm-msg');
+    if (!text) { msg.textContent = '파일을 선택하거나 JSON을 붙여넣어 주세요.'; return; }
+    try {
+      const obj = JSON.parse(text);
+      applyPayload(obj);
+      closeJsonModal();
+    } catch (e) {
+      msg.textContent = '가져오지 못했습니다 — ' + (e && e.message ? e.message : 'JSON 형식 오류');
+    }
+  }
+
+  /* ================= 화면 이동 ================= */
+  function goHome() {
+    if (state.view === 'client') { state.view = 'advisor'; lsSet(VKEY, 'advisor'); applyView(); }
+    switchView('home');
+  }
+  function goClient() {
+    if (!state.analyzed) analyze();
+    switchView('analysis');
+    state.view = 'client';
+    lsSet(VKEY, 'client');
+    applyView();
+  }
+
   /* ================= 초기화 ================= */
   function init() {
     state.view = lsGet(VKEY, 'advisor') === 'client' ? 'client' : 'advisor';
@@ -1388,9 +1818,57 @@
     renderGuideBody();
     renderToolkit();
     loadHistory();
+    renderQuick();
+    renderHome();
+    switchView('home');
     applyView();
     setStep(1, true);
     renderSummary();
+
+    /* 메인 허브 · 화면 이동 */
+    document.addEventListener('click', (e) => {
+      const back = e.target.closest('[data-home]');
+      if (back) { goHome(); return; }
+      const go = e.target.closest('[data-home-go]');
+      if (!go) return;
+      const k = go.dataset.homeGo;
+      if (k === 'analysis') { state.analyzed ? switchView('analysis') : switchView('analysis'); setStep(state.step, true); }
+      else if (k === 'quick') switchView('quick');
+      else if (k === 'client') goClient();
+      else if (k === 'live') switchView('live');
+      else if (k === 'guide') switchView('guide');
+      else if (k === 'toolkit') switchView('toolkit');
+      else if (k === 'pdf') {
+        if (!state.analyzed) analyze();
+        switchView('analysis');
+        setTimeout(() => { const el = $('#pdf-panel'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 60);
+      } else if (k === 'history') {
+        switchView('home');
+        setTimeout(() => { const el = $('#recent-card'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+      }
+    });
+    $('#btn-home').addEventListener('click', goHome);
+    $('#btn-home-load').addEventListener('click', () => {
+      const el = $('#recent-card');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      toast(state.history.length ? '저장된 상담 목록입니다 — 불러오기를 누르세요' : '저장된 상담이 없습니다');
+    });
+    $('#btn-json-export').addEventListener('click', exportJson);
+    $('#btn-json-import').addEventListener('click', openJsonModal);
+    $('#jm-cancel').addEventListener('click', closeJsonModal);
+    $('#jm-ok').addEventListener('click', importFromModal);
+    $('#json-modal').addEventListener('click', (e) => { if (e.target.id === 'json-modal') closeJsonModal(); });
+    $('#jm-file').addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => { $('#jm-text').value = String(rd.result || ''); $('#jm-msg').textContent = `파일을 읽었습니다 — ${f.name} · 가져오기를 누르세요`; };
+      rd.onerror = () => { $('#jm-msg').textContent = '파일을 읽지 못했습니다'; };
+      rd.readAsText(f);
+    });
+    $('#btn-quick-analyze').addEventListener('click', () => { analyze(); switchView('analysis'); $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' }); toast('진단을 완료했습니다'); });
+    $('#btn-quick-done').addEventListener('click', () => { saveSession(); goHome(); toast('입력값을 저장했습니다'); });
+    if ($('#btn-reset2')) $('#btn-reset2').addEventListener('click', () => { $('#reset-modal').hidden = false; });
 
     $('#client-name').addEventListener('input', (e) => {
       state.client.name = (e.target.value || '').trim() || '홍길동';
@@ -1496,6 +1974,14 @@
           lsSet(VKEY, 'advisor');
           applyView();
           toast('상담자 화면으로 돌아왔습니다');
+        },
+        onHome: () => {
+          if (window.BojangDeck) window.BojangDeck.hide();
+          state.view = 'advisor';
+          lsSet(VKEY, 'advisor');
+          applyView();
+          switchView('home');
+          toast('메인 화면으로 돌아왔습니다');
         }
       });
     }

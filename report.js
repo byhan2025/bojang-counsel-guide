@@ -15,6 +15,32 @@
 
   const statById = (id) => STATS.find((s) => s.id === id);
 
+  /* v4.2: 세부 항목을 위치가 아니라 키로 찾습니다 (수술 6축·간병 6칸으로 늘어남) */
+  const PK = (row, key) => (row && row.r.parts.find((p) => p.key === key)) || { val: 0, rec: 0, fill: 0, subs: [], pct: 0, option: null };
+  const subHave = (p) => (p.subs || []).filter((s) => s.val > 0).length;
+
+  /* 1장 요약·표처럼 좁은 칸에 들어가는 짧은 현재 보장 문장 (v4.2) */
+  const REC_SCOPE = { brain: '뇌혈관질환 I60~I69', heart: '허혈성심장 I20~I25' };
+  const BASIS_SHORT = { time: '시간 기준', money: '금액 기준', unknown: '기준 미확인' };
+  function shortSummary(row) {
+    const k = row.item.key;
+    if (k === 'cancer') {
+      return `일반암 ${won(PK(row, 'general').val)} · 치료비 ${subHave(PK(row, 'treatment'))}/5`;
+    }
+    if (k === 'brain' || k === 'heart') {
+      const sc = PK(row, 'scope').option ? PK(row, 'scope').option.label : '미보유';
+      return `${sc} · 치료비 ${subHave(PK(row, 'treat'))}/3`;
+    }
+    if (k === 'surgery') {
+      const dz = ['disease', 'disease15', 'diseaseNdae', 'diseaseNonPay'].filter((x) => PK(row, x).val > 0).length;
+      const ij = ['injury', 'injury15'].filter((x) => PK(row, x).val > 0).length;
+      return `질병 ${dz}/4 · 상해 ${ij}/2`;
+    }
+    const daily = PK(row, 'daily').val, nd = PK(row, 'nDaily').val;
+    const basis = (PK(row, 'basis').option || {}).label || '';
+    return `일반 ${won(daily)} · 요양 ${nd ? won(nd) : '없음'} · ${basis}`;
+  }
+
   /* =========================================================
      공용 블록
      ========================================================= */
@@ -86,34 +112,35 @@
     const w = s.CW;
     const rowH = o.rowH || 26;
     const headH = 16;
+    const rankW = 86, curW = 148, gauW = 96, verdictW = 56;
     s.rect(s.ML, y, w, headH, { fill: C.navy });
-    const cols = [['우선순위', 52, 'left'], ['현재 보장', 168, 'left'], ['충족도', 92, 'center'], ['판정', 52, 'center'], ['부족분', 0, 'right']];
-    let cx = s.ML;
-    cols.forEach((c) => {
-      const cw = c[1] || (s.ML + w - cx - 6);
-      s.text(c[0], c[2] === 'left' ? cx + 7 : cx + cw / 2, y + 5, { size: 6.2, weight: 700, color: '#fff', align: c[2] === 'right' ? 'right' : c[2] });
-      cx += cw;
-    });
+    const heads = [
+      ['우선순위', s.ML + 7, 'left'],
+      ['현재 보장', s.ML + rankW + 6, 'left'],
+      ['충족도', s.ML + rankW + curW + 4, 'left'],
+      ['판정', s.ML + rankW + curW + gauW + verdictW / 2, 'center'],
+      ['부족분', s.ML + w - 7, 'right']
+    ];
+    heads.forEach((h) => s.text(h[0], h[1], y + 5, { size: 6.2, weight: 700, color: '#fff', align: h[2] }));
     let cy = y + headH;
     m.rows.forEach((row, i) => {
       s.rect(s.ML, cy, w, rowH, { fill: i % 2 ? C.sky2 : '#fff' });
       s.line(s.ML, cy + rowH, s.ML + w, cy + rowH, { color: C.line2 });
       // 순위
       s.iconCircle(s.ML + 13, cy + rowH / 2, 7.2, { fill: C.navy, num: row.item.rank, size: 6.8, color: '#fff' });
-      s.text(row.item.name, s.ML + 24, cy + 5, { size: 8, weight: 800, color: C.navy });
-      s.text(row.item.sub, s.ML + 24, cy + 15, { size: 5.8, weight: 500, color: C.muted });
+      s.text(row.item.name, s.ML + 24, cy + rowH / 2 - 4, { size: 8.4, weight: 800, color: C.navy });
       // 현재
-      s.text(row.summary, s.ML + 60, cy + (rowH - 7.4) / 2, { size: 6.6, weight: 500, color: C.ink2 });
+      s.text(shortSummary(row), s.ML + rankW + 6, cy + rowH / 2 - 3.6, { size: 6.4, weight: 500, color: C.ink2 });
       // 충족도
-      const bx = s.ML + 60 + 168, bw = 80;
-      s.gauge(bx, cy + rowH / 2 - 2.5, bw, row.pct / 100, { color: TONE_COLOR[row.level], h: 5 });
-      s.text(`${row.pct}%`, bx + bw + 6, cy + rowH / 2 - 4, { size: 6.4, weight: 700, color: C.ink });
+      const bx = s.ML + rankW + curW + 2, bw = 66;
+      s.gauge(bx, cy + rowH / 2 - 3, bw, row.pct / 100, { color: TONE_COLOR[row.level], h: 5 });
+      s.text(`${row.pct}%`, bx + bw + 4, cy + rowH / 2 - 3.6, { size: 6.2, weight: 700, color: C.ink });
       // 판정
       const badgeW = s.measure(row.label, 6.2, 700) + 9;
-      s.badge(s.ML + w - 52 - 60 - badgeW / 2 + 6, cy + (rowH - 11) / 2, row.label, row.level, { size: 6.2, h: 11, padX: 4.5 });
+      s.badge(s.ML + rankW + curW + gauW + verdictW / 2 - badgeW / 2, cy + (rowH - 11) / 2, row.label, row.level, { size: 6.2, h: 11, padX: 4.5 });
       // 부족분
       const gapText = row.gaps.length ? `${won(row.gaps.reduce((a, g) => a + g.need, 0))}만원` : (row.level === 'ok' ? '—' : '범위 점검');
-      s.text(gapText, s.ML + w - 7, cy + rowH / 2 - 4, { size: 6.8, weight: 700, color: row.gaps.length ? C.red : C.muted, align: 'right' });
+      s.text(gapText, s.ML + w - 7, cy + rowH / 2 - 3.6, { size: 6.6, weight: 700, color: row.gaps.length ? C.red : C.muted, align: 'right' });
       cy += rowH;
     });
     s.rect(s.ML, y, w, cy - y, { stroke: C.line, r: 0 });
@@ -186,12 +213,13 @@
       const max = st.max || Math.max.apply(null, st.rows.map((r) => r.value));
       st.rows.forEach((r) => {
         s.text(r.label, x + 10, cy, { size: 5.9, weight: 500, color: C.ink2 });
+        s.text(r.unit === '명' ? won(r.value) : r.value + '%', x + w - 10, cy, { size: 6, weight: 700, color: C.navy, align: 'right' });
         const bx = x + 10, bw = w - 20, valW = 34;
-        s.rect(bx, cy + 8, bw - valW, 4.4, { fill: C.line2, r: 2.2 });
-        s.rect(bx, cy + 8, (bw - valW) * Math.min(1, r.value / max), 4.4, { fill: C.blue, r: 2.2 });
-        s.text(r.unit === '명' ? won(r.value) : r.value + '%', x + w - 10, cy + 6, { size: 6, weight: 700, color: C.navy, align: 'right' });
-        cy += 15;
+        s.rect(bx, cy + 7.6, bw - valW, 4.4, { fill: C.line2, r: 2.2 });
+        s.rect(bx, cy + 7.6, (bw - valW) * Math.min(1, r.value / max), 4.4, { fill: C.blue, r: 2.2 });
+        cy += 16;
       });
+      cy += 2;
     }
     if (st.notes) {
       st.notes.forEach((n) => { s.text(`· ${n}`, x + 10, cy - 2, { size: 5.6, weight: 500, color: C.ink2 }); cy += 8; });
@@ -314,15 +342,16 @@
 
       // 5줄 요약표
       const rows = m.rows.map((r) => {
-        const p = r.r.parts[0];
+        const p = PK(r, r.item.parts[0].key);
         const cur = p.type === 'amount' ? `${won(p.val)}만원` : (p.option ? p.option.label : '—');
-        const tgt = p.type === 'amount' ? `권장 ${won(p.rec)}만원` : (p.part && p.part.options ? (p.part.options[p.part.options.length - 1].label) : '—');
+        const tgt = p.type === 'amount' ? `권장 ${won(p.rec)}만원`
+          : (p.type === 'scale' ? (REC_SCOPE[r.item.key] || (p.option ? p.option.label : '—')) : (p.part && p.part.options ? (p.part.options[p.part.options.length - 1].label) : '—'));
         return [`${r.item.rank}. ${r.item.name}`, { text: cur, weight: 600 }, { text: tgt, color: C.muted }, { text: r.label, badge: r.level, align: 'center' }, { text: r.gaps.length ? `+${won(r.gaps.reduce((a, g) => a + g.need, 0))}만원` : '—', color: r.gaps.length ? C.red : C.muted, weight: 700 }];
       });
       y = s.table(s.ML, y, s.CW, ['우선순위', '현재 보장', '권장 기준', '상태', '부족분'], rows, {
         widths: [86, 128, 128, 96, 77], size: 6.8, rowH: 16.5, align: ['left', 'left', 'left', 'center', 'right']
       });
-      const sT = m.rows[0].r.parts[2];
+      const sT = PK(m.rows[0], 'treatment');
       const tLine = `암 주요치료비 5종 — ${(sT.subs || []).map((x) => `${TREAT_SHORT[x.key] || x.label} ${x.val ? won(x.val) : '없음'}`).join(' · ')} (합계 ${won(sT.val)} / 권장 ${won(sT.rec)}만원)`;
       s.rect(s.ML, y + 4, s.CW, 12, { fill: '#F5F9FE', r: 3, stroke: '#DCE8F4' });
       s.rect(s.ML, y + 4, 2, 12, { fill: C.blue, r: 1 });
@@ -570,9 +599,9 @@
       let y = H(s, 4, '보장 밸런스 그래프', '네 개의 축으로 나누어 보면 어디가 얇은지 바로 보입니다. 축은 상담 보조용 자체 산식입니다.');
       const axesSets = [
         { t: '① 5대 핵심 우선순위', a: m.rows.map((r) => ({ label: r.item.name, value: r.r.fill })) },
-        { t: '② 진단비 축', note: '진단비가 얇으면 치료 중 소득 공백을 메우지 못합니다.', a: [m.rows[0].r.parts[0], m.rows[0].r.parts[1], m.rows[0].r.parts[2], m.rows[1].r.parts[0], m.rows[2].r.parts[0]].map((p, i) => ({ label: ['일반암', '유사암', '치료비', '뇌', '심장'][i], value: p.fill })) },
-        { t: '③ 의료비·수술·입원', note: '수술·입원 축은 진단비와 별도 계약입니다.', a: [m.rows[3].r.parts[0], m.rows[3].r.parts[1], m.rows[3].r.parts[2], m.rows[1].r.parts[1], m.rows[2].r.parts[1]].map((p, i) => ({ label: ['1~5종', 'N대', '상해', '뇌치료', '심장수술'][i], value: p.fill })) },
-        { t: '④ 간병·노후·기타', note: '노후에 가장 오래 나가는 돈이 이 축입니다.', a: [m.rows[4].r.parts[0].fill, m.rows[4].r.parts[1].fill, m.rows[4].r.parts[2].fill, m.state.silson === 'none' ? 0 : 1, m.state.cov.cancer.recur ? 1 : 0].map((v, i) => ({ label: ['간병일당', '간호간병', '장기요양', '실손', '재진단'][i], value: v })) }
+        { t: '② 진단비 축', note: '진단비가 얇으면 치료 중 소득 공백을 메우지 못합니다.', a: [PK(m.rows[0], 'general'), PK(m.rows[0], 'similar'), PK(m.rows[0], 'treatment'), PK(m.rows[1], 'scope'), PK(m.rows[2], 'scope')].map((p, i) => ({ label: ['일반암', '유사암', '치료비', '뇌', '심장'][i], value: p.fill })) },
+        { t: '③ 의료비·수술·입원', note: '수술·치료비는 진단비와 별도 계약입니다.', a: [PK(m.rows[3], 'disease15'), PK(m.rows[3], 'diseaseNdae'), PK(m.rows[3], 'diseaseNonPay'), PK(m.rows[1], 'treat'), PK(m.rows[2], 'treat')].map((p, i) => ({ label: ['질병1~5종', 'N대', '비급여', '뇌치료3종', '심장치료3종'][i], value: p.fill })) },
+        { t: '④ 간병·노후·기타', note: '노후에 가장 오래 나가는 돈이 이 축입니다.', a: [PK(m.rows[4], 'daily').fill, PK(m.rows[4], 'family').fill, PK(m.rows[4], 'ltc').fill, m.state.silson === 'none' ? 0 : 1, m.state.cov.cancer.recur ? 1 : 0].map((v, i) => ({ label: ['간병일당', '가족간병', '장기요양', '실손', '재진단'][i], value: v })) }
       ];
       const cw = (s.CW - 8) / 2, ch = 158;
       axesSets.forEach((set, i) => {
@@ -600,14 +629,14 @@
     P.push(function (s) {
       let y = H(s, 5, '1순위 · 암 정밀 분석', '암은 진단비(목돈)와 치료비(장기)를 나눠 봅니다. 이 페이지에서 두 축을 모두 확인합니다.');
       const cr = m.rows[0];
-      const tparts = cr.r.parts[2];
+      const tparts = PK(cr, 'treatment');
       const tsubs = tparts.subs || [];
       const tHave = tsubs.filter((s) => s.val > 0).length;
       const cards = [
-        { label: '일반암 진단비', p: cr.r.parts[0], rec: cr.r.parts[0].rec },
-        { label: '유사암 진단비', p: cr.r.parts[1], rec: cr.r.parts[1].rec },
+        { label: '일반암 진단비', p: PK(cr, 'general'), rec: PK(cr, 'general').rec },
+        { label: '유사암 진단비', p: PK(cr, 'similar'), rec: PK(cr, 'similar').rec },
         { label: '암 주요치료비 5종', p: tparts, rec: tparts.rec, note: `5종 중 ${tHave}종` },
-        { label: '재진단·전이', p: cr.r.parts[3], rec: null }
+        { label: '재진단·전이', p: PK(cr, 'recur'), rec: null }
       ];
       const cw = (s.CW - 8 * 3) / 4;
       cards.forEach((c, i) => {
@@ -643,8 +672,8 @@
       });
       y = s.sectionHead(s.ML, y + 10, s.CW, '04', '설계 권장안 — 암 주요치료비 5종 세부', '권장 기준 — 예산에 맞춰 조정합니다');
       const recs = [
-        ['일반암 진단비', `${won(m.state.cov.cancer.general)}만원`, `${won(cr.r.parts[0].rec)}만원`, cr.r.parts[0].fill],
-        ['유사암 진단비', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `${won(cr.r.parts[1].rec)}만원`, cr.r.parts[1].fill],
+        ['일반암 진단비', `${won(m.state.cov.cancer.general)}만원`, `${won(PK(cr, 'general').rec)}만원`, PK(cr, 'general').fill],
+        ['유사암 진단비', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `${won(PK(cr, 'similar').rec)}만원`, PK(cr, 'similar').fill],
         ['암 주요치료비 5종 합계', `${won(tparts.val)}만원`, `${won(tparts.rec)}만원`, tparts.fill]
       ].concat(tsubs.map((sp) => [`　· ${sp.label}`, sp.val ? `${won(sp.val)}만원` : '없음', `${won(sp.rec)}만원`, sp.fill]))
         .concat([['재진단·전이', m.state.cov.cancer.recur ? '보유' : '없음', '보유 권장', m.state.cov.cancer.recur ? 1 : 0]]);
@@ -691,19 +720,19 @@
         s.text(row.summary.split(' · ')[0], tx, y + 41, { size: 7.6, weight: 800, color: row.level === 'ok' ? C.mint : C.red });
         s.text('권장 범위', tx, y + 58, { size: 6, weight: 600, color: C.muted });
         s.text(gi ? '허혈성심장질환 I20~I25' : '뇌혈관질환 I60~I69', tx, y + 67, { size: 7, weight: 700, color: C.navy });
-        s.gauge(tx, y + 84, tw, row.r.parts[0].fill, { color: row.r.parts[0].fill >= 0.99 ? C.mint : C.orange, h: 6 });
-        s.text(`범위 충족 ${Math.round(row.r.parts[0].fill * 100)}%`, tx, y + 94, { size: 6.2, weight: 600, color: C.ink2 });
-        s.text(`수술·치료비 ${row.r.parts[1].val ? '보유' : '없음'}`, tx, y + 106, { size: 6.2, weight: 600, color: row.r.parts[1].val ? C.mint : C.red });
+        s.gauge(tx, y + 84, tw, PK(row, 'scope').fill, { color: PK(row, 'scope').fill >= 0.99 ? C.mint : C.orange, h: 6 });
+        s.text(`범위 충족 ${Math.round(PK(row, 'scope').fill * 100)}%`, tx, y + 94, { size: 6.2, weight: 600, color: C.ink2 });
+        s.text(`주요치료비 3종 ${subHave(PK(row, 'treat'))}/3 · ${won(PK(row, 'treat').val)}만원`, tx, y + 106, { size: 6.2, weight: 600, color: PK(row, 'treat').val > 0 ? C.mint : C.red });
         s.para(gi ? '급성심근경색만 담으면 협심증(I20)과 스텐트 시술이 보장 밖입니다.' : '뇌출혈만 담으면 가장 흔한 뇌경색(I63)이 보장 밖입니다.', tx, y + 118, tw, { size: 5.9, color: C.ink2, lh: 1.35 });
       });
       y += 160;
 
       y = s.sectionHead(s.ML, y, s.CW, '01', '질병별 보장범위 비교', '현재 보장 / 권장 범위 / 해석');
       const rows = [
-        ['뇌출혈', brain.r.parts[0].option ? brain.r.parts[0].option.label : '—', 'I60~I69 (뇌혈관질환)', '뇌출혈만 담으면 가장 좁은 범위입니다'],
-        ['뇌경색', brain.r.parts[0].fill >= 0.7 ? '보장' : '보장 밖', 'I63 포함', '뇌졸중·뇌혈관질환 담보에만 포함'],
-        ['급성심근경색', heart.r.parts[0].option ? heart.r.parts[0].option.label : '—', 'I20~I25 (허혈성)', '협심증(I20)이 빠지면 스텐트 시술이 보장 밖'],
-        ['수술·치료비', `${brain.r.parts[1].val ? '뇌 보유' : '뇌 없음'} · ${heart.r.parts[1].val ? '심장 보유' : '심장 없음'}`, '각각 별도 담보', '혈전용해술·스텐트는 수술 분류에서 빠질 수 있음']
+        ['뇌출혈', PK(brain, 'scope').option ? PK(brain, 'scope').option.label : '—', 'I60~I69 (뇌혈관질환)', '뇌출혈만 담으면 가장 좁은 범위입니다'],
+        ['뇌경색', PK(brain, 'scope').fill >= 0.7 ? '보장' : '보장 밖', 'I63 포함', '뇌졸중·뇌혈관질환 담보에만 포함'],
+        ['급성심근경색', PK(heart, 'scope').option ? PK(heart, 'scope').option.label : '—', 'I20~I25 (허혈성)', '협심증(I20)이 빠지면 스텐트 시술이 보장 밖'],
+        ['주요치료비 3종', `뇌 ${subHave(PK(brain, 'treat'))}/3 · 심장 ${subHave(PK(heart, 'treat'))}/3`, '혈전용해제·수술·중환자실', '혈전용해제와 기계적 혈전제거술은 다른 담보']
       ];
       y = s.table(s.ML, y + 2, s.CW, ['구분', '현재 보장', '권장 범위', '해석'], rows, {
         widths: [80, 110, 130, 195], size: 6.6, rowH: 22, align: ['left', 'center', 'center', 'left']
@@ -713,7 +742,7 @@
       y += 108;
       y = s.sectionHead(s.ML, y, s.CW, '03', '뇌·심장에서 함께 확인할 것', '진단비 밖의 빈틈');
       y = s.bullets(s.ML, y, s.CW, [
-        '수술·혈전용해 치료비: 막힌 혈관을 여는 처치는 약관상 "수술"이 아닐 수 있어 별도 담보가 필요합니다.',
+        '주요치료비 3종: 혈전용해제(tPA)·수술(관혈/비관혈)·중환자실을 각각 봅니다. 기계적 혈전제거술(카테터법)은 혈전용해치료에서 제외되어 별도 담보입니다. 대부분 1년 미만은 50% 감액입니다.',
         '후유장해: 살아남아도 장해가 남으면 지급률로 평가합니다. 진단비와 별개 담보입니다.',
         '재활·간병: 회복 기간이 길어 간병비·장기요양과 연결됩니다. 5순위에서 이어서 봅니다.'
       ], { size: 6.9, gap: 2.5 });
@@ -733,20 +762,27 @@
       s.text('수술 · 간병 · 실손 · 치료비 4축 평균', s.W - s.MR - 14, y + 12, { size: 5.8, weight: 500, color: '#9EC0E4', align: 'right' });
       y += 64;
 
-      y = s.sectionHead(s.ML, y, s.CW, '01', '수술비 두 축 · 간병 세 갈래', null);
+      y = s.sectionHead(s.ML, y, s.CW, '01', '수술비 6축 · 간병 6칸', null);
+      const sgr = m.rows[3], carR = m.rows[4];
       const rows = [
-        ['수술비', '1~5종', `${won(m.state.cov.surgery.disease)}만원`, '침습도 분류 · 1종 고액'],
-        ['수술비', 'N대', m.state.cov.surgery.nDae ? '보유' : '없음', '질환별 별도 한도'],
-        ['수술비', '상해수술비', m.state.cov.surgery.injury ? '보유' : '없음', '질병 수술과 별도 지급'],
-        ['간병', '간병인 사용일당', `${won(m.state.cov.care.daily)}만원`, m.state.cov.care.mode === 'step' ? '체증형' : '일반형'],
+        ['수술비', '질병수술비(일반·매회)', `${won(m.state.cov.surgery.disease)}만원`, '수술 1회당 정액'],
+        ['수술비', '질병 1~5종', `${won(m.state.cov.surgery.disease15)}만원`, '침습도 분류 · 1종 고액'],
+        ['수술비', '질병 N대', m.state.cov.surgery.diseaseNdae ? `${won(m.state.cov.surgery.diseaseNdae)}만원` : '없음', '질환 묶음별 한도'],
+        ['수술비', '비급여 질병 수술', m.state.cov.surgery.diseaseNonPay ? `${won(m.state.cov.surgery.diseaseNonPay)}만원` : '없음', '5세대 실손 보완'],
+        ['수술비', '일반 상해수술', `${won(m.state.cov.surgery.injury)}만원`, '사고 수술 정액'],
+        ['수술비', '상해 1~5종', `${won(m.state.cov.surgery.injury15)}만원`, '사고 수술 침습도'],
+        ['간병', '일반병원 간병일당', `${won(m.state.cov.care.daily)}만원`, '요양병원 제외 · 5~20만원'],
+        ['간병', '요양병원 간병일당', m.state.cov.care.nDaily ? `${won(m.state.cov.care.nDaily)}만원` : '없음', '통상 5~6만원대'],
+        ['간병', '지급 기준', { time: '시간 기준', money: '금액 기준', unknown: '미확인' }[m.state.cov.care.basis], '일 8시간 / 7~8만원'],
+        ['간병', '가족 간병', { yes: '인정', conditional: '업체등록·결제 필요', no: '불인정' }[m.state.cov.care.family], '청구 가능성'],
         ['간병', '간호간병통합', m.state.cov.care.nursing ? '보유' : '없음', '보호자 없는 병동'],
         ['간병', '장기요양등급', m.state.cov.care.ltc ? '보유' : '없음', '1~5등급 · 인지지원'],
         ['실손', '세대', m.state.silson === 'none' ? '없음' : `${m.state.silson}세대`, '급여·비급여 구조 확인']
       ];
       y = s.table(s.ML, y + 2, s.CW, ['영역', '항목', '현재', '메모'], rows.map((r) => [
-        { text: r[0], weight: 700, color: C.navy }, r[1], { text: r[2], weight: 700, color: r[2] === '없음' ? C.red : C.navy }, { text: r[3], color: C.muted }
-      ]), { widths: [56, 148, 96, 215], size: 6.5, rowH: 15, align: ['left', 'left', 'center', 'left'] });
-      y = s.sectionHead(s.ML, y + 10, s.CW, '02', '의료비 방어력 4축', '지금 어느 축이 비어 있는지');
+        { text: r[0], weight: 700, color: C.navy }, r[1], { text: r[2], weight: 700, color: r[2] === '없음' || r[2] === '미확인' ? C.red : C.navy }, { text: r[3], color: C.muted }
+      ]), { widths: [48, 170, 92, 205], size: 6.3, rowH: 13.2, align: ['left', 'left', 'center', 'left'] });
+      y = s.sectionHead(s.ML, y + 8, s.CW, '02', '의료비 방어력 4축', '지금 어느 축이 비어 있는지');
       const axes4 = [
         ['수술비', m.rows[3].r.fill], ['간병', m.rows[4].r.fill],
         ['실손', m.state.silson === 'none' ? 0 : 1], ['치료비 5종', BK.treatCount(m.state) / 5]
@@ -763,7 +799,7 @@
       y = s.sectionHead(s.ML, y + 2, s.CW, '03', '장기요양 등급 분포 — 왜 1~2등급만 준비하면 안 되는가', '출처: 건보공단 2025 노인장기요양보험 통계연보');
       statCard(s, s.ML, y, s.CW, 118, statById('ltc'));
       y += 126;
-      y = noteStrip(s, y, '간병인 사용일당은 실제 고용 증빙이 필요하고, 가족 간병은 인정되지 않는 상품이 많습니다. 장기요양은 등급 판정이 전제이며, 65세 미만도 노인성 질병이면 신청할 수 있습니다.', { size: 6.4 });
+      y = noteStrip(s, y, '2026년 7월부터 주요 손보사가 간병인 사용일당 지급 기준을 금액(하루 8만원)→시간(하루 8시간)으로 전환했습니다. 가족 간병은 업체 등록·결제·간병일지가 맞아야 인정되며, 요양병원은 별도 담보입니다. 장기요양은 등급 판정이 전제이고 65세 미만도 노인성 질병이면 신청할 수 있습니다.', { size: 6.2 });
       s.footer({ left: `${m.client.name}님 · 수술·간병`, right: '07 / 10' });
     });
 
@@ -1251,12 +1287,12 @@
       y += 10;
       const cr = m.rows[0];
       const cw = (s.CW - 8 * 3) / 4;
-      const tP = cr.r.parts[2];
+      const tP = PK(cr, 'treatment');
       const tS = tP.subs || [];
       const tN = tS.filter((x) => x.val > 0).length;
       [
-        ['일반암', `${won(m.state.cov.cancer.general)}만원`, `권장 ${won(cr.r.parts[0].rec)}만원`, cr.r.parts[0].fill],
-        ['유사암', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `권장 ${won(cr.r.parts[1].rec)}만원`, cr.r.parts[1].fill],
+        ['일반암', `${won(m.state.cov.cancer.general)}만원`, `권장 ${won(PK(cr, 'general').rec)}만원`, PK(cr, 'general').fill],
+        ['유사암', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `권장 ${won(PK(cr, 'similar').rec)}만원`, PK(cr, 'similar').fill],
         ['치료비 5종', `${won(tP.val)}만원 (${tN}/5)`, `권장 ${won(tP.rec)}만원`, tP.fill],
         ['재진단', m.state.cov.cancer.recur ? '보유' : '없음', '권장 보유', m.state.cov.cancer.recur ? 1 : 0]
       ].forEach((c, i) => {
@@ -1269,7 +1305,7 @@
       });
       y += 66;
       y = secLabel(s, y, '60초 판독 멘트 (그대로 읽어도 됩니다)');
-      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반암 진단비가 ${won(m.state.cov.cancer.general)}만원입니다. 기준으로 보면 ${Math.round(cr.r.parts[0].fill * 100)}% 수준이고, ${m.state.cov.cancer.similar ? `유사암은 ${won(m.state.cov.cancer.similar)}만원으로` : '유사암 담보는 없어서 갑상선암 같은 경우 0원이 될 수 있고,'} ${tN >= 5 ? `치료비는 5종이 모두 채워져 합계 ${won(tP.val)}만원입니다` : `치료비는 5종 중 ${tN}종만 채워져 합계 ${won(tP.val)}만원입니다`}. 제가 보기엔 ${cr.gaps.length ? `${cr.gaps[0].label}가 가장 먼저 손댈 곳입니다` : '금액은 충분하니 재진단 조건을 확인할 차례입니다'}."` });
+      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반암 진단비가 ${won(m.state.cov.cancer.general)}만원입니다. 기준으로 보면 ${Math.round(PK(cr, 'general').fill * 100)}% 수준이고, ${m.state.cov.cancer.similar ? `유사암은 ${won(m.state.cov.cancer.similar)}만원으로` : '유사암 담보는 없어서 갑상선암 같은 경우 0원이 될 수 있고,'} ${tN >= 5 ? `치료비는 5종이 모두 채워져 합계 ${won(tP.val)}만원입니다` : `치료비는 5종 중 ${tN}종만 채워져 합계 ${won(tP.val)}만원입니다`}. 제가 보기엔 ${cr.gaps.length ? `${cr.gaps[0].label}가 가장 먼저 손댈 곳입니다` : '금액은 충분하니 재진단 조건을 확인할 차례입니다'}."` });
       y += 6;
       y = s.bullets(s.ML, y, s.CW, [`치료비 5종 세부 — ${tS.map((x) => `${x.label} ${x.val ? won(x.val) + '만원' : '없음'}`).join(' · ')} (권장 ${won(tP.rec)}만원)`], { size: 6.6 });
       y += 8;
@@ -1401,18 +1437,18 @@
       const br = m.rows[1];
       s.rect(s.ML, y, s.CW, 70, { fill: '#F5F9FE', r: 6, stroke: C.line });
       s.text('현재 뇌 보장', s.ML + 12, y + 9, { size: 6.2, weight: 600, color: C.muted });
-      s.text(br.r.parts[0].option ? br.r.parts[0].option.label : '미보유', s.ML + 12, y + 18, { size: 15, weight: 800, color: br.level === 'ok' ? C.mint : C.red });
-      s.text(br.r.parts[0].option ? br.r.parts[0].option.hint : '', s.ML + 12, y + 38, { size: 6.4, weight: 600, color: C.ink2 });
-      s.text('수술·혈전용해 치료비', s.ML + 150, y + 9, { size: 6.2, weight: 600, color: C.muted });
-      s.text(br.r.parts[1].val ? '보유' : '없음', s.ML + 150, y + 18, { size: 13, weight: 800, color: br.r.parts[1].val ? C.mint : C.red });
-      s.text(`범위 충족도 ${Math.round(br.r.fill * 100)}%`, s.ML + 150, y + 38, { size: 6.4, weight: 600, color: C.ink2 });
+      s.text(PK(br, 'scope').option ? PK(br, 'scope').option.label : '미보유', s.ML + 12, y + 18, { size: 15, weight: 800, color: PK(br, 'scope').fill >= 0.99 ? C.mint : C.red });
+      s.text(PK(br, 'scope').option ? PK(br, 'scope').option.hint : '', s.ML + 12, y + 38, { size: 6.4, weight: 600, color: C.ink2 });
+      s.text('주요치료비 3종', s.ML + 150, y + 9, { size: 6.2, weight: 600, color: C.muted });
+      s.text(`${subHave(PK(br, 'treat'))}/3종`, s.ML + 150, y + 18, { size: 13, weight: 800, color: PK(br, 'treat').val > 0 ? C.mint : C.red });
+      s.text(`혈전용해제·수술·중환자실 ${won(PK(br, 'treat').val)}만원 / 권장 ${won(PK(br, 'treat').rec)}만원`, s.ML + 150, y + 38, { size: 6.2, weight: 600, color: C.ink2 });
       s.text('권장', s.W - s.MR - 150, y + 9, { size: 6.2, weight: 600, color: C.muted });
       s.text('뇌혈관질환 I60~I69', s.W - s.MR - 150, y + 20, { size: 9, weight: 800, color: C.navy });
       s.text('(뇌졸중 I60~I64 → 뇌출혈 I60~I62)', s.W - s.MR - 150, y + 34, { size: 5.8, weight: 500, color: C.muted });
       s.para('뇌경색(I63)은 뇌졸중·뇌혈관 담보에만 들어갑니다.', s.W - s.MR - 150, y + 46, 140, { size: 5.8, color: C.red, lh: 1.3 });
       y += 80;
       y = secLabel(s, y, '판독 멘트');
-      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님 뇌 담보는 ${br.r.parts[0].option ? br.r.parts[0].option.label : '없음'}입니다. 이 담보는 ${br.r.parts[0].key === 'scope' && m.state.cov.brain.scope === 'bleed' ? '혈관이 터진 뇌출혈만 보장합니다. 그런데 실제로는 혈관이 막히는 뇌경색이 훨씬 많습니다.' : '범위가 좁아서 가장 흔한 형태가 빠질 수 있습니다.'}"` });
+      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님 뇌 담보는 ${PK(br, 'scope').option ? PK(br, 'scope').option.label : '없음'}입니다. 이 담보는 ${m.state.cov.brain.scope === 'bleed' ? '혈관이 터진 뇌출혈만 보장합니다. 그런데 실제로는 혈관이 막히는 뇌경색이 훨씬 많습니다.' : '범위가 좁아서 가장 흔한 형태가 빠질 수 있습니다.'} 주요치료비는 3종 중 ${subHave(PK(br, 'treat'))}종이 채워져 있습니다."` });
       y += 8;
       y = s.sectionHead(s.ML, y, s.CW, '01', '근거 통계 — 이 세 줄이면 충분합니다', '출처: 중앙심뇌혈관질환센터·건강보험통계 2023 · 통계청 2024');
       bn.facts.forEach((f) => { y = s.bullets(s.ML, y, s.CW, [f], { size: 7, gap: 2 }); });
@@ -1472,9 +1508,9 @@
     P.push((s) => {
       let y = head(s, 15, 'PLAN 2 · BRAIN', '뇌 — 설계 권장안과 반론', '범위를 먼저 맞추고, 금액은 예산 안에서 조정합니다.');
       const rows = [
-        ['진단비 범위', m.rows[1].r.parts[0].option ? m.rows[1].r.parts[0].option.label : '미보유', '뇌혈관질환 I60~I69 (최소 뇌졸중)', '범위가 곧 보장입니다'],
-        ['진단비 금액', '—', `권장 ${won(m.rows[1].baseRec)}만원`, '연령대 기준 권장 예시'],
-        ['수술·혈전용해', m.state.cov.brain.treat ? '보유' : '없음', '보유 권장', '처치로 분류될 수 있어 별도 필요'],
+        ['진단비 범위', PK(m.rows[1], 'scope').option ? PK(m.rows[1], 'scope').option.label : '미보유', '뇌혈관질환 I60~I69 (최소 뇌졸중)', '범위가 곧 보장입니다'],
+        ['진단비 금액', `${won(m.state.cov.brain.scope === 'none' ? 0 : 0)}`.replace('0', PK(m.rows[1], 'scope').val > 0 ? '진단비 보유' : '미보유'), `권장 ${won(m.rows[1].baseRec)}만원 (최소 1,000·충분 3,000)`, '연령대 공통 권장 예시'],
+        ['주요치료비 3종', `${subHave(PK(m.rows[1], 'treat'))}/3종`, '혈전용해제·수술·중환자실', '기계적 혈전제거술은 별도 담보'],
         ['후유장해', '—', '확인 필요', '뇌졸중 후 장해 지급률']
       ];
       y = s.table(s.ML, y, s.CW, ['항목', '현재', '권장 기준', '이유'], rows, { widths: [86, 108, 152, 169], size: 6.7, rowH: 20, align: ['left', 'center', 'left', 'left'] });
@@ -1503,17 +1539,17 @@
       const hr = m.rows[2];
       s.rect(s.ML, y, s.CW, 68, { fill: '#FFF7F6', r: 6, stroke: '#F3DDD9' });
       s.text('현재 심장 보장', s.ML + 12, y + 9, { size: 6.2, weight: 600, color: C.muted });
-      s.text(hr.r.parts[0].option ? hr.r.parts[0].option.label : '미보유', s.ML + 12, y + 18, { size: 15, weight: 800, color: hr.level === 'ok' ? C.mint : C.red });
-      s.text(hr.r.parts[0].option ? hr.r.parts[0].option.hint : '', s.ML + 12, y + 38, { size: 6.4, weight: 600, color: C.ink2 });
-      s.text('심혈관 수술비', s.ML + 150, y + 9, { size: 6.2, weight: 600, color: C.muted });
-      s.text(hr.r.parts[1].val ? '보유' : '없음', s.ML + 150, y + 18, { size: 13, weight: 800, color: hr.r.parts[1].val ? C.mint : C.red });
-      s.text(`범위 충족도 ${Math.round(hr.r.fill * 100)}%`, s.ML + 150, y + 38, { size: 6.4, color: C.ink2 });
+      s.text(PK(hr, 'scope').option ? PK(hr, 'scope').option.label : '미보유', s.ML + 12, y + 18, { size: 15, weight: 800, color: PK(hr, 'scope').fill >= 0.99 ? C.mint : C.red });
+      s.text(PK(hr, 'scope').option ? PK(hr, 'scope').option.hint : '', s.ML + 12, y + 38, { size: 6.4, weight: 600, color: C.ink2 });
+      s.text('주요치료비 3종', s.ML + 150, y + 9, { size: 6.2, weight: 600, color: C.muted });
+      s.text(`${subHave(PK(hr, 'treat'))}/3종`, s.ML + 150, y + 18, { size: 13, weight: 800, color: PK(hr, 'treat').val > 0 ? C.mint : C.red });
+      s.text(`혈전용해제·수술·중환자실 ${won(PK(hr, 'treat').val)}만원`, s.ML + 150, y + 38, { size: 6.2, color: C.ink2 });
       s.text('권장', s.W - s.MR - 160, y + 9, { size: 6.2, weight: 600, color: C.muted });
       s.text('허혈성심장질환 I20~I25', s.W - s.MR - 160, y + 20, { size: 9, weight: 800, color: C.navy });
       s.text('급성심근경색 I21~I22 → 협심증 I20 포함', s.W - s.MR - 160, y + 34, { size: 5.8, color: C.muted });
       s.para('스텐트 시술은 협심증 단계에서 가장 많이 이뤄집니다.', s.W - s.MR - 160, y + 46, 150, { size: 5.8, color: C.red, lh: 1.3 });
       y += 78;
-      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님 심장 담보는 ${hr.r.parts[0].option ? hr.r.parts[0].option.label : '없음'}입니다. 협심증은 혈관이 좁아진 단계, 급성심근경색은 막힌 단계입니다. 지금 담보가 뒤쪽만 담고 있으면, 앞쪽에서 하는 스텐트 시술은 보장 밖입니다."` });
+      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님 심장 담보는 ${PK(hr, 'scope').option ? PK(hr, 'scope').option.label : '없음'}입니다. 협심증은 혈관이 좁아진 단계, 급성심근경색은 막힌 단계입니다. 지금 담보가 뒤쪽만 담고 있으면, 앞쪽에서 하는 스텐트 시술은 보장 밖입니다."` });
       y += 8;
       y = s.sectionHead(s.ML, y, s.CW, '01', '근거', '출처: 통계청 2024 사망원인통계');
       ht.facts.forEach((f) => { y = s.bullets(s.ML, y, s.CW, [f], { size: 7, gap: 2 }); });
@@ -1572,7 +1608,7 @@
     P.push((s) => {
       let y = head(s, 19, 'PLAN 3 · HEART', '심장 — 설계 권장안과 반론', '범위를 넓히는 것이 먼저, 금액은 그다음입니다.');
       const rows = [
-        ['진단비 범위', m.rows[2].r.parts[0].option ? m.rows[2].r.parts[0].option.label : '미보유', '허혈성심장질환 I20~I25', '협심증·스텐트 포함'],
+        ['진단비 범위', PK(m.rows[2], 'scope').option ? PK(m.rows[2], 'scope').option.label : '미보유', '허혈성심장질환 I20~I25', '협심증·스텐트 포함'],
         ['진단비 금액', '—', `권장 ${won(m.rows[2].baseRec)}만원`, '연령대 기준 권장 예시'],
         ['심혈관 수술비', m.state.cov.heart.surgery ? '보유' : '없음', '보유 권장', '스텐트·우회로 수술'],
         ['부정맥·심부전', '—', '확인 필요', '별도 담보 영역']
@@ -1595,24 +1631,28 @@
     /* 20~22 수술 */
     const sg = PLAYBOOK.surgery;
     P.push((s) => {
-      let y = head(s, 20, 'PLAN 4 · SURGERY', '4순위 · 수술비 상담 플랜', `${sg.minutes} 배분. 1~5종과 N대의 시너지 구조를 그림으로 설명합니다.`);
-      y = todoStrip(s, y, `이 페이지에서 할 일 — ${m.client.name}님 수술비가 두 축(1~5종·N대)을 갖췄는지 확인하고, 빈 축을 채웁니다.`);
+      let y = head(s, 20, 'PLAN 4 · SURGERY', '4순위 · 수술비 상담 플랜', `${sg.minutes} 배분. 질병 4축과 상해 2축을 그림으로 설명합니다.`);
+      y = todoStrip(s, y, `이 페이지에서 할 일 — ${m.client.name}님 수술비가 질병 4축·상해 2축을 갖췄는지 확인하고, 빈 축을 채웁니다.`);
       y += 10;
       const sur = m.rows[3];
       const cw = (s.CW - 16) / 3;
       [
-        ['질병 1~5종', `${won(m.state.cov.surgery.disease)}만원`, '5종 기준 1회당', sur.r.parts[0].fill],
-        ['N대 수술비', m.state.cov.surgery.nDae ? '보유' : '없음', '질환별 별도 한도', sur.r.parts[1].fill],
-        ['상해수술비', m.state.cov.surgery.injury ? '보유' : '없음', '사고 수술 별도', sur.r.parts[2].fill]
+        ['질병수술비(일반)', `${won(m.state.cov.surgery.disease)}만원`, '수술 1회당 정액', PK(sur, 'disease').fill],
+        ['질병 1~5종', `${won(m.state.cov.surgery.disease15)}만원`, '1종 기준액', PK(sur, 'disease15').fill],
+        ['질병 N대', m.state.cov.surgery.diseaseNdae ? `${won(m.state.cov.surgery.diseaseNdae)}만원` : '없음', '질환 묶음별 한도', PK(sur, 'diseaseNdae').fill],
+        ['비급여 질병 수술', m.state.cov.surgery.diseaseNonPay ? `${won(m.state.cov.surgery.diseaseNonPay)}만원` : '없음', '5세대 실손 보완', PK(sur, 'diseaseNonPay').fill],
+        ['일반 상해수술', `${won(m.state.cov.surgery.injury)}만원`, '사고 수술 정액', PK(sur, 'injury').fill],
+        ['상해 1~5종', `${won(m.state.cov.surgery.injury15)}만원`, '1종 기준액', PK(sur, 'injury15').fill]
       ].forEach((c, i) => {
-        const x = s.ML + i * (cw + 8);
-        s.rect(x, y, cw, 58, { fill: '#fff', r: 5, stroke: C.line });
-        s.text(c[0], x + 9, y + 8, { size: 6.4, weight: 600, color: C.muted });
-        s.text(c[1], x + 9, y + 18, { size: 13, weight: 800, color: c[3] >= 0.99 ? C.mint : c[3] > 0 ? C.orange : C.red });
-        s.text(c[2], x + 9, y + 36, { size: 5.8, color: C.muted });
-        s.gauge(x + 9, y + 47, cw - 18, c[3], { color: c[3] >= 0.99 ? C.mint : c[3] > 0 ? C.orange : C.gray, h: 4.5 });
+        const x = s.ML + (i % 3) * (cw + 8);
+        const yy = y + Math.floor(i / 3) * 64;
+        s.rect(x, yy, cw, 58, { fill: '#fff', r: 5, stroke: C.line });
+        s.text(c[0], x + 9, yy + 8, { size: 6.4, weight: 600, color: C.muted });
+        s.text(c[1], x + 9, yy + 18, { size: 13, weight: 800, color: c[3] >= 0.99 ? C.mint : c[3] > 0 ? C.orange : C.red });
+        s.text(c[2], x + 9, yy + 36, { size: 5.8, color: C.muted });
+        s.gauge(x + 9, yy + 47, cw - 18, c[3], { color: c[3] >= 0.99 ? C.mint : c[3] > 0 ? C.orange : C.gray, h: 4.5 });
       });
-      y += 70;
+      y += 136;
       s.rect(s.ML, y, s.CW, 96, { fill: '#F7FAFE', r: 6, stroke: C.line });
       s.text('두 축은 경쟁이 아니라 중복 청구 구조입니다', s.ML + 12, y + 9, { size: 8, weight: 800, color: C.navy });
       s.ctx.save();
@@ -1663,9 +1703,12 @@
     P.push((s) => {
       let y = head(s, 22, 'PLAN 4 · SURGERY', '수술 — 설계 권장안과 반론', '금액은 크게 잡지 않습니다. 빈 축을 채우는 것이 목적입니다.');
       const rows = [
-        ['질병 1~5종', `${won(m.state.cov.surgery.disease)}만원`, `권장 ${won(m.rows[3].baseRec)}만원 (5종 기준)`, '기본 축'],
-        ['N대 수술비', m.state.cov.surgery.nDae ? '보유' : '없음', '보유 권장', '질환별 한도'],
-        ['상해수술비', m.state.cov.surgery.injury ? '보유' : '없음', '보유 권장', '사고 수술 대비'],
+        ['질병수술비(일반)', `${won(m.state.cov.surgery.disease)}만원`, `권장 ${won(PK(m.rows[3], 'disease').rec)}만원`, '수술 1회당 정액'],
+        ['질병 1~5종', `${won(m.state.cov.surgery.disease15)}만원`, `권장 ${won(PK(m.rows[3], 'disease15').rec)}만원 (1종 기준)`, '침습도 축'],
+        ['질병 N대', m.state.cov.surgery.diseaseNdae ? `${won(m.state.cov.surgery.diseaseNdae)}만원` : '없음', '보유 권장', '질환별 한도'],
+        ['비급여 질병 수술', m.state.cov.surgery.diseaseNonPay ? `${won(m.state.cov.surgery.diseaseNonPay)}만원` : '없음', '보유 권장', '5세대 실손 보완'],
+        ['일반 상해수술', `${won(m.state.cov.surgery.injury)}만원`, `권장 ${won(PK(m.rows[3], 'injury').rec)}만원`, '사고 수술 정액'],
+        ['상해 1~5종', `${won(m.state.cov.surgery.injury15)}만원`, `권장 ${won(PK(m.rows[3], 'injury15').rec)}만원`, '사고 수술 침습도'],
         ['수술비 비중', '—', '전체 보험료의 20% 이내 (권장 예시)', '진단비가 우선']
       ];
       y = s.table(s.ML, y, s.CW, ['항목', '현재', '권장 기준', '이유'], rows, { widths: [78, 100, 182, 155], size: 6.7, rowH: 20, align: ['left', 'center', 'left', 'left'] });
@@ -1692,19 +1735,23 @@
       const car = m.rows[4];
       const cw = (s.CW - 16) / 3;
       [
-        ['간병인 일당', `${won(m.state.cov.care.daily)}만원`, m.state.cov.care.mode === 'step' ? '체증형' : '일반형', car.r.parts[0].fill],
-        ['간호간병통합', m.state.cov.care.nursing ? '보유' : '없음', '보호자 없는 병동', car.r.parts[1].fill],
-        ['장기요양등급', m.state.cov.care.ltc ? '보유' : '없음', '1~5등급·인지지원', car.r.parts[2].fill]
+        ['일반병원 간병일당', `${won(m.state.cov.care.daily)}만원`, m.state.cov.care.mode === 'step' ? '체증형' : '일반형', PK(car, 'daily').fill],
+        ['요양병원 간병일당', m.state.cov.care.nDaily ? `${won(m.state.cov.care.nDaily)}만원` : '없음', '통상 5~6만원대', PK(car, 'nDaily').fill],
+        ['지급 기준', { time: '시간 기준', money: '금액 기준', unknown: '미확인' }[m.state.cov.care.basis], '일 8시간 / 7~8만원', PK(car, 'basis').fill],
+        ['가족 간병', { yes: '인정', conditional: '업체등록·결제 필요', no: '불인정' }[m.state.cov.care.family], '청구 가능성', PK(car, 'family').fill],
+        ['간호간병통합', m.state.cov.care.nursing ? '보유' : '없음', '보호자 없는 병동', PK(car, 'nursing').fill],
+        ['장기요양등급', m.state.cov.care.ltc ? '보유' : '없음', '1~5등급·인지지원', PK(car, 'ltc').fill]
       ].forEach((c, i) => {
-        const x = s.ML + i * (cw + 8);
-        s.rect(x, y, cw, 58, { fill: '#fff', r: 5, stroke: C.line });
-        s.text(c[0], x + 9, y + 8, { size: 6.4, weight: 600, color: C.muted });
-        s.text(c[1], x + 9, y + 18, { size: 13, weight: 800, color: c[3] >= 0.99 ? C.mint : c[3] > 0 ? C.orange : C.red });
-        s.text(c[2], x + 9, y + 36, { size: 5.8, color: C.muted });
-        s.gauge(x + 9, y + 47, cw - 18, c[3], { color: c[3] >= 0.99 ? C.mint : c[3] > 0 ? C.orange : C.gray, h: 4.5 });
+        const x = s.ML + (i % 3) * (cw + 8);
+        const yy = y + Math.floor(i / 3) * 64;
+        s.rect(x, yy, cw, 58, { fill: '#fff', r: 5, stroke: C.line });
+        s.text(c[0], x + 9, yy + 8, { size: 6.4, weight: 600, color: C.muted });
+        s.text(c[1], x + 9, yy + 18, { size: 13, weight: 800, color: c[3] >= 0.99 ? C.mint : c[3] > 0 ? C.orange : C.red });
+        s.text(c[2], x + 9, yy + 36, { size: 5.8, color: C.muted });
+        s.gauge(x + 9, yy + 47, cw - 18, c[3], { color: c[3] >= 0.99 ? C.mint : c[3] > 0 ? C.orange : C.gray, h: 4.5 });
       });
-      y += 70;
-      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 간병 일당이 ${won(m.state.cov.care.daily)}만원입니다. 간병인을 하루 쓰면 10만~15만 원이 나가니까, 한 달이면 300만 원을 넘습니다. 지금 일당으로는 ${Math.round(car.r.parts[0].fill * 100)}% 수준입니다."` });
+      y += 136;
+      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반병원 간병 일당이 ${won(m.state.cov.care.daily)}만원, 요양병원은 ${m.state.cov.care.nDaily ? won(m.state.cov.care.nDaily) + '만원' : '없음'}입니다. 간병인을 하루 쓰면 10만~15만 원이 나가니까, 한 달이면 300만 원을 넘습니다. 지급 기준은 ${ { time: '하루 8시간', money: '하루 7~8만원', unknown: '확인 필요' }[m.state.cov.care.basis] }입니다."` });
       y += 8;
       y = s.sectionHead(s.ML, y, s.CW, '01', '근거 통계 — 노후의 실제 지출', '출처: 건보공단 2025 노인장기요양보험 통계연보');
       cr2.facts.forEach((f) => { y = s.bullets(s.ML, y, s.CW, [f], { size: 7, gap: 2 }); });

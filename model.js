@@ -1,7 +1,9 @@
-/* 보장분석 상담 가이드 — 공용 진단 모델 (v4.1)
+/* 보장분석 상담 가이드 — 공용 진단 모델 (v4.2)
    화면·라이브 상담·고객 30장 슬라이드·PDF 리포트가 모두 이 계산 하나를 씁니다.
-   v4 추가: 가족력 · 간편고지 판정 · 계약 납입상태/만기 집계.
-   v4.1 추가: 암 주요치료비 5종(암수술·항암약물·항암방사선·중환자실·비급여) 세분화.
+   v4   : 가족력 · 간편고지 판정 · 계약 납입상태/만기 집계.
+   v4.1 : 암 주요치료비 5종(암수술·항암약물·항암방사선·중환자실·비급여) 세분화.
+   v4.2 : 암 3,000/5,000/1억 3단계 · 뇌·심장 권장 2,000 + 주요치료비 3종(혈전용해제·수술·중환자실)
+          · 수술비 질병 4축 + 상해 2축 · 간병비 일반/요양 분리 + 시간·금액·가족간병 요건.
    모든 점수·권장선은 상담 보조용 자체 산식이며 보험사 기준이 아닙니다. */
 (function (root) {
   'use strict';
@@ -9,127 +11,249 @@
   const won = (n) => Number(n || 0).toLocaleString('ko-KR');
   const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
-  /* ---------- 암 주요치료비 5종 ---------- */
-  const TREAT_SUBS = (typeof CANCER_TREAT_SUBS !== 'undefined' && CANCER_TREAT_SUBS.length)
-    ? CANCER_TREAT_SUBS
-    : [
-      { key: 'surgery', label: '암수술비', hint: '수술 1회당', factor: 0.20 },
-      { key: 'drug', label: '항암약물치료비', hint: '표적·면역항암', factor: 0.30 },
-      { key: 'radio', label: '항암방사선치료비', hint: '방사선 치료', factor: 0.12 },
-      { key: 'icu', label: '중환자실 입원', hint: '암 치료 중 중환자실', factor: 0.10 },
-      { key: 'extra', label: '비급여 추가 치료비', hint: '비급여 주사·검사', factor: 0.18 }
-    ];
+  const FALLBACK_TREAT = [
+    { key: 'surgery', label: '암수술비', hint: '수술 1회당', factor: 0.20 },
+    { key: 'drug', label: '항암약물치료비', hint: '표적·면역항암', factor: 0.30 },
+    { key: 'radio', label: '항암방사선치료비', hint: '방사선 치료', factor: 0.12 },
+    { key: 'icu', label: '중환자실 입원', hint: '암 치료 중 중환자실', factor: 0.10 },
+    { key: 'extra', label: '비급여 추가 치료비', hint: '비급여 주사·검사', factor: 0.18 }
+  ];
+  const FALLBACK_NEURO = [
+    { key: 'lysis', label: '혈전용해제 치료비', hint: 'tPA 투여 · 기계적 혈전제거술은 별도', factor: 0.5 },
+    { key: 'surgery', label: '수술비(관혈·비관혈)', hint: '개두·개흉 · 스텐트·색전술', factor: 0.75 },
+    { key: 'icu', label: '중환자실 입원비', hint: '중환자실 치료 일당', factor: 0.5 }
+  ];
+
+  const TREAT_SUBS = (typeof CANCER_TREAT_SUBS !== 'undefined' && CANCER_TREAT_SUBS.length) ? CANCER_TREAT_SUBS : FALLBACK_TREAT;
+  const NEURO_SUBS = (typeof NEURO_TREAT_SUBS !== 'undefined' && NEURO_TREAT_SUBS.length) ? NEURO_TREAT_SUBS : FALLBACK_NEURO;
   const TREAT_MIN = 500, TREAT_MAX = 3000;
+  const NEURO_MIN = 500, NEURO_MAX = 3000;
   const CANCER_ITEM = () => PRIORITY[0];
 
-  /* 세부 1종의 권장 금액(만원) — 500~3,000만원, 100만원 단위 */
-  function treatRec(baseRec, sub) {
+  /* 세부 1종의 권장 금액(만원) — 100만원 단위, 500~3,000만원 */
+  function subRec(baseRec, sub, part) {
     const f = (sub && sub.factor) || 0;
+    const min = (part && part.min) || TREAT_MIN;
+    const max = (part && part.max) || TREAT_MAX;
     const raw = Math.round(((Number(baseRec) || 0) * f) / 100) * 100;
-    return clamp(raw, TREAT_MIN, TREAT_MAX);
+    return clamp(raw, min, max);
   }
-  function treatRecs(baseRec) {
-    return TREAT_SUBS.map((s) => treatRec(baseRec, s));
-  }
-  function emptyTreat() {
+  function treatRec(baseRec, sub) { return subRec(baseRec, sub, { min: TREAT_MIN, max: TREAT_MAX }); }
+  function treatRecs(baseRec) { return TREAT_SUBS.map((s) => treatRec(baseRec, s)); }
+
+  function emptyGroup(subs) {
     const o = {};
-    TREAT_SUBS.forEach((s) => { o[s.key] = 0; });
+    (subs || []).forEach((s) => { o[s.key] = 0; });
     return o;
   }
-  function treatObj(cov) {
-    const t = cov && cov.cancer && cov.cancer.treatment;
-    return (t && typeof t === 'object') ? t : null;
+  function emptyTreat() { return emptyGroup(TREAT_SUBS); }
+  function emptyNeuro() { return emptyGroup(NEURO_SUBS); }
+
+  function groupObj(state, key, partKey) {
+    const c = state && state.cov && state.cov[key];
+    const t = c && c[partKey];
+    return (t && typeof t === 'object' && !Array.isArray(t)) ? t : null;
   }
   /* 세부 값이 아직 숫자(구버전 단일 항목)여도 합계는 읽힙니다 */
-  function treatSum(state) {
-    const t = state && state.cov && state.cov.cancer ? state.cov.cancer.treatment : 0;
-    if (t && typeof t === 'object') return TREAT_SUBS.reduce((a, s) => a + Number(t[s.key] || 0), 0);
+  function groupSum(state, key, partKey) {
+    const c = state && state.cov && state.cov[key];
+    const t = c ? c[partKey] : 0;
+    if (t && typeof t === 'object') return Object.keys(t).reduce((a, k) => a + (Number(t[k]) || 0), 0);
     return Number(t || 0) || 0;
   }
+  function treatSum(state) { return groupSum(state, 'cancer', 'treatment'); }
+  function treatObj(state) { return groupObj(state, 'cancer', 'treatment'); }
   function treatCount(state) {
-    const t = treatObj(state && state.cov);
+    const t = treatObj(state);
     if (!t) return treatSum(state) > 0 ? 1 : 0;
     return TREAT_SUBS.filter((s) => Number(t[s.key] || 0) > 0).length;
   }
   function treatMissing(state) {
-    const t = treatObj(state && state.cov) || {};
+    const t = treatObj(state) || {};
     return TREAT_SUBS.filter((s) => !(Number(t[s.key] || 0) > 0)).map((s) => s.label);
   }
-
-  /* 구버전 단일 숫자(cov.cancer.treatment) → 5종으로 분배 (권장 비중대로, 합계 보존) */
-  function normalizeCov(state) {
-    if (!state || !state.cov || !state.cov.cancer) return { migrated: false };
-    const c = state.cov.cancer;
-    const t = c.treatment;
-    if (t && typeof t === 'object') {
-      TREAT_SUBS.forEach((s) => { if (typeof t[s.key] !== 'number') t[s.key] = Number(t[s.key] || 0) || 0; });
-      return { migrated: false };
-    }
-    const legacy = Number(t || 0) || 0;
-    const recs = treatRecs(CANCER_ITEM().rec[state.age] || 0);
-    const recSum = recs.reduce((a, b) => a + b, 0) || 1;
-    const out = emptyTreat();
-    TREAT_SUBS.forEach((s, i) => {
-      out[s.key] = legacy > 0 ? Math.round((legacy * recs[i]) / recSum / 10) * 10 : 0;
-    });
-    c.treatment = out;
-    if (legacy > 0) c.treatmentLegacy = legacy;
-    return { migrated: true, legacy };
+  function neuroSum(state, key) { return groupSum(state, key, 'treat'); }
+  function neuroCount(state, key) {
+    const t = groupObj(state, key, 'treat') || {};
+    return NEURO_SUBS.filter((s) => Number(t[s.key] || 0) > 0).length;
   }
+  function neuroMissing(state, key) {
+    const t = groupObj(state, key, 'treat') || {};
+    return NEURO_SUBS.filter((s) => !(Number(t[s.key] || 0) > 0)).map((s) => s.label);
+  }
+
+  /* ---------- 구버전 데이터 마이그레이션 (v4.2) ----------
+     저장된 localStorage 세션·상담 이력·가져온 JSON을 지금 구조로 옮깁니다.
+     금액을 알 수 없는 boolean 보유 표시는 표준 금액으로 채우고, 확인이 필요하다는 메모를 남깁니다. */
+  function normalizeState(state) {
+    const res = { migrated: false, notes: [] };
+    if (!state || !state.cov) return res;
+    const cov = state.cov;
+
+    /* 1) 암 주요치료비: 단일 숫자 → 5종 분배 (합계 보존) */
+    if (cov.cancer) {
+      const c = cov.cancer;
+      const t = c.treatment;
+      if (!(t && typeof t === 'object')) {
+        const legacy = Number(t || 0) || 0;
+        const recs = treatRecs(CANCER_ITEM().rec[state.age] || 5000);
+        const recSum = recs.reduce((a, b) => a + b, 0) || 1;
+        const out = emptyTreat();
+        TREAT_SUBS.forEach((s, i) => {
+          out[s.key] = legacy > 0 ? Math.round((legacy * recs[i]) / recSum / 10) * 10 : 0;
+        });
+        c.treatment = out;
+        if (legacy > 0) { c.treatmentLegacy = legacy; res.migrated = true; res.notes.push('암 주요치료비 단일 금액을 5종으로 나눠 옮겼습니다(합계 유지).'); }
+      } else {
+        TREAT_SUBS.forEach((s) => { if (typeof t[s.key] !== 'number') t[s.key] = Number(t[s.key] || 0) || 0; });
+      }
+      if (typeof c.general !== 'number') c.general = 0;
+      if (typeof c.similar !== 'number') c.similar = 0;
+      c.recur = !!c.recur;
+    }
+
+    /* 2) 뇌·심장 주요치료비: boolean/단일 → 3종 */
+    ['brain', 'heart'].forEach((key) => {
+      const c = cov[key];
+      if (!c) return;
+      const legacyBool = (typeof c.treat === 'boolean') ? c.treat : (typeof c.surgery === 'boolean' ? c.surgery : null);
+      if (!(c.treat && typeof c.treat === 'object')) {
+        const out = emptyNeuro();
+        if (legacyBool) {
+          NEURO_SUBS.forEach((s) => { out[s.key] = 1000; });
+          res.migrated = true;
+          res.notes.push(`${key === 'brain' ? '뇌' : '심장'} 주요치료비 보유 표시를 3종 각 1,000만원으로 옮겼습니다 — 실제 가입금액을 확인하세요.`);
+        }
+        c.treat = out;
+        delete c.surgery;
+      } else {
+        NEURO_SUBS.forEach((s) => { if (typeof c.treat[s.key] !== 'number') c.treat[s.key] = Number(c.treat[s.key + ''] || 0) || 0; });
+        delete c.surgery;
+      }
+      if (!c.scope) c.scope = 'none';
+    });
+
+    /* 3) 수술비: 질병 4축 + 상해 2축 */
+    if (cov.surgery) {
+      const s = cov.surgery;
+      const legacy = typeof s.injury === 'boolean' || typeof s.nDae === 'boolean';
+      if (legacy) {
+        const d15 = Number(s.disease || 0);
+        s.disease15 = d15;
+        s.disease = 0;
+        s.diseaseNdae = s.nDae ? 500 : 0;
+        s.diseaseNonPay = 0;
+        s.injury15 = 0;
+        s.injury = s.injury ? 50 : 0;
+        delete s.nDae;
+        res.migrated = true;
+        res.notes.push('수술비를 질병 4축·상해 2축으로 세분화했습니다 — 기존 1~5종 금액은 그대로 옮겼습니다.');
+      }
+      ['disease', 'disease15', 'diseaseNdae', 'diseaseNonPay', 'injury', 'injury15'].forEach((k) => {
+        if (typeof s[k] !== 'number') s[k] = Number(s[k] || 0) || 0;
+      });
+    }
+
+    /* 4) 간병비: 일반/요양 분리 + 약관 요건 */
+    if (cov.care) {
+      const c = cov.care;
+      if (typeof c.daily !== 'number') c.daily = Number(c.daily || 0) || 0;
+      if (typeof c.nDaily !== 'number') { c.nDaily = Number(c.nDaily || 0) || 0; if (c.daily > 0) { res.notes.push('간병 일당을 일반병원 칸으로 옮겼습니다 — 요양병원 해당 여부를 확인하세요.'); } }
+      if (!c.basis) c.basis = 'unknown';
+      if (!c.family) c.family = 'conditional';
+      c.nursing = !!c.nursing;
+      c.ltc = !!c.ltc;
+      if (!c.mode) c.mode = 'normal';
+    }
+
+    if (typeof state.premium !== 'number') state.premium = Number(state.premium || 0) || 0;
+    if (!state.flags) state.flags = {};
+    if (!Array.isArray(state.contracts)) state.contracts = [];
+    if (!Array.isArray(state.family)) state.family = [];
+    if (!state.disc || typeof state.disc !== 'object') state.disc = {};
+    return res;
+  }
+
+  /* 하위 호환: 예전 이름 */
+  function normalizeCov(state) { return normalizeState(state); }
 
   function getVal(state, item, part) {
     const c = state.cov && state.cov[item.key];
     return c ? c[part.key] : undefined;
   }
 
+  function partLevel(fill, val) {
+    if (fill >= 0.999) return 'enough';
+    if (fill >= 0.6) return 'check';
+    if (fill > 0 || val) return 'short';
+    return 'none';
+  }
+
+  /* 3단계 기준(최소·권장·충분) 게이지 판정 */
+  function stageOf(val, tiers, rec) {
+    const v = Number(val) || 0;
+    if (!tiers) return null;
+    if (v <= 0) return { code: 'none', label: '없음', pct: 0 };
+    if (v >= tiers.enough) return { code: 'enough', label: '충분', pct: 100 };
+    if (v >= tiers.rec) return { code: 'rec', label: '권장 충족', pct: Math.round((v / tiers.enough) * 100) };
+    if (v >= tiers.min) return { code: 'min', label: '최소 충족', pct: Math.round((v / tiers.enough) * 100) };
+    if (rec > 0) return { code: 'low', label: '최소 미달', pct: Math.round((v / rec) * 100) };
+    return { code: 'low', label: '최소 미달', pct: 0 };
+  }
+
   /* ---------- 담보 1개 평가 ---------- */
   function evalItem(state, item) {
     const baseRec = item.rec[state.age] || 0;
+    const firstKey = item.parts[0] && item.parts[0].key;
     const parts = item.parts.map((p) => {
-      let fill = 0, rec = 0, val = 0, option = null, subs = null;
+      const tiers = p.tiers || (p.key === firstKey ? item.tiers : null) || null;
+      let fill = 0, rec = 0, val = 0, option = null, subs = null, stage = null;
       if (p.type === 'amount') {
         rec = Math.round(baseRec * p.factor);
         val = Number(getVal(state, item, p) || 0);
         fill = rec > 0 ? clamp(val / rec, 0, 1) : 0;
+        stage = stageOf(val, tiers, rec);
       } else if (p.type === 'group') {
-        /* 5종 세분화 — 세부별 권장 대비 충족도(권장 비중 가중) */
+        /* 세부별 권장 대비 충족도(권장 비중 가중) */
         const raw = getVal(state, item, p);
         const src = (raw && typeof raw === 'object') ? raw : {};
         const list = (p.subs || TREAT_SUBS);
         subs = list.map((sp) => {
-          const srec = treatRec(baseRec, sp);
+          const srec = subRec(baseRec, sp, p);
           const sval = Number(src[sp.key] || 0) || 0;
           const sfill = srec > 0 ? clamp(sval / srec, 0, 1) : 0;
           return {
             key: sp.key, label: sp.label, hint: sp.hint, rec: srec, val: sval, fill: sfill,
-            pct: Math.round(sfill * 100), level: partLevel(sfill, sval), part: sp
+            pct: Math.round(sfill * 100), level: partLevel(sfill, sval), part: sp,
+            min: p.min || 500, max: p.max || 3000
           };
         });
         rec = subs.reduce((a, s) => a + s.rec, 0);
         val = subs.reduce((a, s) => a + s.val, 0);
         fill = rec > 0 ? subs.reduce((a, s) => a + Math.min(s.val, s.rec), 0) / rec : 0;
       } else if (p.type === 'scale') {
-        const v = getVal(state, item, p) || 'none';
+        const v = getVal(state, item, p) || p.options[0].v;
         option = p.options.find((o) => o.v === v) || p.options[0];
         fill = option.score;
       } else {
         val = !!getVal(state, item, p);
         fill = val ? 1 : 0;
       }
-      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p, subs };
+      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p, subs, stage, tiers };
     });
     const fill = parts.reduce((a, p) => a + p.weight * p.fill, 0);
     const primary = parts[0].fill;
     let level, label;
-    if (primary <= 0) { level = 'gap'; label = '공백 위험'; }
+    if (primary <= 0 && !(parts[1] && parts[1].fill > 0)) { level = 'gap'; label = '공백 위험'; }
     else if (fill >= 0.9) { level = 'ok'; label = '적정'; }
     else { level = 'need'; label = '보강 필요'; }
-    return { item, baseRec, parts, fill, level, label, primary };
+    return { item, baseRec, parts, fill, level, label, primary, tiers: item.tiers || null };
   }
 
   /* ---------- 보장 요약 문장 ---------- */
   function summaryOf(state, item, r) {
     const c = state.cov[item.key] || {};
+    const P = (k) => r.parts.find((p) => p.key === k) || {};
     if (item.key === 'cancer') {
       const bits = [`일반암 ${won(c.general)}만원`];
       bits.push(c.similar > 0 ? `유사암 ${won(c.similar)}만원` : '유사암 없음');
@@ -139,18 +263,21 @@
       return bits.join(' · ');
     }
     if (item.key === 'brain' || item.key === 'heart') {
-      const p = r.parts[0];
+      const p = P('scope');
       const opt = p.option || { label: '미보유' };
-      const extra = state.cov[item.key][item.key === 'brain' ? 'treat' : 'surgery'];
-      return `${opt.label}${opt.hint ? ' (' + opt.hint + ')' : ''}` + (extra ? ' · 수술·치료비 보유' : ' · 수술·치료비 없음');
+      const g = P('treat');
+      const n = (g.subs || []).filter((s) => s.val > 0).length;
+      return `${opt.label}${opt.hint ? ' (' + opt.hint + ')' : ''} · 치료비 3종 ${n}/3 ${won(g.val)}만원`;
     }
     if (item.key === 'surgery') {
-      const bits = [`질병 5종 ${won(c.disease)}만원`];
-      bits.push(c.nDae ? 'N대 보유' : 'N대 없음');
-      if (c.injury) bits.push('상해 보유');
-      return bits.join(' · ');
+      const dz = ['disease', 'disease15', 'diseaseNdae', 'diseaseNonPay'].filter((k) => Number(P(k).val) > 0).length;
+      const ij = ['injury', 'injury15'].filter((k) => Number(P(k).val) > 0).length;
+      return `질병 ${dz}/4축 · 상해 ${ij}/2축` + (P('diseaseNdae').val > 0 ? ` · N대 ${won(P('diseaseNdae').val)}만원` : ' · N대 없음');
     }
-    const bits = [`일당 ${won(c.daily)}만원`, c.mode === 'step' ? '체증형' : '일반형'];
+    const bits = [`일반병원 ${won(c.daily)}만원`, c.nDaily > 0 ? `요양병원 ${won(c.nDaily)}만원` : '요양병원 없음'];
+    const basisLabel = { time: '시간 기준', money: '금액 기준', unknown: '지급기준 미확인' }[c.basis] || '지급기준 미확인';
+    bits.push(basisLabel);
+    if (c.family === 'yes') bits.push('가족간병 인정'); else if (c.family === 'no') bits.push('가족간병 불인정');
     if (c.nursing) bits.push('간호간병');
     if (c.ltc) bits.push('장기요양');
     return bits.join(' · ');
@@ -178,7 +305,7 @@
     const penalty = [];
     if (state.silson === 'none') { score += SCORE_MODEL.penalty.silsonNone; penalty.push({ v: SCORE_MODEL.penalty.silsonNone, t: '실손 공백' }); }
     if (state.silson === '5') { score += SCORE_MODEL.penalty.silson5; penalty.push({ v: SCORE_MODEL.penalty.silson5, t: '5세대 비중증 축소' }); }
-    if (state.flags.renew) { score += SCORE_MODEL.penalty.renew; penalty.push({ v: SCORE_MODEL.penalty.renew, t: '갱신형 중심' }); }
+    if (state.flags && state.flags.renew) { score += SCORE_MODEL.penalty.renew; penalty.push({ v: SCORE_MODEL.penalty.renew, t: '갱신형 중심' }); }
     score = Math.round(clamp(score, 0, 100));
     const grade = SCORE_MODEL.grades.find((g) => score >= g.min) || SCORE_MODEL.grades[SCORE_MODEL.grades.length - 1];
     return { score, grade, penalty, w };
@@ -244,13 +371,6 @@
   /* ---------- 세부 항목 매트릭스 ---------- */
   const LEVEL_LABEL = { enough: '충분', check: '점검', short: '부족', none: '없음' };
 
-  function partLevel(fill, val) {
-    if (fill >= 0.999) return 'enough';
-    if (fill >= 0.6) return 'check';
-    if (fill > 0 || val) return 'short';
-    return 'none';
-  }
-
   function partRows(state, rows) {
     const out = [];
     rows.forEach(({ item, r }) => {
@@ -259,11 +379,11 @@
           itemKey: item.key, itemName: item.name, rank: item.rank,
           key: p.key, label: p.label, type: p.type,
           fill: p.fill, pct: Math.round(p.fill * 100),
-          val: p.val, rec: p.rec, option: p.option,
+          val: p.val, rec: p.rec, option: p.option, stage: p.stage, tiers: p.tiers,
           subs: p.subs ? p.subs.map((s) => ({ label: s.label, key: s.key, val: s.val, rec: s.rec, fill: s.fill, pct: s.pct, level: s.level })) : null,
           level: partLevel(p.fill, p.val),
-          text: p.type === 'amount' ? `${won(p.val)}만원 / ${won(p.rec)}만원`
-            : p.type === 'group' ? `5종 합계 ${won(p.val)}만원 / ${won(p.rec)}만원`
+          text: p.type === 'amount' ? `${won(p.val)}만원 / ${won(p.rec)}만원${p.stage ? ` (${p.stage.label})` : ''}`
+            : p.type === 'group' ? `${p.subs.filter((s) => s.val > 0).length}/${p.subs.length}종 · ${won(p.val)}만원 / ${won(p.rec)}만원`
               : p.type === 'scale' ? (p.option ? p.option.label : '미보유')
                 : (p.val ? '보유' : '없음')
         });
@@ -290,18 +410,14 @@
   };
 
   function familyList(state) {
-    const f = (state.family || []).filter((k) => FAMILY_KEYS.indexOf(k) >= 0);
-    return f;
+    return (state.family || []).filter((k) => FAMILY_KEYS.indexOf(k) >= 0);
   }
 
   function familyNotes(state) {
-    const keys = familyList(state);
-    return keys.map((k) => ({ key: k, label: FAMILY_NOTE[k].title, body: FAMILY_NOTE[k].body }));
+    return familyList(state).map((k) => ({ key: k, label: FAMILY_NOTE[k].title, body: FAMILY_NOTE[k].body }));
   }
 
   /* ---------- 간편 고지(알릴 의무) 판정 ---------- */
-  /* 기준: 간편심사는 3개월(입원·수술·추가검사 소견) / N년(입원·수술) / 5년(암 등 중대질병) 구조.
-     3·5·5는 N=5(질문 넓음·경할증), 3·2·5는 N=2(질문 좁음·중할증). 상품별 청약서 문항이 최종 기준입니다. */
   function disclosureJudge(state) {
     const d = state.disc || {};
     const on = (k) => !!d[k];
@@ -365,6 +481,7 @@
   /* ---------- 보장 구멍 · 보험료 다이어트 ---------- */
   function checkpoints(state, rows, totalSum, annual) {
     const cps = [];
+    const cov = state.cov;
     if (state.silson === 'none') {
       cps.push({ level: 'danger', title: '실손 공백', body: '입원·통원 기본부터 막혀 있습니다. 진단비보다 실손이 먼저입니다.' });
     } else if (state.silson === '1' || state.silson === '2') {
@@ -372,36 +489,66 @@
     } else if (state.silson === '3' || state.silson === '4') {
       cps.push({ level: 'ok', title: `실손 ${state.silson}세대 — 유지 판단`, body: '비급여 한도·자기부담 구조가 5세대보다 넓습니다. 의료 이용이 적다면 보험료 차이를 비교해 볼 수 있지만 서두를 이유는 없습니다.' });
     } else {
-      cps.push({ level: 'ok', title: '실손 5세대 — 구조 확인', body: '중증(특약1)과 비중증(특약2)이 분리돼 있습니다. 특약2는 연 1,000만원·자기부담 50%이므로 도수·비급여 주사는 사실상 자기부담입니다.' });
+      cps.push({ level: 'ok', title: '실손 5세대 — 구조 확인', body: '중증(특약1)과 비중증(특약2)이 분리돼 있습니다. 특약2는 연 1,000만원·자기부담 50%이므로 도수·비급여 주사는 사실상 자기부담입니다. 비중증이 줄어든 만큼 정액 수술비·비급여 수술비의 역할이 커집니다.' });
     }
 
-    const get = (k) => rows.find((x) => x.item.key === k);
-    const care = get('care');
-
-    if (state.cov.cancer.similar <= 0) cps.push({ level: 'warn', title: '유사암 담보 없음', body: '갑상선암(C73)·기타피부암(C44)·제자리암(D00~D09)·경계성종양(D37~D48)은 일반암에서 빠져 별도 담보로 지급됩니다. 이 담보가 없으면 지급액이 0이거나 아주 작습니다.' });
+    /* 암 */
+    const cg = Number(cov.cancer.general || 0);
+    const cTier = PRIORITY[0].tiers;
+    if (cg <= 0) cps.push({ level: 'danger', title: '일반암 진단비 없음', body: `암 진단은 곧 소득 중단입니다. 최소 ${won(cTier.min)}만원, 권장 ${won(cTier.rec)}만원이 출발선입니다.` });
+    else if (cg < cTier.min) cps.push({ level: 'warn', title: `일반암 ${won(cg)}만원 — 최소선 미달`, body: `초기 치료비 부담 최소선이 ${won(cTier.min)}만원입니다. ${won(cTier.min - cg)}만원이 비어 있습니다.` });
+    else if (cg < cTier.rec) cps.push({ level: 'info', title: `일반암 ${won(cg)}만원 — 권장선 미달`, body: `권장 ${won(cTier.rec)}만원(초기 생활비+치료비 여유) 대비 ${won(cTier.rec - cg)}만원 부족합니다. 충분선은 ${won(cTier.enough)}만원입니다.` });
+    if (Number(cov.cancer.similar || 0) <= 0) cps.push({ level: 'warn', title: '유사암 담보 없음', body: '갑상선암(C73)·기타피부암(C44)·제자리암(D00~D09)·경계성종양(D37~D48)은 일반암에서 빠져 별도 담보로 지급됩니다. 이 담보가 없으면 지급액이 0이거나 아주 작습니다.' });
     if (treatSum(state) <= 0) cps.push({ level: 'warn', title: '암 주요치료비 5종 없음', body: '표적·면역항암·방사선·비급여 치료는 진단비와 별도 축입니다. 진단비만 있으면 장기 치료에서 공백이 생깁니다. 5종(암수술·항암약물·항암방사선·중환자실·비급여)을 각각 확인하세요.' });
     else {
-      if (!(Number(treatObj(state.cov) ? treatObj(state.cov).drug : 0) > 0)) cps.push({ level: 'info', title: '항암약물치료비 없음', body: '표적·면역항암제는 1년에 수천만원이 나가는 구간입니다. 5종 중에서 가장 먼저 채워야 하는 칸입니다.' });
+      if (!(Number((treatObj(state) || {}).drug) > 0)) cps.push({ level: 'info', title: '항암약물치료비 없음', body: '표적·면역항암제는 1년에 수천만원이 나가는 구간입니다. 5종 중에서 가장 먼저 채워야 하는 칸입니다.' });
       const missing = treatMissing(state);
       if (missing.length) cps.push({ level: 'info', title: `암 주요치료비 5종 중 ${missing.length}종 비어 있음`, body: `없는 항목: ${missing.join(' · ')}. 한 번에 다 채우지 말고 항암약물 → 비급여 → 수술 순으로 채웁니다.` });
     }
-    if (state.cov.brain.scope === 'bleed') cps.push({ level: 'danger', title: '뇌 보장이 뇌출혈에 갇혀 있습니다', body: '뇌경색(I63)은 뇌졸중·뇌혈관질환 담보에만 들어갑니다. 공식 통계에서도 뇌경색 환자가 뇌내출혈보다 약 5.1배 많습니다.' });
-    else if (state.cov.brain.scope === 'stroke' || state.cov.brain.scope === 'vascular') {
-      if (!state.cov.brain.treat) cps.push({ level: 'warn', title: '뇌혈관 수술·혈전용해치료비 없음', body: '혈전용해술·스텐트는 약관상 "수술"이 아닌 처치로 분류될 수 있어, 진단비 외 치료비 담보가 따로 필요합니다.' });
-    }
-    if (state.cov.heart.scope === 'mi') cps.push({ level: 'danger', title: '심장이 급성심근경색에 갇혀 있습니다', body: '협심증(I20)은 허혈성심장질환(I20~I25) 담보에만 들어갑니다. 스텐트 시술은 협심증 단계에서 많이 이뤄집니다.' });
-    if (state.cov.heart.scope !== 'none' && !state.cov.heart.surgery) cps.push({ level: 'warn', title: '심혈관 수술비 없음', body: '스텐트·관상동맥우회술 등 심혈관 수술비 담보가 따로 있는지 확인하세요.' });
-    if (!state.cov.surgery.nDae) cps.push({ level: 'info', title: 'N대 수술비 없음', body: '1~5종만 있으면 큰 수술에서 금액이 부족합니다. N대 수술비는 질환별 한도를 따로 둡니다.' });
-    if (!state.cov.surgery.injury) cps.push({ level: 'info', title: '상해수술비 없음', body: '질병 수술비만 있으면 사고로 다쳐 수술해도 지급되지 않습니다.' });
-    if (!state.cov.care.ltc) cps.push({ level: 'warn', title: '장기요양등급 보장 없음', body: '공식 통계상 장기요양 인정자의 87.4%가 3~5등급·인지지원입니다. 1~2등급만 대비하면 대부분의 구간이 비어 있습니다.' });
-    if (!state.cov.care.nursing) cps.push({ level: 'info', title: '간호간병통합서비스 미보장', body: '보호자 없는 병동은 별도 특약이 있어야 지급되는 경우가 많습니다.' });
+    if (!cov.cancer.recur) cps.push({ level: 'info', title: '재진단·전이암 보장 없음', body: '1회한 진단비는 한 번 지급되면 끝입니다. 재발·전이는 별도 담보가 있어야 다시 지급됩니다.' });
+
+    /* 뇌 · 심장 */
+    if (cov.brain.scope === 'bleed') cps.push({ level: 'danger', title: '뇌 보장이 뇌출혈에 갇혀 있습니다', body: '뇌경색(I63)은 뇌졸중·뇌혈관질환 담보에만 들어갑니다. 공식 통계에서도 뇌경색 환자가 뇌내출혈보다 약 5.1배 많습니다.' });
+    if (cov.heart.scope === 'mi') cps.push({ level: 'danger', title: '심장이 급성심근경색에 갇혀 있습니다', body: '협심증(I20)은 허혈성심장질환(I20~I25) 담보에만 들어갑니다. 스텐트 시술은 협심증 단계에서 많이 이뤄집니다.' });
+
+    [['brain', '뇌'], ['heart', '심장']].forEach(([key, name]) => {
+      const tg = groupObj(state, key, 'treat') || {};
+      const n = Number(tg.lysis || 0), s = Number(tg.surgery || 0), icu = Number(tg.icu || 0);
+      if (n <= 0) cps.push({ level: 'warn', title: `${name} 혈전용해제 치료비 없음`, body: `진단비는 1회성입니다. ${name === '뇌' ? '뇌경색(I63)' : '급성심근경색(I21)'} 치료의 첫 단계인 혈전용해제(tPA) 투여는 별도 담보입니다. 기계적 혈전제거술(카테터법)은 혈전용해치료에서 제외되므로 그 담보가 있는지도 함께 확인하세요.` });
+      if (s <= 0) cps.push({ level: 'warn', title: `${name} 주요치료 수술비 없음`, body: `${name === '뇌' ? '개두술(관혈)·스텐트·색전술(비관혈)' : '관상동맥우회술(관혈)·스텐트(비관혈)'}은 약관상 "수술" 분류에 따라 지급이 갈립니다. 수술비 담보를 따로 확인하세요.` });
+      if (icu <= 0) cps.push({ level: 'info', title: `${name} 중환자실 입원비 없음`, body: '중환자실은 하루 비용이 일반 병실의 몇 배입니다. 입원일당과 별도로 중환자실 담보가 있는지 확인합니다.' });
+      const missingN = neuroMissing(state, key);
+      if (missingN.length && missingN.length < 3) cps.push({ level: 'info', title: `${name} 주요치료비 3종 중 ${missingN.length}종 비어 있음`, body: `없는 항목: ${missingN.join(' · ')}. 대부분 최초 1회한 또는 연 1회한이고, 계약일부터 1년 미만은 50%만 지급됩니다.` });
+      if (n > 0 || s > 0) cps.push({ level: 'info', title: `${name} 치료비 — 지급 조건 확인`, body: '혈전용해제 치료비는 뇌경색(I63)·급성심근경색(I21) 진단이 전제이고, 기계적 혈전제거술은 별도 담보입니다. 연 1회한인지, 진단 후 10년 한도인지, 만기까지인지 증권 문구로 확인하세요.' });
+    });
+
+    /* 수술비 */
+    const sg = cov.surgery;
+    if (!(sg.disease > 0)) cps.push({ level: 'info', title: '질병수술비(일반·매회) 없음', body: '수술 1회당 정액으로 나오는 가장 기본 축입니다. 1~5종·N대와 별개 계약입니다.' });
+    if (!(sg.disease15 > 0)) cps.push({ level: 'info', title: '질병 1~5종 수술비 없음', body: '1종(관혈)부터 5종(내시경·카테터)까지 침습도로 금액이 갈립니다. 회사별 분류표가 달라 같은 수술도 종수가 다릅니다.' });
+    if (!(sg.diseaseNdae > 0)) cps.push({ level: 'info', title: '질병 N대 수술비 없음', body: '1~5종만 있으면 큰 수술에서 금액이 부족합니다. N대는 질환 묶음(21·22·30·33대 등)별 한도를 따로 둡니다. 회사별로 용종·체외충격파 포함 여부가 다릅니다.' });
+    if (!(sg.diseaseNonPay > 0)) cps.push({ level: 'info', title: '비급여 질병 수술비 없음', body: '5세대 실손은 비중증 비급여 한도가 연 1,000만원·자기부담 50%입니다. 비급여 수술은 실손으로 다 메워지지 않아 정액 비급여 수술비가 보완합니다.' });
+    if (!(sg.injury > 0) && !(sg.injury15 > 0)) cps.push({ level: 'warn', title: '상해 수술비 없음', body: '질병 수술비만 있으면 사고로 다쳐 수술해도 지급되지 않습니다. 일반 상해수술비와 상해 1~5종은 다른 축입니다.' });
+    else if (!(sg.injury15 > 0)) cps.push({ level: 'info', title: '상해 1~5종 수술비 없음', body: '일반 상해수술비만 있으면 골절 수술 같은 중한 상해에서 금액이 얇습니다. 1~5종 축을 함께 봅니다.' });
+    if (sg.disease15 > 0 || sg.diseaseNdae > 0) cps.push({ level: 'info', title: '수술비 — 1년 미만 50% 감액 확인', body: '수술비 담보는 계약일부터 1년 미만이면 50%만 지급되는 상품이 흔합니다. 가입 시점과 청구 시점을 함께 봐야 합니다.' });
+
+    /* 간병비 */
+    const cr = cov.care;
+    if (!(cr.daily > 0) && !(cr.nDaily > 0)) cps.push({ level: 'warn', title: '간병비 담보 없음', body: '간병은 하루 10만~15만원, 한 달이면 300만원을 넘습니다. 진단비로 대체되지 않는 매일의 비용입니다.' });
+    if (cr.daily > 0 && !(cr.nDaily > 0)) cps.push({ level: 'info', title: '요양병원 간병 일당 없음', body: '대부분 상품이 요양병원을 제외합니다. 요양병원은 통상 5~6만원대이고 별도 담보가 필요합니다. 요양병원 포함 여부를 증권에서 확인하세요.' });
+    if (cr.basis === 'unknown') cps.push({ level: 'warn', title: '간병비 지급 기준 미확인', body: '2026년 7월부터 주요 손보사가 "하루 8만원 이상" 금액 기준을 "하루 8시간 이상" 시간 기준으로 전환했습니다. 8시간을 못 채우면 지급액이 깎이거나 지급되지 않습니다. 어떤 기준인지 증권으로 확인하세요.' });
+    else if (cr.basis === 'money') cps.push({ level: 'info', title: '간병비 금액 기준 — 8시간 기준으로 전환되는 추세', body: '금액 기준은 7~8만원 이상 사용 시 지급입니다. 신규 가입이면 시간 기준 상품이 늘고 있어, 같은 가입금액이라도 실제 수령액이 달라집니다.' });
+    if (cr.family === 'no') cps.push({ level: 'warn', title: '가족 간병 불인정', body: '가족이 간병하면 지급되지 않는 상품입니다. 실제 간병인 고용·업체 등록·결제 증빙이 필요합니다.' });
+    else if (cr.family === 'conditional') cps.push({ level: 'info', title: '가족 간병 — 업체 등록·결제 조건', body: '가족 간병을 인정하려면 업체 등록과 결제, 간병일지가 서로 맞아야 합니다. 청구 때 사용계약서·영수증·근무일지를 요구받습니다. 현금으로 주고받으면 인정이 어렵습니다.' });
+    if (!cr.nursing) cps.push({ level: 'info', title: '간호·간병통합서비스 미보장', body: '보호자 없는 병동은 별도 특약이 있어야 지급되는 경우가 많습니다. 간병인 사용일당과 다른 담보입니다.' });
+    if (!cr.ltc) cps.push({ level: 'warn', title: '장기요양등급 보장 없음', body: '공식 통계상 장기요양 인정자의 87.4%가 3~5등급·인지지원입니다. 1~2등급만 대비하면 대부분의 구간이 비어 있습니다.' });
 
     /* v4: 가족력 · 고지 판정 · 계약 납입/만기 */
     familyNotes(state).forEach((f) => {
-      if (f.key === 'cancer' && state.cov.cancer.general < (PRIORITY[0].rec[state.age] || 0)) cps.push({ level: 'warn', title: f.label, body: f.body });
-      else if (f.key === 'brain' && state.cov.brain.scope !== 'vascular') cps.push({ level: 'warn', title: f.label, body: f.body });
-      else if (f.key === 'heart' && state.cov.heart.scope !== 'ischemic' && state.cov.heart.scope !== 'cardiac') cps.push({ level: 'warn', title: f.label, body: f.body });
-      else if (f.key === 'dementia' && !state.cov.care.ltc) cps.push({ level: 'warn', title: f.label, body: f.body });
+      if (f.key === 'cancer' && cov.cancer.general < (PRIORITY[0].rec[state.age] || 0)) cps.push({ level: 'warn', title: f.label, body: f.body });
+      else if (f.key === 'brain' && cov.brain.scope !== 'vascular') cps.push({ level: 'warn', title: f.label, body: f.body });
+      else if (f.key === 'heart' && cov.heart.scope !== 'ischemic' && cov.heart.scope !== 'cardiac') cps.push({ level: 'warn', title: f.label, body: f.body });
+      else if (f.key === 'dementia' && !cov.care.ltc) cps.push({ level: 'warn', title: f.label, body: f.body });
       else cps.push({ level: 'info', title: f.label, body: f.body });
     });
     const dj = disclosureJudge(state);
@@ -416,7 +563,7 @@
     if (state.flags.manyRiders) cps.push({ level: 'info', title: '특약 정리 여지', body: '중복·미사용 특약(예: 유사암 중복, 이미 소진된 1회한 담보)을 확인해 우선순위 보강에 배분합니다.' });
     if (Number(state.premium) >= 40) cps.push({ level: 'warn', title: `월 ${won(state.premium)}만원 — 구성 점검 우선`, body: '보험료 절대액이 큽니다. 해지가 아니라 배분 문제로 접근하세요.' });
     if (annual > 0 && totalSum / annual < 12) cps.push({ level: 'warn', title: '보험료 대비 진단비가 얇습니다', body: `연 보험료 ${won(annual)}만원에 주요 진단비 합계 ${won(totalSum)}만원입니다. 적립·중복을 덜어 진단비로 옮기는 재배치를 검토하세요.` });
-    if (Number(state.age) >= 60 && care && care.r.level !== 'ok') cps.push({ level: 'danger', title: '60대 이상 — 간병이 최대 리스크', body: '이 연령대에서 실제로 돈이 새는 곳은 간병입니다. 장기요양등급과 간병 일당을 함께 확인하세요.' });
+    if (Number(state.age) >= 60 && (cr.daily || 0) < 10) cps.push({ level: 'danger', title: '60대 이상 — 간병이 최대 리스크', body: '이 연령대에서 실제로 돈이 새는 곳은 간병입니다. 장기요양등급과 간병 일당(요양병원 포함)을 함께 확인하세요.' });
 
     if (!cps.length) cps.push({ level: 'ok', title: '구조적 구멍 없음', body: '5대 담보와 실손 구성이 기준선을 넘습니다. 이제는 금액 조정과 갱신 대비가 남은 과제입니다.' });
     return cps;
@@ -436,7 +583,7 @@
 
   /* ---------- 전체 모델 ---------- */
   function full(state) {
-    normalizeCov(state);
+    const migration = normalizeState(state);
     const rows = PRIORITY.map((item) => {
       const r = evalItem(state, item);
       const gaps = r.parts.filter((p) => (p.type === 'amount' || p.type === 'group') && p.rec > 0 && p.val < p.rec)
@@ -446,8 +593,9 @@
     });
     const parts = partRows(state, rows);
     const sc = computeScore(state, rows);
-    const totalSum = Number(state.cov.cancer.general || 0) + Number(state.cov.cancer.similar || 0)
-      + treatSum(state) + Number(state.cov.surgery.disease || 0);
+    const sg = state.cov.surgery;
+    const totalSum = Number(state.cov.cancer.general || 0) + Number(state.cov.cancer.similar || 0) + treatSum(state)
+      + ['disease', 'disease15', 'diseaseNdae', 'diseaseNonPay', 'injury', 'injury15'].reduce((a, k) => a + Number(sg[k] || 0), 0);
     const annual = Number(state.premium || 0) * 12;
     const cps = checkpoints(state, rows, totalSum, annual);
     const st = steps(state, rows);
@@ -458,6 +606,14 @@
     const disc = disclosureJudge(state);
     const birth = (state.client && state.client.birth) || '';
     const ageDay = nextAgeDay(birth);
+    const cancerRow = rows.find((x) => x.item.key === 'cancer');
+    const brainRow = rows.find((x) => x.item.key === 'brain');
+    const heartRow = rows.find((x) => x.item.key === 'heart');
+    const cancerTreatPart = cancerRow.r.parts.find((p) => p.key === 'treatment');
+    const neuroOf = (row) => {
+      const g = row.r.parts.find((p) => p.key === 'treat');
+      return { subs: g.subs || [], sum: g.val, rec: g.rec, count: (g.subs || []).filter((s) => s.val > 0).length, missing: neuroMissing(state, row.item.key) };
+    };
     return {
       state, rows, parts, score: sc.score, grade: sc.grade, letter: gradeLetter(sc.score),
       weights: sc.w, penalty: sc.penalty,
@@ -467,7 +623,10 @@
       contracts: state.contracts || [], contractTotal, contractStats: cstats,
       family, familyLabels: family.map((k) => FAMILY_NOTE[k].title), familyNotes: familyNotes(state),
       disclosure: disc, MATURITY,
-      cancerTreat: { subs: (rows[0].r.parts[2].subs || []), sum: treatSum(state), count: treatCount(state), missing: treatMissing(state), legacy: state.cov.cancer.treatmentLegacy || 0 },
+      tiers: { cancer: PRIORITY[0].tiers, brain: PRIORITY[1].tiers, heart: PRIORITY[2].tiers, care: PRIORITY[4].tiers },
+      cancerTreat: { subs: (cancerTreatPart && cancerTreatPart.subs) || [], sum: treatSum(state), rec: (cancerTreatPart && cancerTreatPart.rec) || 0, count: treatCount(state), missing: treatMissing(state), legacy: state.cov.cancer.treatmentLegacy || 0 },
+      neuro: { brain: neuroOf(brainRow), heart: neuroOf(heartRow) },
+      migration,
       client: {
         name: (state.client && state.client.name) || '홍길동',
         consultant: (state.client && state.client.consultant) || '담당 컨설턴트',
@@ -491,6 +650,8 @@
     parseDate, insuranceAge, nextAgeDay, ageBandFromBirth,
     partRows, counts, checkpoints, steps, full, oneLine, LEVEL_LABEL,
     FAMILY_KEYS, FAMILY_NOTE, familyList, familyNotes, disclosureJudge, contractStats, MATURITY,
-    TREAT_SUBS, TREAT_MIN, TREAT_MAX, treatRec, treatRecs, emptyTreat, treatObj, treatSum, treatCount, treatMissing, normalizeCov
+    TREAT_SUBS, NEURO_SUBS, TREAT_MIN, TREAT_MAX, NEURO_MIN, NEURO_MAX,
+    treatRec, treatRecs, subRec, emptyTreat, emptyNeuro, treatObj, treatSum, treatCount, treatMissing,
+    neuroSum, neuroCount, neuroMissing, groupObj, groupSum, normalizeState, normalizeCov, stageOf, partLevel
   };
 })(typeof window !== 'undefined' ? window : globalThis);
