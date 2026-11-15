@@ -12,12 +12,13 @@
   const PXH = Math.round(H * DENS);       // 1754
   const FONT = '"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Noto Sans CJK KR","Malgun Gothic","Segoe UI",sans-serif';
 
+  /* v5.0 「보험에 반하다」 — 크림·로즈 아이보리 바탕, 로즈 코랄 포인트, 깊은 와인 텍스트 */
   const C = {
-    navy: '#0B2545', navy2: '#123B66', blue: '#1264B0', blue2: '#3B8FD4', sky: '#E9F1FB', sky2: '#F5F9FE',
-    ink: '#172B43', ink2: '#3F577A', muted: '#7A8BA1', line: '#DCE4EF', line2: '#EDF2F8',
-    red: '#D9382F', redSoft: '#FDECEA', mint: '#0E9C86', mintSoft: '#E6F6F2',
-    orange: '#D9821B', orangeSoft: '#FDF2E3', gray: '#93A2B4', graySoft: '#EFF2F6',
-    gold: '#B8912F', white: '#FFFFFF'
+    navy: '#3A2628', navy2: '#4A2E30', blue: '#C85A60', blue2: '#D96B70', sky: '#FDF0F0', sky2: '#FDF9F8',
+    ink: '#231F20', ink2: '#4C3B3C', muted: '#8B7A7B', line: '#EED9D8', line2: '#F6EAE9',
+    red: '#B3261E', redSoft: '#FDECEA', mint: '#0E9C86', mintSoft: '#E6F6F2',
+    orange: '#C07A2C', orangeSoft: '#FDF2E3', gray: '#9B9091', graySoft: '#F4EBEB',
+    gold: '#B8912F', white: '#FFFFFF', rose: '#D96B70', roseDeep: '#C85A60', wine: '#3A2628', blush: '#FDF0F0', cream: '#FDF9F8'
   };
 
   const TONE = {
@@ -28,7 +29,7 @@
     ok: { fg: '#0E7C69', bg: '#E6F6F2', label: '적정', solid: C.mint },
     need: { fg: '#B0690F', bg: '#FDF2E3', label: '보강 필요', solid: C.orange },
     gap: { fg: '#B3261E', bg: '#FDECEA', label: '공백 위험', solid: C.red },
-    info: { fg: '#1264B0', bg: '#E9F1FB', label: '안내', solid: C.blue },
+    info: { fg: '#A8494F', bg: '#FDF0F0', label: '안내', solid: C.blue },
     warn: { fg: '#B0690F', bg: '#FDF2E3', label: '주의', solid: C.orange },
     danger: { fg: '#B3261E', bg: '#FDECEA', label: '위험', solid: C.red }
   };
@@ -199,9 +200,50 @@
     }
 
     /* ---------- 페이지 머리·꼬리 ---------- */
+    brandMark(x, y, size, o) {
+      o = o || {};
+      const c = this.ctx;
+      const sc = (size || 10) / 100;
+      c.save();
+      c.translate(x, y);
+      c.scale(sc, sc);
+      c.strokeStyle = o.color || C.rose;
+      c.lineWidth = (o.lw || 1) / sc;
+      c.lineCap = 'round'; c.lineJoin = 'round';
+      c.beginPath();
+      c.moveTo(60, 36);
+      c.bezierCurveTo(60, 26, 68, 18, 79, 18);
+      c.bezierCurveTo(90, 18, 98, 27, 98, 39);
+      c.bezierCurveTo(98, 56, 79, 69, 60, 81);
+      c.bezierCurveTo(41, 69, 22, 56, 22, 39);
+      c.bezierCurveTo(22, 27, 31, 18, 42, 18);
+      c.bezierCurveTo(53, 18, 60, 26, 60, 36);
+      c.stroke();
+      c.globalAlpha = o.ribbon === false ? 0 : 0.65;
+      c.beginPath();
+      c.moveTo(18, 78);
+      c.bezierCurveTo(38, 90, 70, 90, 88, 76);
+      c.bezierCurveTo(94, 71, 100, 69, 106, 69);
+      c.stroke();
+      c.restore();
+      return x + size * 1.2;
+    }
+    /* 표지용 워드마크: 하트 + 보험에(먹색) 반하다(로즈) + 선택 슬로건 */
+    brandWordmark(x, y, o) {
+      o = o || {};
+      const size = o.size || 20;
+      const mx = this.brandMark(x, y - size * 0.12, size * 1.15, { lw: 1.05, color: o.markColor || C.rose });
+      const tx = mx + 6;
+      this.text('보험에 ', tx, y, { size, weight: 800, color: o.ink || C.ink });
+      const w1 = this.measure('보험에 ', size, 800);
+      this.text('반하다', tx + w1, y, { size, weight: 800, color: o.accent || C.rose });
+      if (o.slogan) this.text(o.slogan, tx, y + size * 1.35, { size: Math.max(5.4, size * 0.32), weight: 500, color: C.ink2 });
+      return y + size * (o.slogan ? 1.75 : 1.2);
+    }
     header(o) {
       const y = this.MT;
-      this.text(o.kicker || 'LIFE REPORT', this.ML, y, { size: 8, weight: 800, color: C.navy });
+      this.brandMark(this.ML, y - 2.5, 11, { lw: 0.95 });
+      this.text(o.kicker || 'LIFE REPORT', this.ML + 14, y, { size: 8, weight: 800, color: C.navy });
       if (o.no) {
         const label = o.total ? `${o.no} / ${o.total}` : String(o.no);
         this.text(label, this.W - this.MR, y - 0.5, { size: 8, weight: 700, color: C.blue, align: 'right' });
@@ -216,7 +258,7 @@
       const y = this.H - 26;
       this.line(this.ML, y, this.W - this.MR, y, { color: C.line });
       this.text(o.left || '상담 보조용 자료 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다', this.ML, y + 5, { size: 6.2, weight: 500, color: C.muted });
-      this.text(o.right || 'LIFE REPORT', this.W - this.MR, y + 5, { size: 6.2, weight: 700, color: C.gray, align: 'right' });
+      this.text(o.right || '보험에 반하다', this.W - this.MR, y + 5, { size: 6.2, weight: 700, color: C.blue, align: 'right' });
     }
     memoBand(labels, maxH) {
       const top = (this.contentBottom || 0) + 16;
@@ -305,7 +347,7 @@
       c.beginPath();
       axes.forEach((a, i) => { const p = pt(i, Math.max(0.03, Math.min(1, a.value))); i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); });
       c.closePath();
-      c.fillStyle = o.fill || 'rgba(18,100,176,0.16)'; c.fill();
+      c.fillStyle = o.fill || 'rgba(200,90,96,0.16)'; c.fill();
       c.strokeStyle = o.color || C.blue; c.lineWidth = 1.6; c.stroke();
       axes.forEach((a, i) => {
         const p = pt(i, Math.max(0.03, Math.min(1, a.value)));
@@ -502,13 +544,13 @@
       c.save();
       c.beginPath(); c.rect(0, y, W, h); c.clip();
       const g = c.createLinearGradient(0, y, W, y + h);
-      g.addColorStop(0, o.from || '#EAF2FB'); g.addColorStop(0.55, o.mid || '#F7FAFE'); g.addColorStop(1, o.to || '#E4EEFA');
+      g.addColorStop(0, o.from || '#FDF3F2'); g.addColorStop(0.55, o.mid || '#FFFBFA'); g.addColorStop(1, o.to || '#F7E6E5');
       c.fillStyle = g; c.fillRect(0, y, W, h);
       // 장식 도형
       c.globalAlpha = 0.5;
-      c.fillStyle = '#CFE1F5';
+      c.fillStyle = '#F3D7D5';
       c.beginPath(); c.moveTo(W * 0.62, y); c.lineTo(W, y); c.lineTo(W, y + h); c.lineTo(W * 0.78, y + h); c.closePath(); c.fill();
-      c.globalAlpha = 0.35; c.fillStyle = '#B9D3EE';
+      c.globalAlpha = 0.3; c.fillStyle = '#EBC4C1';
       c.beginPath(); c.moveTo(W * 0.74, y); c.lineTo(W * 0.9, y); c.lineTo(W * 0.72, y + h); c.lineTo(W * 0.6, y + h); c.closePath(); c.fill();
       c.globalAlpha = 1;
       // 미니 차트 모티프
@@ -517,7 +559,7 @@
       c.fillRect(bx, by, bw, bh);
       const vals = [0.42, 0.66, 0.52, 0.78, 0.6];
       vals.forEach((v, i) => {
-        c.fillStyle = i === 3 ? '#2F7FC6' : '#7FB2DC';
+        c.fillStyle = i === 3 ? '#C85A60' : '#E3A9A6';
         c.fillRect(bx + 8 + i * (bw - 16) / 5, by + bh - 6 - (bh - 14) * v, (bw - 16) / 5 - 4, (bh - 14) * v);
       });
       c.restore();

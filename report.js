@@ -28,7 +28,9 @@
       return `일반암 ${won(PK(row, 'general').val)} · 치료비 ${subHave(PK(row, 'treatment'))}/5`;
     }
     if (k === 'brain' || k === 'heart') {
-      const sc = PK(row, 'scope').option ? PK(row, 'scope').option.label : '미보유';
+      const dxp = PK(row, 'dx');
+      const core = dxp.dx && dxp.dx.core;
+      const sc = core && core.val > 0 ? `${BK.dxShort(core.label)} ${won(core.val)}` : (dxp.dx && dxp.dx.gapWarn ? '범위 공백' : '미보유');
       return `${sc} · 치료비 ${subHave(PK(row, 'treat'))}/3`;
     }
     if (k === 'surgery') {
@@ -64,11 +66,11 @@
 
   function gradeHero(s, m, y, h) {
     const w = s.CW;
-    s.rect(s.ML, y, w, h, { fill: '#0B2545', r: 7 });
+    s.rect(s.ML, y, w, h, { fill: '#3A2628', r: 7 });
     // 왼쪽 등급
-    s.text('종합 보장등급', s.ML + 16, y + 13, { size: 6.4, weight: 700, color: '#9EC0E4' });
+    s.text('종합 보장등급', s.ML + 16, y + 13, { size: 6.4, weight: 700, color: '#E7CDC9' });
     s.text(m.letter, s.ML + 16, y + 22, { size: 34, weight: 800, color: '#FFFFFF' });
-    s.text(`${m.score}점 / 100`, s.ML + 16, y + h - 22, { size: 7.4, weight: 600, color: '#CFE0F2' });
+    s.text(`${m.score}점 / 100`, s.ML + 16, y + h - 22, { size: 7.4, weight: 600, color: '#F0DEDB' });
     s.text(m.grade.label, s.ML + 16, y + h - 12, { size: 6.6, weight: 700, color: '#8FF0DC' });
 
     // 가운데 레이더
@@ -85,17 +87,17 @@
       { value: dn.short, color: '#E05B52' },
       { value: dn.none, color: '#94A6BA' }
     ];
-    s.donut(dcx, dcy, 30, segs, { inner: 19, innerFill: '#0B2545', centerValue: dn.total, centerLabel: '항목', centerSize: 14, centerColor: '#fff' });
+    s.donut(dcx, dcy, 30, segs, { inner: 19, innerFill: '#3A2628', centerValue: dn.total, centerLabel: '항목', centerSize: 14, centerColor: '#fff' });
     const legend = [['충분', C.mint, dn.enough], ['점검', C.orange, dn.check], ['부족', '#E05B52', dn.short], ['없음', '#94A6BA', dn.none]];
     legend.forEach((l, i) => {
       const ly = y + h / 2 - 22 + i * 12;
       s.rect(dcx + 36, ly + 1, 5, 5, { fill: l[1], r: 2.5 });
-      s.text(`${l[0]} ${l[2]}`, dcx + 45, ly - 0.5, { size: 6.2, weight: 600, color: '#D7E5F4' });
+      s.text(`${l[0]} ${l[2]}`, dcx + 45, ly - 0.5, { size: 6.2, weight: 600, color: '#F2E4E2' });
     });
 
     // 우측 끝 보완 우선
     const fx = s.W - s.MR - 92;
-    s.text('먼저 채울 곳', fx, y + 13, { size: 6.2, weight: 700, color: '#9EC0E4' });
+    s.text('먼저 채울 곳', fx, y + 13, { size: 6.2, weight: 700, color: '#E7CDC9' });
     if (m.first) {
       s.text(`${m.first.item.rank}순위 ${m.first.item.name}`, fx, y + 24, { size: 11, weight: 800, color: '#FFD47A' });
       s.text(`${m.first.pct}% · ${m.first.label}`, fx, y + 40, { size: 6.8, weight: 600, color: '#fff' });
@@ -151,7 +153,7 @@
     const w = s.CW, gap = 8, cw = (w - gap * 2) / 3;
     m.steps.forEach((st, i) => {
       const x = s.ML + i * (cw + gap);
-      s.rect(x, y, cw, h, { fill: i === 0 ? '#F3F9FF' : i === 1 ? '#FFFBF3' : '#F2FBF8', r: 6, stroke: C.line });
+      s.rect(x, y, cw, h, { fill: i === 0 ? '#FDF5F4' : i === 1 ? '#FDF7EC' : '#F1FAF7', r: 6, stroke: C.line });
       s.rect(x, y, cw, 3.2, { fill: [C.blue, C.orange, C.mint][i], r: 1.6 });
       s.text(`STEP ${i + 1}`, x + 10, y + 10, { size: 6, weight: 800, color: [C.blue, C.orange, C.mint][i] });
       s.text(st.title.replace(/^[^ ]+ — /, ''), x + 10, y + 19, { size: 9.4, weight: 800, color: C.navy });
@@ -181,7 +183,7 @@
     o = o || {};
     const w = s.CW;
     const h = s.height(text, w - 24, o.size || 7, 1.45) + 14;
-    s.rect(s.ML, y, w, h, { fill: o.fill || '#F3F8FF', r: 4, stroke: o.stroke || '#DCE9F8' });
+    s.rect(s.ML, y, w, h, { fill: o.fill || '#FDF7F6', r: 4, stroke: o.stroke || '#F3DCDB' });
     s.rect(s.ML, y, 2.4, h, { fill: o.accent || C.blue, r: 1.2 });
     s.para(text, s.ML + 12, y + 7, w - 24, { size: o.size || 7, color: o.color || C.ink2, lh: 1.45 });
     return y + h;
@@ -200,7 +202,7 @@
     let cy = y + 30;
     if (st.stacked) {
       const total = st.stacked.reduce((a, b) => a + b.value, 0);
-      const tones = ['#0B2545', '#1B4A78', '#2F6FA3', '#4E90C0', '#8FBADA', '#C9DDEC'];
+      const tones = ['#3A2628', '#1B4A78', '#2F6FA3', '#4E90C0', '#8FBADA', '#C9DDEC'];
       s.stacked(x + 10, cy, w - 20, 10, st.stacked.map((sg, i) => ({ value: sg.value, color: tones[i] })), { showLabel: true, lightFrom: 4 });
       cy += 14;
       st.stacked.forEach((sg, i) => {
@@ -327,14 +329,15 @@
   function summaryPage(m) {
     return function (s) {
       s.header({ kicker: 'LIFE REPORT', no: '1', total: '1' });
-      s.text('COVERAGE SUMMARY', s.ML, 64, { size: 6.6, weight: 800, color: C.blue });
-      s.text('보장분석 요약 리포트', s.ML, 73, { size: 20, weight: 800, color: C.navy });
-      s.text(`${m.client.name}님의 보장을 한 장으로 정리했습니다`, s.ML, 98, { size: 8, weight: 500, color: C.ink2 });
-      s.rect(s.W - s.MR - 96, 70, 96, 30, { fill: C.sky, r: 4 });
-      s.text('보완 우선', s.W - s.MR - 88, 76, { size: 5.8, weight: 700, color: C.blue });
-      s.text(m.first ? `${m.first.item.rank}순위 ${m.first.item.name}` : '구조 유지', s.W - s.MR - 88, 85, { size: 10, weight: 800, color: C.navy });
+      s.brandWordmark(s.ML, 58, { size: 8.2 });
+      s.text('COVERAGE SUMMARY', s.ML, 73, { size: 6.6, weight: 800, color: C.blue });
+      s.text('보장분석 요약 리포트', s.ML, 82, { size: 20, weight: 800, color: C.navy });
+      s.text(`${m.client.name}님의 보장을 한 장으로 정리했습니다`, s.ML, 106, { size: 8, weight: 500, color: C.ink2 });
+      s.rect(s.W - s.MR - 96, 79, 96, 30, { fill: C.sky, r: 4 });
+      s.text('보완 우선', s.W - s.MR - 88, 85, { size: 5.8, weight: 700, color: C.blue });
+      s.text(m.first ? `${m.first.item.rank}순위 ${m.first.item.name}` : '구조 유지', s.W - s.MR - 88, 94, { size: 10, weight: 800, color: C.navy });
 
-      let y = clientBar(s, m, 112);
+      let y = clientBar(s, m, 120);
       y = gradeHero(s, m, y + 10, 92);
       y = s.sectionHead(s.ML, y + 14, s.CW, null, '5대 우선순위 진단', '현재 보장 → 권장 기준');
       y = priorityTable(s, m, y + 2);
@@ -343,9 +346,13 @@
       // 5줄 요약표
       const rows = m.rows.map((r) => {
         const p = PK(r, r.item.parts[0].key);
-        const cur = p.type === 'amount' ? `${won(p.val)}만원` : (p.option ? p.option.label : '—');
+        const dxCore = p.type === 'dxset' && p.dx ? p.dx.core : null;
+        const cur = p.type === 'amount' ? `${won(p.val)}만원`
+          : p.type === 'dxset' ? (dxCore ? `${won(dxCore.val)}만원` : '—')
+            : (p.option ? p.option.label : '—');
         const tgt = p.type === 'amount' ? `권장 ${won(p.rec)}만원`
-          : (p.type === 'scale' ? (REC_SCOPE[r.item.key] || (p.option ? p.option.label : '—')) : (p.part && p.part.options ? (p.part.options[p.part.options.length - 1].label) : '—'));
+          : p.type === 'dxset' ? `권장 ${won(p.rec)}만원`
+            : (p.type === 'scale' ? (REC_SCOPE[r.item.key] || (p.option ? p.option.label : '—')) : (p.part && p.part.options ? (p.part.options[p.part.options.length - 1].label) : '—'));
         return [`${r.item.rank}. ${r.item.name}`, { text: cur, weight: 600 }, { text: tgt, color: C.muted }, { text: r.label, badge: r.level, align: 'center' }, { text: r.gaps.length ? `+${won(r.gaps.reduce((a, g) => a + g.need, 0))}만원` : '—', color: r.gaps.length ? C.red : C.muted, weight: 700 }];
       });
       y = s.table(s.ML, y, s.CW, ['우선순위', '현재 보장', '권장 기준', '상태', '부족분'], rows, {
@@ -353,13 +360,13 @@
       });
       const sT = PK(m.rows[0], 'treatment');
       const tLine = `암 주요치료비 5종 — ${(sT.subs || []).map((x) => `${TREAT_SHORT[x.key] || x.label} ${x.val ? won(x.val) : '없음'}`).join(' · ')} (합계 ${won(sT.val)} / 권장 ${won(sT.rec)}만원)`;
-      s.rect(s.ML, y + 4, s.CW, 12, { fill: '#F5F9FE', r: 3, stroke: '#DCE8F4' });
+      s.rect(s.ML, y + 4, s.CW, 12, { fill: '#FDF9F8', r: 3, stroke: '#DCE8F4' });
       s.rect(s.ML, y + 4, 2, 12, { fill: C.blue, r: 1 });
       s.text(tLine, s.ML + 8, y + 8, { size: 5.7, weight: 600, color: C.ink2 });
       y += 18;
 
       y = s.sectionHead(s.ML, y + 12, s.CW, null, '실행 로드맵 3단계', '유지 → 조정 → 보완');
-      y = roadmapCards(s, m, y + 1, 82);
+      y = roadmapCards(s, m, y + 1, 76);
       y += 10;
       const useW = (s.CW - 16) / 3;
       const cs1 = m.contractStats;
@@ -393,13 +400,14 @@
     P.push(function (s) {
       s.photoBand(0, 306, {});
       s.header({ kicker: 'LIFE REPORT', no: '01', total: '10' });
+      s.brandWordmark(s.ML, 54, { size: 8.6, slogan: '당신의 삶에 꼭 맞는 보험, 현명한 선택' });
       s.text('보장분석 리포트', s.ML, 96, { size: 32, weight: 800, color: C.navy });
       s.text('과도한 보장은 줄이고, 부족한 보장은 채우는', s.ML, 66, { size: 10, weight: 700, color: C.blue });
       s.para(`${m.client.name}님의 보장자산 현황을 한눈에 진단하고, 보완 우선순위를 숫자와 근거로 설명하는 금융시스템형 분석 리포트입니다.`, s.ML, 140, 300, { size: 8.4, color: C.ink2, lh: 1.5 });
       s.text(`${m.client.name} 고객님`, s.ML, 196, { size: 9.6, weight: 800, color: C.navy });
       s.text(`상담일 ${m.dateLabel} · ${m.client.consultant}`, s.ML, 210, { size: 7.2, weight: 500, color: C.ink2 });
-      s.rect(s.ML, 232, 150, 42, { fill: '#0B2545', r: 5 });
-      s.text('종합 보장등급', s.ML + 12, 240, { size: 5.8, weight: 700, color: '#9EC0E4' });
+      s.rect(s.ML, 232, 150, 42, { fill: '#3A2628', r: 5 });
+      s.text('종합 보장등급', s.ML + 12, 240, { size: 5.8, weight: 700, color: '#E7CDC9' });
       s.text(m.letter, s.ML + 12, 248, { size: 18, weight: 800, color: '#fff' });
       s.text(`${m.score}점`, s.ML + 62, 252, { size: 9, weight: 700, color: '#8FF0DC' });
 
@@ -457,7 +465,7 @@
       const kw = (s.CW - 16) / 3;
       kpis.forEach((k, i) => {
         const x = s.ML + i * (kw + 8);
-        s.rect(x, y, kw, 62, { fill: i === 0 ? '#F3F9FF' : '#fff', r: 5, stroke: C.line });
+        s.rect(x, y, kw, 62, { fill: i === 0 ? '#FDF5F4' : '#fff', r: 5, stroke: C.line });
         s.text(k.k, x + 10, y + 8, { size: 6, weight: 600, color: C.muted });
         s.text(k.v, x + 10, y + 18, { size: 11, weight: 800, color: C.navy });
         s.para(k.s, x + 10, y + 34, kw - 20, { size: 6.2, color: C.ink2, lh: 1.35 });
@@ -572,7 +580,7 @@
       s.text(famText, s.ML + 10, y + 17, { size: 9.6, weight: 800, color: m.family.length ? C.navy : C.muted });
       s.para(m.familyNotes.length ? m.familyNotes[0].body : '가족력을 입력하면 같은 위험을 우선 점검합니다.', s.ML + 10, y + 31, half - 20, { size: 5.9, color: C.ink2, lh: 1.35 });
       const dx = s.ML + half + 8;
-      const djFill = m.disclosure.tone === 'ok' ? '#F2FBF8' : m.disclosure.tone === 'gap' ? '#FDF2F1' : '#FFFBF3';
+      const djFill = m.disclosure.tone === 'ok' ? '#F1FAF7' : m.disclosure.tone === 'gap' ? '#FDF2F1' : '#FDF7EC';
       s.rect(dx, y, half, 62, { fill: djFill, r: 5, stroke: C.line });
       s.text('고지 판정 (3개월 · 1년 · 5년)', dx + 10, y + 7, { size: 6.2, weight: 700, color: C.muted });
       s.text(m.disclosure.label, dx + 10, y + 17, { size: 9.6, weight: 800, color: m.disclosure.tone === 'ok' ? C.mint : m.disclosure.tone === 'gap' ? C.red : C.orange });
@@ -599,7 +607,7 @@
       let y = H(s, 4, '보장 밸런스 그래프', '네 개의 축으로 나누어 보면 어디가 얇은지 바로 보입니다. 축은 상담 보조용 자체 산식입니다.');
       const axesSets = [
         { t: '① 5대 핵심 우선순위', a: m.rows.map((r) => ({ label: r.item.name, value: r.r.fill })) },
-        { t: '② 진단비 축', note: '진단비가 얇으면 치료 중 소득 공백을 메우지 못합니다.', a: [PK(m.rows[0], 'general'), PK(m.rows[0], 'similar'), PK(m.rows[0], 'treatment'), PK(m.rows[1], 'scope'), PK(m.rows[2], 'scope')].map((p, i) => ({ label: ['일반암', '유사암', '치료비', '뇌', '심장'][i], value: p.fill })) },
+        { t: '② 진단비 축', note: '진단비가 얇으면 치료 중 소득 공백을 메우지 못합니다.', a: [PK(m.rows[0], 'general'), PK(m.rows[0], 'similar'), PK(m.rows[0], 'treatment'), PK(m.rows[1], 'dx'), PK(m.rows[2], 'dx')].map((p, i) => ({ label: ['일반암', '유사암', '치료비', '뇌', '심장'][i], value: p.fill })) },
         { t: '③ 의료비·수술·입원', note: '수술·치료비는 진단비와 별도 계약입니다.', a: [PK(m.rows[3], 'disease15'), PK(m.rows[3], 'diseaseNdae'), PK(m.rows[3], 'diseaseNonPay'), PK(m.rows[1], 'treat'), PK(m.rows[2], 'treat')].map((p, i) => ({ label: ['질병1~5종', 'N대', '비급여', '뇌치료3종', '심장치료3종'][i], value: p.fill })) },
         { t: '④ 간병·노후·기타', note: '노후에 가장 오래 나가는 돈이 이 축입니다.', a: [PK(m.rows[4], 'daily').fill, PK(m.rows[4], 'family').fill, PK(m.rows[4], 'ltc').fill, m.state.silson === 'none' ? 0 : 1, m.state.cov.cancer.recur ? 1 : 0].map((v, i) => ({ label: ['간병일당', '가족간병', '장기요양', '실손', '재진단'][i], value: v })) }
       ];
@@ -690,12 +698,14 @@
       let y = H(s, 6, '뇌 · 심장 보장범위 분석', '같은 질병이라도 보장 범위에 따라 보장되는 범위가 크게 달라집니다. 담보명이 아니라 코드로 확인합니다.');
       const brain = m.rows[1], heart = m.rows[2];
       const half = (s.CW - 8) / 2;
+      const bdx = PK(brain, 'dx').dx || {};
+      const hdx = PK(heart, 'dx').dx || {};
 
-      [[brain, '뇌혈관질환', ['뇌혈관질환 100%', '뇌졸중 64%', '뇌출혈 9%'], [C.blue, '#7FB2DC', '#C9DDF0'], C.blue],
-      [heart, '허혈성심장질환', ['허혈성심장 100%', '급성심근경색 9%'], ['#E05B52', '#F3B7B1'], C.red]].forEach((grp, gi) => {
+      [[brain, '뇌혈관질환', ['뇌혈관질환 I60~I69', '뇌졸중 I60~I63·I65~I66', '뇌출혈 I60~I62'], ['#3A2628', '#7A3F45', '#D96B70'], C.blue],
+      [heart, '허혈성심장질환', ['허혈성심장 I20~I25', '급성심근경색 I21~I23'], ['#8C3A40', '#E8A39B'], C.red]].forEach((grp, gi) => {
         const [row, title, labels, colors, accent] = grp;
         const x = s.ML + gi * (half + 8);
-        s.rect(x, y, half, 150, { fill: gi ? '#FFF7F6' : '#F5F9FE', r: 6, stroke: C.line });
+        s.rect(x, y, half, 150, { fill: gi ? '#FDF2F1' : '#FDF9F8', r: 6, stroke: C.line });
         s.text(title, x + 12, y + 10, { size: 10, weight: 800, color: accent });
         s.text(`${row.item.rank}순위`, x + half - 12, y + 12, { size: 6, weight: 700, color: C.muted, align: 'right' });
         const cy = y + 78;
@@ -714,29 +724,40 @@
           s.text(`${bits[0]} ${bits[1] || ''}`, x + 21, ly - 1.2, { size: 5.7, weight: 600, color: C.ink2 });
         });
 
-        // 현재 vs 권장
+        // 현재 vs 권장 — 범위별 진단비 금액
+        const dxp = PK(row, 'dx');
+        const dx = gi ? hdx : bdx;
+        const core = dx.core;
         const tx = x + 132, tw = half - 144;
-        s.text('현재 보장', tx, y + 32, { size: 6, weight: 600, color: C.muted });
-        s.text(row.summary.split(' · ')[0], tx, y + 41, { size: 7.6, weight: 800, color: row.level === 'ok' ? C.mint : C.red });
-        s.text('권장 범위', tx, y + 58, { size: 6, weight: 600, color: C.muted });
-        s.text(gi ? '허혈성심장질환 I20~I25' : '뇌혈관질환 I60~I69', tx, y + 67, { size: 7, weight: 700, color: C.navy });
-        s.gauge(tx, y + 84, tw, PK(row, 'scope').fill, { color: PK(row, 'scope').fill >= 0.99 ? C.mint : C.orange, h: 6 });
-        s.text(`범위 충족 ${Math.round(PK(row, 'scope').fill * 100)}%`, tx, y + 94, { size: 6.2, weight: 600, color: C.ink2 });
-        s.text(`주요치료비 3종 ${subHave(PK(row, 'treat'))}/3 · ${won(PK(row, 'treat').val)}만원`, tx, y + 106, { size: 6.2, weight: 600, color: PK(row, 'treat').val > 0 ? C.mint : C.red });
-        s.para(gi ? '급성심근경색만 담으면 협심증(I20)과 스텐트 시술이 보장 밖입니다.' : '뇌출혈만 담으면 가장 흔한 뇌경색(I63)이 보장 밖입니다.', tx, y + 118, tw, { size: 5.9, color: C.ink2, lh: 1.35 });
+        s.text('핵심 범위 금액', tx, y + 32, { size: 6, weight: 600, color: C.muted });
+        s.text(`${core ? won(core.val) : '0'}만원`, tx, y + 40, { size: 10, weight: 800, color: core && core.val >= 2000 ? C.mint : C.red });
+        s.text('권장 범위', tx, y + 56, { size: 6, weight: 600, color: C.muted });
+        s.text(gi ? '허혈성심장질환 I20~I25' : '뇌혈관질환 I60~I69', tx, y + 65, { size: 6.8, weight: 700, color: C.navy });
+        s.gauge(tx, y + 80, tw, dxp.fill, { color: dxp.fill >= 0.99 ? C.mint : C.orange, h: 6 });
+        s.text(`충족 ${Math.round(dxp.fill * 100)}%`, tx, y + 89, { size: 6.2, weight: 600, color: C.ink2 });
+        s.text(`주요치료비 3종 ${subHave(PK(row, 'treat'))}/3 · ${won(PK(row, 'treat').val)}만원`, tx, y + 100, { size: 6.2, weight: 600, color: PK(row, 'treat').val > 0 ? C.mint : C.red });
+        s.text((dx.scenarios || []).map((sc) => `${BK.dxShort(sc.label.replace(/\(.*/, ''))} ${won(sc.sum)}`).join(' · '), tx, y + 112, { size: 5.9, weight: 600, color: C.navy });
+        s.para(gi ? '협심증(I20)은 허혈성심장 담보에서만, 급성심근경색(I21)은 두 담보가 합산됩니다.' : '뇌경색(I63)은 뇌혈관+뇌졸중, 뇌출혈(I61)은 세 담보가 합산됩니다.', tx, y + 122, tw, { size: 5.7, color: C.ink2, lh: 1.32 });
       });
       y += 160;
 
-      y = s.sectionHead(s.ML, y, s.CW, '01', '질병별 보장범위 비교', '현재 보장 / 권장 범위 / 해석');
+      y = s.sectionHead(s.ML, y, s.CW, '01', '진단비 3단계·2단계 금액', '핵심 범위 / 현재 / 권장 / 해석');
+      const rowOfDx = (dxp, i) => {
+        const sp = (dxp.subs || [])[i];
+        if (!sp) return ['—', '—', '—', '—'];
+        return [sp.label, sp.val ? `${won(sp.val)}만원` : '0원', `${won(sp.rec)}만원`, sp.codes];
+      };
       const rows = [
-        ['뇌출혈', PK(brain, 'scope').option ? PK(brain, 'scope').option.label : '—', 'I60~I69 (뇌혈관질환)', '뇌출혈만 담으면 가장 좁은 범위입니다'],
-        ['뇌경색', PK(brain, 'scope').fill >= 0.7 ? '보장' : '보장 밖', 'I63 포함', '뇌졸중·뇌혈관질환 담보에만 포함'],
-        ['급성심근경색', PK(heart, 'scope').option ? PK(heart, 'scope').option.label : '—', 'I20~I25 (허혈성)', '협심증(I20)이 빠지면 스텐트 시술이 보장 밖'],
-        ['주요치료비 3종', `뇌 ${subHave(PK(brain, 'treat'))}/3 · 심장 ${subHave(PK(heart, 'treat'))}/3`, '혈전용해제·수술·중환자실', '혈전용해제와 기계적 혈전제거술은 다른 담보']
+        rowOfDx(PK(brain, 'dx'), 0), rowOfDx(PK(brain, 'dx'), 1), rowOfDx(PK(brain, 'dx'), 2),
+        rowOfDx(PK(heart, 'dx'), 0), rowOfDx(PK(heart, 'dx'), 1),
+        ['주요치료비 3종', `뇌 ${subHave(PK(brain, 'treat'))}/3 · 심장 ${subHave(PK(heart, 'treat'))}/3`, '혈전용해제·수술·중환자실', '혈전용해제와 기계적 혈전제거술은 별도']
       ];
-      y = s.table(s.ML, y + 2, s.CW, ['구분', '현재 보장', '권장 범위', '해석'], rows, {
-        widths: [80, 110, 130, 195], size: 6.6, rowH: 22, align: ['left', 'center', 'center', 'left']
+      y = s.table(s.ML, y + 2, s.CW, ['담보 (범위)', '현재', '권장', '코드'], rows, {
+        widths: [150, 90, 90, 185], size: 6.6, rowH: 20, align: ['left', 'center', 'center', 'center']
       });
+      y = noteStrip(s, y + 6, (bdx.gapWarn ? '⚠ 뇌혈관질환 진단비가 0원입니다 — 뇌경색(I63)은 뇌졸중 금액만, 뇌혈관 후유증(I69)은 지급되지 않습니다. ' : '')
+        + (hdx.gapWarn ? '⚠ 허혈성심장질환 진단비가 0원입니다 — 협심증(I20)·스텐트 시술이 지급되지 않습니다. ' : '')
+        + '안쪽 담보는 바깥 담보에 포함되고, 진단 시 금액이 합산됩니다. 실제 지급은 담보명·코드·지급 조건으로 확인합니다.', { size: 6.4 });
       y = s.sectionHead(s.ML, y + 10, s.CW, '02', '공식 통계로 확인', '출처: 중앙심뇌혈관질환센터·건강보험통계 2023');
       statCard(s, s.ML, y, s.CW, 100, statById('stroke'));
       y += 108;
@@ -754,12 +775,12 @@
       let y = H(s, 7, '수술 · 입원 · 간병 · 실손', '매일 나가는 돈과 한 번 나가는 돈을 함께 봅니다. 의료비 방어력은 이 네 축의 합입니다.');
       const surgery = m.rows[3], care = m.rows[4];
       const defence = Math.round(((surgery.r.fill + care.r.fill + (m.state.silson === 'none' ? 0 : 1) + (BK.treatSum(m.state) > 0 ? 1 : 0)) / 4) * 100);
-      s.rect(s.ML, y, s.CW, 54, { fill: '#0B2545', r: 6 });
-      s.text('의료비 방어력', s.ML + 14, y + 10, { size: 6.4, weight: 700, color: '#9EC0E4' });
+      s.rect(s.ML, y, s.CW, 54, { fill: '#3A2628', r: 6 });
+      s.text('의료비 방어력', s.ML + 14, y + 10, { size: 6.4, weight: 700, color: '#E7CDC9' });
       s.text(`${defence}%`, s.ML + 14, y + 19, { size: 22, weight: 800, color: '#fff' });
-      s.gauge(s.ML + 92, y + 30, s.CW - 116, defence / 100, { color: '#8FF0DC', h: 8, track: '#1D3E63' });
-      s.text(defence >= 80 ? '기본 방어선이 서 있습니다' : defence >= 50 ? '한두 축이 비어 있습니다' : '의료비 기본축부터 세워야 합니다', s.ML + 92, y + 12, { size: 6.8, weight: 600, color: '#D7E5F4' });
-      s.text('수술 · 간병 · 실손 · 치료비 4축 평균', s.W - s.MR - 14, y + 12, { size: 5.8, weight: 500, color: '#9EC0E4', align: 'right' });
+      s.gauge(s.ML + 92, y + 30, s.CW - 116, defence / 100, { color: '#8FF0DC', h: 8, track: '#5A3C3E' });
+      s.text(defence >= 80 ? '기본 방어선이 서 있습니다' : defence >= 50 ? '한두 축이 비어 있습니다' : '의료비 기본축부터 세워야 합니다', s.ML + 92, y + 12, { size: 6.8, weight: 600, color: '#F2E4E2' });
+      s.text('수술 · 간병 · 실손 · 치료비 4축 평균', s.W - s.MR - 14, y + 12, { size: 5.8, weight: 500, color: '#E7CDC9', align: 'right' });
       y += 64;
 
       y = s.sectionHead(s.ML, y, s.CW, '01', '수술비 6축 · 간병 6칸', null);
@@ -866,13 +887,13 @@
     /* 09 summary */
     P.push(function (s) {
       let y = H(s, 9, '한 장으로 보는 보장자산 Summary', '점수·등급·세부 점수를 한 화면에 모았습니다. 이 페이지만 보관하셔도 됩니다.');
-      s.rect(s.ML, y, s.CW, 76, { fill: '#0B2545', r: 6 });
-      s.text('종합 보장등급', s.ML + 16, y + 12, { size: 6.4, weight: 700, color: '#9EC0E4' });
+      s.rect(s.ML, y, s.CW, 76, { fill: '#3A2628', r: 6 });
+      s.text('종합 보장등급', s.ML + 16, y + 12, { size: 6.4, weight: 700, color: '#E7CDC9' });
       s.text(m.letter, s.ML + 16, y + 22, { size: 30, weight: 800, color: '#fff' });
       s.text(`${m.score} / 100점`, s.ML + 76, y + 34, { size: 9, weight: 700, color: '#8FF0DC' });
-      s.text(m.grade.line, s.ML + 76, y + 48, { size: 7.4, weight: 500, color: '#D7E5F4' });
+      s.text(m.grade.line, s.ML + 76, y + 48, { size: 7.4, weight: 500, color: '#F2E4E2' });
       s.text(`보완 필요 ${m.needList.length}개 항목`, s.W - s.MR - 16, y + 14, { size: 7.4, weight: 700, color: '#fff', align: 'right' });
-      s.text(`충분 ${m.counts.enough} · 점검 ${m.counts.check} · 부족 ${m.counts.short} · 없음 ${m.counts.none}`, s.W - s.MR - 16, y + 28, { size: 6.4, weight: 500, color: '#9EC0E4', align: 'right' });
+      s.text(`충분 ${m.counts.enough} · 점검 ${m.counts.check} · 부족 ${m.counts.short} · 없음 ${m.counts.none}`, s.W - s.MR - 16, y + 28, { size: 6.4, weight: 500, color: '#E7CDC9', align: 'right' });
       y += 86;
       y = s.sectionHead(s.ML, y, s.CW, '01', '세부 점수 분포', '14개 세부 담보 + 실손');
       const cols = 2, cw = (s.CW - 10) / cols;
@@ -922,7 +943,7 @@
       y = s.sectionHead(s.ML, y + 12, s.CW, '02', '실행 로드맵', '한 번에 다 하지 않습니다');
       const cw = s.CW;
       m.steps.forEach((st, i) => {
-        s.rect(s.ML, y, cw, 44, { fill: i === 0 ? '#F3F9FF' : i === 1 ? '#FFFBF3' : '#F2FBF8', r: 5, stroke: C.line });
+        s.rect(s.ML, y, cw, 44, { fill: i === 0 ? '#FDF5F4' : i === 1 ? '#FDF7EC' : '#F1FAF7', r: 5, stroke: C.line });
         s.iconCircle(s.ML + 18, y + 22, 9, { fill: [C.blue, C.orange, C.mint][i], num: i + 1, size: 8, color: '#fff' });
         s.text(st.title.replace(/^[^ ]+ — /, ''), s.ML + 34, y + 8, { size: 8.6, weight: 800, color: C.navy });
         s.para(st.body, s.ML + 34, y + 22, cw - 46, { size: 6.3, color: C.ink2, lh: 1.35 });
@@ -1035,11 +1056,12 @@
     P.push(function (s) {
       s.photoBand(0, 296, {});
       s.header({ kicker: 'BOJANG PLAN BOOK', no: '01', total: '30' });
+      s.brandWordmark(s.ML, 52, { size: 8.4 });
       s.text('상담 마스터 플랜북', s.ML, 76, { size: 28, weight: 800, color: C.navy });
       s.text('이 책만 보고 따라가면 상담이 끊기지 않습니다', s.ML, 112, { size: 9.6, weight: 700, color: C.blue });
       s.para(`${m.client.name}님 · ${m.dateLabel} · 담당 ${m.client.consultant}`, s.ML, 132, 280, { size: 7.6, color: C.ink2 });
-      s.rect(s.ML, 150, 190, 44, { fill: '#0B2545', r: 5 });
-      s.text('오늘의 목표', s.ML + 12, 157, { size: 5.8, weight: 700, color: '#9EC0E4' });
+      s.rect(s.ML, 150, 190, 44, { fill: '#3A2628', r: 5 });
+      s.text('오늘의 목표', s.ML + 12, 157, { size: 5.8, weight: 700, color: '#E7CDC9' });
       s.text(`1순위 ${m.first ? m.first.item.name : '유지'} · ${m.score}점 ${m.letter}`, s.ML + 12, 167, { size: 10.4, weight: 800, color: '#fff' });
       let y = 300;
       s.text('오늘 상담 60분 설계', s.ML, y, { size: 11, weight: 800, color: C.navy });
@@ -1047,7 +1069,7 @@
       PLAN_OPEN.flow.forEach((f, i) => {
         const x = s.ML + i * ((s.CW - 8 * 4) / 5 + 8);
         const w = (s.CW - 8 * 4) / 5;
-        s.rect(x, y, w, 66, { fill: i === 0 ? '#F3F9FF' : '#fff', r: 5, stroke: C.line });
+        s.rect(x, y, w, 66, { fill: i === 0 ? '#FDF5F4' : '#fff', r: 5, stroke: C.line });
         s.text(f.m, x + 9, y + 8, { size: 6, weight: 800, color: C.blue });
         s.text(f.t, x + 9, y + 20, { size: 9.4, weight: 800, color: C.navy });
         s.para(f.d, x + 9, y + 36, w - 18, { size: 6, color: C.ink2, lh: 1.35 });
@@ -1104,13 +1126,13 @@
       });
 
       const rx = s.ML + left + 12;
-      s.rect(rx, y, left, 150, { fill: '#0B2545', r: 6 });
-      s.text('진단 요약', rx + 12, y + 9, { size: 7.6, weight: 800, color: '#9EC0E4' });
+      s.rect(rx, y, left, 150, { fill: '#3A2628', r: 6 });
+      s.text('진단 요약', rx + 12, y + 9, { size: 7.6, weight: 800, color: '#E7CDC9' });
       s.text(`${m.letter}`, rx + 12, y + 22, { size: 30, weight: 800, color: '#fff' });
       s.text(`${m.score}점 · ${m.grade.label}`, rx + 58, y + 36, { size: 8.4, weight: 700, color: '#8FF0DC' });
-      s.text('보완 필요', rx + 12, y + 62, { size: 6.2, weight: 700, color: '#9EC0E4' });
+      s.text('보완 필요', rx + 12, y + 62, { size: 6.2, weight: 700, color: '#E7CDC9' });
       s.para(gapLine(m), rx + 12, y + 71, left - 24, { size: 6.8, color: '#fff', lh: 1.4 });
-      s.text('오늘의 목표', rx + 12, y + 106, { size: 6.2, weight: 700, color: '#9EC0E4' });
+      s.text('오늘의 목표', rx + 12, y + 106, { size: 6.2, weight: 700, color: '#E7CDC9' });
       s.para(m.first ? `${m.first.item.name} 한 칸을 결정하고, 다음 약속 날짜를 받는다.` : '금액 조정과 갱신 대비를 정리한다.', rx + 12, y + 115, left - 24, { size: 7, weight: 600, color: '#fff', lh: 1.4 });
       y += 162;
 
@@ -1121,7 +1143,7 @@
       s.text(m.family.length ? m.familyLabels.join(' · ') : '미입력', s.ML + 10, y + 16, { size: 9.4, weight: 800, color: m.family.length ? C.navy : C.muted });
       s.para(m.familyNotes.length ? m.familyNotes.map((f) => f.title).join(' · ') + ' — 해당 담보를 우선 점검합니다.' : '가족력을 입력하면 같은 위험의 담보를 먼저 확인합니다.', s.ML + 10, y + 30, halfW - 20, { size: 5.7, color: C.ink2, lh: 1.3 });
       const ddx = s.ML + halfW + 8;
-      s.rect(ddx, y, halfW, 54, { fill: m.disclosure.tone === 'ok' ? '#F2FBF8' : m.disclosure.tone === 'gap' ? '#FDF2F1' : '#FFFBF3', r: 5, stroke: C.line });
+      s.rect(ddx, y, halfW, 54, { fill: m.disclosure.tone === 'ok' ? '#F1FAF7' : m.disclosure.tone === 'gap' ? '#FDF2F1' : '#FDF7EC', r: 5, stroke: C.line });
       s.text('고지 판정 (3개월·1년·5년)', ddx + 10, y + 7, { size: 6.2, weight: 700, color: C.muted });
       s.text(m.disclosure.label, ddx + 10, y + 16, { size: 9.4, weight: 800, color: m.disclosure.tone === 'ok' ? C.mint : m.disclosure.tone === 'gap' ? C.red : C.orange });
       s.para(m.disclosure.reasons.length ? m.disclosure.reasons.join(' · ') : '체크된 항목 없음 — 표준체 우선', ddx + 10, y + 30, halfW - 20, { size: 5.7, color: C.ink2, lh: 1.3 });
@@ -1195,8 +1217,8 @@
         s.text(`${l[2]}`, s.ML + 164, ly - 1, { size: 6.6, weight: 800, color: C.navy, align: 'right' });
       });
       const rx = s.ML + 188, rw = s.CW - 188;
-      s.rect(rx, y, rw, 118, { fill: '#0B2545', r: 6 });
-      s.text('한 문장으로 말하면', rx + 12, y + 10, { size: 6.2, weight: 700, color: '#9EC0E4' });
+      s.rect(rx, y, rw, 118, { fill: '#3A2628', r: 6 });
+      s.text('한 문장으로 말하면', rx + 12, y + 10, { size: 6.2, weight: 700, color: '#E7CDC9' });
       s.para(`${m.client.name}님은 지금 ${m.letter} 등급이고, ${m.first ? `${m.first.item.rank}순위 ${m.first.item.name}이 ${m.first.pct}%로 가장 비어 있습니다.` : '5대 담보가 모두 기준선을 넘었습니다.'} 나머지는 유지하면서 이 한 칸부터 채우면 됩니다.`, rx + 12, y + 22, rw - 24, { size: 9, weight: 600, color: '#fff', lh: 1.5 });
       s.text(`${m.needList.length}개 항목 보완 필요 · 월 ${won(m.premium)}만원`, rx + 12, y + 96, { size: 6.6, weight: 600, color: '#8FF0DC' });
       y += 130;
@@ -1378,7 +1400,7 @@
         const d = mk(t.f);
         const x = s.ML + i * ((s.CW - 16) / 3 + 8);
         const w = (s.CW - 16) / 3;
-        s.rect(x, y, w, 128, { fill: i === 1 ? '#F3F9FF' : '#fff', r: 6, stroke: i === 1 ? C.blue : C.line });
+        s.rect(x, y, w, 128, { fill: i === 1 ? '#FDF5F4' : '#fff', r: 6, stroke: i === 1 ? C.blue : C.line });
         if (i === 1) s.rect(x, y, w, 3, { fill: C.blue, r: 1.5 });
         s.text(t.name, x + 10, y + 10, { size: 8, weight: 800, color: C.navy });
         s.text(`일반암 ${won(d.g)}만원`, x + 10, y + 24, { size: 10, weight: 800, color: C.blue });
@@ -1411,7 +1433,7 @@
     P.push((s) => {
       let y = head(s, 11, 'PLAN 1 · CANCER', '암 — 예상 반론 3종', '반론은 막는 것이 아니라 꺼내게 하는 것입니다. 먼저 꺼내면 대화가 됩니다.');
       pb.objections.forEach((o, i) => {
-        s.rect(s.ML, y, s.CW, 22, { fill: '#0B2545', r: 4 });
+        s.rect(s.ML, y, s.CW, 22, { fill: '#3A2628', r: 4 });
         s.text(o.trigger, s.ML + 12, y + 5, { size: 8.4, weight: 800, color: '#fff' });
         y += 26;
         [['공감', o.empathy, C.mint], ['환기', o.awaken, C.orange], ['대안', o.alternative, C.blue]].forEach((st) => {
@@ -1435,27 +1457,29 @@
       y = todoStrip(s, y, `이 페이지에서 할 일 — ${m.client.name}님의 뇌 담보가 어느 범위인지 확인하고, 뇌경색 공백 여부를 판정합니다.`);
       y += 10;
       const br = m.rows[1];
-      s.rect(s.ML, y, s.CW, 70, { fill: '#F5F9FE', r: 6, stroke: C.line });
-      s.text('현재 뇌 보장', s.ML + 12, y + 9, { size: 6.2, weight: 600, color: C.muted });
-      s.text(PK(br, 'scope').option ? PK(br, 'scope').option.label : '미보유', s.ML + 12, y + 18, { size: 15, weight: 800, color: PK(br, 'scope').fill >= 0.99 ? C.mint : C.red });
-      s.text(PK(br, 'scope').option ? PK(br, 'scope').option.hint : '', s.ML + 12, y + 38, { size: 6.4, weight: 600, color: C.ink2 });
+      const bdxA = PK(br, 'dx').dx || {};
+      const bCore = bdxA.core || { val: 0, label: '뇌혈관질환 진단비' };
+      s.rect(s.ML, y, s.CW, 70, { fill: '#FDF9F8', r: 6, stroke: C.line });
+      s.text('핵심 범위 · 뇌혈관질환', s.ML + 12, y + 9, { size: 6.2, weight: 600, color: C.muted });
+      s.text(`${won(bCore.val)}만원`, s.ML + 12, y + 18, { size: 15, weight: 800, color: bCore.val >= 2000 ? C.mint : C.red });
+      s.text(`뇌졸중 ${won((bdxA.subs[1] || {}).val || 0)} · 뇌출혈 ${won((bdxA.subs[2] || {}).val || 0)}만원`, s.ML + 12, y + 38, { size: 6.4, weight: 600, color: C.ink2 });
       s.text('주요치료비 3종', s.ML + 150, y + 9, { size: 6.2, weight: 600, color: C.muted });
       s.text(`${subHave(PK(br, 'treat'))}/3종`, s.ML + 150, y + 18, { size: 13, weight: 800, color: PK(br, 'treat').val > 0 ? C.mint : C.red });
-      s.text(`혈전용해제·수술·중환자실 ${won(PK(br, 'treat').val)}만원 / 권장 ${won(PK(br, 'treat').rec)}만원`, s.ML + 150, y + 38, { size: 6.2, weight: 600, color: C.ink2 });
-      s.text('권장', s.W - s.MR - 150, y + 9, { size: 6.2, weight: 600, color: C.muted });
-      s.text('뇌혈관질환 I60~I69', s.W - s.MR - 150, y + 20, { size: 9, weight: 800, color: C.navy });
-      s.text('(뇌졸중 I60~I64 → 뇌출혈 I60~I62)', s.W - s.MR - 150, y + 34, { size: 5.8, weight: 500, color: C.muted });
-      s.para('뇌경색(I63)은 뇌졸중·뇌혈관 담보에만 들어갑니다.', s.W - s.MR - 150, y + 46, 140, { size: 5.8, color: C.red, lh: 1.3 });
+      s.text(`혈전용해제·수술·중환자실 ${won(PK(br, 'treat').val)}만원`, s.ML + 150, y + 38, { size: 6.2, weight: 600, color: C.ink2 });
+      s.text('진단 시 합산', s.W - s.MR - 150, y + 9, { size: 6.2, weight: 600, color: C.muted });
+      s.text('뇌경색(I63) ' + won((bdxA.scenarios && bdxA.scenarios[0] ? bdxA.scenarios[0].sum : 0)) + '만원', s.W - s.MR - 150, y + 19, { size: 7.4, weight: 800, color: C.navy });
+      s.text('뇌출혈(I61) ' + won((bdxA.scenarios && bdxA.scenarios[1] ? bdxA.scenarios[1].sum : 0)) + '만원', s.W - s.MR - 150, y + 30, { size: 7.4, weight: 800, color: C.navy });
+      s.para('뇌경색은 뇌출혈 담보에서 0원입니다.', s.W - s.MR - 150, y + 46, 140, { size: 5.8, color: C.red, lh: 1.3 });
       y += 80;
       y = secLabel(s, y, '판독 멘트');
-      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님 뇌 담보는 ${PK(br, 'scope').option ? PK(br, 'scope').option.label : '없음'}입니다. 이 담보는 ${m.state.cov.brain.scope === 'bleed' ? '혈관이 터진 뇌출혈만 보장합니다. 그런데 실제로는 혈관이 막히는 뇌경색이 훨씬 많습니다.' : '범위가 좁아서 가장 흔한 형태가 빠질 수 있습니다.'} 주요치료비는 3종 중 ${subHave(PK(br, 'treat'))}종이 채워져 있습니다."` });
+      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님 뇌 담보는 뇌혈관질환 ${won(bCore.val)}만원, 뇌졸중 ${won((bdxA.subs[1] || {}).val || 0)}만원, 뇌출혈 ${won((bdxA.subs[2] || {}).val || 0)}만원입니다. ${bCore.val > 0 ? '가장 넓은 범위가 살아 있어서 뇌경색은 뇌혈관과 뇌졸중이 합산됩니다.' : '넓은 범위가 비어 있어서, 가장 흔한 뇌경색은 뇌졸중 금액만 받고 후유증은 지급되지 않습니다.'} 주요치료비는 3종 중 ${subHave(PK(br, 'treat'))}종이 채워져 있습니다."` });
       y += 8;
       y = s.sectionHead(s.ML, y, s.CW, '01', '근거 통계 — 이 세 줄이면 충분합니다', '출처: 중앙심뇌혈관질환센터·건강보험통계 2023 · 통계청 2024');
       bn.facts.forEach((f) => { y = s.bullets(s.ML, y, s.CW, [f], { size: 7, gap: 2 }); });
       y += 6;
       y = s.sectionHead(s.ML, y, s.CW, '02', '오늘의 목표', null);
       y = s.checks(s.ML, y, s.CW, [
-        m.state.cov.brain.scope === 'bleed' ? '뇌출혈 → 뇌졸중/뇌혈관질환 보완 여부 결정' : '보유 범위 유지 + 수술·치료비 보완 여부 결정',
+        bCore.val >= 2000 ? '보유 범위 유지 + 수술·치료비 보완 여부 결정' : '뇌혈관질환 2,000만원 보완 여부 결정',
         '뇌경색(I63)이 현재 담보에 포함되는지 고객에게 확인시켜 주기',
         '후유장해 담보 유무 확인 (다음 상담 과제로 넘겨도 됨)'
       ], { size: 7, rowH: 14.5 });
@@ -1507,16 +1531,17 @@
 
     P.push((s) => {
       let y = head(s, 15, 'PLAN 2 · BRAIN', '뇌 — 설계 권장안과 반론', '범위를 먼저 맞추고, 금액은 예산 안에서 조정합니다.');
+      const bd15 = PK(m.rows[1], 'dx').dx || {};
       const rows = [
-        ['진단비 범위', PK(m.rows[1], 'scope').option ? PK(m.rows[1], 'scope').option.label : '미보유', '뇌혈관질환 I60~I69 (최소 뇌졸중)', '범위가 곧 보장입니다'],
-        ['진단비 금액', `${won(m.state.cov.brain.scope === 'none' ? 0 : 0)}`.replace('0', PK(m.rows[1], 'scope').val > 0 ? '진단비 보유' : '미보유'), `권장 ${won(m.rows[1].baseRec)}만원 (최소 1,000·충분 3,000)`, '연령대 공통 권장 예시'],
-        ['주요치료비 3종', `${subHave(PK(m.rows[1], 'treat'))}/3종`, '혈전용해제·수술·중환자실', '기계적 혈전제거술은 별도 담보'],
-        ['후유장해', '—', '확인 필요', '뇌졸중 후 장해 지급률']
+        ['뇌혈관질환 진단비', `${won((bd15.core || {}).val || 0)}만원`, '권장 2,000만원 (I60~I69)', '가장 넓은 핵심 범위'],
+        ['뇌졸중 진단비', `${won((bd15.subs && bd15.subs[1] ? bd15.subs[1].val : 0))}만원`, '권장 2,000만원 (I60~I63·I65~I66)', '뇌경색(I63) 포함'],
+        ['뇌출혈 진단비', `${won((bd15.subs && bd15.subs[2] ? bd15.subs[2].val : 0))}만원`, '권장 1,000만원 (I60~I62)', '가장 좁은 범위 · 뇌경색 제외'],
+        ['주요치료비 3종', `${subHave(PK(m.rows[1], 'treat'))}/3종`, '혈전용해제·수술·중환자실', '기계적 혈전제거술은 별도']
       ];
       y = s.table(s.ML, y, s.CW, ['항목', '현재', '권장 기준', '이유'], rows, { widths: [86, 108, 152, 169], size: 6.7, rowH: 20, align: ['left', 'center', 'left', 'left'] });
       y += 12;
       bn.objections.forEach((o, i) => {
-        s.rect(s.ML, y, s.CW, 20, { fill: '#0B2545', r: 3 });
+        s.rect(s.ML, y, s.CW, 20, { fill: '#3A2628', r: 3 });
         s.text(o.trigger, s.ML + 10, y + 4, { size: 8, weight: 800, color: '#fff' });
         y += 23;
         s.para(`공감 — ${o.empathy}`, s.ML + 4, y, s.CW - 8, { size: 6.4, color: C.ink2, lh: 1.35 });
@@ -1537,10 +1562,12 @@
       y = todoStrip(s, y, `이 페이지에서 할 일 — ${m.client.name}님 심장 담보의 코드 범위를 확인하고, 스텐트 시술이 보장되는지 판정합니다.`);
       y += 10;
       const hr = m.rows[2];
-      s.rect(s.ML, y, s.CW, 68, { fill: '#FFF7F6', r: 6, stroke: '#F3DDD9' });
-      s.text('현재 심장 보장', s.ML + 12, y + 9, { size: 6.2, weight: 600, color: C.muted });
-      s.text(PK(hr, 'scope').option ? PK(hr, 'scope').option.label : '미보유', s.ML + 12, y + 18, { size: 15, weight: 800, color: PK(hr, 'scope').fill >= 0.99 ? C.mint : C.red });
-      s.text(PK(hr, 'scope').option ? PK(hr, 'scope').option.hint : '', s.ML + 12, y + 38, { size: 6.4, weight: 600, color: C.ink2 });
+      s.rect(s.ML, y, s.CW, 68, { fill: '#FDF2F1', r: 6, stroke: '#F3DDD9' });
+      const hdxA = PK(hr, 'dx').dx || {};
+      const hCore = hdxA.core || { val: 0 };
+      s.text('핵심 범위 · 허혈성심장', s.ML + 12, y + 9, { size: 6.2, weight: 600, color: C.muted });
+      s.text(`${won(hCore.val)}만원`, s.ML + 12, y + 18, { size: 15, weight: 800, color: hCore.val >= 2000 ? C.mint : C.red });
+      s.text(`급성심근경색 ${won((hdxA.subs && hdxA.subs[1] ? hdxA.subs[1].val : 0))}만원`, s.ML + 12, y + 38, { size: 6.4, weight: 600, color: C.ink2 });
       s.text('주요치료비 3종', s.ML + 150, y + 9, { size: 6.2, weight: 600, color: C.muted });
       s.text(`${subHave(PK(hr, 'treat'))}/3종`, s.ML + 150, y + 18, { size: 13, weight: 800, color: PK(hr, 'treat').val > 0 ? C.mint : C.red });
       s.text(`혈전용해제·수술·중환자실 ${won(PK(hr, 'treat').val)}만원`, s.ML + 150, y + 38, { size: 6.2, color: C.ink2 });
@@ -1549,7 +1576,7 @@
       s.text('급성심근경색 I21~I22 → 협심증 I20 포함', s.W - s.MR - 160, y + 34, { size: 5.8, color: C.muted });
       s.para('스텐트 시술은 협심증 단계에서 가장 많이 이뤄집니다.', s.W - s.MR - 160, y + 46, 150, { size: 5.8, color: C.red, lh: 1.3 });
       y += 78;
-      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님 심장 담보는 ${PK(hr, 'scope').option ? PK(hr, 'scope').option.label : '없음'}입니다. 협심증은 혈관이 좁아진 단계, 급성심근경색은 막힌 단계입니다. 지금 담보가 뒤쪽만 담고 있으면, 앞쪽에서 하는 스텐트 시술은 보장 밖입니다."` });
+      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님 심장 담보는 허혈성심장질환 ${won(hCore.val)}만원, 급성심근경색 ${won((hdxA.subs && hdxA.subs[1] ? hdxA.subs[1].val : 0))}만원입니다. 협심증은 혈관이 좁아진 단계, 급성심근경색은 막힌 단계입니다. ${hCore.val > 0 ? '허혈성 범위가 있어서 협심증과 급성심근경색이 합산됩니다.' : '급성심근경색만 담겨 있어서, 협심증에서 하는 스텐트 시술은 보장 밖입니다.'}"` });
       y += 8;
       y = s.sectionHead(s.ML, y, s.CW, '01', '근거', '출처: 통계청 2024 사망원인통계');
       ht.facts.forEach((f) => { y = s.bullets(s.ML, y, s.CW, [f], { size: 7, gap: 2 }); });
@@ -1590,7 +1617,7 @@
       y = codeTable(s, s.ML, y, s.CW, PLAYBOOK_CODES('heart'));
       y += 10;
       ht.traps.forEach((t, i) => {
-        s.rect(s.ML, y, s.CW, 46, { fill: i % 2 ? '#FFF7F6' : '#fff', r: 4, stroke: C.line });
+        s.rect(s.ML, y, s.CW, 46, { fill: i % 2 ? '#FDF2F1' : '#fff', r: 4, stroke: C.line });
         s.text(`${i + 1}. ${t.title}`, s.ML + 10, y + 5, { size: 7.4, weight: 800, color: C.navy });
         s.text(`확인 — ${t.watch}`, s.ML + 10, y + 17, { size: 6, color: C.ink2 });
         s.text(`말 — ${t.script.replace(/^"|"$/g, '')}`, s.ML + 10, y + 28, s.CW - 20, { size: 6, color: C.blue });
@@ -1607,10 +1634,11 @@
 
     P.push((s) => {
       let y = head(s, 19, 'PLAN 3 · HEART', '심장 — 설계 권장안과 반론', '범위를 넓히는 것이 먼저, 금액은 그다음입니다.');
+      const hd19 = PK(m.rows[2], 'dx').dx || {};
       const rows = [
-        ['진단비 범위', PK(m.rows[2], 'scope').option ? PK(m.rows[2], 'scope').option.label : '미보유', '허혈성심장질환 I20~I25', '협심증·스텐트 포함'],
-        ['진단비 금액', '—', `권장 ${won(m.rows[2].baseRec)}만원`, '연령대 기준 권장 예시'],
-        ['심혈관 수술비', m.state.cov.heart.surgery ? '보유' : '없음', '보유 권장', '스텐트·우회로 수술'],
+        ['허혈성심장질환 진단비', `${won((hd19.core || {}).val || 0)}만원`, '권장 2,000만원 (I20~I25)', '협심증·스텐트 포함'],
+        ['급성심근경색 진단비', `${won((hd19.subs && hd19.subs[1] ? hd19.subs[1].val : 0))}만원`, '권장 2,000만원 (I21~I23)', '협심증(I20) 제외'],
+        ['심혈관 수술비', PK(m.rows[3], 'diseaseNdae').val > 0 ? '수술비 축 확인' : '없음', '보유 권장', '스텐트·우회로 수술'],
         ['부정맥·심부전', '—', '확인 필요', '별도 담보 영역']
       ];
       y = s.table(s.ML, y, s.CW, ['항목', '현재', '권장 기준', '이유'], rows, { widths: [86, 108, 152, 169], size: 6.7, rowH: 20, align: ['left', 'center', 'left', 'left'] });
@@ -1714,7 +1742,7 @@
       y = s.table(s.ML, y, s.CW, ['항목', '현재', '권장 기준', '이유'], rows, { widths: [78, 100, 182, 155], size: 6.7, rowH: 20, align: ['left', 'center', 'left', 'left'] });
       y += 14;
       sg.objections.forEach((o) => {
-        s.rect(s.ML, y, s.CW, 20, { fill: '#0B2545', r: 3 });
+        s.rect(s.ML, y, s.CW, 20, { fill: '#3A2628', r: 3 });
         s.text(o.trigger, s.ML + 10, y + 4, { size: 8, weight: 800, color: '#fff' });
         y += 23;
         s.para(`공감 — ${o.empathy}`, s.ML + 4, y, s.CW - 8, { size: 6.4, color: C.ink2, lh: 1.35 }); y += 13;
@@ -1777,10 +1805,10 @@
       const cw = (s.CW - 16) / 3;
       cols.forEach((c, i) => {
         const x = s.ML + i * (cw + 8);
-        s.rect(x, y, cw, 96, { fill: i === 2 ? '#0B2545' : '#fff', r: 6, stroke: C.line });
+        s.rect(x, y, cw, 96, { fill: i === 2 ? '#3A2628' : '#fff', r: 6, stroke: C.line });
         s.text(c.when, x + 10, y + 9, { size: 6, weight: 700, color: i === 2 ? '#8FF0DC' : c.c });
         s.text(c.t, x + 10, y + 19, { size: 8.6, weight: 800, color: i === 2 ? '#fff' : C.navy });
-        s.para(c.d, x + 10, y + 34, cw - 20, { size: 6.2, color: i === 2 ? '#CFE0F2' : C.ink2, lh: 1.4 });
+        s.para(c.d, x + 10, y + 34, cw - 20, { size: 6.2, color: i === 2 ? '#F0DEDB' : C.ink2, lh: 1.4 });
       });
       y += 106;
       let n = 0;
@@ -1831,10 +1859,10 @@
     P.push((s) => {
       let y = head(s, 26, 'MANUAL · MEDICAL', '실손 1~5세대 전환 판단 매뉴얼', '2026년 11월, 1·2세대에 두 갈래 선택지가 열렸습니다. 유지가 답인 경우도 분명히 말합니다.');
       const sil = m.state.silson;
-      s.rect(s.ML, y, s.CW, 46, { fill: '#0B2545', r: 6 });
-      s.text('이 고객의 실손', s.ML + 12, y + 8, { size: 6, weight: 700, color: '#9EC0E4' });
+      s.rect(s.ML, y, s.CW, 46, { fill: '#3A2628', r: 6 });
+      s.text('이 고객의 실손', s.ML + 12, y + 8, { size: 6, weight: 700, color: '#E7CDC9' });
       s.text(sil === 'none' ? '없음 — 실손부터' : `${sil}세대`, s.ML + 12, y + 17, { size: 16, weight: 800, color: '#fff' });
-      s.para(sil === '1' || sil === '2' ? '2026년 11월 제도 대상일 가능성이 큽니다. 가입 시기와 재가입 조건을 확인하세요.' : sil === 'none' ? '진단비보다 실손이 먼저입니다. 입원·통원 기본축이 비어 있습니다.' : '선택형 할인·전환 대상이 아닐 수 있습니다. 유지 판단이 먼저입니다.', s.ML + 130, y + 10, s.CW - 150, { size: 6.8, color: '#D7E5F4', lh: 1.4 });
+      s.para(sil === '1' || sil === '2' ? '2026년 11월 제도 대상일 가능성이 큽니다. 가입 시기와 재가입 조건을 확인하세요.' : sil === 'none' ? '진단비보다 실손이 먼저입니다. 입원·통원 기본축이 비어 있습니다.' : '선택형 할인·전환 대상이 아닐 수 있습니다. 유지 판단이 먼저입니다.', s.ML + 130, y + 10, s.CW - 150, { size: 6.8, color: '#F2E4E2', lh: 1.4 });
       y += 58;
       y = s.sectionHead(s.ML, y, s.CW, '01', '판단 5단계', null);
       SILSON_DECISION.steps.forEach((st, i) => {
@@ -1871,7 +1899,7 @@
       /* v4: 입력값 기반 심사 판정 */
       const dj = m.disclosure;
       const djCol = dj.tone === 'ok' ? C.mint : dj.tone === 'gap' ? C.red : C.orange;
-      s.rect(s.ML, y, s.CW, 54, { fill: dj.tone === 'ok' ? '#F2FBF8' : dj.tone === 'gap' ? '#FDF2F1' : '#FFFBF3', r: 5, stroke: C.line });
+      s.rect(s.ML, y, s.CW, 54, { fill: dj.tone === 'ok' ? '#F1FAF7' : dj.tone === 'gap' ? '#FDF2F1' : '#FDF7EC', r: 5, stroke: C.line });
       s.rect(s.ML, y, 2.6, 54, { fill: djCol, r: 1.3 });
       s.text('이 고객의 권장 심사', s.ML + 10, y + 6, { size: 6, weight: 700, color: C.muted });
       s.text(dj.label, s.ML + 10, y + 14, { size: 10.4, weight: 800, color: djCol });
@@ -1903,7 +1931,7 @@
     P.push((s) => {
       let y = head(s, 28, 'FIELD SCRIPT', '현장 6대 거절 돌파 스크립트', '거절은 반박 대상이 아니라 확인 대상입니다. 공감 → 환기 → 대안 순서를 지킵니다.');
       REBUTTALS.forEach((r, i) => {
-        s.rect(s.ML, y, s.CW, 17, { fill: i % 2 ? '#123B66' : '#0B2545', r: 3 });
+        s.rect(s.ML, y, s.CW, 17, { fill: i % 2 ? '#4A2E30' : '#3A2628', r: 3 });
         s.text(`Q${i + 1}  ${r.trigger}`, s.ML + 10, y + 3, { size: 7.6, weight: 800, color: i === 3 ? '#FFD47A' : '#fff' });
         y += 19;
         s.text('공감', s.ML + 4, y, { size: 5.6, weight: 800, color: C.mint });
@@ -1968,7 +1996,7 @@
         '상령일 D-day가 가까우면 미리 연락해 보험료 변동을 안내합니다.',
         '갱신 3개월 전 알림을 캘린더에 직접 등록해 두세요.'
       ], { size: 7, gap: 3 });
-      y = noteStrip(s, y + 4, `오늘 상담 요약 — ${m.client.name}님 · ${m.letter}(${m.score}점) · ${m.first ? `1순위 ${m.first.item.name} ${m.first.pct}%` : '전 항목 기준선 이상'} · 월 ${won(m.premium)}만원`, { size: 6.8, fill: '#F2FBF8', stroke: '#CDECE3', accent: C.mint });
+      y = noteStrip(s, y + 4, `오늘 상담 요약 — ${m.client.name}님 · ${m.letter}(${m.score}점) · ${m.first ? `1순위 ${m.first.item.name} ${m.first.pct}%` : '전 항목 기준선 이상'} · 월 ${won(m.premium)}만원`, { size: 6.8, fill: '#F1FAF7', stroke: '#CDECE3', accent: C.mint });
       y = blockTitle(s, y + 4, '소개 요청은 이때만', '타이밍이 결과를 바꿉니다');
       y = s.bullets(s.ML, y, s.CW, [
         '청구를 도와준 직후 — 가장 신뢰가 높은 순간',

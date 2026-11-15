@@ -143,6 +143,15 @@
     /* ---------- 01 표지 ---------- */
     add(1, 'summary', null, `
       <div class="cover">
+        <div class="cover-brand">
+          <span class="cb-heart" aria-hidden="true">
+            <svg viewBox="0 0 120 100" fill="none">
+              <path d="M60 36c0-10 8-18 19-18s19 9 19 21c0 17-19 30-38 42C41 69 22 56 22 39 22 27 31 18 42 18s18 8 18 18z" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M18 78c20 12 52 12 70-2 6-5 12-7 18-7" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" opacity=".6"/>
+            </svg>
+          </span>
+          <span class="cb-name">보험에 <em>반하다</em></span>
+        </div>
         <div class="cover-eyebrow">LIFE REPORT · BOJANG ANALYSIS</div>
         <h1 class="cover-title">${esc(m.client.name)}님의<br>보장분석 리포트</h1>
         <p class="cover-lead">과도한 보장은 줄이고, 부족한 보장은 채우는<br>5대 담보 · 30장 시각화 리포트</p>
@@ -277,7 +286,7 @@
       return r ? r.r.fill : 0;
     };
     const axes4 = [
-      { label: '진단비', value: (PK(rowOf('cancer'), 'general').fill + PK(rowOf('brain'), 'scope').fill + PK(rowOf('heart'), 'scope').fill) / 3 },
+      { label: '진단비', value: (PK(rowOf('cancer'), 'general').fill + PK(rowOf('brain'), 'dx').fill + PK(rowOf('heart'), 'dx').fill) / 3 },
       { label: '치료·수술', value: (PK(rowOf('cancer'), 'treatment').fill + PK(rowOf('brain'), 'treat').fill + PK(rowOf('heart'), 'treat').fill + rowOf('surgery').r.fill) / 4 },
       { label: '실손', value: m.state.silson === 'none' ? 0 : 1 },
       { label: '간병·요양', value: (PK(rowOf('care'), 'daily').fill + PK(rowOf('care'), 'ltc').fill + PK(rowOf('care'), 'nursing').fill) / 3 }
@@ -404,30 +413,45 @@
 
     /* ---------- 12 뇌 현재 vs 권장 ---------- */
     const br = rowOf('brain');
-    const brainScope = PK(br, 'scope').option || { label: '미보유' };
+    const bDxP = PK(br, 'dx');
+    const bDx = bDxP.dx || { subs: [], core: null, scenarios: [] };
+    const bDxCore = bDx.core || { val: 0, rec: 2000, label: '뇌혈관질환 진단비' };
+    const bDxSubs = bDxP.subs || [];
     const bT = PK(br, 'treat');
     const bTs = bT.subs || [];
+    const dxRow = (s2) => `
+      <div class="t5-row${s2.val > 0 ? '' : ' is-off'}">
+        <span class="t5-l">${esc(s2.label.replace(/\s*진단비$/, ''))}</span>
+        <span class="t5-v">${s2.val > 0 ? `${won(s2.val)}만원` : '0원'}</span>
+        <div class="t5-bar"><i style="width:${Math.max(2, Math.min(100, s2.pct))}%;background:${s2.pct >= 100 ? '#12A594' : s2.pct > 0 ? '#E8952E' : '#E05B52'}"></i></div>
+        <b class="t5-p" style="color:${s2.pct >= 100 ? '#0a6b57' : s2.pct > 0 ? '#a5620f' : '#b3261e'}">${s2.pct}%</b>
+      </div>`;
     add(12, 'brain', 'brain', `
       <div class="sl-head"><span class="k">2순위 · 뇌</span><h2>뇌 보장, 어디까지 담았나</h2>
         <p>이름이 비슷한 세 담보가 있습니다. 뒤로 갈수록 보장 범위가 넓습니다.</p></div>
       <div class="concentric-wrap">
         <svg viewBox="0 0 300 260" class="sl-concentric" role="img" aria-label="뇌혈관질환·뇌졸중·뇌출혈 포함관계">
-          <circle cx="150" cy="130" r="118" fill="#123b66"/>
-          <circle cx="150" cy="130" r="86" fill="#1b5a8a"/>
-          <circle cx="150" cy="130" r="54" fill="#2f86b8"/>
+          <circle cx="150" cy="130" r="118" fill="#3A2628"/>
+          <circle cx="150" cy="130" r="86" fill="#7A3F45"/>
+          <circle cx="150" cy="130" r="54" fill="#C06A6A"/>
           <text x="150" y="42" text-anchor="middle" class="cg-t">뇌혈관질환</text>
           <text x="150" y="56" text-anchor="middle" class="cg-s">I60~I69 · 후유증 포함</text>
           <text x="150" y="86" text-anchor="middle" class="cg-t">뇌졸중</text>
-          <text x="150" y="99" text-anchor="middle" class="cg-s">I60~I64</text>
+          <text x="150" y="99" text-anchor="middle" class="cg-s">I60~I63·I65~I66</text>
           <text x="150" y="126" text-anchor="middle" class="cg-t">뇌출혈</text>
           <text x="150" y="139" text-anchor="middle" class="cg-s">I60~I62</text>
           <text x="150" y="168" text-anchor="middle" class="cg-s2">뇌경색 I63은 뇌졸중·뇌혈관에만</text>
         </svg>
         <div class="conc-side">
-          <div class="side-card"><span>현재 보장</span><b>${esc(brainScope.label)}</b><p>${esc(brainScope.hint || '')} · 진단비 최소 1,000 / 권장 2,000만원</p></div>
+          <div class="side-card"><span>핵심 범위 뇌혈관질환</span><b>${won(bDxCore.val)}만원</b><p>권장 2,000만원 · 뇌졸중 ${won((bDxSubs[1] || {}).val || 0)} · 뇌출혈 ${won((bDxSubs[2] || {}).val || 0)}만원</p></div>
           <div class="side-card"><span>권장 범위</span><b>뇌혈관질환 I60~I69</b><p>가장 흔한 뇌경색과 후유증까지 담는 범위입니다.</p></div>
           <div class="side-card"><span>충족도</span><b>${br.pct}%</b>${bar(br.r.fill, br.level)}</div>
         </div>
+      </div>
+      <div class="t5">
+        <div class="t5-head"><b>뇌 진단비 3단계</b><span>핵심 뇌혈관 ${won(bDxCore.val)} / 권장 2,000만원</span></div>
+        <div class="t5-rows">${bDxSubs.map(dxRow).join('')}</div>
+        <div class="dx-scen-inline">${(bDx.scenarios || []).map((sc) => `<span><em>${esc(sc.label)}</em>${won(sc.sum)}만원</span>`).join('')}</div>
       </div>
       <div class="t5">
         <div class="t5-head"><b>뇌 주요치료비 3종</b><span>합계 ${won(bT.val)}만원 / 권장 ${won(bT.rec)}만원 · ${subN(bT)}/3종</span></div>
@@ -441,7 +465,7 @@
             </div>`).join('')}
         </div>
       </div>
-      ${noteBox('진단비는 1회성이라 치료비 구성이 핵심입니다. 혈전용해제(tPA)는 별도 담보이고, 기계적 혈전제거술(카테터법)은 그 치료에서 제외되어 또 다른 담보입니다.', 'info')}`, { need: needOf('brain') });
+      ${bDx.gapWarn ? noteBox(`⚠ 범위 공백 — 뇌혈관질환 진단비가 0원입니다. 뇌경색(I63)은 뇌졸중 금액만 받고, 뇌혈관 후유증(I69)은 지급되지 않습니다.`, 'warn') : noteBox('진단 시 금액은 범위별로 합산됩니다. 뇌경색(I63) = 뇌혈관 + 뇌졸중, 뇌출혈(I61) = 세 담보 모두. 혈전용해제(tPA)는 별도 담보이고 기계적 혈전제거술은 그 치료에서 제외됩니다.', 'info')}`, { need: needOf('brain') });
 
     /* ---------- 13 뇌 코드 비교 ---------- */
     add(13, 'brain', 'brain', `
@@ -451,12 +475,12 @@
         <div class="ct-head"><span>담보</span><span>코드</span><span>지급 대상</span></div>
         ${[
           { n: '뇌혈관질환', c: 'I60~I69', d: '뇌출혈·뇌경색·협착·후유증(I69)까지' },
-          { n: '뇌졸중', c: 'I60~I64', d: '뇌출혈 + 뇌경색(I63) + 상세불명(I64)' },
+          { n: '뇌졸중', c: 'I60~I63·I65~I66', d: '뇌출혈 + 뇌경색(I63) 포함' },
           { n: '뇌출혈', c: 'I60~I62', d: '거미막하·뇌내·기타 두개내 출혈' },
           { n: '뇌경색', c: 'I63', d: '뇌졸중·뇌혈관 담보에만 포함' }
         ].map((r) => `<div class="ct-line"><b>${r.n}</b><code>${r.c}</code><span>${r.d}</span></div>`).join('')}
       </div>
-      ${noteBox(`지금 담보는 <b>${esc(brainScope.label)}</b>입니다. ${br.pct >= 100 ? '범위가 가장 넓습니다. 유지가 원칙입니다.' : '가장 흔한 뇌경색이 빠지는 구조인지 확인이 필요합니다.'}`, br.pct >= 100 ? 'ok' : 'warn')}
+      ${noteBox(`핵심 범위 금액은 <b>뇌혈관질환 ${won(bDxCore.val)}만원</b>입니다. ${bDxCore.val >= 2000 ? '기준선(2,000만원)을 넘었습니다. 유지가 원칙입니다.' : '뇌경색(I63)과 후유증(I69)이 빠지지 않았는지 확인이 필요합니다.'}`, bDxCore.val >= 2000 ? 'ok' : 'warn')}
       ${src('KCD 한국표준질병·사인분류 기준 · 상품별 담보명과 지급 조건은 약관 확인')}`, { need: needOf('brain') });
 
     /* ---------- 14 심뇌 통계 ---------- */
@@ -483,7 +507,7 @@
       <div class="sl-head"><span class="k">2순위 · 뇌</span><h2>뇌 보완 방향</h2>
         <p>금액보다 범위가 먼저입니다. 좁은 담보를 넓히는 것이 출발점입니다.</p></div>
       <ol class="steps-list">
-        <li><b>① 범위 정렬</b><p>뇌출혈 → 뇌졸중 → 뇌혈관질환 순으로 넓힙니다. 같은 보험료에서 범위를 바꾸는 방법이 있습니다.</p><em>현재 ${esc(brainScope.label)} → 권장 뇌혈관질환 I60~I69</em></li>
+        <li><b>① 범위 정렬</b><p>뇌출혈 → 뇌졸중 → 뇌혈관질환 순으로 넓힙니다. 같은 보험료에서 범위를 바꾸는 방법이 있습니다.</p><em>뇌혈관 ${won(bDxCore.val)}만원 → 권장 뇌혈관질환 2,000만원 (I60~I69)</em></li>
         <li><b>② 치료비 축</b><p>혈전용해술·스텐트는 약관상 "수술"이 아니어서 수술비가 안 나올 수 있습니다. 혈전용해제·수술·중환자실 3종을 따로 봅니다.</p><em>3종 중 ${subN(bT)}종 · ${won(bT.val)}만원 → 권장 ${won(bT.rec)}만원</em></li>
         <li><b>③ 회복 구간</b><p>살아남아도 장해가 남으면 후유장해 담보로 지급률을 평가합니다. 재활·간병은 5순위와 연결됩니다.</p><em>후유장해·간병 담보 함께 확인</em></li>
       </ol>
@@ -491,7 +515,10 @@
 
     /* ---------- 16 심장 현재 vs 권장 ---------- */
     const hr = rowOf('heart');
-    const heartScope = PK(hr, 'scope').option || { label: '미보유' };
+    const hDxP = PK(hr, 'dx');
+    const hDx = hDxP.dx || { subs: [], core: null, scenarios: [] };
+    const hDxCore = hDx.core || { val: 0, rec: 2000, label: '허혈성심장질환 진단비' };
+    const hDxSubs = hDxP.subs || [];
     const hT = PK(hr, 'treat');
     const hTs = hT.subs || [];
     add(16, 'heart', 'heart', `
@@ -499,22 +526,27 @@
         <p>협심증과 급성심근경색은 같은 심장 질환이지만 보험에서는 다른 담보입니다.</p></div>
       <div class="concentric-wrap">
         <svg viewBox="0 0 300 260" class="sl-concentric" role="img" aria-label="심장질환·허혈성심장질환·급성심근경색 포함관계">
-          <circle cx="150" cy="130" r="118" fill="#7a1f1a"/>
-          <circle cx="150" cy="130" r="86" fill="#b04237"/>
-          <circle cx="150" cy="130" r="54" fill="#e0705f"/>
+          <circle cx="150" cy="130" r="118" fill="#3A2628"/>
+          <circle cx="150" cy="130" r="86" fill="#8C3A40"/>
+          <circle cx="150" cy="130" r="54" fill="#E08A80"/>
           <text x="150" y="42" text-anchor="middle" class="cg-t">심장질환</text>
           <text x="150" y="56" text-anchor="middle" class="cg-s">부정맥·판막·심부전</text>
           <text x="150" y="86" text-anchor="middle" class="cg-t">허혈성심장</text>
           <text x="150" y="99" text-anchor="middle" class="cg-s">I20~I25</text>
           <text x="150" y="126" text-anchor="middle" class="cg-t">급성심근경색</text>
-          <text x="150" y="139" text-anchor="middle" class="cg-s">I21~I22</text>
+          <text x="150" y="139" text-anchor="middle" class="cg-s">I21~I23</text>
           <text x="150" y="168" text-anchor="middle" class="cg-s2">협심증 I20은 허혈성 담보에만</text>
         </svg>
         <div class="conc-side">
-          <div class="side-card"><span>현재 보장</span><b>${esc(heartScope.label)}</b><p>${esc(heartScope.hint || '')} · 진단비 최소 1,000 / 권장 2,000만원</p></div>
+          <div class="side-card"><span>핵심 범위 허혈성심장</span><b>${won(hDxCore.val)}만원</b><p>권장 2,000만원 · 급성심근경색 ${won((hDxSubs[1] || {}).val || 0)}만원</p></div>
           <div class="side-card"><span>권장 범위</span><b>허혈성심장질환 I20~I25</b><p>스텐트 시술이 이뤄지는 협심증 단계까지 담습니다.</p></div>
           <div class="side-card"><span>충족도</span><b>${hr.pct}%</b>${bar(hr.r.fill, hr.level)}</div>
         </div>
+      </div>
+      <div class="t5">
+        <div class="t5-head"><b>심장 진단비 2단계</b><span>핵심 허혈성심장 ${won(hDxCore.val)} / 권장 2,000만원</span></div>
+        <div class="t5-rows">${hDxSubs.map(dxRow).join('')}</div>
+        <div class="dx-scen-inline">${(hDx.scenarios || []).map((sc) => `<span><em>${esc(sc.label)}</em>${won(sc.sum)}만원</span>`).join('')}</div>
       </div>
       <div class="t5">
         <div class="t5-head"><b>심장 주요치료비 3종</b><span>합계 ${won(hT.val)}만원 / 권장 ${won(hT.rec)}만원 · ${subN(hT)}/3종</span></div>
@@ -528,7 +560,7 @@
             </div>`).join('')}
         </div>
       </div>
-      ${noteBox('급성심근경색(I21)은 혈전용해제 치료비의 대상이지만, 스텐트·우회로는 수술비 담보에서 봅니다. 1년 미만 50% 감액 여부도 함께 확인하세요.', 'warn')}`, { need: needOf('heart') });
+      ${hDx.gapWarn ? noteBox(`⚠ 범위 공백 — 허혈성심장질환 진단비가 0원입니다. 협심증(I20)과 스텐트 시술 구간이 지급되지 않고, 급성심근경색만 이 담보에서 나옵니다.`, 'warn') : noteBox('협심증(I20)은 허혈성심장 담보에서만, 급성심근경색(I21)은 두 담보가 합산됩니다. 스텐트·우회로는 수술비 담보에서 확인하고 1년 미만 50% 감액 여부도 함께 보세요.', 'warn')}`, { need: needOf('heart') });
 
     /* ---------- 17 심장 위험요인 ---------- */
     add(17, 'heart', 'heart', `
@@ -551,7 +583,7 @@
       <div class="sl-head"><span class="k">3순위 · 심장</span><h2>심장 보완 방향</h2>
         <p>범위를 넓히는 것이 먼저, 금액은 그다음입니다.</p></div>
       <ol class="steps-list">
-        <li><b>① 범위</b><p>급성심근경색 → 허혈성심장질환(I20~I25)으로 넓힙니다. 같은 보험료 안에서 조정되는 경우가 많습니다.</p><em>현재 ${esc(heartScope.label)} → 권장 허혈성 I20~I25</em></li>
+        <li><b>① 범위</b><p>급성심근경색 → 허혈성심장질환(I20~I25)으로 넓힙니다. 같은 보험료 안에서 조정되는 경우가 많습니다.</p><em>허혈성 ${won(hDxCore.val)}만원 → 권장 허혈성 I20~I25 2,000만원</em></li>
         <li><b>② 수술비</b><p>스텐트·관상동맥우회술이 수술비 지급 대상인지 약관의 수술 분류표로 확인합니다.</p><em>3종 중 ${subN(hT)}종 · ${won(hT.val)}만원 → 권장 ${won(hT.rec)}만원</em></li>
         <li><b>③ 약값·관리</b><p>한 번 막히면 항혈전제를 오래 복용합니다. 진단비·수술비·약값을 함께 봅니다.</p><em>부정맥·판막·심부전 담보도 확인</em></li>
       </ol>
@@ -564,10 +596,10 @@
       <div class="cmp-table">
         <div class="ct-head"><span>구분</span><span>사망원인</span><span>핵심 범위</span><span>지금</span></div>
         ${[
-          { n: '암', d: '24.8% · 1위', s: 'C00~C97 + 유사암', r: rowOf('cancer') },
-          { n: '뇌', d: '6.9% · 4위', s: 'I60~I69', r: rowOf('brain') },
-          { n: '심장', d: '9.4% · 2위', s: 'I20~I25', r: rowOf('heart') }
-        ].map((r) => `<div class="ct-line"><b>${r.n}</b><span>${r.d}</span><span>${r.s}</span><em class="tone-${r.r.level}">${r.r.pct}%</em></div>`).join('')}
+          { n: '암', d: '24.8% · 1위', s: 'C00~C97 + 유사암', r: rowOf('cancer'), amt: PK(rowOf('cancer'), 'general').val },
+          { n: '뇌', d: '6.9% · 4위', s: '뇌혈관 I60~I69', r: rowOf('brain'), amt: ((PK(rowOf('brain'), 'dx').dx || {}).core || {}).val || 0 },
+          { n: '심장', d: '9.4% · 2위', s: '허혈성 I20~I25', r: rowOf('heart'), amt: ((PK(rowOf('heart'), 'dx').dx || {}).core || {}).val || 0 }
+        ].map((r) => `<div class="ct-line"><b>${r.n}</b><span>${r.d}</span><span>${r.s} · ${won(r.amt)}만원</span><em class="tone-${r.r.level}">${r.r.pct}%</em></div>`).join('')}
       </div>
       <div class="big-stat slim">
         <span class="bs-label">3대 중증질환 합산 사망원인 비중</span>

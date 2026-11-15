@@ -1,14 +1,14 @@
 {
-  "name": "보장분석 상담 가이드 v4.2 · 메인 허브 + 고객 30장 슬라이드",
-  "short_name": "보장분석",
-  "description": "메인 허브에서 상담자 상세 입력·한 화면 빠른 입력·고객 30장 슬라이드·PDF로 바로 들어갑니다. 5대 담보를 진단하고 1장·10장·30장 PDF를 저장·공유합니다.",
+  "name": "보험에 반하다 v5.0 · 보장분석 상담 가이드",
+  "short_name": "보험에 반하다",
+  "description": "뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 판독하는 보장분석 앱. 고객 30장 슬라이드와 1·10·30장 PDF, 질병코드 사전·실손 비교·고지 판정·적정 보험료 계산기.",
   "lang": "ko-KR",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f4f6fb",
-  "theme_color": "#0b2545",
+  "background_color": "#FAF4F3",
+  "theme_color": "#FAF4F3",
   "icons": [
     {
       "src": "./icons/icon-192.png",

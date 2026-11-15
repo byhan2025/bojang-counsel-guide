@@ -37,6 +37,40 @@ const NEURO_TREAT_SUBS = [
   { key: 'icu', label: '중환자실 입원비', hint: '중환자실 치료 일당', factor: 0.5 }
 ];
 
+/* v5.0 — 뇌·심장 진단비 금액 3단계 / 2단계 (실무 누락 보완)
+   실무에서는 같은 뇌·심장이라도 범위별로 담보가 따로 가입돼 있는 경우가 많습니다.
+   · 안쪽 담보는 바깥 담보에 포함되고, 진단 시 금액은 겹쳐서 합산 지급됩니다.
+     뇌경색(I63) = 뇌혈관 + 뇌졸중 (뇌출혈 0원)
+     뇌출혈(I61) = 뇌혈관 + 뇌졸중 + 뇌출혈
+     협심증(I20) = 허혈성심장 (급성심근경색 0원)
+     급성심근경색(I21) = 허혈성심장 + 급성심근경색
+   · 그래서 평가 주축은 가장 넓은 범위(뇌혈관질환·허혈성심장질환)입니다.
+     좁은 범위만 있고 넓은 범위가 0원이면 "범위 공백 경고"를 띄웁니다. */
+const NEURO_DX_MIN = 0;
+const NEURO_DX_MAX = 5000;
+const NEURO_DX_QUICK = [0, 1000, 2000, 3000, 5000];
+const BRAIN_DX_SUBS = [
+  { key: 'vascular', label: '뇌혈관질환 진단비', codes: 'I60~I69', hint: '가장 넓은 범위 · 후유증(I69) 포함', rec: 2000, factor: 1, core: true },
+  { key: 'stroke', label: '뇌졸중 진단비', codes: 'I60~I63·I65~I66', hint: '뇌경색(I63) 포함', rec: 2000, factor: 1, part: 0.5 },
+  { key: 'bleed', label: '뇌출혈 진단비', codes: 'I60~I62', hint: '가장 좁은 범위 · 뇌경색 제외', rec: 1000, factor: 0.5, part: 0.3 }
+];
+const HEART_DX_SUBS = [
+  { key: 'ischemic', label: '허혈성심장질환 진단비', codes: 'I20~I25', hint: '협심증(I20) 포함 · 핵심 범위', rec: 2000, factor: 1, core: true },
+  { key: 'ami', label: '급성심근경색 진단비', codes: 'I21~I23', hint: '협심증(I20) 제외', rec: 2000, factor: 1, part: 0.45 }
+];
+/* 진단 시 합산 시나리오 — 어떤 코드로 진단되면 어느 담보가 함께 지급되는지 */
+const NEURO_DX_SCENARIOS = {
+  brain: [
+    { label: '뇌경색(I63)', code: 'I63', parts: ['vascular', 'stroke'], note: '뇌출혈 담보는 0원' },
+    { label: '뇌출혈(I61)', code: 'I61', parts: ['vascular', 'stroke', 'bleed'], note: '세 담보 모두 합산' },
+    { label: '뇌혈관 후유증(I69)', code: 'I69', parts: ['vascular'], note: '뇌혈관질환 담보만' }
+  ],
+  heart: [
+    { label: '협심증(I20)', code: 'I20', parts: ['ischemic'], note: '급성심근경색 담보는 0원' },
+    { label: '급성심근경색(I21)', code: 'I21', parts: ['ischemic', 'ami'], note: '두 담보 합산' }
+  ]
+};
+
 const PRIORITY = [
   {
     key: 'cancer', rank: 1, name: '암', sub: '진단비 · 치료비 5종', unit: '만원',
@@ -58,12 +92,7 @@ const PRIORITY = [
     tierNote: '최소 1,000 · 권장 2,000 · 3,000은 참고 상한(과권장 금지)',
     weight: 22,
     parts: [
-      { key: 'scope', type: 'scale', label: '보장 범위', hint: '진단비 — 1회성', weight: 0.55, options: [
-        { v: 'none', label: '미보유', score: 0 },
-        { v: 'bleed', label: '뇌출혈', hint: 'I60~I62', score: 0.45 },
-        { v: 'stroke', label: '뇌졸중', hint: 'I60~I64', score: 0.72 },
-        { v: 'vascular', label: '뇌혈관질환', hint: 'I60~I69', score: 1 }
-      ] },
+      { key: 'dx', type: 'dxset', label: '뇌 진단비 3단계', hint: '뇌혈관질환 · 뇌졸중 · 뇌출혈 각각 입력', weight: 0.55, subs: BRAIN_DX_SUBS, min: NEURO_DX_MIN, max: NEURO_DX_MAX, step: 500, quick: NEURO_DX_QUICK, core: 'vascular', tiers: { min: 1000, rec: 2000, enough: 3000 } },
       { key: 'treat', type: 'group', label: '뇌 주요치료비 3종', hint: '혈전용해제 · 수술 · 중환자실', weight: 0.45, subs: NEURO_TREAT_SUBS, min: NEURO_TREAT_MIN, max: NEURO_TREAT_MAX, step: 500, quick: NEURO_TREAT_QUICK }
     ]
   },
@@ -74,12 +103,7 @@ const PRIORITY = [
     tierNote: '최소 1,000 · 권장 2,000 · 3,000은 참고 상한(과권장 금지)',
     weight: 18,
     parts: [
-      { key: 'scope', type: 'scale', label: '보장 범위', hint: '진단비 — 1회성', weight: 0.55, options: [
-        { v: 'none', label: '미보유', score: 0 },
-        { v: 'mi', label: '급성심근경색', hint: 'I21~I22', score: 0.45 },
-        { v: 'ischemic', label: '허혈성심장', hint: 'I20~I25', score: 0.8 },
-        { v: 'cardiac', label: '심장질환', hint: '부정맥·판막·심부전', score: 1 }
-      ] },
+      { key: 'dx', type: 'dxset', label: '심장 진단비 2단계', hint: '허혈성심장질환 · 급성심근경색 각각 입력', weight: 0.55, subs: HEART_DX_SUBS, min: NEURO_DX_MIN, max: NEURO_DX_MAX, step: 500, quick: NEURO_DX_QUICK, core: 'ischemic', tiers: { min: 1000, rec: 2000, enough: 3000 } },
       { key: 'treat', type: 'group', label: '심장 주요치료비 3종', hint: '혈전용해제 · 수술 · 중환자실', weight: 0.45, subs: NEURO_TREAT_SUBS, min: NEURO_TREAT_MIN, max: NEURO_TREAT_MAX, step: 500, quick: NEURO_TREAT_QUICK }
     ]
   },
@@ -128,8 +152,8 @@ const PRESETS = {
     label: '20대 표준 분석 샘플', premium: 12, silson: '4', gender: '여', job: '1',
     cov: {
       cancer: { general: 3000, similar: 500, treatment: { surgery: 500, drug: 500, radio: 500, icu: 0, extra: 0 }, recur: false },
-      brain: { scope: 'stroke', treat: { lysis: 1000, surgery: 0, icu: 0 } },
-      heart: { scope: 'mi', treat: { lysis: 0, surgery: 1000, icu: 0 } },
+      brain: { dx: { vascular: 1000, stroke: 1000, bleed: 0 }, treat: { lysis: 1000, surgery: 0, icu: 0 } },
+      heart: { dx: { ischemic: 0, ami: 1000 }, treat: { lysis: 0, surgery: 1000, icu: 0 } },
       surgery: { disease: 30, disease15: 100, diseaseNdae: 0, diseaseNonPay: 0, injury: 50, injury15: 100 },
       care: { daily: 0, nDaily: 0, basis: 'unknown', family: 'conditional', nursing: false, ltc: false, mode: 'normal' }
     }
@@ -138,8 +162,8 @@ const PRESETS = {
     label: '30대 표준 분석 샘플', premium: 18, silson: '4', gender: '여', job: '1',
     cov: {
       cancer: { general: 5000, similar: 1000, treatment: { surgery: 1000, drug: 1000, radio: 500, icu: 0, extra: 500 }, recur: true },
-      brain: { scope: 'vascular', treat: { lysis: 1000, surgery: 500, icu: 0 } },
-      heart: { scope: 'ischemic', treat: { lysis: 0, surgery: 1000, icu: 0 } },
+      brain: { dx: { vascular: 2000, stroke: 2000, bleed: 1000 }, treat: { lysis: 1000, surgery: 500, icu: 0 } },
+      heart: { dx: { ischemic: 2000, ami: 0 }, treat: { lysis: 0, surgery: 1000, icu: 0 } },
       surgery: { disease: 50, disease15: 300, diseaseNdae: 300, diseaseNonPay: 0, injury: 50, injury15: 300 },
       care: { daily: 5, nDaily: 0, basis: 'money', family: 'conditional', nursing: true, ltc: false, mode: 'normal' }
     }
@@ -148,8 +172,8 @@ const PRESETS = {
     label: '40대 표준 분석 샘플', premium: 27, silson: '3', gender: '남', job: '1',
     cov: {
       cancer: { general: 5000, similar: 1000, treatment: { surgery: 1000, drug: 1500, radio: 600, icu: 0, extra: 500 }, recur: true },
-      brain: { scope: 'vascular', treat: { lysis: 1000, surgery: 1500, icu: 0 } },
-      heart: { scope: 'ischemic', treat: { lysis: 0, surgery: 1500, icu: 500 } },
+      brain: { dx: { vascular: 2000, stroke: 2000, bleed: 1000 }, treat: { lysis: 1000, surgery: 1500, icu: 0 } },
+      heart: { dx: { ischemic: 2000, ami: 1000 }, treat: { lysis: 0, surgery: 1500, icu: 500 } },
       surgery: { disease: 50, disease15: 300, diseaseNdae: 500, diseaseNonPay: 0, injury: 50, injury15: 300 },
       care: { daily: 10, nDaily: 0, basis: 'time', family: 'conditional', nursing: true, ltc: false, mode: 'normal' }
     }
@@ -158,8 +182,8 @@ const PRESETS = {
     label: '50대 표준 분석 샘플', premium: 35, silson: '2', gender: '남', job: '2',
     cov: {
       cancer: { general: 5000, similar: 2000, treatment: { surgery: 1000, drug: 2000, radio: 1000, icu: 500, extra: 1000 }, recur: true },
-      brain: { scope: 'vascular', treat: { lysis: 1000, surgery: 2000, icu: 1000 } },
-      heart: { scope: 'cardiac', treat: { lysis: 1000, surgery: 2000, icu: 1000 } },
+      brain: { dx: { vascular: 3000, stroke: 3000, bleed: 2000 }, treat: { lysis: 1000, surgery: 2000, icu: 1000 } },
+      heart: { dx: { ischemic: 3000, ami: 2000 }, treat: { lysis: 1000, surgery: 2000, icu: 1000 } },
       surgery: { disease: 100, disease15: 500, diseaseNdae: 1000, diseaseNonPay: 300, injury: 100, injury15: 500 },
       care: { daily: 15, nDaily: 5, basis: 'time', family: 'no', nursing: true, ltc: true, mode: 'step' }
     }
@@ -168,8 +192,8 @@ const PRESETS = {
     label: '60대 표준 분석 샘플', premium: 42, silson: '1', gender: '남', job: '2',
     cov: {
       cancer: { general: 3000, similar: 1000, treatment: { surgery: 1000, drug: 1500, radio: 500, icu: 500, extra: 500 }, recur: false },
-      brain: { scope: 'stroke', treat: { lysis: 1000, surgery: 1000, icu: 0 } },
-      heart: { scope: 'ischemic', treat: { lysis: 1000, surgery: 1000, icu: 0 } },
+      brain: { dx: { vascular: 0, stroke: 2000, bleed: 1000 }, treat: { lysis: 1000, surgery: 1000, icu: 0 } },
+      heart: { dx: { ischemic: 2000, ami: 0 }, treat: { lysis: 1000, surgery: 1000, icu: 0 } },
       surgery: { disease: 100, disease15: 300, diseaseNdae: 500, diseaseNonPay: 300, injury: 100, injury15: 300 },
       care: { daily: 20, nDaily: 6, basis: 'time', family: 'conditional', nursing: true, ltc: true, mode: 'step' }
     }
@@ -178,8 +202,8 @@ const PRESETS = {
     label: '70대 표준 분석 샘플', premium: 48, silson: '1', gender: '여', job: '3',
     cov: {
       cancer: { general: 3000, similar: 500, treatment: { surgery: 500, drug: 1000, radio: 500, icu: 0, extra: 500 }, recur: false },
-      brain: { scope: 'stroke', treat: { lysis: 1000, surgery: 500, icu: 0 } },
-      heart: { scope: 'mi', treat: { lysis: 0, surgery: 1000, icu: 0 } },
+      brain: { dx: { vascular: 0, stroke: 0, bleed: 1000 }, treat: { lysis: 1000, surgery: 500, icu: 0 } },
+      heart: { dx: { ischemic: 0, ami: 1000 }, treat: { lysis: 0, surgery: 1000, icu: 0 } },
       surgery: { disease: 30, disease15: 100, diseaseNdae: 0, diseaseNonPay: 0, injury: 30, injury15: 100 },
       care: { daily: 20, nDaily: 10, basis: 'money', family: 'no', nursing: false, ltc: true, mode: 'step' }
     }
@@ -190,7 +214,7 @@ const PRESETS = {
 const WIZARD = [
   { step: 1, key: 'profile', title: '기본 정보', desc: '연령대 · 성별 · 직업급수 · 가족력 · 실손 · 보험료' },
   { step: 2, key: 'cancer', title: '암', desc: '일반암(3천/5천/1억) · 유사암 · 주요치료비 5종 · 재진단' },
-  { step: 3, key: 'brainheart', title: '뇌 · 심장', desc: '보장 범위 + 주요치료비 3종(혈전용해제·수술·중환자실)' },
+  { step: 3, key: 'brainheart', title: '뇌 · 심장', desc: '진단비 3단계·2단계 금액 + 주요치료비 3종' },
   { step: 4, key: 'surgerycare', title: '수술 · 간병', desc: '질병 4축·상해 2축, 일반·요양 일당, 시간·가족간병' },
   { step: 5, key: 'contract', title: '계약 · 보험료', desc: '보유 계약 · 납입상태 · 만기 · 갱신 · 특약' },
   { step: 6, key: 'disclosure', title: '간편 고지', desc: '3개월 · 1년 · 5년 → 표준체 / 간편심사 판정' }
@@ -321,11 +345,11 @@ const GUIDES = {
   brain: {
     title: '2순위 · 뇌',
     head: '뇌출혈만 담으면 뇌경색이 빠진다',
-    lead: '뇌 보험은 "어디까지 담았나"가 전부입니다. 이름이 비슷한 세 담보(뇌출혈 · 뇌졸중 · 뇌혈관질환)가 있고, 뒤로 갈수록 보장 범위가 넓습니다. 실제 입원·수술은 혈관이 막히는 뇌경색 쪽이 더 많습니다.',
+    lead: '뇌 보험은 "어디까지 담았나"가 전부입니다. 이름이 비슷한 세 담보(뇌출혈 · 뇌졸중 · 뇌혈관질환)가 있고, 뒤로 갈수록 보장 범위가 넓습니다. 실제 입원·수술은 혈관이 막히는 뇌경색 쪽이 더 많습니다. 증권에 범위별로 금액이 따로 적혀 있으면 세 칸을 각각 입력합니다.',
     diagram: 'contain',
     tiers: [
       { label: '뇌혈관질환', code: 'I60~I69', note: '뇌경색·협착·후유증(I69)까지', width: 316, tone: 'deep' },
-      { label: '뇌졸중', code: 'I60~I64', note: '뇌출혈 + 뇌경색(I63) + 상세불명(I64)', width: 232, tone: 'mid' },
+      { label: '뇌졸중', code: 'I60~I63·I65~I66', note: '뇌출혈 + 뇌경색(I63) 포함', width: 232, tone: 'mid' },
       { label: '뇌출혈', code: 'I60~I62', note: '거미막하·뇌내·기타 두개내 출혈', width: 148, tone: 'light' }
     ],
     diagramNote: '안쪽이 바깥 담보에 포함됩니다. 담보명이 "뇌출혈"이면 뇌경색(I63)은 지급 대상이 아닙니다.',
@@ -336,7 +360,8 @@ const GUIDES = {
     ],
     traps: [
       '<b>뇌출혈만 보유 → 뇌경색 공백.</b> 가장 흔한 구멍이고, 뇌졸중 중 뇌경색 비중이 가장 큽니다.',
-      '뇌졸중 진단비와 뇌혈관질환 진단비를 같은 것으로 착각 — 뇌혈관은 <b>후유증(I69)</b>까지 포함합니다.',
+      '뇌졸중 진단비와 뇌혈관질환 진단비를 같은 것으로 착각 — 뇌졸중은 I60~I63·I65~I66, 뇌혈관은 <b>후유증(I69)</b>까지 포함합니다.',
+      '<b>범위별 금액을 합쳐서 착각</b> — 뇌경색(I63) 진단 시 뇌혈관 + 뇌졸중이 합산되지만, 뇌출혈 담보는 0원입니다. 넓은 범위 금액이 0원이면 가장 흔한 뇌경색이 비어 있습니다.',
       '<b>혈전용해술·스텐트 삽입</b>은 약관상 "수술"이 아닌 "처치"로 분류되는 경우가 많아 수술비 청구가 안 될 수 있습니다.',
       '뇌혈관 <b>수술비</b>·재활치료비 담보가 따로 있는지 확인하세요.',
       '1회한 여부와 갱신형 여부 — 갱신 시 보험료 인상과 재가입 심사를 봅니다.'
@@ -353,12 +378,12 @@ const GUIDES = {
   heart: {
     title: '3순위 · 심장',
     head: '급성심근경색만 있으면 협심증이 빠진다',
-    lead: '심장은 "막힌 혈관"이 기준입니다. 협심증(혈관이 좁아짐)과 급성심근경색(혈관이 막혀 심근이 죽음)은 중증도가 달라 보험도 다른 담보로 봅니다. 스텐트 시술은 협심증 단계에서 많이 이뤄집니다.',
+    lead: '심장은 "막힌 혈관"이 기준입니다. 협심증(혈관이 좁아짐)과 급성심근경색(혈관이 막혀 심근이 죽음)은 중증도가 달라 보험도 다른 담보로 봅니다. 스텐트 시술은 협심증 단계에서 많이 이뤄집니다. 두 담보의 가입금액을 각각 확인해 입력합니다.',
     diagram: 'contain',
     tiers: [
       { label: '심장질환', code: '부정맥·판막·심부전', note: '상품별 별도 담보 영역', width: 316, tone: 'deep' },
       { label: '허혈성심장질환', code: 'I20~I25', note: '협심증(I20) ~ 만성 허혈성(I25)', width: 232, tone: 'mid' },
-      { label: '급성심근경색', code: 'I21~I22', note: '급성·재발성 심근경색증', width: 148, tone: 'light' }
+      { label: '급성심근경색', code: 'I21~I23', note: '급성·재발성 (협심증 제외)', width: 148, tone: 'light' }
     ],
     diagramNote: '안쪽이 바깥 담보에 포함됩니다. "급성심근경색" 담보만으로는 협심증(I20)이 지급되지 않습니다.',
     talk: [
@@ -372,6 +397,7 @@ const GUIDES = {
       '<b>부정맥·판막·심부전</b>은 별도 담보가 없으면 미보장입니다.',
       '심장 수술비 담보를 아예 안 가진 경우가 많습니다.',
       'I25(만성 허혈성심장질환) 포함 여부 — 담보명만 보고 판단하지 마세요.',
+      '<b>범위별 금액 확인</b> — 협심증(I20) 진단 시 허혈성심장 담보만 지급됩니다. 급성심근경색 담보에 2,000만원이 있어도 협심증은 0원입니다.',
       '<b>심혈관 수술비</b>는 진단비와 별도 담보입니다. 스텐트·우회로 수술비가 있는지 확인하세요.'
     ],
     claim: [
@@ -578,3 +604,154 @@ const OBJECTIONS = [
     alternative: '큰 돈 아니어도 돼요. 수술·간병 쪽만 얇게 준비해 두면 자녀분께 부담이 가지 않습니다. 그 부분만 따로 계산해 드릴게요.'
   }
 ];
+
+/* =========================================================
+   v5.0 — 설계사(FC) 실무 도우미 데이터
+   · FC_CODES      : 질병코드·약관 사전 (키워드/코드 검색)
+   · CLAIM_DOCS    : 5대 담보 + 실손 청구 필수 서류 (카톡 복사)
+   · SILSON_FIVE   : 실손 세대 비교 + 전환 판단 5기준 + 5세대 체크
+   · PREMIUM_GUIDE : 소득 대비 적정 보장성 보험료 가이드
+   지급 여부·금액은 언제나 가입 상품의 약관과 증권이 기준입니다.
+   ========================================================= */
+
+const FC_CODES = [
+  /* ---------- 암 · 유사암 ---------- */
+  { code: 'C73', name: '갑상선의 악성신생물', group: '유사암', tags: '갑상선암 갑상선 C73 유사암', pays: '유사암 진단비 (상품별). 일반암 진단비에서는 제외', check: '유사암 담보가 없으면 지급 0원. 담보명의 "유사암 제외" 문구 확인', note: '원발부위 기준 조항의 설명 여부가 다퉈진 판례 — 대법원 2025.3.13. 선고 2023다250746' },
+  { code: 'C44', name: '기타 피부의 악성신생물', group: '유사암', tags: '피부암 기저세포 편평세포 C44 유사암', pays: '유사암 진단비 (상품별)', check: '기저세포암·편평세포암이 대표. 악성흑색종(C43)은 일반암인 상품이 많음', note: 'C43(악성흑색종)과 C44를 같은 유사암으로 묶는지 상품별 확인' },
+  { code: 'D00~D09', name: '제자리암(상피내암)', group: '유사암', tags: '제자리암 상피내암 D00 D05 D06 유사암', pays: '유사암 진단비 (상품별)', check: 'D05(유방 제자리암)·D06(자궁경부 제자리암)이 흔함. 침윤암이 아니면 일반암 아님', note: '"제자리암"과 "상피내암"을 같은 뜻으로 쓰지만 약관 정의를 확인' },
+  { code: 'D37~D48', name: '행동양식 불명 또는 미상의 신생물(경계성)', group: '유사암', tags: '경계성 종양 D37 D48 유사암', pays: '유사암 진단비 (상품별)', check: 'D37(구강·소화기)·D39(요로)·D48(기타) 등. 경계성이라는 이유로 일반암 지급은 아님', note: '조직검사 결과지에 "경계성"으로 적혀야 인정. 악성과 경계성 사이 판정이 문제되면 병리 재검토' },
+  { code: 'C16', name: '위의 악성신생물', group: '암', tags: '위암 위 C16', pays: '일반암 진단비 · 암수술비 · 항암약물치료비', check: '내시경 절제(ESD)는 수술비 분류표에서 4~5종 또는 시술 제외 여부 확인', note: '조기 위암 내시경 절제는 "수술" 인정 여부가 회사별로 갈림' },
+  { code: 'C18', name: '대장의 악성신생물', group: '암', tags: '대장암 결장 직장 C18 C20', pays: '일반암 진단비 · 암수술비 · 항암약물치료비', check: '직장암(C20)도 일반암. 용종 절제(K63.5)와 구분', note: '용종에서 암으로 진행된 경우 최초 진단일 기준 확인' },
+  { code: 'C34', name: '기관지 및 폐의 악성신생물', group: '암', tags: '폐암 C34', pays: '일반암 진단비 · 암수술비 · 항암약물치료비 · 방사선치료비', check: '폐암 검진(저선량 CT)에서 발견된 경우 진단확정일 확인', note: '표적항암제 치료가 길어 항암약물치료비(연 1회한) 조건 확인' },
+  { code: 'C50', name: '유방의 악성신생물', group: '암', tags: '유방암 C50', pays: '일반암 진단비 · 암수술비 · 항암·방사선치료비', check: 'D05(제자리암)와 C50(침윤암) 구분이 지급액을 가름', note: '수술 후 방사선·표적치료가 겹치는 구간이 많아 치료비 담보 확인' },
+  { code: 'C61', name: '전립선의 악성신생물', group: '암', tags: '전립선암 C61', pays: '일반암 진단비', check: '고령에서 진행이 느린 경우 치료 방법에 따라 수술비 해당 여부 확인', note: '호르몬 치료는 항암약물치료비 지급 대상이 아닌 경우가 많음' },
+  { code: 'C22', name: '간 및 간내 담관의 악성신생물', group: '암', tags: '간암 담관암 C22', pays: '일반암 진단비', check: '간경화(K74) 동반 시 고지·인수 이슈', note: '만성 B·C형 간염 이력은 고지 대상 여부 확인' },
+  { code: 'C25', name: '췌장의 악성신생물', group: '암', tags: '췌장암 C25', pays: '일반암 진단비', check: '진단 시점에 수술 가능 여부가 갈려 치료비 비중이 큼', note: '항암·방사선 병행이 많아 치료비 5종의 필요성이 큰 암' },
+  { code: 'C64', name: '신장의 악성신생물(제외: 신우)', group: '암', tags: '신장암 콩팥 C64', pays: '일반암 진단비', check: '신우(C65)·요관(C66)은 별도 코드 — 담보 범위 확인', note: '부분 신절제는 수술비 분류표 확인' },
+  { code: 'C67', name: '방광의 악성신생물', group: '암', tags: '방광암 C67', pays: '일반암 진단비', check: '경요도 절제(TURB)는 시술 분류로 수술비 제외 가능', note: '재발이 잦아 1회한 진단비의 한계가 드러나는 암' },
+  { code: 'C53', name: '자궁경부의 악성신생물', group: '암', tags: '자궁경부암 C53', pays: '일반암 진단비', check: 'CIN(이형성)은 암 아님 — D06(제자리암)과 구분', note: '원추절제술은 수술비 분류표 확인' },
+  { code: 'C56', name: '난소의 악성신생물', group: '암', tags: '난소암 C56', pays: '일반암 진단비', check: '경계성 난소종양(D39)은 유사암 — 조직검사 결과지가 기준', note: '복막 전이 시 원발부위 기준 확인' },
+  { code: 'C81~C86', name: '림프종', group: '암', tags: '림프종 혈액암 C81 C82 C83 C85', pays: '일반암 진단비 · 항암약물치료비', check: '혈액암은 진단확정 서류(골수검사·병리)가 핵심', note: '항암약물치료가 장기전 — 연간 1회한·총 한도 확인' },
+  { code: 'C90', name: '다발골수종', group: '암', tags: '다발골수종 혈액암 C90', pays: '일반암 진단비 · 항암약물치료비', check: '조혈모세포이식은 수술비 분류표 확인', note: '표적치료제 장기 투여 — 약물치료비 한도 확인' },
+  { code: 'C91~C95', name: '백혈병', group: '암', tags: '백혈병 혈액암 C91 C92 C93 C94 C95', pays: '일반암 진단비 · 항암약물치료비', check: '급성·만성 구분과 진단확정일 확인', note: '장기 치료로 소득 공백이 길어 진단비 금액 기준선이 높음' },
+
+  /* ---------- 뇌 ---------- */
+  { code: 'I60', name: '거미막하출혈', group: '뇌', tags: '뇌출혈 거미막하 I60', pays: '뇌출혈·뇌졸중·뇌혈관질환 진단비 모두 해당', check: '뇌동맥류 파열이 원인. 코일색전술은 "수술" 인정 여부 확인', note: '수술비 청구 시 색전술이 처치로 분류되는 경우 있음' },
+  { code: 'I61', name: '뇌내출혈', group: '뇌', tags: '뇌출혈 뇌내출혈 I61', pays: '뇌출혈·뇌졸중·뇌혈관질환 진단비 모두 해당', check: '고혈압성 출혈이 대표. 세 담보가 모두 있으면 합산 지급', note: '뇌경색(I63)보다 환자 수는 적지만 사망·중증도가 높음' },
+  { code: 'I62', name: '기타 비외상성 두개내출혈', group: '뇌', tags: '뇌출혈 I62', pays: '뇌출혈·뇌졸중·뇌혈관질환 진단비', check: '외상성 출혈(S06)은 상해 담보 영역 — 원인 구분 확인', note: '외상이면 질병 담보가 아닌 상해 담보로 청구' },
+  { code: 'I63', name: '뇌경색증', group: '뇌', tags: '뇌경색 뇌졸중 I63', pays: '뇌졸중·뇌혈관질환 진단비. 뇌출혈 담보에서는 지급 없음', check: '가장 흔한 뇌혈관 사고 — 뇌출혈 담보만 있으면 공백', note: '혈전용해제(tPA) 치료비 담보 대상. 기계적 혈전제거술은 별도 담보' },
+  { code: 'I64', name: '상세불명의 뇌졸중', group: '뇌', tags: '뇌졸중 상세불명 I64', pays: '뇌졸중·뇌혈관질환 진단비 (약관 문구 확인)', check: '영상검사로 출혈·경색 구분이 안 된 경우. 추가 서류를 요구받을 수 있음', note: 'I64만으로 청구하면 심사가 길어짐 — MRI/CT 판독지 함께 제출' },
+  { code: 'I65~I66', name: '뇌동맥의 폐색 및 협착(뇌경색 미발생)', group: '뇌', tags: '경동맥 협착 뇌혈관 I65 I66', pays: '뇌혈관질환 진단비 (뇌졸중 담보는 상품별)', check: '뇌경색이 발생하지 않은 협착은 뇌졸중 담보에서 제외되는 경우가 많음', note: '스텐트 삽입술은 "수술" 분류 여부 확인' },
+  { code: 'I67', name: '기타 뇌혈관질환', group: '뇌', tags: '뇌혈관 I67', pays: '뇌혈관질환 진단비', check: '뇌동맥류(비파열)·모야모야병 등이 포함', note: '뇌졸중 담보에서는 제외 — 범위 차이가 드러나는 코드' },
+  { code: 'I69', name: '뇌혈관질환의 후유증', group: '뇌', tags: '후유증 뇌혈관 I69', pays: '뇌혈관질환 진단비 (일부 상품)', check: '뇌졸중을 앓은 뒤 후유증으로 진단되는 경우 — 최초 진단과 중복 여부 확인', note: '뇌혈관질환 담보와 뇌졸중 담보를 가르는 대표 코드' },
+  { code: 'G45', name: '일과성 뇌허혈발작(TIA)', group: '뇌', tags: 'TIA 일과성허혈 G45', pays: '뇌혈관질환 진단비 (상품별 포함 여부 다름)', check: '뇌졸중 담보에서는 대체로 제외. 24시간 내 회복되는 허혈발작', note: '고지의무 대상 진단 — 3개월·5년 문항 확인' },
+
+  /* ---------- 심장 ---------- */
+  { code: 'I20', name: '협심증', group: '심장', tags: '협심증 스텐트 I20', pays: '허혈성심장질환 진단비. 급성심근경색 담보에서는 지급 없음', check: '스텐트 시술이 가장 많은 단계 — 범위 공백이 생기는 지점', note: '스텐트·혈관성형술은 약관상 "수술"이 아닌 처치로 분류될 수 있음' },
+  { code: 'I21', name: '급성심근경색증', group: '심장', tags: '급성심근경색 심근경색 I21', pays: '급성심근경색·허혈성심장질환 진단비 모두 해당 (합산)', check: '트로포닌·심전도·관상동맥조영술 결과가 진단 근거', note: '혈전용해제 치료비 담보 대상. 1년 미만 50% 감액 확인' },
+  { code: 'I22', name: '재발성 심근경색증', group: '심장', tags: '재발 심근경색 I22', pays: '급성심근경색·허혈성심장질환 진단비 (1회한 여부 확인)', check: '1회한 담보는 첫 지급 후 재지급 없음 — 재진단 담보 필요', note: '재발은 별도 담보가 없으면 지급되지 않는다는 점을 설명' },
+  { code: 'I23', name: '급성심근경색증 후발 합병증', group: '심장', tags: '심근경색 합병증 I23', pays: '급성심근경색 진단비 (약관 문구 확인)', check: '급성심근경색 이후 발생한 합병증 — 코드 범위 포함 여부 확인', note: '상품에 따라 I21~I22만 담아 I23이 빠지는 경우가 있음' },
+  { code: 'I25', name: '만성 허혈성심장질환', group: '심장', tags: '만성허혈 허혈성 I25', pays: '허혈성심장질환 진단비 (I20~I25 범위면 포함)', check: '담보명이 "허혈성심장질환"이면 포함. 코드 범위 확인', note: 'I20~I24만 담는 상품과 구분' },
+  { code: 'I48', name: '심방세동 및 조동', group: '심장', tags: '부정맥 심방세동 I48', pays: '심장질환 담보(상품별 별도 담보). 허혈성 범위에는 미포함', check: '부정맥은 별도 담보가 없으면 미보장', note: '고주파 절제술은 수술비 분류표 확인' },
+  { code: 'I50', name: '심부전', group: '심장', tags: '심부전 I50', pays: '심장질환 담보(상품별)', check: '심장질환 담보의 코드 범위에 부정맥·판막·심부전이 들어가는지 확인', note: '허혈성심장질환 담보로는 지급되지 않음' },
+
+  /* ---------- 수술 · 기타 ---------- */
+  { code: 'M51', name: '기타 추간판장애(디스크)', group: '수술', tags: '디스크 추간판 M51 허리', pays: '질병수술비(관혈)·1~5종·N대. 도수·주사는 실손', check: '관혈적 수술(유합술)만 수술비 해당. 신경차단술·도수는 시술', note: '5종 분류표에서 내시경 감압술이 몇 종인지 회사별 확인' },
+  { code: 'M50', name: '경추 추간판장애', group: '수술', tags: '목 디스크 경추 M50', pays: '질병수술비 · 1~5종', check: '목 디스크 수술은 1~2종(관혈)에 해당하는 경우가 많음', note: '비급여 인공디스크는 실손 한도와 별도 정액 담보 확인' },
+  { code: 'M48', name: '기타 척추병증(척추관협착)', group: '수술', tags: '협착 척추관 M48', pays: '질병수술비 · 1~5종 · N대', check: '척추 유합술은 1종 고액 구간 — 금액 차이가 큼', note: '비급여 나사·케이지 사용 시 비급여 수술비 담보 유무 확인' },
+  { code: 'K63.5', name: '대장의 용종(양성신생물)', group: '수술', tags: '용종 대장용종 K63.5 건강검진', pays: '수술비: 내시경 절제는 시술로 보아 제외되는 상품이 많음', check: '건강검진 중 용종 제거도 고지의무상 "수술" 대상 — 5년 문항 확인', note: '용종 제거는 청구보다 고지가 문제되는 대표 사례' },
+  { code: 'D12', name: '대장의 양성신생물', group: '수술', tags: '대장 양성종양 D12 용종', pays: '수술비(상품별) · 실손', check: '조직검사상 양성으로 확정되면 암 담보 지급 대상 아님', note: '용종 절제 후 암 진단이 나오면 암보장개시일(90일) 확인' },
+  { code: 'K35', name: '급성 충수염', group: '수술', tags: '맹장 충수염 K35', pays: '질병수술비 · 1~5종 (복강경은 종수 확인)', check: '복강경 충수절제술의 종수는 회사별 3~5종으로 갈림', note: '응급 수술이라 1년 미만 50% 감액 확인' },
+  { code: 'K80', name: '담석증', group: '수술', tags: '담석 담낭 K80', pays: '질병수술비 · N대', check: '복강경 담낭절제술 종수 확인. 내시경 결석 제거는 시술', note: '수술명이 분류표 문구와 일치해야 인정' },
+  { code: 'N20', name: '요로의 결석', group: '수술', tags: '요로결석 신장결석 N20 체외충격파', pays: '수술비: 체외충격파 쇄석술은 "시술"로 제외되는 상품이 많음', check: 'N대 수술비에 체외충격파 포함 여부가 회사별로 다름', note: '같은 시술도 상품에 따라 지급 — 약관 확인이 답' },
+  { code: 'H25', name: '노년성 백내장', group: '수술', tags: '백내장 H25 눈', pays: '수술비(상품별) · 실손(비급여 한도)', check: '다초점·난시교정 렌즈는 비급여 — 5세대 실손 비중증 한도 확인', note: '1~5종 분류표에서 백내장 수술 종수 확인' },
+  { code: 'M17', name: '무릎관절증', group: '수술', tags: '무릎 관절 인공관절 M17', pays: '질병수술비 · 1종(관혈)', check: '인공관절 치환술은 1종 고액 구간', note: '비급여 인공관절은 정액 비급여 수술비 담보 확인' },
+  { code: 'I10', name: '본태성(원발성) 고혈압', group: '기타', tags: '고혈압 I10 고지', pays: '진단비 지급 대상 아님 — 고지·인수 판단 항목', check: '3개월 이내 진단·상시 복용은 고지 대상', note: '혈압약 복용은 간편심사 3개월 문항(투약) 확인' },
+  { code: 'N18', name: '만성 신장병', group: '기타', tags: '만성신부전 투석 N18 신장', pays: '중대질병 고지 항목 — 간편심사 5년 문항', check: '투석 중인 만성신장질환은 5년 이내 고지 대상', note: '일반심사에서는 인수 거절·할증이 흔함' },
+  { code: 'K74', name: '간의 섬유증 및 경화', group: '기타', tags: '간경화 K74 간', pays: '중대질병 고지 항목', check: '간경화는 간편심사에서도 5년 문항에 포함', note: 'B·C형 간염 보유자는 별도 문항 확인' },
+  { code: 'F00', name: '알츠하이머병에서의 치매', group: '기타', tags: '치매 알츠하이머 F00 요양', pays: '치매 진단비(상품별) · 장기요양 · 간병', check: '장기요양등급과 치매 특약은 별개 — 등급 판정이 전제', note: '3~5등급·인지지원이 인정자의 87.4% (건보공단 2025)' },
+  { code: 'U22', name: '치매(상세불명 포함)', group: '기타', tags: '치매 F01 F03 U22 혈관성', pays: '치매 진단비 · 장기요양(상품별)', check: 'KCD-8의 U22는 치매 관련 추가 코드 — 상품 약관의 코드 범위 확인', note: '치매는 진단비+간병+장기요양을 함께 봅니다' },
+  { code: 'S72', name: '대퇴골의 골절', group: '기타', tags: '골절 대퇴골 고관절 S72 상해', pays: '상해수술비 · 상해 1~5종 · 골절진단비', check: '질병수술비로는 지급되지 않음 — 상해 축 확인', note: '고령 낙상은 상해 담보와 간병이 함께 문제' },
+  { code: 'S82', name: '하퇴골의 골절(발목 포함)', group: '기타', tags: '골절 발목 정강이 S82 상해', pays: '상해수술비 · 상해 1~5종', check: '금속판 고정술은 관혈 수술 — 상해 1~2종', note: '수술확인서에 수술명·수술방법 기재 확인' },
+  { code: 'J18', name: '상세불명 병원체의 폐렴', group: '기타', tags: '폐렴 J18 입원', pays: '입원일당 · 질병수술비(해당 시)', check: '입원일당은 입원일수 기준. 간병비 담보는 별도', note: '고령 폐렴은 입원이 길어 간병비 공백이 드러남' }
+];
+
+/* 5대 담보 + 실손 — 고객에게 보내는 청구 필수 서류 (카톡 복사용) */
+const CLAIM_DOCS = {
+  cancer: {
+    title: '암', color: 'rose',
+    must: ['진단서 (병명·발생부위·진단일 기재)', '조직검사(병리) 결과지', '최초 진단 확인서류 (필요 시)'],
+    extra: ['입·통원 진료비 영수증 및 세부내역서 (실손 청구용)', '수술확인서 (암수술비 청구 시 수술명·수술일·방법)', '약제 처방전·투약내역 (항암약물치료비)'],
+    tips: ['진단일 = 최초 진단서 발급일이 아니라 "진단이 확정된 날" 기준입니다. 병리 결과일을 확인하세요.', '가입 후 90일 이내 진단은 보장 제외, 1년 미만은 50% 감액이 흔합니다.', '청구 소멸시효는 진단일부터 3년입니다.', '유사암은 담보별 1회한·연 1회한 문구를 증권에서 확인합니다.']
+  },
+  brain: {
+    title: '뇌', color: 'wine',
+    must: ['진단서 (뇌혈관질환명·코드 기재)', 'MRI / CT 영상 판독지', '입·퇴원 확인서 (입원한 경우)'],
+    extra: ['수술확인서 (개두·색전술 등)', '혈전용해제 투여 기록 (치료비 청구)', '중환자실 입실 기록 (중환자실 담보)'],
+    tips: ['I64(상세불명 뇌졸중)는 코드만으로 확정이 어려워 판독지를 함께 요구받습니다.', 'I63(뇌경색)은 뇌졸중·뇌혈관 담보에서만 지급 — 뇌출혈 담보는 0원입니다.', '혈전용해술·스텐트는 약관상 "수술"이 아닌 처치로 분류될 수 있습니다.', '진단비와 별개로 후유장해 담보는 지급률 평가입니다.']
+  },
+  heart: {
+    title: '심장', color: 'rose',
+    must: ['진단서 (급성심근경색 I21 / 협심증 I20 구분)', '심전도·심근효소(트로포닌) 검사 결과', '관상동맥조영술 결과지'],
+    extra: ['수술확인서 (스텐트·우회로 수술)', '중환자실 입실 기록', '약제 처방내역 (항혈전제)'],
+    tips: ['I20(협심증)과 I21(급성심근경색) 구분이 지급액을 가릅니다.', '스텐트 시술이 수술비 지급 대상인지 약관 분류표로 확인합니다.', '협심증은 허혈성심장질환 담보에서만 지급됩니다.', '90일 면책·1년 미만 감액 여부를 확인합니다.']
+  },
+  surgery: {
+    title: '수술비', color: 'blush',
+    must: ['수술확인서 (수술명·수술일·수술방법)', '진단서 (수술 원인 질병·코드)', '입·퇴원 확인서'],
+    extra: ['수술기록지 (수술명이 분류표와 다를 때)', '조직검사 결과지 (종양·용종)', '진료비 영수증 (실손 청구)'],
+    tips: ['수술명이 약관 분류표 문구와 일치해야 인정됩니다. 병원에 분류표상 명칭으로 요청하세요.', '당일 시술·외래 시술은 수술비 대상이 아닌 경우가 많습니다.', '계약일부터 1년 미만이면 50%만 지급되는 상품이 흔합니다.', '같은 수술에 여러 담보(1~5종·N대)가 걸리면 각각 청구 가능 여부를 확인합니다.']
+  },
+  care: {
+    title: '간병', color: 'mint',
+    must: ['간병인 이용확인서 (사용일수·일당)', '간병 계약서 · 결제 영수증', '요양보호사 자격 확인서'],
+    extra: ['진료비 영수증의 병동 구분 (간호간병통합)', '장기요양 인정서(등급판정서)', '급여이용내역서 (방문요양·방문간호)'],
+    tips: ['2026년 7월부터 주요 손보사는 "하루 8시간 이상" 시간 기준으로 전환했습니다.', '가족 간병은 업체 등록·결제·간병일지가 맞아야 인정됩니다.', '요양병원 간병은 별도 담보가 없으면 지급되지 않습니다.', '장기요양은 등급 판정이 전제이고 65세 미만도 노인성 질병이면 신청할 수 있습니다.']
+  },
+  silson: {
+    title: '실손', color: 'blush',
+    must: ['진료비 영수증', '진료비 세부내역서', '처방전 또는 약제비 영수증'],
+    extra: ['진단서·소견서 (비급여 항목 사유 확인)', '영상검사 판독지 (MRI·MRA)', '입·퇴원 확인서 (입원)'],
+    tips: ['영수증만으로는 비급여 항목이 확인되지 않아 세부내역서가 필요합니다.', '5세대는 중증(특약1)과 비중증(특약2)이 분리돼 청구 경로가 다릅니다.', '비중증 비급여는 연 1,000만원 한도·자기부담 50%입니다.', '청구 소멸시효는 진료일부터 3년입니다.']
+  }
+};
+
+/* 실손 — 세대 비교 + 전환 판단 5기준 + 5세대 자체 체크 */
+const SILSON_FIVE = {
+  checks: [
+    { q: '가입 시기가 2013년 3월 이전이고 재가입 조건이 없나요?', why: '1·2세대 계약전환 할인·선택형 할인 특약 대상의 핵심 조건입니다.' },
+    { q: '최근 1년간 도수치료·비급여 주사·MRI를 실제로 썼나요?', why: '비중증 비급여를 많이 쓰는 분은 5세대 전환 시 체감 보장이 크게 줄어듭니다.' },
+    { q: '최근 5년 내 입원·수술·중대질병 이력이 있나요?', why: '5세대 전환은 5년 재가입이 생깁니다. 지금 건강 상태가 다음 재가입 심사를 좌우합니다.' },
+    { q: '5년 뒤에도 같은 보험료를 감당할 수 있나요?', why: '1·2세대는 갱신이 없어 보험료가 고정이고, 3~5세대는 5년마다 재산정됩니다.' },
+    { q: '앞으로 장기 치료(암·희귀질환) 계획이나 가족력이 있나요?', why: '장기 치료가 예상되면 비급여 한도가 넓은 기존 세대 유지가 유리합니다.' }
+  ],
+  options: [
+    { key: 'A', title: '선택형 할인 특약', keep: '기존 계약 유지', cut: '전부 선택 시 약 30~40% 할인 (1세대 40%대 · 2세대 30%대 예상)', cost: '①도수·체외충격파·비급여 주사 면책 ②비급여 MRI·MRA 면책 ③자기부담률 20% 중 선택', back: '특약 해지로 원상 복구 가능', watch: '면책 항목을 실제로 쓰는 고객에게는 손해' },
+    { key: 'B', title: '5세대 전환', keep: '5세대 신규 전환', cut: '5세대 보험료 3년간 50% 할인 (6개월 한시, 연장 검토)', cost: '비중증 비급여 연 1,000만원 · 자기부담 50%로 축소', back: '5년 재가입 · 6개월 내 청약철회 가능하나 철회 시 재가입 제한', watch: '보험료를 아끼는 결정이지 보장이 좋아지는 결정이 아님' }
+  ],
+  fiveGen: [
+    '중증(특약1)과 비중증(특약2)이 분리 — 청구 경로가 다릅니다.',
+    '비중증 비급여: 연 1,000만원 한도 · 자기부담 50%.',
+    '중증 입원: 상급종합·종합병원 연 500만원 상한 구조.',
+    '급여: 입원 20% · 통원은 건보 본인부담률과 20% 중 낮은 쪽(최소 1~2만원).',
+    '임신·출산·발달장애 관련 보장이 신설됐습니다.'
+  ]
+};
+
+/* 소득 대비 적정 보장성 보험료 (상담 보조 가이드) */
+const PREMIUM_GUIDE = {
+  minPct: 7,
+  recPct: 10,
+  maxPct: 13,
+  lines: [
+    '보장성 보험료는 세후 월 소득의 7~10%를 기준선으로 봅니다. 13%를 넘으면 적립·중복 특약을 먼저 점검합니다.',
+    '저축성·연금성 보험료는 이 비율에 넣지 않습니다. 보장성(진단비·수술·실손·간병)만 계산합니다.',
+    '소득이 일정하지 않은 분(사업·프리랜서)은 최근 12개월 평균 소득으로 계산합니다.',
+    '이 비율은 상담 보조 기준이며, 가족 구성·부채·노후 준비에 따라 달라집니다.'
+  ],
+  remodel: [
+    '해지가 아니라 재배치입니다. 적립·중복·미사용 특약을 정리해 빈 칸으로 옮깁니다.',
+    '같은 보험료 안에서 1순위 한 칸을 채우는 것이 첫 단계입니다.',
+    '추가 지출이 필요하면 고객이 선택합니다. 상담자가 먼저 금액을 정하지 않습니다.'
+  ]
+};

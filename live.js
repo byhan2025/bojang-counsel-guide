@@ -224,9 +224,12 @@
       (PK('treatment').subs || []).forEach((s) => rows.push([`　${s.label}`, s.val ? `${won(s.val)}만원` : '없음', `${won(s.rec)}만원`]));
       rows.push(['재진단·전이', m.state.cov.cancer.recur ? '보유' : '없음', '보유 권장']);
     } else if (k === 'brain' || k === 'heart') {
-      const nm = k === 'brain' ? '뇌혈관질환 I60~I69' : '허혈성심장 I20~I25';
-      rows.push(['보장 범위', PK('scope').option ? PK('scope').option.label : '미보유', nm]);
-      rows.push(['진단비 기준', '—', `권장 ${won(row.baseRec)}만원 (최소 1,000·충분 3,000)`]);
+      const dxp = PK('dx');
+      const d = dxp.dx || {};
+      const core = d.core || { val: 0, label: '핵심 범위' };
+      rows.push([core.label, core.val ? `${won(core.val)}만원` : '없음', `권장 ${won(dxp.rec)}만원`]);
+      (dxp.subs || []).filter((x) => !x.isCore).forEach((x) => rows.push([`　${x.label}`, x.val ? `${won(x.val)}만원` : '없음', `${won(x.rec)}만원`]));
+      rows.push(['진단 시 합산', (d.scenarios || []).map((sc) => `${sc.label} ${won(sc.sum)}`).join(' · '), '포함관계 확인']);
       rows.push(['주요치료비 3종', `${subHave(PK('treat'))}/3종 · ${won(PK('treat').val)}만원`, `${won(PK('treat').rec)}만원`]);
       (PK('treat').subs || []).forEach((s) => rows.push([`　${s.label}`, s.val ? `${won(s.val)}만원` : '없음', `${won(s.rec)}만원`]));
     } else if (k === 'surgery') {

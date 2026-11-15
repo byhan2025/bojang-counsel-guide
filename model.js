@@ -26,6 +26,59 @@
 
   const TREAT_SUBS = (typeof CANCER_TREAT_SUBS !== 'undefined' && CANCER_TREAT_SUBS.length) ? CANCER_TREAT_SUBS : FALLBACK_TREAT;
   const NEURO_SUBS = (typeof NEURO_TREAT_SUBS !== 'undefined' && NEURO_TREAT_SUBS.length) ? NEURO_TREAT_SUBS : FALLBACK_NEURO;
+
+  /* v5.0 — 뇌·심장 진단비 3단계 / 2단계 (content.js 정의, 없을 때 폴백) */
+  const FALLBACK_DX = {
+    brain: [
+      { key: 'vascular', label: '뇌혈관질환 진단비', codes: 'I60~I69', hint: '가장 넓은 범위 · 후유증(I69) 포함', rec: 2000, factor: 1, core: true },
+      { key: 'stroke', label: '뇌졸중 진단비', codes: 'I60~I63·I65~I66', hint: '뇌경색(I63) 포함', rec: 2000, factor: 1, part: 0.5 },
+      { key: 'bleed', label: '뇌출혈 진단비', codes: 'I60~I62', hint: '가장 좁은 범위 · 뇌경색 제외', rec: 1000, factor: 0.5, part: 0.3 }
+    ],
+    heart: [
+      { key: 'ischemic', label: '허혈성심장질환 진단비', codes: 'I20~I25', hint: '협심증(I20) 포함 · 핵심 범위', rec: 2000, factor: 1, core: true },
+      { key: 'ami', label: '급성심근경색 진단비', codes: 'I21~I23', hint: '협심증(I20) 제외', rec: 2000, factor: 1, part: 0.45 }
+    ]
+  };
+  const DX_SUBS = {
+    brain: (typeof BRAIN_DX_SUBS !== 'undefined' && BRAIN_DX_SUBS.length) ? BRAIN_DX_SUBS : FALLBACK_DX.brain,
+    heart: (typeof HEART_DX_SUBS !== 'undefined' && HEART_DX_SUBS.length) ? HEART_DX_SUBS : FALLBACK_DX.heart
+  };
+  const DX_SCENARIOS = (typeof NEURO_DX_SCENARIOS !== 'undefined' && NEURO_DX_SCENARIOS) ? NEURO_DX_SCENARIOS : {
+    brain: [
+      { label: '뇌경색(I63)', code: 'I63', parts: ['vascular', 'stroke'], note: '뇌출혈 담보는 0원' },
+      { label: '뇌출혈(I61)', code: 'I61', parts: ['vascular', 'stroke', 'bleed'], note: '세 담보 모두 합산' },
+      { label: '뇌혈관 후유증(I69)', code: 'I69', parts: ['vascular'], note: '뇌혈관질환 담보만' }
+    ],
+    heart: [
+      { label: '협심증(I20)', code: 'I20', parts: ['ischemic'], note: '급성심근경색 담보는 0원' },
+      { label: '급성심근경색(I21)', code: 'I21', parts: ['ischemic', 'ami'], note: '두 담보 합산' }
+    ]
+  };
+  const DX_MAX = 5000;
+
+  function dxObj(state, key) {
+    const c = state && state.cov && state.cov[key];
+    const d = c && c.dx;
+    return (d && typeof d === 'object' && !Array.isArray(d)) ? d : {};
+  }
+  function dxTotal(state, key) {
+    const d = dxObj(state, key);
+    return Object.keys(d).reduce((a, k) => a + (Number(d[k]) || 0), 0);
+  }
+  /* 핵심(가장 넓은) 범위 금액 — 평가 주축 */
+  function dxCoreVal(state, key) {
+    const core = DX_SUBS[key].find((s) => s.core) || DX_SUBS[key][DX_SUBS[key].length - 1];
+    return Number(dxObj(state, key)[core.key] || 0) || 0;
+  }
+  /* 진단 시 합산 지급액 시나리오 */
+  function dxScenarios(state, key) {
+    const d = dxObj(state, key);
+    return (DX_SCENARIOS[key] || []).map((sc) => ({
+      label: sc.label, code: sc.code, note: sc.note,
+      parts: sc.parts.map((k) => ({ key: k, val: Number(d[k] || 0) || 0, label: (DX_SUBS[key].find((s) => s.key === k) || {}).label || k })),
+      sum: sc.parts.reduce((a, k) => a + (Number(d[k] || 0) || 0), 0)
+    }));
+  }
   const TREAT_MIN = 500, TREAT_MAX = 3000;
   const NEURO_MIN = 500, NEURO_MAX = 3000;
   const CANCER_ITEM = () => PRIORITY[0];
@@ -73,6 +126,7 @@
     return TREAT_SUBS.filter((s) => !(Number(t[s.key] || 0) > 0)).map((s) => s.label);
   }
   function neuroSum(state, key) { return groupSum(state, key, 'treat'); }
+  function dxShort(label) { return String(label || '').replace(/\s*진단비$/, ''); }
   function neuroCount(state, key) {
     const t = groupObj(state, key, 'treat') || {};
     return NEURO_SUBS.filter((s) => Number(t[s.key] || 0) > 0).length;
@@ -112,10 +166,32 @@
       c.recur = !!c.recur;
     }
 
-    /* 2) 뇌·심장 주요치료비: boolean/단일 → 3종 */
+    /* 2) 뇌·심장 주요치료비: boolean/단일 → 3종 + 진단비 3단계/2단계 (v5.0) */
     ['brain', 'heart'].forEach((key) => {
       const c = cov[key];
       if (!c) return;
+      /* 2-a) 진단비 금액 칸 (v5.0) — 구버전 범위 선택(scope)을 금액으로 옮깁니다 */
+      const subs = DX_SUBS[key];
+      const isObj = c.dx && typeof c.dx === 'object' && !Array.isArray(c.dx);
+      if (!isObj) {
+        const out = {};
+        subs.forEach((s) => { out[s.key] = 0; });
+        const legacyScope = c.scope;
+        const map = { bleed: 'bleed', stroke: 'stroke', vascular: 'vascular', mi: 'ami', ischemic: 'ischemic', cardiac: 'ischemic' };
+        const k = legacyScope && legacyScope !== 'none' ? map[legacyScope] : null;
+        if (k && out[k] != null) {
+          out[k] = 2000;
+          res.migrated = true;
+          res.notes.push(`${key === 'brain' ? '뇌' : '심장'} 보장 범위 선택을 진단비 2,000만원으로 옮겼습니다 — 실제 가입금액을 확인하세요.`);
+        }
+        c.dx = out;
+      } else {
+        subs.forEach((s) => {
+          if (typeof c.dx[s.key] !== 'number') c.dx[s.key] = Number(c.dx[s.key]) || 0;
+          c.dx[s.key] = Math.max(0, Math.min(DX_MAX, c.dx[s.key]));
+        });
+      }
+      delete c.scope;
       const legacyBool = (typeof c.treat === 'boolean') ? c.treat : (typeof c.surgery === 'boolean' ? c.surgery : null);
       if (!(c.treat && typeof c.treat === 'object')) {
         const out = emptyNeuro();
@@ -125,12 +201,10 @@
           res.notes.push(`${key === 'brain' ? '뇌' : '심장'} 주요치료비 보유 표시를 3종 각 1,000만원으로 옮겼습니다 — 실제 가입금액을 확인하세요.`);
         }
         c.treat = out;
-        delete c.surgery;
       } else {
         NEURO_SUBS.forEach((s) => { if (typeof c.treat[s.key] !== 'number') c.treat[s.key] = Number(c.treat[s.key + ''] || 0) || 0; });
-        delete c.surgery;
       }
-      if (!c.scope) c.scope = 'none';
+      delete c.surgery;
     });
 
     /* 3) 수술비: 질병 4축 + 상해 2축 */
@@ -207,7 +281,7 @@
     const firstKey = item.parts[0] && item.parts[0].key;
     const parts = item.parts.map((p) => {
       const tiers = p.tiers || (p.key === firstKey ? item.tiers : null) || null;
-      let fill = 0, rec = 0, val = 0, option = null, subs = null, stage = null;
+      let fill = 0, rec = 0, val = 0, option = null, subs = null, stage = null, dx = null;
       if (p.type === 'amount') {
         rec = Math.round(baseRec * p.factor);
         val = Number(getVal(state, item, p) || 0);
@@ -231,6 +305,40 @@
         rec = subs.reduce((a, s) => a + s.rec, 0);
         val = subs.reduce((a, s) => a + s.val, 0);
         fill = rec > 0 ? subs.reduce((a, s) => a + Math.min(s.val, s.rec), 0) / rec : 0;
+      } else if (p.type === 'dxset') {
+        /* v5.0 — 범위별 진단비 금액. 평가 주축 = 가장 넓은 범위(뇌혈관·허혈성심장) */
+        const raw = getVal(state, item, p);
+        const src = (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
+        const list = p.subs || [];
+        const coreKey = p.core || ((list.find((s) => s.core) || list[list.length - 1] || {}).key);
+        subs = list.map((sp) => {
+          const srec = Number(sp.rec) || Math.round(baseRec * (sp.factor || 1));
+          const sval = Number(src[sp.key] || 0) || 0;
+          const sfill = srec > 0 ? clamp(sval / srec, 0, 1) : 0;
+          return {
+            key: sp.key, label: sp.label, codes: sp.codes, hint: sp.hint, rec: srec, val: sval, fill: sfill,
+            pct: Math.round(sfill * 100), level: partLevel(sfill, sval), part: sp,
+            isCore: sp.key === coreKey, min: 0, max: p.max || DX_MAX
+          };
+        });
+        const core = subs.find((s) => s.isCore) || subs[0] || { val: 0, rec: 0, fill: 0, label: '', key: coreKey };
+        let f = core.fill;
+        if (!(core.val > 0)) {
+          /* 넓은 범위가 0원이면 좁은 범위에 부분 점수만 (뇌경색·협심증은 여전히 공백) */
+          subs.forEach((s) => { if (!s.isCore) f = Math.max(f, s.fill * (Number(s.part && s.part.part) || 0.4)); });
+        }
+        fill = clamp(f, 0, 1);
+        val = subs.reduce((a, s) => a + s.val, 0);
+        rec = core.rec || 0;
+        stage = stageOf(core.val, p.tiers || item.tiers, core.rec);
+        dx = {
+          subs,
+          core,
+          gapWarn: !(core.val > 0) && subs.some((s) => s.val > 0),
+          gapLabel: core.label,
+          scenarios: dxScenarios(state, item.key),
+          total: val
+        };
       } else if (p.type === 'scale') {
         const v = getVal(state, item, p) || p.options[0].v;
         option = p.options.find((o) => o.v === v) || p.options[0];
@@ -239,7 +347,7 @@
         val = !!getVal(state, item, p);
         fill = val ? 1 : 0;
       }
-      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p, subs, stage, tiers };
+      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p, subs, stage, tiers, dx };
     });
     const fill = parts.reduce((a, p) => a + p.weight * p.fill, 0);
     const primary = parts[0].fill;
@@ -263,11 +371,16 @@
       return bits.join(' · ');
     }
     if (item.key === 'brain' || item.key === 'heart') {
-      const p = P('scope');
-      const opt = p.option || { label: '미보유' };
+      const p = P('dx');
       const g = P('treat');
       const n = (g.subs || []).filter((s) => s.val > 0).length;
-      return `${opt.label}${opt.hint ? ' (' + opt.hint + ')' : ''} · 치료비 3종 ${n}/3 ${won(g.val)}만원`;
+      const d = p.dx || {};
+      const core = d.core;
+      const narrow = (p.subs || []).filter((s) => !s.isCore && s.val > 0).map((s) => `${dxShort(s.label)} ${won(s.val)}`);
+      const coreTxt = core && core.val > 0
+        ? `${dxShort(core.label)} ${won(core.val)}만원`
+        : (d.gapWarn ? `범위 공백(${dxShort(core ? core.label : '')} 0원)` : '진단비 없음');
+      return `${coreTxt}${narrow.length ? ' + ' + narrow.join(' + ') + '만원' : ''} · 치료비 3종 ${n}/3 ${won(g.val)}만원`;
     }
     if (item.key === 'surgery') {
       const dz = ['disease', 'disease15', 'diseaseNdae', 'diseaseNonPay'].filter((k) => Number(P(k).val) > 0).length;
@@ -380,11 +493,12 @@
           key: p.key, label: p.label, type: p.type,
           fill: p.fill, pct: Math.round(p.fill * 100),
           val: p.val, rec: p.rec, option: p.option, stage: p.stage, tiers: p.tiers,
-          subs: p.subs ? p.subs.map((s) => ({ label: s.label, key: s.key, val: s.val, rec: s.rec, fill: s.fill, pct: s.pct, level: s.level })) : null,
+          subs: p.subs ? p.subs.map((s) => ({ label: s.label, key: s.key, val: s.val, rec: s.rec, fill: s.fill, pct: s.pct, level: s.level, codes: s.codes })) : null,
           level: partLevel(p.fill, p.val),
           text: p.type === 'amount' ? `${won(p.val)}만원 / ${won(p.rec)}만원${p.stage ? ` (${p.stage.label})` : ''}`
             : p.type === 'group' ? `${p.subs.filter((s) => s.val > 0).length}/${p.subs.length}종 · ${won(p.val)}만원 / ${won(p.rec)}만원`
-              : p.type === 'scale' ? (p.option ? p.option.label : '미보유')
+              : p.type === 'dxset' ? `${(p.subs || []).filter((s) => s.val > 0).length}/${(p.subs || []).length}단계 · 핵심 ${p.dx && p.dx.core ? (p.dx.core.val ? won(p.dx.core.val) : '0') : '0'}만원 / 권장 ${won(p.rec)}만원`
+                : p.type === 'scale' ? (p.option ? p.option.label : '미보유')
                 : (p.val ? '보유' : '없음')
         });
       });
@@ -508,8 +622,25 @@
     if (!cov.cancer.recur) cps.push({ level: 'info', title: '재진단·전이암 보장 없음', body: '1회한 진단비는 한 번 지급되면 끝입니다. 재발·전이는 별도 담보가 있어야 다시 지급됩니다.' });
 
     /* 뇌 · 심장 */
-    if (cov.brain.scope === 'bleed') cps.push({ level: 'danger', title: '뇌 보장이 뇌출혈에 갇혀 있습니다', body: '뇌경색(I63)은 뇌졸중·뇌혈관질환 담보에만 들어갑니다. 공식 통계에서도 뇌경색 환자가 뇌내출혈보다 약 5.1배 많습니다.' });
-    if (cov.heart.scope === 'mi') cps.push({ level: 'danger', title: '심장이 급성심근경색에 갇혀 있습니다', body: '협심증(I20)은 허혈성심장질환(I20~I25) 담보에만 들어갑니다. 스텐트 시술은 협심증 단계에서 많이 이뤄집니다.' });
+    /* 뇌 · 심장 — v5.0 진단비 금액 기준 */
+    const bdx = dxObj(state, 'brain'), hdx = dxObj(state, 'heart');
+    const bCore = dxCoreVal(state, 'brain'), hCore = dxCoreVal(state, 'heart');
+    const bNarrow = Number(bdx.stroke || 0) + Number(bdx.bleed || 0);
+    const hNarrow = Number(hdx.ami || 0);
+    if (bCore <= 0 && bNarrow > 0) {
+      cps.push({ level: 'danger', title: '범위 공백 — 뇌혈관질환 진단비 0원', body: `뇌졸중 ${won(bdx.stroke)}만원 · 뇌출혈 ${won(bdx.bleed)}만원이 있어도 뇌혈관질환 금액이 0원입니다. 뇌경색(I63)은 뇌졸중 금액만 받고, 후유증(I69)·기타 뇌혈관질환(I67)은 한 푼도 나오지 않습니다. 권장은 뇌혈관질환 2,000만원입니다.` });
+    } else if (bCore > 0 && bCore < 2000) {
+      cps.push({ level: 'info', title: `뇌혈관질환 진단비 ${won(bCore)}만원 — 권장 2,000만원`, body: `최소선 1,000만원은 넘었습니다. 뇌경색 입원이 평균 62.7일·진료비 2,562만원인 구간이라 2,000만원을 기준선으로 봅니다.` });
+    } else if (bCore <= 0 && bNarrow <= 0) {
+      cps.push({ level: 'warn', title: '뇌 진단비 없음', body: '뇌출혈·뇌졸중·뇌혈관질환 진단비가 모두 0원입니다. 범위는 뇌혈관질환(I60~I69)부터 잡고 금액은 최소 1,000만원에서 시작합니다.' });
+    }
+    if (hCore <= 0 && hNarrow > 0) {
+      cps.push({ level: 'danger', title: '범위 공백 — 협심증(I20) 미보장', body: `급성심근경색 ${won(hdx.ami)}만원은 있어도 허혈성심장질환 금액이 0원입니다. 협심증(I20)과 스텐트 시술이 가장 많은 구간이 비어 있고, 급성심근경색만 이 담보에서 지급됩니다. 권장은 허혈성심장질환 2,000만원입니다.` });
+    } else if (hCore > 0 && hCore < 2000) {
+      cps.push({ level: 'info', title: `허혈성심장질환 진단비 ${won(hCore)}만원 — 권장 2,000만원`, body: '협심증·스텐트 구간을 담보하는 핵심 칸입니다. 2,000만원을 기준선으로 보고 금액을 조정합니다.' });
+    } else if (hCore <= 0 && hNarrow <= 0) {
+      cps.push({ level: 'warn', title: '심장 진단비 없음', body: '급성심근경색·허혈성심장질환 진단비가 모두 0원입니다. 범위는 허혈성심장질환(I20~I25)부터 잡습니다.' });
+    }
 
     [['brain', '뇌'], ['heart', '심장']].forEach(([key, name]) => {
       const tg = groupObj(state, key, 'treat') || {};
@@ -546,8 +677,8 @@
     /* v4: 가족력 · 고지 판정 · 계약 납입/만기 */
     familyNotes(state).forEach((f) => {
       if (f.key === 'cancer' && cov.cancer.general < (PRIORITY[0].rec[state.age] || 0)) cps.push({ level: 'warn', title: f.label, body: f.body });
-      else if (f.key === 'brain' && cov.brain.scope !== 'vascular') cps.push({ level: 'warn', title: f.label, body: f.body });
-      else if (f.key === 'heart' && cov.heart.scope !== 'ischemic' && cov.heart.scope !== 'cardiac') cps.push({ level: 'warn', title: f.label, body: f.body });
+      else if (f.key === 'brain' && bCore < 2000) cps.push({ level: 'warn', title: f.label, body: f.body });
+      else if (f.key === 'heart' && hCore < 2000) cps.push({ level: 'warn', title: f.label, body: f.body });
       else if (f.key === 'dementia' && !cov.care.ltc) cps.push({ level: 'warn', title: f.label, body: f.body });
       else cps.push({ level: 'info', title: f.label, body: f.body });
     });
@@ -586,8 +717,15 @@
     const migration = normalizeState(state);
     const rows = PRIORITY.map((item) => {
       const r = evalItem(state, item);
-      const gaps = r.parts.filter((p) => (p.type === 'amount' || p.type === 'group') && p.rec > 0 && p.val < p.rec)
-        .map((p) => ({ label: p.label, val: p.val, rec: p.rec, need: p.rec - p.val, pct: Math.round(p.fill * 100) }));
+      const gaps = [];
+      r.parts.forEach((p) => {
+        if (p.type === 'dxset') {
+          const core = p.dx && p.dx.core;
+          if (core && core.rec > 0 && core.val < core.rec) gaps.push({ label: core.label, val: core.val, rec: core.rec, need: core.rec - core.val, pct: Math.round(core.fill * 100), code: core.codes });
+        } else if ((p.type === 'amount' || p.type === 'group') && p.rec > 0 && p.val < p.rec) {
+          gaps.push({ label: p.label, val: p.val, rec: p.rec, need: p.rec - p.val, pct: Math.round(p.fill * 100) });
+        }
+      });
       const pct = Math.round(clamp(r.fill, 0, 1) * 100);
       return { item, r, pct, baseRec: r.baseRec, level: r.level, label: r.label, summary: summaryOf(state, item, r), gaps };
     });
@@ -595,6 +733,7 @@
     const sc = computeScore(state, rows);
     const sg = state.cov.surgery;
     const totalSum = Number(state.cov.cancer.general || 0) + Number(state.cov.cancer.similar || 0) + treatSum(state)
+      + dxCoreVal(state, 'brain') + dxCoreVal(state, 'heart')
       + ['disease', 'disease15', 'diseaseNdae', 'diseaseNonPay', 'injury', 'injury15'].reduce((a, k) => a + Number(sg[k] || 0), 0);
     const annual = Number(state.premium || 0) * 12;
     const cps = checkpoints(state, rows, totalSum, annual);
@@ -612,7 +751,14 @@
     const cancerTreatPart = cancerRow.r.parts.find((p) => p.key === 'treatment');
     const neuroOf = (row) => {
       const g = row.r.parts.find((p) => p.key === 'treat');
-      return { subs: g.subs || [], sum: g.val, rec: g.rec, count: (g.subs || []).filter((s) => s.val > 0).length, missing: neuroMissing(state, row.item.key) };
+      const dd = row.r.parts.find((p) => p.key === 'dx');
+      return {
+        subs: g.subs || [], sum: g.val, rec: g.rec, count: (g.subs || []).filter((s) => s.val > 0).length, missing: neuroMissing(state, row.item.key),
+        dx: dd ? {
+          subs: dd.subs || [], core: dd.dx.core, gapWarn: dd.dx.gapWarn, scenarios: dd.dx.scenarios,
+          total: dd.dx.total, coreVal: dd.dx.core ? dd.dx.core.val : 0, rec: dd.rec, fill: dd.fill, pct: Math.round(dd.fill * 100)
+        } : null
+      };
     };
     return {
       state, rows, parts, score: sc.score, grade: sc.grade, letter: gradeLetter(sc.score),
@@ -624,8 +770,12 @@
       family, familyLabels: family.map((k) => FAMILY_NOTE[k].title), familyNotes: familyNotes(state),
       disclosure: disc, MATURITY,
       tiers: { cancer: PRIORITY[0].tiers, brain: PRIORITY[1].tiers, heart: PRIORITY[2].tiers, care: PRIORITY[4].tiers },
-      cancerTreat: { subs: (cancerTreatPart && cancerTreatPart.subs) || [], sum: treatSum(state), rec: (cancerTreatPart && cancerTreatPart.rec) || 0, count: treatCount(state), missing: treatMissing(state), legacy: state.cov.cancer.treatmentLegacy || 0 },
+      brainTreat: { subs: (cancerTreatPart && cancerTreatPart.subs) || [], sum: treatSum(state), rec: (cancerTreatPart && cancerTreatPart.rec) || 0, count: treatCount(state), missing: treatMissing(state), legacy: state.cov.cancer.treatmentLegacy || 0 },
       neuro: { brain: neuroOf(brainRow), heart: neuroOf(heartRow) },
+      dx: {
+        brain: { subs: DX_SUBS.brain, values: dxObj(state, 'brain'), core: dxCoreVal(state, 'brain'), total: dxTotal(state, 'brain'), scenarios: dxScenarios(state, 'brain') },
+        heart: { subs: DX_SUBS.heart, values: dxObj(state, 'heart'), core: dxCoreVal(state, 'heart'), total: dxTotal(state, 'heart'), scenarios: dxScenarios(state, 'heart') }
+      },
       migration,
       client: {
         name: (state.client && state.client.name) || '홍길동',
@@ -638,7 +788,51 @@
     };
   }
 
-  /* 간단 요약 문장 (카톡·라이브 공용) */
+  /* ---------- 보완 시뮬레이션 (같은 보험료 재배치·추가 보완 점수 미리보기) ----------
+     boosts: { cancer: 0~100, brain: 0~100, ... } 보완 정도(%) */
+  function simulate(state, boosts) {
+    const clone = JSON.parse(JSON.stringify({
+      age: state.age, gender: state.gender, job: state.job, silson: state.silson, premium: state.premium,
+      client: state.client, contracts: state.contracts, family: state.family, disc: state.disc,
+      cov: state.cov, flags: state.flags
+    }));
+    PRIORITY.forEach((p) => {
+      const b = (boosts && boosts[p.key]) || 0;
+      if (!b) return;
+      const c = clone.cov[p.key] || (clone.cov[p.key] = {});
+      const f = b / 100;
+      p.parts.forEach((pt) => {
+        if (pt.type === 'amount') {
+          const rec = Math.round((p.rec[state.age] || 0) * pt.factor);
+          c[pt.key] = Math.max(Number(c[pt.key] || 0), Math.round(rec * f));
+        } else if (pt.type === 'bool') {
+          if (b >= 60) c[pt.key] = true;
+        } else if (pt.type === 'group') {
+          if (!c[pt.key] || typeof c[pt.key] !== 'object') c[pt.key] = {};
+          const brec = p.rec[state.age] || 0;
+          (pt.subs || []).forEach((sp) => {
+            const rec = subRec(brec, sp, pt);
+            c[pt.key][sp.key] = Math.max(Number(c[pt.key][sp.key] || 0), Math.round(rec * f));
+          });
+        } else if (pt.type === 'dxset') {
+          if (!c[pt.key] || typeof c[pt.key] !== 'object') c[pt.key] = {};
+          (pt.subs || []).forEach((sp) => {
+            const rec = Number(sp.rec) || Math.round((p.rec[state.age] || 0) * (sp.factor || 1));
+            c[pt.key][sp.key] = Math.max(Number(c[pt.key][sp.key] || 0), Math.round(rec * f));
+          });
+        } else if (pt.type === 'scale') {
+          const opts = pt.options;
+          const idx = Math.min(opts.length - 1, Math.round((opts.length - 1) * f));
+          const cand = opts[idx];
+          const now = opts.find((o) => o.v === c[pt.key]);
+          if (!now || cand.score > now.score) c[pt.key] = cand.v;
+        }
+      });
+    });
+    return full(clone);
+  }
+
+
   function oneLine(state, m) {
     if (!m.needList.length) return '5대 담보가 기준선을 넘었습니다. 금액 조정과 갱신 대비가 남은 과제입니다.';
     const x = m.needList[0];
@@ -652,6 +846,7 @@
     FAMILY_KEYS, FAMILY_NOTE, familyList, familyNotes, disclosureJudge, contractStats, MATURITY,
     TREAT_SUBS, NEURO_SUBS, TREAT_MIN, TREAT_MAX, NEURO_MIN, NEURO_MAX,
     treatRec, treatRecs, subRec, emptyTreat, emptyNeuro, treatObj, treatSum, treatCount, treatMissing,
-    neuroSum, neuroCount, neuroMissing, groupObj, groupSum, normalizeState, normalizeCov, stageOf, partLevel
+    neuroSum, neuroCount, neuroMissing, groupObj, groupSum, normalizeState, normalizeCov, stageOf, partLevel,
+    dxObj, dxTotal, dxCoreVal, dxScenarios, dxShort, DX_SUBS, DX_MAX, simulate
   };
 })(typeof window !== 'undefined' ? window : globalThis);

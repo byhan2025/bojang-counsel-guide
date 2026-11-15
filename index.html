@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 상담 가이드 v4.2 · 메인 허브 + 상담자 입력실 + 고객 30장 슬라이드</title>
-<meta name="description" content="손해보험 설계사를 위한 현장 상담용 보장분석. 메인 허브에서 상담자 상세 입력·한 화면 빠른 입력·고객 30장 슬라이드·라이브 상담·PDF·상담 이력으로 바로 들어가고, 1장·10장·30장 PDF로 저장·공유합니다.">
-<meta name="theme-color" content="#0a1d33">
+<title>보험에 반하다 v5.0 · 보장분석 상담 가이드 (뇌·심장 진단비 · FC 실무 도우미)</title>
+<meta name="description" content="손해보험 설계사를 위한 현장 상담 앱 '보험에 반하다'. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기까지.">
+<meta name="theme-color" content="#FAF4F3">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" href="./icons/icon-192.png" sizes="192x192">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="보장분석">
+<meta name="apple-mobile-web-app-title" content="보험에 반하다">
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -21,14 +21,14 @@
   <div class="header-inner">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 3l7 3v5.5c0 4.3-2.9 7.6-7 9.5-4.1-1.9-7-5.2-7-9.5V6l7-3z"/>
-          <path d="M8.5 14.5v-3M12 14.5v-5M15.5 14.5v-1.8"/>
+        <svg viewBox="0 0 120 100" fill="none">
+          <path d="M60 36c0-10 8-18 19-18s19 9 19 21c0 17-19 30-38 42C41 69 22 56 22 39 22 27 31 18 42 18s18 8 18 18z" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M18 78c20 12 52 12 70-2 6-5 12-7 18-7" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity=".65"/>
         </svg>
       </span>
       <div class="brand-text">
-        <h1>보장분석 가이드 <em class="ver">v4.2</em></h1>
-        <p>메인 허브 · 상담자 입력실 · 고객 30장 슬라이드</p>
+        <h1>보험에 <em>반하다</em></h1>
+        <p>당신의 삶에 꼭 맞는 보험, 현명한 선택</p>
       </div>
     </div>
     <button type="button" class="home-btn" id="btn-home" aria-label="메인 화면으로">
@@ -63,9 +63,27 @@
   <section id="view-home" class="view is-active" aria-label="메인 허브">
 
     <div class="home-hero">
+      <div class="hh-brand">
+        <span class="hh-heart" aria-hidden="true">
+          <svg viewBox="0 0 120 100" fill="none">
+            <path d="M60 36c0-10 8-18 19-18s19 9 19 21c0 17-19 30-38 42C41 69 22 56 22 39 22 27 31 18 42 18s18 8 18 18z" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18 78c20 12 52 12 70-2 6-5 12-7 18-7" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" opacity=".62"/>
+          </svg>
+        </span>
+        <div class="hh-lockup">
+          <b>보험에 <em>반하다</em></b>
+          <span>당신의 삶에 꼭 맞는 보험, 현명한 선택</span>
+        </div>
+      </div>
+      <div class="hh-values">
+        <span class="hv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.4-3 8-7 9.5C8 20 5 16.4 5 12V6l7-3z"/><path d="M8.8 12l2.4 2.4 4-4.4"/></svg>보장분석</span>
+        <span class="hv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3.5h6M9 11l1.6 1.6L14 9.4M9 16.5l1.6 1.6L14 14.9"/></svg>맞춤설계</span>
+        <span class="hv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="9" r="2.6"/><circle cx="16" cy="10.5" r="2"/><path d="M3.5 19c.6-3 2.6-4.6 5-4.6s4.4 1.6 5 4.6M13.8 14.6c2.3-.4 4.6 1 5.2 4.4"/></svg>가족보장</span>
+        <span class="hv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0112 8a3.9 3.9 0 017 2.6C19 15.6 12 20 12 20z"/></svg>든든한미래</span>
+      </div>
       <div class="hh-top">
-        <span class="hh-eyebrow">BOJANG ANALYSIS V4.2</span>
-        <span class="hh-ver">v4.2 · 2026.11</span>
+        <span class="hh-eyebrow">BOJANG ANALYSIS V5.0</span>
+        <span class="hh-ver">v5.0 · 2026.11</span>
       </div>
       <h2>무엇을 하시겠어요?</h2>
       <p>상담 전 과정을 한 화면에서 시작합니다. 입력은 이 기기 안에서만 계산되고, PDF도 기기에서 직접 만듭니다.</p>
@@ -138,6 +156,34 @@
       </button>
     </div>
 
+    <div class="home-section-title"><span class="eyebrow">FC TOOLS</span> 설계사 실무 도우미 <span class="hst-sub">상담 현장에서 바로 쓰는 4종</span></div>
+    <div class="home-grid fc-grid">
+      <button type="button" class="hg-card" data-home-go="codes">
+        <span class="hg-no">9</span>
+        <b>🔍 질병코드 · 약관 사전</b>
+        <span>KCD 코드·키워드로 담보 지급·제외와 약관·판례 주의사항을 즉시 확인</span>
+        <em>검색</em>
+      </button>
+      <button type="button" class="hg-card" data-home-go="silson">
+        <span class="hg-no">10</span>
+        <b>🏥 실손 세대별 비교 · 5세대 체크</b>
+        <span>1~5세대 자기부담·한도·재가입 비교표 + 전환 판단 5기준</span>
+        <em>비교</em>
+      </button>
+      <button type="button" class="hg-card" data-home-go="disclose">
+        <span class="hg-no">11</span>
+        <b>📋 고지사항 · 청구 서류 1탭 복사</b>
+        <span>3개월·1년·5년 일반고지 vs 간편심사 3·2·5 / 3·3·5 / 3·5·5 판정 + 5대 담보 청구 서류 카톡 복사</span>
+        <em>복사</em>
+      </button>
+      <button type="button" class="hg-card" data-home-go="premium">
+        <span class="hg-no">12</span>
+        <b>💰 적정 보험료 · 리모델링 비교기</b>
+        <span>소득 대비 권장 보장성 보험료(7~10%) 계산 + 현재·재배치·보완 후 점수 비교</span>
+        <em>계산</em>
+      </button>
+    </div>
+
     <div class="card home-preset">
       <div class="card-title"><span class="eyebrow">PRESET</span> 연령대별 추천 프리셋 <span class="card-sub">원터치로 표준 분석 샘플을 채웁니다</span></div>
       <div class="preset-row" id="preset-row"></div>
@@ -151,7 +197,7 @@
       <div id="history-list" class="history"></div>
     </div>
 
-    <p class="app-foot">기준일 2026-11-15 · v4.2 기준점(암 3,000/5,000/1억 · 뇌·심장 권장 2,000 + 치료비 3종 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리) 반영 · 상품별 약관 우선</p>
+    <p class="app-foot">기준일 2026-11-15 · v5.0 기준점(암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 치료비 3종 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리) 반영 · 상품별 약관 우선</p>
   </section>
 
   <!-- ================= TAB 1 : 보장분석 ================= -->
@@ -159,7 +205,7 @@
     <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>상담자 상세 입력 (6단계)</span></div>
 
     <div class="intro-card no-print">
-      <div class="intro-eyebrow">BOJANG ANALYSIS V4</div>
+      <div class="intro-eyebrow">BOJANG ANALYSIS V5.0</div>
       <h2>상담자 입력실에서 진단하고<br>고객 화면 30장으로 보여줍니다</h2>
       <p>입력값은 서버로 전송되지 않고 이 화면 안에서만 계산됩니다. PDF는 이 기기에서 직접 만들어 저장·공유합니다.</p>
     </div>
@@ -246,7 +292,7 @@
         </div>
 
         <div class="wiz-panel" data-step="3">
-          <div class="wiz-panel-title"><span class="n">3</span>뇌 · 심장<em>보장 범위와 수술·치료비</em></div>
+          <div class="wiz-panel-title"><span class="n">3</span>뇌 · 심장<em>진단비 3단계·2단계 금액 + 치료비 3종</em></div>
           <div id="card-brain"></div>
           <div id="card-heart"></div>
         </div>
@@ -526,6 +572,63 @@
     <p class="app-foot">기준일 2026-11-15 · 상품별 약관이 우선합니다 · 특정 보험사·상품 추천이 아닌 상담 구조 안내</p>
     <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>현장 툴킷</span></div>
   </section>
+
+  <!-- ================= FC 실무 ① 질병코드·약관 사전 ================= -->
+  <section id="view-codes" class="view" aria-label="질병코드 약관 사전">
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>질병코드 · 약관 사전</span></div>
+    <div class="fc-hero">
+      <div class="fc-eyebrow">FC TOOL 01 · KCD SEARCH</div>
+      <h2>질병코드 · 약관 사전</h2>
+      <p>코드(C73) · 이름(갑상선암) · 증상(디스크)으로 찾으면 <b>어느 담보에서 지급되고 어디서 제외되는지</b>와 약관·판례 주의사항이 한 번에 나옵니다.</p>
+      <div class="fc-search">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.4"/><path d="M16 16l4.5 4.5"/></svg>
+        <input id="code-q" type="search" placeholder="예: I63 / 뇌경색 / 협심증 / 용종 / 백내장" autocomplete="off" aria-label="질병코드 검색">
+        <span class="fc-count" id="code-count"></span>
+      </div>
+      <div class="fc-chips" id="code-chips" role="group" aria-label="분류"></div>
+    </div>
+    <div id="code-list" class="code-list"></div>
+    <p class="app-foot">KCD 한국표준질병·사인분류 기준 · 담보명과 코드 범위·지급 조건은 상품 약관과 증권이 기준입니다.</p>
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>질병코드 · 약관 사전</span></div>
+  </section>
+
+  <!-- ================= FC 실무 ② 실손 세대 비교 ================= -->
+  <section id="view-silson" class="view" aria-label="실손 세대별 비교">
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>실손 세대별 비교 · 5세대 체크</span></div>
+    <div class="fc-hero">
+      <div class="fc-eyebrow">FC TOOL 02 · MEDICAL</div>
+      <h2>실손 세대별 비교 · 5세대 체크</h2>
+      <p>1~5세대의 급여·비급여 자기부담률·한도·재가입 주기를 한 화면에 놓고, 고객이 전환을 고민할 때 확인할 <b>5가지 판단 기준</b>을 함께 봅니다.</p>
+    </div>
+    <div id="sil-tool" class="fc-body"></div>
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>실손 세대별 비교</span></div>
+  </section>
+
+  <!-- ================= FC 실무 ③ 고지·청구 서류 ================= -->
+  <section id="view-disclose" class="view" aria-label="고지사항과 청구 서류">
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>고지사항 · 청구 서류</span></div>
+    <div class="fc-hero">
+      <div class="fc-eyebrow">FC TOOL 03 · DISCLOSURE &amp; CLAIM</div>
+      <h2>고지사항 판정 · 청구 서류 1탭 복사</h2>
+      <p>3개월·1년·5년 일반고지와 간편심사(3·2·5 / 3·3·5 / 3·5·5)를 한 번에 판정하고, 5대 담보별 청구 필수 서류를 카톡 문장으로 복사합니다.</p>
+    </div>
+    <div id="disc-tool" class="fc-body"></div>
+    <div id="claim-tool" class="fc-body"></div>
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>고지 · 청구 서류</span></div>
+  </section>
+
+  <!-- ================= FC 실무 ④ 적정 보험료 계산기 ================= -->
+  <section id="view-premium" class="view" aria-label="적정 보험료 계산기">
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>적정 보험료 · 리모델링</span></div>
+    <div class="fc-hero">
+      <div class="fc-eyebrow">FC TOOL 04 · PREMIUM</div>
+      <h2>소득 대비 적정 보험료 · 리모델링 비교기</h2>
+      <p>월 소득을 넣으면 권장 보장성 보험료(7~10%)와 현재 비율을 계산하고, <b>현재 · 같은 보험료 재배치 · 소득 기준 보완</b> 세 가지의 보장 점수를 나란히 보여줍니다.</p>
+    </div>
+    <div id="premium-tool" class="fc-body"></div>
+    <div class="app-foot">세후 월 소득 기준 · 저축성·연금성 보험료는 제외한 보장성 보험료 비율입니다.</div>
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>적정 보험료 계산기</span></div>
+  </section>
 </main>
 
 <nav class="tabbar no-print" role="tablist" aria-label="주요 메뉴">
@@ -635,6 +738,7 @@
 <script src="./report.js"></script>
 <script src="./client.js"></script>
 <script src="./live.js"></script>
+<script src="./tools.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>

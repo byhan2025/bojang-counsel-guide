@@ -23,8 +23,8 @@
     disc: {},
     cov: {
       cancer: { general: 5000, similar: 1000, treatment: { surgery: 1000, drug: 1500, radio: 600, icu: 0, extra: 500 }, recur: true },
-      brain: { scope: 'vascular', treat: { lysis: 1000, surgery: 1500, icu: 0 } },
-      heart: { scope: 'ischemic', treat: { lysis: 0, surgery: 1500, icu: 500 } },
+      brain: { dx: { vascular: 2000, stroke: 2000, bleed: 1000 }, treat: { lysis: 1000, surgery: 1500, icu: 0 } },
+      heart: { dx: { ischemic: 2000, ami: 1000 }, treat: { lysis: 0, surgery: 1500, icu: 500 } },
       surgery: { disease: 50, disease15: 300, diseaseNdae: 500, diseaseNonPay: 0, injury: 50, injury15: 300 },
       care: { daily: 10, nDaily: 0, basis: 'time', family: 'conditional', nursing: true, ltc: false, mode: 'normal' }
     },
@@ -299,6 +299,57 @@
       </div>`;
   }
 
+  /* v5.0: 범위별 진단비 3단계(뇌) · 2단계(심장) — 진단 시 합산 지급 안내 */
+  function dxRowHTML(item, part) {
+    const ev = BojangModel.evalItem(state, item);
+    const pr = ev.parts.find((p) => p.key === part.key) || { subs: [], rec: 0, fill: 0, dx: {} };
+    const subs = pr.subs || [];
+    const dx = pr.dx || {};
+    const core = dx.core;
+    const hi = part.max || 5000;
+    const scen = dx.scenarios || [];
+    return `
+      <div class="part dx-group" data-part="${part.key}">
+        <div class="part-head">
+          <div class="part-label"><strong>${part.label}</strong><span>${part.hint}</span></div>
+          <div class="part-side">${core ? `<span class="mini-badge tone-${core.fill >= 1 ? 'ok' : core.fill > 0 ? 'need' : 'gap'}" data-dxbadge>${Math.round(core.fill * 100)}%</span>` : ''}</div>
+        </div>
+        <div class="dx-core${dx.gapWarn ? ' is-warn' : ''}">
+          <span class="dxc-label">핵심 범위</span>
+          <b data-dxcore>${won(core ? core.val : 0)}</b><em>만원</em>
+          <span class="dxc-rec">권장 ${won(pr.rec)}만원</span>
+          <span class="dxc-state">${core && core.val >= 2000 ? '기준선 충족' : '기준선 미달'}</span>
+        </div>
+        <div class="dx-warn${dx.gapWarn ? ' is-on' : ''}" data-dxwarn>
+          ⚠ <b>범위 공백 경고</b> — ${esc(dx.gapLabel || '')} 금액이 0원입니다. ${item.key === 'brain' ? '뇌경색(I63)은 뇌졸중 금액만 지급되고, 뇌혈관 후유증(I69)은 지급되지 않습니다.' : '협심증(I20)과 스텐트 시술 구간이 지급되지 않습니다.'}
+        </div>
+        <div class="dx-scen">
+          <span class="ds-title">진단 시 합산</span>
+          ${scen.map((s) => `<span class="ds-chip"><em>${esc(s.label)}</em><b data-dxscen="${esc(s.code)}">${won(s.sum)}만원</b><i>${esc(s.note)}</i></span>`).join('')}
+        </div>
+        ${subs.map((s) => `
+          <div class="sub-row dx-sub${s.isCore ? ' is-core' : ''}" data-sub="${s.key}">
+            <div class="sr-head">
+              <div class="part-label"><strong>${esc(s.label)}</strong>${s.isCore ? '<span class="core-tag">핵심</span>' : ''}<span class="code-chip">${esc(s.codes || '')}</span></div>
+              <span class="mini-badge tone-${s.fill >= 1 ? 'ok' : s.fill > 0 ? 'need' : 'gap'}">${s.pct}%</span>
+            </div>
+            <div class="input-row">
+              <span class="di-tag">직접입력</span>
+              <input type="number" inputmode="numeric" min="0" max="${hi}" step="${part.step || 500}"
+                     data-item="${item.key}" data-part="${part.key}" data-sub="${s.key}"
+                     value="${s.val}" placeholder="0~${won(hi)}" aria-label="${esc(s.label)} 직접입력 (만원)">
+              <span class="unit">만원</span>
+            </div>
+            <div class="quick-row">
+              ${(part.quick || []).map((q) => `<button type="button" class="quick" data-set="${q}" data-item="${item.key}" data-part="${part.key}" data-sub="${s.key}">${q === 0 ? '없음' : won(q)}</button>`).join('')}
+              <span class="rec-hint">권장 ${won(s.rec)}만원</span>
+            </div>
+            <p class="sub-hint">${esc(s.hint || '')}</p>
+          </div>`).join('')}
+        <p class="treat-note">각 칸 0~${won(hi)}만원 · 안쪽 담보는 바깥 담보에 포함되며 진단 시 금액이 합산됩니다. ${item.key === 'brain' ? '뇌혈관질환(권장 2,000)이 0원이면 가장 흔한 뇌경색(I63)과 후유증(I69)이 비어 있습니다.' : '허혈성심장질환(권장 2,000)이 0원이면 협심증(I20)·스텐트 시술이 비어 있습니다.'} 대부분 최초 1회한이고 1년 미만은 50% 감액입니다.</p>
+      </div>`;
+  }
+
   function amountRowHTML(item, part) {
     const ev = BojangModel.evalItem(state, item);
     const pr = ev.parts.find((p) => p.key === part.key) || { rec: 0, val: 0, fill: 0 };
@@ -408,7 +459,8 @@
     const r = BojangModel.evalItem(state, item);
     const rowOf = (p) => p.type === 'amount' ? amountRowHTML(item, p)
       : p.type === 'group' ? groupRowHTML(item, p)
-        : p.type === 'scale' ? scaleRowHTML(item, p) : boolRowHTML(item, p);
+        : p.type === 'dxset' ? dxRowHTML(item, p)
+          : p.type === 'scale' ? scaleRowHTML(item, p) : boolRowHTML(item, p);
     return `
       <div class="card cov-card" data-item="${item.key}">
         <div class="card-title">
@@ -439,6 +491,15 @@
     bindCoverageInputs();
   }
 
+  function emptyFor(itemKey, partKey) {
+    if (partKey === 'dx') {
+      const out = {};
+      (BojangModel.DX_SUBS[itemKey] || []).forEach((s) => { out[s.key] = 0; });
+      return out;
+    }
+    return itemKey === 'cancer' ? BojangModel.emptyTreat() : BojangModel.emptyNeuro();
+  }
+
   function bindCoverageInputs() {
     $$('#wiz-panels input[type="number"][data-item]').forEach((input) => {
       input.addEventListener('input', () => {
@@ -447,7 +508,7 @@
         if (sb) {
           const box = state.cov[it][pt];
           if (box && typeof box === 'object') box[sb] = v;
-          else state.cov[it][pt] = Object.assign(BojangModel.emptyTreat(), { [sb]: v });
+          else state.cov[it][pt] = Object.assign(emptyFor(it, pt), { [sb]: v });
         } else state.cov[it][pt] = v;
         refreshBadges(); saveSession();
       });
@@ -458,7 +519,7 @@
         if (sb) {
           const box = state.cov[it][pt];
           if (box && typeof box === 'object') box[sb] = v;
-          else state.cov[it][pt] = Object.assign(BojangModel.emptyTreat(), { [sb]: v });
+          else state.cov[it][pt] = Object.assign(emptyFor(it, pt), { [sb]: v });
           const sinput = $(`input[data-item="${it}"][data-part="${pt}"][data-sub="${sb}"]`);
           if (sinput) sinput.value = v;
         } else {
@@ -509,6 +570,25 @@
           const pct = Math.round(p.fill * 100);
           badge.className = 'mini-badge tone-' + (p.fill >= 1 ? 'ok' : p.fill >= 0.5 ? 'need' : 'gap');
           badge.textContent = pct + '%';
+        }
+        if (p.type === 'dxset') {
+          const d = p.dx || {};
+          const core = d.core;
+          const coreEl = $('[data-dxcore]', row);
+          if (coreEl) coreEl.textContent = won(core ? core.val : 0);
+          const badgeEl = $('[data-dxbadge]', row);
+          if (badgeEl) {
+            badgeEl.className = 'mini-badge tone-' + (core && core.fill >= 1 ? 'ok' : core && core.fill > 0 ? 'need' : 'gap');
+            badgeEl.textContent = (core ? Math.round(core.fill * 100) : 0) + '%';
+          }
+          const warnEl = $('[data-dxwarn]', row);
+          if (warnEl) warnEl.classList.toggle('is-on', !!d.gapWarn);
+          const coreBox = $('.dx-core', row);
+          if (coreBox) coreBox.classList.toggle('is-warn', !!d.gapWarn);
+          (d.scenarios || []).forEach((sc) => {
+            const el = $(`[data-dxscen="${sc.code}"]`, row);
+            if (el) el.textContent = won(sc.sum) + '만원';
+          });
         }
         if (p.subs) {
           p.subs.forEach((s) => {
@@ -1101,7 +1181,7 @@
     });
     if (isClient) {
       const active = $('.view.is-active');
-      if (active && ['view-toolkit', 'view-live', 'view-home', 'view-quick'].indexOf(active.id) >= 0) switchView('analysis');
+      if (active && ['view-toolkit', 'view-live', 'view-home', 'view-quick', 'view-codes', 'view-silson', 'view-disclose', 'view-premium'].indexOf(active.id) >= 0) switchView('analysis');
       const liveTab = $('#tab-live'); if (liveTab) liveTab.style.display = 'none';
       if (!state.analyzed) analyze();
       if (window.BojangDeck) window.BojangDeck.show(state);
@@ -1137,6 +1217,7 @@
     } catch (e) { toast('복사가 막혔습니다. 길게 눌러 직접 선택해 주세요'); }
   }
   window.__bojangCopy = copy;
+  window.__bojangToast = toast;
 
   /* ================= 탭 전환 ================= */
   function switchView(name) {
@@ -1144,7 +1225,7 @@
     state.tab = name;
     const viewId = 'view-' + name;
     $$('.view').forEach((v) => v.classList.toggle('is-active', v.id === viewId));
-    const tabOf = { home: 'home', analysis: 'analysis', quick: 'analysis', guide: 'guide', live: 'live', toolkit: 'toolkit' };
+    const tabOf = { home: 'home', analysis: 'analysis', quick: 'analysis', guide: 'guide', live: 'live', toolkit: 'toolkit', codes: 'home', silson: 'home', disclose: 'home', premium: 'home' };
     const active = tabOf[name] || name;
     $$('.tab').forEach((t) => {
       const on = t.dataset.view === active;
@@ -1157,6 +1238,12 @@
     /* 다른 화면에서 값을 바꿨을 수 있으므로 위저드 입력칸을 상태와 맞춥니다 */
     if (name === 'analysis') syncWizardInputs();
     if (name === 'live' && window.BojangLive) window.BojangLive.render();
+    if (window.BojangTools) {
+      if (name === 'codes') window.BojangTools.renderCodes();
+      else if (name === 'silson') window.BojangTools.renderSilson();
+      else if (name === 'disclose') { window.BojangTools.renderDisclosureTool(); window.BojangTools.renderClaimDocs(); }
+      else if (name === 'premium') window.BojangTools.renderPremiumTool();
+    }
   }
 
   function syncWizardInputs() {
@@ -1544,6 +1631,31 @@
           </span>
         </div>`;
     }
+    if (p.type === 'dxset') {
+      const subs = pr.subs || [];
+      const d = pr.dx || {};
+      const core = d.core;
+      return `
+        <div class="qrow qgroup-head${d.gapWarn ? ' is-warn' : ''}" data-qrow="${item.key}.${p.key}">
+          <span class="ql"><b>${p.label}</b><em>${d.gapWarn ? '⚠ 범위 공백 — ' + esc(d.gapLabel) + ' 0원' : (p.hint || '')}</em></span>
+          <div class="qv"><span class="qsum">${won(core ? core.val : 0)}<em>만원</em></span><span class="qstate tone-${tone}">핵심 범위</span></div>
+          <span class="qc"><em class="qrec">권장 ${won(pr.rec)}</em></span>
+        </div>
+        ${subs.map((s) => `
+          <div class="qrow qsub${s.isCore ? ' is-core' : ''}" data-qrow="${item.key}.${p.key}.${s.key}">
+            <span class="ql"><b>${s.isCore ? '★ ' : '└ '}${esc(s.label)}</b><em>${esc(s.codes || '')}</em></span>
+            <div class="qv">
+              <span class="di-tag">직접입력</span>
+              <input type="number" inputmode="numeric" min="0" max="${s.max || 5000}" step="${p.step || 500}" data-qitem="${item.key}" data-qpart="${p.key}" data-qsub="${s.key}" value="${s.val}" aria-label="${esc(s.label)} (만원)">
+              <span class="unit">만원</span>
+              <span class="qstate tone-${s.fill >= 1 ? 'ok' : s.val > 0 ? 'need' : 'gap'}">${s.pct}%</span>
+            </div>
+            <span class="qc">
+              ${(p.quick || []).map((q) => `<button type="button" class="quick" data-qset="${q}" data-qitem="${item.key}" data-qpart="${p.key}" data-qsub="${s.key}">${q === 0 ? '없음' : won(q)}</button>`).join('')}
+              <em class="qrec">권장 ${won(s.rec)}</em>
+            </span>
+          </div>`).join('')}`;
+    }
     if (p.type === 'group') {
       const subs = pr.subs || [];
       return `
@@ -1621,7 +1733,7 @@
     const c = state.cov[itemKey];
     if (!c) return;
     if (subKey) {
-      if (!c[partKey] || typeof c[partKey] !== 'object') c[partKey] = (itemKey === 'cancer' ? BojangModel.emptyTreat() : BojangModel.emptyNeuro());
+      if (!c[partKey] || typeof c[partKey] !== 'object') c[partKey] = emptyFor(itemKey, partKey);
       c[partKey][subKey] = val;
     } else c[partKey] = val;
   }
@@ -1820,6 +1932,7 @@
     loadHistory();
     renderQuick();
     renderHome();
+    if (window.BojangTools) window.BojangTools.init();
     switchView('home');
     applyView();
     setStep(1, true);
@@ -1838,6 +1951,10 @@
       else if (k === 'live') switchView('live');
       else if (k === 'guide') switchView('guide');
       else if (k === 'toolkit') switchView('toolkit');
+      else if (k === 'codes') switchView('codes');
+      else if (k === 'silson') switchView('silson');
+      else if (k === 'disclose') switchView('disclose');
+      else if (k === 'premium') switchView('premium');
       else if (k === 'pdf') {
         if (!state.analyzed) analyze();
         switchView('analysis');
