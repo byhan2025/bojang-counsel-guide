@@ -783,9 +783,10 @@ body.wiz-all .wiz-nav,body.wiz-all .wiz-bar,body.wiz-all .wiz-count{display:none
 .stat-notes{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;}
 .stat-notes span{font-size:9.5px;color:var(--ink-2);background:#eef4fb;border-radius:6px;padding:3px 7px;letter-spacing:0;}
 .stat-source{font-size:9px;color:var(--muted);margin-top:9px;letter-spacing:0;line-height:1.5;}
-.stk-bar{display:flex;height:18px;border-radius:6px;overflow:hidden;margin-top:11px;background:#e9eef6;}
-.stk-seg{display:flex;align-items:center;justify-content:center;}
-.stk-seg b{font-size:8.5px;color:#fff;font-weight:800;letter-spacing:0;}
+.stk-bar{display:flex;height:22px;border-radius:6px;overflow:hidden;margin-top:11px;background:#e9eef6;}
+.stk-seg{display:flex;align-items:center;justify-content:center;min-width:7px;}
+.stk-seg b{font-size:9px;color:#fff;font-weight:800;letter-spacing:0;}
+.stk-seg.is-light b{color:#12304f;}
 .stk-legend{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:8px;}
 .stk-li{font-size:9.5px;color:var(--ink-2);letter-spacing:0;display:inline-flex;align-items:center;gap:4px;}
 .stk-li i{width:7px;height:7px;border-radius:2px;display:inline-block;}

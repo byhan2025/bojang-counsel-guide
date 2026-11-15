@@ -392,7 +392,8 @@
         const segs = st.stacked.map((s, i) => {
           const w = (s.value / total) * 100;
           const tones = ['#0b2545', '#1b4a78', '#3f7ba6', '#6fa3c4', '#a8c8dc', '#d3e2ee'];
-          return `<span class="stk-seg" style="width:${w.toFixed(2)}%;background:${tones[i % tones.length]}" title="${s.label} ${s.value}%"><b>${s.value >= 8 ? s.value + '%' : ''}</b></span>`;
+          const dark = i >= 3;
+          return `<span class="stk-seg${dark ? ' is-light' : ''}" style="width:${w.toFixed(2)}%;background:${tones[i % tones.length]}" title="${s.label} ${s.value}%"><b>${s.value >= 8 ? s.value + '%' : ''}</b></span>`;
         }).join('');
         const legend = st.stacked.map((s, i) => {
           const tones = ['#0b2545', '#1b4a78', '#3f7ba6', '#6fa3c4', '#a8c8dc', '#d3e2ee'];
