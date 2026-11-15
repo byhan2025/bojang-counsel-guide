@@ -1940,3 +1940,6 @@ body.is-client .client-banner{display:none!important;}
 #view-quick .qc{row-gap:4px;}
 #view-quick .quick{padding:4px 8px;font-size:10px;border-radius:9px;}
 #view-quick .qsum{font-size:12.5px;}
+
+/* 화면 전환·스크롤 시 제목이 상단 고정 헤더에 가리지 않게 */
+.view{scroll-margin-top:calc(var(--hdr, 108px) + 6px);}
