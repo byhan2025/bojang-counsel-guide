@@ -228,37 +228,76 @@
       c.restore();
       return x + size * 1.2;
     }
-    /* 표지용 워드마크: 하트 + 보험에(먹색) 반하다(로즈) + 선택 슬로건 */
+    /* 표지용 워드마크: 하트 + 상호(앞말 먹색·끝말 포인트) + 선택 슬로건 + 설계사 연락처
+       v5.1: 화이트라벨 저장값(BojangBrand)을 읽어 상호·슬로건·테마가 PDF 표지에 반영됩니다. */
     brandWordmark(x, y, o) {
       o = o || {};
+      const B = (root.BojangBrand && root.BojangBrand.get) ? root.BojangBrand.get() : null;
+      const T = (root.BojangBrand && root.BojangBrand.themes && B) ? (root.BojangBrand.themes[B.theme] || null) : null;
+      const accent = o.accent || (T ? T.accent : C.rose);
       const size = o.size || 20;
-      const mx = this.brandMark(x, y - size * 0.12, size * 1.15, { lw: 1.05, color: o.markColor || C.rose });
+      const rawName = B ? B.name : '보험에 반하다';
+      const parts = (root.BojangBrand && root.BojangBrand.parts) ? root.BojangBrand.parts(rawName) : { head: '보험에 ', tail: '반하다' };
+      const mx = this.brandMark(x, y - size * 0.12, size * 1.15, { lw: 1.05, color: o.markColor || accent });
       const tx = mx + 6;
-      this.text('보험에 ', tx, y, { size, weight: 800, color: o.ink || C.ink });
-      const w1 = this.measure('보험에 ', size, 800);
-      this.text('반하다', tx + w1, y, { size, weight: 800, color: o.accent || C.rose });
-      if (o.slogan) this.text(o.slogan, tx, y + size * 1.35, { size: Math.max(5.4, size * 0.32), weight: 500, color: C.ink2 });
-      return y + size * (o.slogan ? 1.75 : 1.2);
+      if (parts.head) this.text(parts.head, tx, y, { size, weight: 800, color: o.ink || C.ink });
+      const w1 = parts.head ? this.measure(parts.head, size, 800) : 0;
+      this.text(parts.tail, tx + w1, y, { size, weight: 800, color: accent });
+      const slogan = o.slogan === true ? (B ? B.slogan : '') : (o.slogan || '');
+      if (slogan) this.text(slogan, tx, y + size * 1.35, { size: Math.max(5.4, size * 0.32), weight: 500, color: C.ink2 });
+      /* 설계사 이름·직함·연락처 — 표지 오른쪽 위 */
+      const contact = (root.BojangBrand && root.BojangBrand.contactLine) ? root.BojangBrand.contactLine(B) : '';
+      if (contact && o.contact !== false) {
+        const cy = y + size * (slogan ? 2.0 : 1.35);
+        this.text(contact, this.W - this.MR, cy, { size: 5.8, weight: 600, color: C.ink2, align: 'right' });
+      }
+      return y + size * (slogan ? 1.75 : 1.2);
     }
     header(o) {
       const y = this.MT;
-      this.brandMark(this.ML, y - 2.5, 11, { lw: 0.95 });
+      const B = (root.BojangBrand && root.BojangBrand.get) ? root.BojangBrand.get() : null;
+      const T = (root.BojangBrand && root.BojangBrand.themes && B) ? (root.BojangBrand.themes[B.theme] || null) : null;
+      this.brandMark(this.ML, y - 2.5, 11, { lw: 0.95, color: T ? T.accent : C.rose });
       this.text(o.kicker || 'LIFE REPORT', this.ML + 14, y, { size: 8, weight: 800, color: C.navy });
       if (o.no) {
         const label = o.total ? `${o.no} / ${o.total}` : String(o.no);
         this.text(label, this.W - this.MR, y - 0.5, { size: 8, weight: 700, color: C.blue, align: 'right' });
       }
       this.line(this.ML, y + 14, this.W - this.MR, y + 14, { color: C.line });
-      this.line(this.ML, y + 14, this.ML + 46, y + 14, { color: C.blue, w: 2 });
+      this.line(this.ML, y + 14, this.ML + 46, y + 14, { color: T ? T.accent : C.blue, w: 2 });
       return y + 22;
     }
     footer(o) {
       o = o || {};
       this.contentBottom = this.maxY || 0;
       const y = this.H - 26;
+      const B = (root.BojangBrand && root.BojangBrand.get) ? root.BojangBrand.get() : null;
+      const brandName = B ? B.name : '보험에 반하다';
+      const accent = B && root.BojangBrand.themes ? ((root.BojangBrand.themes[B.theme] || {}).deep || C.blue) : C.blue;
       this.line(this.ML, y, this.W - this.MR, y, { color: C.line });
+      if (o.brandSlogan && B && B.slogan && !this.suppressBrandSlogan && (this.maxY || 0) < y - 12) {
+        this.text(B.slogan, this.ML, y - 10, { size: 5.8, weight: 600, color: C.muted });
+      }
       this.text(o.left || '상담 보조용 자료 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다', this.ML, y + 5, { size: 6.2, weight: 500, color: C.muted });
-      this.text(o.right || '보험에 반하다', this.W - this.MR, y + 5, { size: 6.2, weight: 700, color: C.blue, align: 'right' });
+      const right = o.right || brandName;
+      this.text(right, this.W - this.MR, y + 5, { size: 6.2, weight: 700, color: accent, align: 'right' });
+      /* 페이지 번호가 오는 꼬리말에도 브랜드 이름을 함께 남깁니다 */
+      if (o.right && o.right !== brandName) {
+        const w = this.measure(right, 6.2, 700);
+        this.text(brandName, this.W - this.MR - w - 8, y + 5, { size: 6.2, weight: 600, color: C.muted, align: 'right' });
+      }
+    }
+    /* v5.1 무료 체험판 워터마크 — 하단 띠 */
+    watermark(text) {
+      if (!text) return;
+      const y = this.H - 44;
+      const c = this.ctx;
+      c.save();
+      c.globalAlpha = 0.9;
+      c.fillStyle = '#FDF0F0';
+      c.fillRect(0, y, W, 16);
+      c.restore();
+      this.text(text, W / 2, y + 4.4, { size: 7, weight: 800, color: '#A8494F', align: 'center' });
     }
     memoBand(labels, maxH) {
       const top = (this.contentBottom || 0) + 16;
@@ -649,10 +688,14 @@
     for (let i = 0; i < drawers.length; i++) {
       const s = new Sheet();
       s.overflow = 0;
+      s.suppressBrandSlogan = !!opts.watermark;
       try { drawers[i](s, i); } catch (e) { console.error('page ' + (i + 1) + ' draw error', e); throw e; }
       if (opts.collect) opts.collect.push({ page: i + 1, contentBottom: Math.round(s.contentBottom || 0), limit: Math.round(s.limit) });
       if (opts.memo !== false && s.contentBottom && s.contentBottom < s.H - 130) {
         try { s.memoBand(opts.memoLabels, opts.memoMax); } catch (e) { console.warn('memo', e); }
+      }
+      if (opts.watermark) {
+        try { s.watermark(opts.watermark); } catch (e) { console.warn('watermark', e); }
       }
       if (s.overflow) {
         const msg = `[PDF] 레이아웃 넘침 page ${i + 1} (y=${s.overflow.toFixed(1)} > ${s.limit})`;

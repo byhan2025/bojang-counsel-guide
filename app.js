@@ -924,19 +924,25 @@
     const build = BojangReport.build(kind, state);
     const overflow = [];
     const memoOpts = BojangReport.MEMO[kind] || {};
+    /* v5.1: 무료 체험은 1장 요약만 — 하단에 무료 체험판 워터마크를 넣습니다 */
+    const free = !(window.BojangPlan && window.BojangPlan.isPro());
+    const brand = window.BojangBrand ? window.BojangBrand.get() : { name: '보험에 반하다' };
+    const watermark = free && kind === 'summary' ? `${brand.name} · 무료 체험판` : '';
     const blob = await PDFKit.renderPages(build.pages, {
       quality: kind === 'summary' ? 0.92 : kind === 'detail' ? 0.86 : 0.83,
       overflow,
       memo: kind !== 'summary',
       memoMax: memoOpts.memoMax,
       memoLabels: memoOpts.memoLabels,
+      watermark,
       meta: { title: `${build.m.client.name}_${PDF_LABEL[kind]}` },
       onProgress: (done, total) => {
         overlay(true, `${PDF_LABEL[kind]} PDF 생성 중`, `${total}페이지 중 ${done}페이지를 그렸습니다`, done / total);
       }
     });
     const filename = PDFKit.fileName(kind, build.m.client.name, isoDate(build.m.dateLabel));
-    return { blob, filename, pages: build.pages.length, overflow, ms: Math.round(performance.now() - started), model: build.m };
+    window.__lastPdf = { kind, watermark: !!watermark, pages: build.pages.length, filename };
+    return { blob, filename, pages: build.pages.length, overflow, ms: Math.round(performance.now() - started), model: build.m, watermark };
   }
   window.BojangApp = { buildPdfBlob, doPdf, state, analyze, cursorModel: model };
 
@@ -949,6 +955,11 @@
 
   async function doPdf(kind) {
     if (!state.analyzed) analyze();
+    /* v5.1 무료 체험: 1장 요약만 저장 · 10장/30장은 페이월 */
+    if (window.BojangPlan && !window.BojangPlan.isPro() && kind !== 'summary') {
+      window.BojangPlan.openPaywall(kind === 'advisor' ? 'pdf30' : 'pdf10');
+      return;
+    }
     const btn = $(`.pdf-btn[data-pdf="${kind}"]`);
     if (btn) btn.disabled = true;
     overlay(true, `${PDF_LABEL[kind]} PDF 생성 중`, '페이지를 그리는 중…', 0.02);
@@ -1016,14 +1027,22 @@
   }
 
   /* ================= 상담 저장 ================= */
+  function historyMax() {
+    return window.BojangPlan && window.BojangPlan.isPro() ? 30 : 1;
+  }
+
   function loadHistory() {
     const list = lsGet(HKEY, []);
-    state.history = Array.isArray(list) ? list.slice(0, 5) : [];
+    state.history = Array.isArray(list) ? list.slice(0, historyMax()) : [];
     renderHistory();
   }
 
   function saveConsult() {
     if (!state.lastResult) { toast('먼저 진단해 주세요'); return; }
+    if (!(window.BojangPlan && window.BojangPlan.isPro()) && state.history.length >= 1) {
+      window.BojangPlan.openPaywall('save2');
+      return;
+    }
     const label = ($('#cust-label').value || '').trim() || `${state.client.name} · ${state.age}대 ${state.gender}`;
     const entry = {
       id: 'c' + Date.now(), label, savedAt: new Date().toISOString(),
@@ -1036,9 +1055,10 @@
         family: state.family.slice(), disc: Object.assign({}, state.disc)
       }
     };
-    const next = [entry].concat(state.history).slice(0, 5);
+    const next = [entry].concat(state.history).slice(0, historyMax());
     if (lsSet(HKEY, next)) {
-      state.history = next; renderHistory(); toast('최근 상담에 저장했습니다 (최대 5건)');
+      state.history = next; renderHistory();
+      toast(window.BojangPlan && window.BojangPlan.isPro() ? '저장했습니다 (Pro · 최대 30건)' : '무료 체험 · 고객 1명을 저장했습니다 (Pro는 30명)');
     } else toast('저장 공간을 쓸 수 없습니다');
   }
 
@@ -1225,7 +1245,7 @@
     state.tab = name;
     const viewId = 'view-' + name;
     $$('.view').forEach((v) => v.classList.toggle('is-active', v.id === viewId));
-    const tabOf = { home: 'home', analysis: 'analysis', quick: 'analysis', guide: 'guide', live: 'live', toolkit: 'toolkit', codes: 'home', silson: 'home', disclose: 'home', premium: 'home' };
+    const tabOf = { home: 'home', analysis: 'analysis', quick: 'analysis', guide: 'guide', live: 'live', toolkit: 'toolkit', codes: 'home', silson: 'home', disclose: 'home', premium: 'home', remodel: 'home', brand: 'home' };
     const active = tabOf[name] || name;
     $$('.tab').forEach((t) => {
       const on = t.dataset.view === active;
@@ -1238,6 +1258,8 @@
     /* 다른 화면에서 값을 바꿨을 수 있으므로 위저드 입력칸을 상태와 맞춥니다 */
     if (name === 'analysis') syncWizardInputs();
     if (name === 'live' && window.BojangLive) window.BojangLive.render();
+    if (name === 'remodel' && window.BojangRemodel) window.BojangRemodel.render();
+    if (name === 'brand' && window.BojangBrand) window.BojangBrand.render();
     if (window.BojangTools) {
       if (name === 'codes') window.BojangTools.renderCodes();
       else if (name === 'silson') window.BojangTools.renderSilson();
@@ -1537,6 +1559,7 @@
   function renderHome() {
     const host = $('#home-client');
     if (!host) return;
+    if (window.BojangPlan) window.BojangPlan.renderPlanUI();
     let m = null;
     try { m = model(); } catch (e) { m = null; }
     const ia = state.client.birth ? BojangModel.insuranceAge(state.client.birth) : null;
@@ -1931,6 +1954,7 @@
     renderToolkit();
     loadHistory();
     renderQuick();
+    if (window.BojangPlan) window.BojangPlan.init();
     renderHome();
     if (window.BojangTools) window.BojangTools.init();
     switchView('home');
@@ -1955,6 +1979,8 @@
       else if (k === 'silson') switchView('silson');
       else if (k === 'disclose') switchView('disclose');
       else if (k === 'premium') switchView('premium');
+      else if (k === 'remodel') switchView('remodel');
+      else if (k === 'brand') switchView('brand');
       else if (k === 'pdf') {
         if (!state.analyzed) analyze();
         switchView('analysis');

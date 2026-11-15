@@ -390,7 +390,7 @@
       });
       y += 42;
       y = noteStrip(s, y + 4, `※ 이 리포트의 점수·권장선은 상담 보조용 자체 산식입니다. 통계는 통계청 2024 · 중앙암등록본부 2023 · 중앙심뇌혈관질환센터 2023 · 건보공단 2025 공표 수치이며, 실제 지급 여부와 금액은 가입하신 상품의 약관과 증권이 기준입니다.`, { size: 6.2 });
-      s.footer({ left: `${m.client.name}님 보장분석 요약 · ${m.dateLabel} · ${m.client.consultant}`, right: 'LIFE REPORT' });
+      s.footer({ left: `${m.client.name}님 보장분석 요약 · ${m.dateLabel} · ${m.client.consultant}`, right: 'LIFE REPORT', brandSlogan: true });
     };
   }
 
@@ -408,7 +408,7 @@
     P.push(function (s) {
       s.photoBand(0, 306, {});
       s.header({ kicker: 'LIFE REPORT', no: '01', total: '10' });
-      s.brandWordmark(s.ML, 54, { size: 8.6, slogan: '당신의 삶에 꼭 맞는 보험, 현명한 선택' });
+      s.brandWordmark(s.ML, 54, { size: 8.6 });
       s.text('보장분석 리포트', s.ML, 96, { size: 32, weight: 800, color: C.navy });
       s.text('과도한 보장은 줄이고, 부족한 보장은 채우는', s.ML, 66, { size: 10, weight: 700, color: C.blue });
       s.para(`${m.client.name}님의 보장자산 현황을 한눈에 진단하고, 보완 우선순위를 숫자와 근거로 설명하는 금융시스템형 분석 리포트입니다.`, s.ML, 140, 300, { size: 8.4, color: C.ink2, lh: 1.5 });
@@ -990,7 +990,7 @@
       s.line(s.ML, y - 4, s.W - s.MR, y - 4, { color: C.line });
       return y + 2;
     };
-    const foot = (s, no, label) => s.footer({ left: `${m.client.name}님 상담 플랜 · ${label} · 설계사용`, right: `${String(no).padStart(2, '0')} / 30` });
+    const foot = (s, no, label, extra) => s.footer(Object.assign({ left: `${m.client.name}님 상담 플랜 · ${label} · 설계사용`, right: `${String(no).padStart(2, '0')} / 30` }, extra || {}));
     const secLabel = (s, y, t) => {
       s.text(t, s.ML, y, { size: 6.4, weight: 800, color: C.blue });
       return y + 12;

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보험에 반하다 v5.0 · 보장분석 상담 가이드 (뇌·심장 진단비 · FC 실무 도우미)</title>
+<title>보험에 반하다 v5.1 · 보장분석 상담 가이드 (Free/Pro · 리모델링 · 화이트라벨)</title>
 <meta name="description" content="손해보험 설계사를 위한 현장 상담 앱 '보험에 반하다'. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기까지.">
 <meta name="theme-color" content="#FAF4F3">
 <link rel="manifest" href="./manifest.json">
@@ -50,6 +50,9 @@
     <span class="cs-dot"></span>
     <span class="cs-meta" id="cs-meta">연령대 미입력</span>
     <span class="cs-badge" id="cs-dday" hidden>상령일 D-</span>
+    <button type="button" class="plan-pill" id="plan-badge" aria-label="무료 체험 · Pro로 전환">
+      <span class="pp-dot" aria-hidden="true"></span><b id="plan-badge-label">무료 체험</b>
+    </button>
   </div>
 </header>
 
@@ -71,8 +74,8 @@
           </svg>
         </span>
         <div class="hh-lockup">
-          <b>보험에 <em>반하다</em></b>
-          <span>당신의 삶에 꼭 맞는 보험, 현명한 선택</span>
+          <b id="home-brand-name">보험에 <em>반하다</em></b>
+          <span id="home-brand-slogan">당신의 삶에 꼭 맞는 보험, 현명한 선택</span>
         </div>
       </div>
       <div class="hh-values">
@@ -82,18 +85,19 @@
         <span class="hv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0112 8a3.9 3.9 0 017 2.6C19 15.6 12 20 12 20z"/></svg>든든한미래</span>
       </div>
       <div class="hh-top">
-        <span class="hh-eyebrow">BOJANG ANALYSIS V5.0</span>
-        <span class="hh-ver">v5.0 · 2026.11</span>
+        <span class="hh-eyebrow">BOJANG ANALYSIS V5.1</span>
+        <span class="hh-ver">v5.1 · 2026.11</span>
       </div>
       <h2>무엇을 하시겠어요?</h2>
       <p>상담 전 과정을 한 화면에서 시작합니다. 입력은 이 기기 안에서만 계산되고, PDF도 기기에서 직접 만듭니다.</p>
       <div class="hh-client" id="home-client"></div>
+      <div class="hh-plan" id="home-plan-banner"></div>
       <div class="hh-actions">
         <button type="button" class="hh-btn primary" data-home-go="analysis">
           <span class="hb-ico">✎</span><b>새 상담 시작</b><span>기본 정보부터 6단계 입력</span>
         </button>
         <button type="button" class="hh-btn" id="btn-home-load">
-          <span class="hb-ico">📂</span><b>저장된 고객 불러오기</b><span>최근 상담 최대 5건</span>
+          <span class="hb-ico">📂</span><b>저장된 고객 불러오기</b><span id="home-load-sub">무료 1명 · Pro 30명</span>
         </button>
         <button type="button" class="hh-btn" id="btn-json-export">
           <span class="hb-ico">⬇</span><b>JSON 내보내기</b><span>PC ↔ 모바일 이동</span>
@@ -182,6 +186,18 @@
         <span>소득 대비 권장 보장성 보험료(7~10%) 계산 + 현재·재배치·보완 후 점수 비교</span>
         <em>계산</em>
       </button>
+      <button type="button" class="hg-card pro-card" data-home-go="remodel">
+        <span class="hg-no">13</span>
+        <b>🏠 리모델링 Before / After</b>
+        <span>보유 계약 유지·감액·정리 + 담보별 보강 금액 → 보험료·점수·5대 담보 실시간 비교</span>
+        <em>PRO</em>
+      </button>
+      <button type="button" class="hg-card pro-card" data-home-go="brand">
+        <span class="hg-no">14</span>
+        <b>🏷 내 브랜드 설정 (화이트라벨)</b>
+        <span>상호·슬로건·설계사 정보·포인트 테마 4종 → 헤더 · 표지 · PDF에 반영</span>
+        <em>PRO</em>
+      </button>
     </div>
 
     <div class="card home-preset">
@@ -192,12 +208,12 @@
 
     <div class="card home-history">
       <div class="card-title"><span class="eyebrow">RECENT</span> 최근 상담
-        <span class="card-sub">이 기기에만 저장 · 최대 5건</span>
+        <span class="card-sub" id="home-hist-sub">이 기기에만 저장 · 무료 1명</span>
         <button type="button" class="btn-reset" id="btn-reset">새 상담 시작</button></div>
       <div id="history-list" class="history"></div>
     </div>
 
-    <p class="app-foot">기준일 2026-11-15 · v5.0 기준점(암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 치료비 3종 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리) 반영 · 상품별 약관 우선</p>
+    <p class="app-foot">기준일 2026-11-15 · v5.1 기준점(암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 치료비 3종 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리) 반영 · 상품별 약관 우선</p>
   </section>
 
   <!-- ================= TAB 1 : 보장분석 ================= -->
@@ -205,7 +221,7 @@
     <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>상담자 상세 입력 (6단계)</span></div>
 
     <div class="intro-card no-print">
-      <div class="intro-eyebrow">BOJANG ANALYSIS V5.0</div>
+      <div class="intro-eyebrow">BOJANG ANALYSIS V5.1</div>
       <h2>상담자 입력실에서 진단하고<br>고객 화면 30장으로 보여줍니다</h2>
       <p>입력값은 서버로 전송되지 않고 이 화면 안에서만 계산됩니다. PDF는 이 기기에서 직접 만들어 저장·공유합니다.</p>
     </div>
@@ -453,7 +469,7 @@
 
     <div class="card internal no-print" id="recent-card">
       <div class="card-title"><span class="eyebrow">RECENT</span> 최근 상담
-        <span class="card-sub">이 기기에만 저장 · 최대 5건</span>
+        <span class="card-sub" id="result-hist-sub">이 기기에만 저장 · 무료 1명</span>
         <button type="button" class="btn-reset" id="btn-reset2">새 상담 시작</button></div>
       <div id="history-list2" class="history"></div>
     </div>
@@ -629,6 +645,29 @@
     <div class="app-foot">세후 월 소득 기준 · 저축성·연금성 보험료는 제외한 보장성 보험료 비율입니다.</div>
     <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>적정 보험료 계산기</span></div>
   </section>
+  <!-- ================= v5.1 리모델링 Before / After 비교기 ================= -->
+  <section id="view-remodel" class="view" aria-label="리모델링 Before After 비교기">
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>리모델링 Before / After</span></div>
+    <div class="fc-hero">
+      <div class="fc-eyebrow">REMODELING STUDIO · PRO</div>
+      <h2>리모델링 Before / After 비교기</h2>
+      <p>지금 가진 계약과 5대 담보를 <b>Before</b>로 불러와, 계약은 <b>유지·감액·정리</b>, 담보는 <b>보강 금액과 추가 보험료</b>를 넣으면 월 보험료 변화와 종합 점수를 실시간으로 비교합니다.</p>
+    </div>
+    <div id="remodel-body" class="fc-body"></div>
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>리모델링 Before / After</span></div>
+  </section>
+
+  <!-- ================= v5.1 내 브랜드 설정 (화이트라벨) ================= -->
+  <section id="view-brand" class="view" aria-label="내 브랜드 설정 화이트라벨">
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>내 브랜드 설정 (화이트라벨)</span></div>
+    <div class="fc-hero">
+      <div class="fc-eyebrow">WHITE LABEL · PRO</div>
+      <h2>내 브랜드 설정</h2>
+      <p>상호 · 슬로건 · 설계사 정보 · 포인트 테마를 내 것으로 바꿉니다. 저장하면 <b>앱 헤더 · 메인 허브 · 고객 30장 표지 · 1/10/30장 PDF 표지와 꼬리말</b>에 바로 반영됩니다.</p>
+    </div>
+    <div id="brand-body" class="fc-body"></div>
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>내 브랜드 설정</span></div>
+  </section>
 </main>
 
 <nav class="tabbar no-print" role="tablist" aria-label="주요 메뉴">
@@ -739,6 +778,7 @@
 <script src="./client.js"></script>
 <script src="./live.js"></script>
 <script src="./tools.js"></script>
+<script src="./monetize.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>

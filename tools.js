@@ -12,6 +12,13 @@
   const state = () => root.__bojangState || { premium: 0, silson: '4', age: '40' };
   const toast = (m) => { if (root.__bojangToast) root.__bojangToast(m); };
   const copy = (t, m) => { if (root.__bojangCopy) root.__bojangCopy(t, m); };
+  /* v5.1 무료/유료 경계 — 무료는 맛보기, Pro는 전체 */
+  const isPro = () => !!(root.BojangPlan && root.BojangPlan.isPro());
+  const guard = (feature) => {
+    if (isPro()) return true;
+    if (root.BojangPlan) root.BojangPlan.openPaywall(feature);
+    return false;
+  };
 
   /* =========================================================
      ① 질병코드 · 약관 사전
@@ -39,8 +46,11 @@
       host.innerHTML = `<p class="fc-empty">검색 결과가 없습니다. 코드(C73) 또는 이름(갑상선암)·증상(디스크)으로 다시 찾아보세요.</p>`;
       return;
     }
-    host.innerHTML = list.map((c) => `
-      <article class="code-card">
+    host.innerHTML = list.map((c, idx) => {
+      /* 무료 체험은 상위 3개 코드의 요약까지 — 이후는 약관·판례와 복사가 잠깁니다 */
+      const lk = !isPro() && idx >= 3;
+      return `
+      <article class="code-card${lk ? ' is-locked' : ''}">
         <div class="cc-head">
           <code class="cc-code">${esc(c.code)}</code>
           <b class="cc-name">${esc(c.name)}</b>
@@ -49,12 +59,15 @@
         <dl class="cc-rows">
           <div><dt>지급 담보</dt><dd class="pays">${esc(c.pays)}</dd></div>
           <div><dt>확인 포인트</dt><dd>${esc(c.check)}</dd></div>
-          <div class="cc-note"><dt>약관·판례</dt><dd>${esc(c.note)}</dd></div>
+          <div class="cc-note"><dt>약관·판례</dt><dd>${lk ? '<span class="fc-lock" data-code-lock>🔒 Pro에서 약관·판례 열기</span>' : esc(c.note)}</dd></div>
         </dl>
-        <button type="button" class="cc-copy" data-code-copy="${esc(c.code)}">이 코드 복사</button>
-      </article>`).join('');
+        <button type="button" class="cc-copy${lk ? ' is-locked' : ''}" data-code-copy="${esc(c.code)}">${lk ? '🔒 코드 복사 (Pro)' : '이 코드 복사'}</button>
+      </article>`;
+    }).join('');
+    $$('[data-code-lock]', host).forEach((b) => b.addEventListener('click', () => guard('codeDetail')));
     $$('[data-code-copy]', host).forEach((b) => {
       b.addEventListener('click', () => {
+        if (!guard('codeDetail')) return;
         const c = FC_CODES.find((x) => x.code === b.dataset.codeCopy);
         if (!c) return;
         copy(`${c.code} ${c.name}\n· 지급: ${c.pays}\n· 확인: ${c.check}\n· 약관·판례: ${c.note}`, '코드 요약을 복사했습니다');
@@ -248,13 +261,14 @@
         <div class="cs-sec"><h5>꼭 확인하세요</h5><ul class="cs-tips">${c.tips.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>
       </div>
       <div class="claim-actions">
-        <button type="button" class="btn-primary sm" id="claim-copy">카톡 복사 (${esc(c.title)})</button>
-        <button type="button" class="btn-ghost sm" id="claim-copy-all">5대 담보 전체 복사</button>
+        <button type="button" class="btn-primary sm" id="claim-copy">${isPro() ? '카톡 복사' : '🔒 Pro에서 카톡 복사'} (${esc(c.title)})</button>
+        <button type="button" class="btn-ghost sm" id="claim-copy-all">${isPro() ? '5대 담보 전체 복사' : '🔒 전체 복사 (Pro)'}</button>
       </div>
     `;
     $$('[data-claimtab]', host).forEach((b) => b.addEventListener('click', () => { claimTab = b.dataset.claimtab; renderClaimDocs(); }));
-    $('#claim-copy').addEventListener('click', () => copy(claimText(claimTab), `${CLAIM_DOCS[claimTab].title} 청구 서류를 복사했습니다`));
+    $('#claim-copy').addEventListener('click', () => { if (guard('claimCopy')) copy(claimText(claimTab), `${CLAIM_DOCS[claimTab].title} 청구 서류를 복사했습니다`); });
     $('#claim-copy-all').addEventListener('click', () => {
+      if (!guard('claimCopy')) return;
       const text = CLAIM_ORDER.map((k) => claimText(k)).join('\n\n──────────\n\n');
       copy(text, '5대 담보 청구 서류를 모두 복사했습니다');
     });

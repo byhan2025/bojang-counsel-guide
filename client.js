@@ -27,6 +27,16 @@
 
   let S = null, H = null, slides = [], cur = 0, needOnly = false, built = false, lastSig = '';
 
+  /* v5.1 — 무료 체험은 1~6번 요약까지만 열립니다 */
+  function isPro() { return !!(root.BojangPlan && root.BojangPlan.isPro()); }
+  function freeLimit() { return (root.BojangPlan && root.BojangPlan.FREE_SLIDES) || 6; }
+  function locked(no) { return !isPro() && Number(no) > freeLimit(); }
+  function askUpgrade() {
+    root.__deckLockNo = cur;
+    if (root.BojangPlan) root.BojangPlan.openPaywall('deck');
+    else if (H && H.upgrade) H.upgrade('deck');
+  }
+
   /* =========================================================
      작은 SVG 부품
      ========================================================= */
@@ -150,7 +160,7 @@
               <path d="M18 78c20 12 52 12 70-2 6-5 12-7 18-7" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" opacity=".6"/>
             </svg>
           </span>
-          <span class="cb-name">보험에 <em>반하다</em></span>
+          <span class="cb-name">${root.BojangBrand ? root.BojangBrand.nameHTML(root.BojangBrand.get().name) : '보험에 <em>반하다</em>'}</span>
         </div>
         <div class="cover-eyebrow">LIFE REPORT · BOJANG ANALYSIS</div>
         <h1 class="cover-title">${esc(m.client.name)}님의<br>보장분석 리포트</h1>
@@ -166,6 +176,7 @@
           <div><dt>상담일</dt><dd>${esc(m.dateLabel || '-')}</dd></div>
           <div><dt>담당</dt><dd>${esc(m.client.consultant)}</dd></div>
         </dl>
+        ${root.BojangBrand && root.BojangBrand.contactLine(root.BojangBrand.get()) ? `<p class="cover-contact">${esc(root.BojangBrand.contactLine(root.BojangBrand.get()))}</p>` : ''}
         <div class="cover-values">
           <span>보장분석</span><i></i><span>맞춤설계</span><i></i><span>가족보장</span><i></i><span>든든한미래</span>
         </div>
@@ -832,9 +843,15 @@
       const nextLine = (sl.no > 1 && nx)
         ? `<div class="sl-nextline"><span>다음</span><b>${String(nx.no).padStart(2, '0')} · ${esc(titleOf(nx))}</b><i>›</i></div>`
         : '';
+      const lk = locked(sl.no);
       return `
-      <section class="slide" id="slide-${sl.no}" data-no="${sl.no}" data-group="${sl.group}" data-need="${sl.need ? 1 : 0}" aria-label="${sl.no}번 슬라이드">
-        <div class="sl-inner">${sl.inner}${nextLine}</div>
+      <section class="slide" id="slide-${sl.no}" data-no="${sl.no}" data-group="${sl.group}" data-need="${sl.need ? 1 : 0}" data-locked="${lk ? 1 : 0}" aria-label="${sl.no}번 슬라이드">
+        <div class="sl-inner${lk ? ' is-locked' : ''}">${lk ? `<div class="slide-lock" role="dialog" aria-label="Pro 잠금">
+          <span class="slk-badge">PRO</span>
+          <b>30장 전체는 Pro 멤버십에서</b>
+          <p>무료 체험은 1~6번 요약까지입니다. 7번 암 상세부터 30번 로드맵까지 24장이 잠겨 있습니다.</p>
+          <button type="button" class="slk-btn" data-deck-upgrade>🔒 Pro 멤버십으로 30장 전체 열기</button>
+        </div>` : ''}${sl.inner}${nextLine}</div>
       </section>`;
     }).join('');
     $('#deck-total').textContent = slides.length;
@@ -870,7 +887,8 @@
     $('#deck-now').textContent = String(cur).padStart(2, '0');
     $('#deck-progress-fill').style.width = ((cur / slides.length) * 100) + '%';
     $('#deck-prev').disabled = list.indexOf(target) <= 0;
-    $('#deck-next').disabled = list.indexOf(target) >= list.length - 1;
+    /* 무료 체험은 잠긴 슬라이드에서 더 나아가지 못합니다 */
+    $('#deck-next').disabled = list.indexOf(target) >= list.length - 1 || locked(target.no);
     if (!silent) stageFocus();
   }
 
@@ -882,7 +900,10 @@
   function next() {
     const list = visible();
     const i = list.findIndex((s) => s.no === cur);
-    if (i >= 0 && i < list.length - 1) goTo(list[i + 1].no);
+    if (i < 0 || i >= list.length - 1) return;
+    const nx = list[i + 1];
+    goTo(nx.no);
+    if (locked(nx.no)) askUpgrade();
   }
   function prev() {
     const list = visible();
@@ -983,6 +1004,7 @@
 
   function bindSlideActions() {
     bindSim();
+    $$('[data-deck-upgrade]').forEach((b) => b.addEventListener('click', askUpgrade));
     $$('[data-deck-pdf]').forEach((b) => {
       b.addEventListener('click', () => {
         if (H && H.doPdf) H.doPdf(b.dataset.deckPdf);
@@ -1007,7 +1029,10 @@
         if (!g) return;
         if (g.key === 'all') { goTo(visible()[0].no); return; }
         const list = visible().filter((s) => s.no >= g.from && s.no <= g.to);
-        if (list.length) goTo(list[0].no);
+        if (list.length) {
+          goTo(list[0].no);
+          if (locked(g.from)) askUpgrade();
+        }
         else if (H && H.toast) H.toast(`${g.label} 영역은 지금 충족 상태라 '부족 항목만 보기'에서 숨겨졌습니다`);
       });
     });
