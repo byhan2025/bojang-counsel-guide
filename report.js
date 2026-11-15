@@ -252,13 +252,14 @@
     o = o || {};
     const w = s.CW;
     const rows = m.contracts.length ? m.contracts : [];
-    const headH = 16, rowH = 16;
+    const headH = 16, rowH = 22;
     s.rect(s.ML, y, w, headH, { fill: C.navy });
-    const cols = [['보험사', 0.26], ['상품명', 0.42], ['월 보험료', 0.16], ['구분', 0.16]];
+    const cols = [['보험사 · 상품명', 0.46, 'left'], ['월 보험료', 0.16, 'right'], ['납입', 0.15, 'center'], ['만기 · 구조', 0.23, 'center']];
     let cx = s.ML;
-    cols.forEach((c, i) => {
+    cols.forEach((c) => {
       const cw = w * c[1];
-      s.text(c[0], i === 0 ? cx + 7 : (i === 2 ? cx + cw - 7 : cx + cw / 2), y + 5, { size: 6.2, weight: 700, color: '#fff', align: i === 0 ? 'left' : (i === 2 ? 'right' : 'center') });
+      const tx = c[2] === 'left' ? cx + 7 : c[2] === 'right' ? cx + cw - 7 : cx + cw / 2;
+      s.text(c[0], tx, y + 5, { size: 6.2, weight: 700, color: '#fff', align: c[2] });
       cx += cw;
     });
     let cy = y + headH;
@@ -268,21 +269,23 @@
       cy += 26;
     }
     rows.slice(0, o.max || 8).forEach((c, i) => {
-      const cw = w * 0.26;
       s.rect(s.ML, cy, w, rowH, { fill: i % 2 ? C.sky2 : '#fff' });
-      s.text(c.insurer || '—', s.ML + 7, cy + 4, { size: 6.4, weight: 700, color: C.navy });
-      s.text(c.product || '—', s.ML + cw + 2, cy + 4, { size: 6.2, weight: 500, color: C.ink2 });
-      s.text(`${won(c.premium)}만원`, s.ML + w * 0.84 - 7, cy + 4, { size: 6.4, weight: 700, color: C.navy, align: 'right' });
-      s.text(c.renew ? '갱신형' : '비갱신', s.ML + w * 0.84 + (w * 0.16) / 2, cy + 4, { size: 6, weight: 600, color: c.renew ? C.orange : C.mint, align: 'center' });
+      s.text(c.insurer || '—', s.ML + 7, cy + 3.5, { size: 6.4, weight: 700, color: C.navy });
+      s.text(c.product || '—', s.ML + 7, cy + 12, { size: 5.8, weight: 500, color: C.ink2 });
+      s.text(`${won(c.premium)}만원`, s.ML + w * 0.62 - 7, cy + 7, { size: 6.4, weight: 700, color: C.navy, align: 'right' });
+      const paid = (c.pay || '납입중') === '납입완료';
+      s.text(paid ? '납입완료' : '납입중', s.ML + w * 0.62 + (w * 0.15) / 2, cy + 7, { size: 5.9, weight: 700, color: paid ? C.muted : C.mint, align: 'center' });
+      s.text(`${c.maturity && c.maturity !== '미입력' ? c.maturity : '만기 미입력'} · ${c.renew ? '갱신형' : '비갱신'}`, s.ML + w * 0.77 + (w * 0.23) / 2, cy + 7, { size: 5.8, weight: 600, color: c.renew ? C.orange : C.mint, align: 'center' });
       s.line(s.ML, cy + rowH, s.ML + w, cy + rowH, { color: C.line2 });
       cy += rowH;
     });
     if (rows.length) {
-      s.rect(s.ML, cy, w, 15, { fill: '#F0F6FD' });
-      s.text('합계', s.ML + 7, cy + 3.6, { size: 6.4, weight: 700, color: C.navy });
-      s.text(`${rows.length}건`, s.ML + w * 0.68, cy + 3.6, { size: 6.2, weight: 600, color: C.muted, align: 'right' });
-      s.text(`${won(m.contractTotal)}만원`, s.ML + w * 0.84 - 7, cy + 3.6, { size: 6.6, weight: 800, color: C.navy, align: 'right' });
-      cy += 15;
+      const cs = m.contractStats || BK.contractStats(m.contracts);
+      s.rect(s.ML, cy, w, 16, { fill: '#F0F6FD' });
+      s.text(`합계 ${cs.count}건 · 납입중 ${cs.activeCount}건 / 납입완료 ${cs.paidUpCount}건`, s.ML + 7, cy + 4, { size: 6.2, weight: 700, color: C.navy });
+      s.text(`${won(cs.total)}만원`, s.ML + w * 0.62 - 7, cy + 4, { size: 6.6, weight: 800, color: C.navy, align: 'right' });
+      s.text(`${cs.shortMaturityCount ? `만기 80·90세 ${cs.shortMaturityCount}건` : '만기 점검'}`, s.ML + w * 0.77 + (w * 0.23) / 2, cy + 4, { size: 5.8, weight: 600, color: cs.shortMaturityCount ? C.orange : C.muted, align: 'center' });
+      cy += 16;
     }
     s.rect(s.ML, y, w, cy - y, { stroke: C.line });
     return cy;
@@ -293,7 +296,7 @@
      ========================================================= */
   function summaryPage(m) {
     return function (s) {
-      s.header({ kicker: 'LIFE REPORT', no: '1 / 1', total: '1' });
+      s.header({ kicker: 'LIFE REPORT', no: '1', total: '1' });
       s.text('COVERAGE SUMMARY', s.ML, 64, { size: 6.6, weight: 800, color: C.blue });
       s.text('보장분석 요약 리포트', s.ML, 73, { size: 20, weight: 800, color: C.navy });
       s.text(`${m.client.name}님의 보장을 한 장으로 정리했습니다`, s.ML, 98, { size: 8, weight: 500, color: C.ink2 });
@@ -319,16 +322,21 @@
       });
 
       y = s.sectionHead(s.ML, y + 12, s.CW, null, '실행 로드맵 3단계', '유지 → 조정 → 보완');
-      y = roadmapCards(s, m, y + 1, 86);
-      y += 12;
+      y = roadmapCards(s, m, y + 1, 82);
+      y += 10;
       const useW = (s.CW - 16) / 3;
-      [['① 오늘', '1순위 한 칸을 정합니다'], ['② 이번 주', '증권에서 담보명·코드 확인'], ['③ 다음 상담', '10장 상세로 세부 점검']].forEach((u, i) => {
+      const cs1 = m.contractStats;
+      [
+        ['가족력', m.family.length ? m.familyLabels.join('·') : '미입력', C.navy],
+        ['고지 판정', m.disclosure.label, m.disclosure.tone === 'ok' ? C.mint : m.disclosure.tone === 'gap' ? C.red : C.orange],
+        ['보유 계약', cs1.count ? `${cs1.count}건 · 납입완료 ${cs1.paidUpCount}건` : '미입력', C.navy]
+      ].forEach((u, i) => {
         const x = s.ML + i * (useW + 8);
-        s.rect(x, y, useW, 34, { fill: '#fff', r: 4, stroke: C.line });
-        s.text(u[0], x + 9, y + 7, { size: 6, weight: 800, color: C.blue });
-        s.text(u[1], x + 9, y + 18, { size: 6.4, weight: 600, color: C.ink2 });
+        s.rect(x, y, useW, 38, { fill: '#fff', r: 4, stroke: C.line });
+        s.text(u[0], x + 9, y + 7, { size: 5.8, weight: 700, color: C.muted });
+        s.para(u[1], x + 9, y + 16, useW - 18, { size: 6.6, weight: 800, color: u[2], lh: 1.2 });
       });
-      y += 44;
+      y += 46;
       y = noteStrip(s, y + 4, `※ 이 리포트의 점수·권장선은 상담 보조용 자체 산식입니다. 통계는 통계청 2024 · 중앙암등록본부 2023 · 중앙심뇌혈관질환센터 2023 · 건보공단 2025 공표 수치이며, 실제 지급 여부와 금액은 가입하신 상품의 약관과 증권이 기준입니다.`, { size: 6.2 });
       s.footer({ left: `${m.client.name}님 보장분석 요약 · ${m.dateLabel} · ${m.client.consultant}`, right: 'LIFE REPORT' });
     };
@@ -516,8 +524,26 @@
     P.push(function (s) {
       let y = H(s, 3, '보장 포트폴리오 현황', '보유 계약과 세부 담보를 항목별로 점검합니다. 표의 상태 배지가 다음 상담의 순서를 정합니다.');
       y = s.sectionHead(s.ML, y, s.CW, '01', '보유 계약 목록', m.contracts.length ? `${m.contracts.length}건 · 월 ${won(m.contractTotal)}만원` : '앱에서 계약을 추가할 수 있습니다');
-      y = contractTable(s, m, y + 2, { max: 6 });
-      y = s.sectionHead(s.ML, y + 12, s.CW, '02', '세부 담보 점검 매트릭스', '충분 / 점검 / 부족 / 없음');
+      y = contractTable(s, m, y + 2, { max: 5 });
+
+      /* v4: 가족력 · 고지 판정 */
+      y = s.sectionHead(s.ML, y + 10, s.CW, '02', '가족력 · 간편고지 판정', '청약 전에 확인하는 두 가지');
+      const half = (s.CW - 8) / 2;
+      s.rect(s.ML, y, half, 62, { fill: '#fff', r: 5, stroke: C.line });
+      s.text('가족력', s.ML + 10, y + 7, { size: 6.2, weight: 700, color: C.muted });
+      const famText = m.family.length ? m.familyLabels.join(' · ') : '미입력';
+      s.text(famText, s.ML + 10, y + 17, { size: 9.6, weight: 800, color: m.family.length ? C.navy : C.muted });
+      s.para(m.familyNotes.length ? m.familyNotes[0].body : '가족력을 입력하면 같은 위험을 우선 점검합니다.', s.ML + 10, y + 31, half - 20, { size: 5.9, color: C.ink2, lh: 1.35 });
+      const dx = s.ML + half + 8;
+      const djFill = m.disclosure.tone === 'ok' ? '#F2FBF8' : m.disclosure.tone === 'gap' ? '#FDF2F1' : '#FFFBF3';
+      s.rect(dx, y, half, 62, { fill: djFill, r: 5, stroke: C.line });
+      s.text('고지 판정 (3개월 · 1년 · 5년)', dx + 10, y + 7, { size: 6.2, weight: 700, color: C.muted });
+      s.text(m.disclosure.label, dx + 10, y + 17, { size: 9.6, weight: 800, color: m.disclosure.tone === 'ok' ? C.mint : m.disclosure.tone === 'gap' ? C.red : C.orange });
+      s.para(m.disclosure.headline, dx + 10, y + 31, half - 20, { size: 5.9, color: C.ink2, lh: 1.35 });
+      if (m.disclosure.reasons.length) s.text(m.disclosure.reasons.join(' · '), dx + 10, y + 52, { size: 5.4, weight: 600, color: C.orange });
+      y += 72;
+
+      y = s.sectionHead(s.ML, y, s.CW, '03', '세부 담보 점검 매트릭스', '충분 / 점검 / 부족 / 없음');
       const rows = m.parts.map((p) => [
         { text: `${p.rank}. ${p.itemName}`, weight: 700, color: C.navy },
         { text: p.label, weight: 500 },
@@ -525,25 +551,9 @@
         { text: LEVEL_LABEL[p.level], badge: p.level === 'enough' ? 'ok' : p.level === 'check' ? 'need' : p.level === 'short' ? 'gap' : 'info', align: 'center' }
       ]);
       y = s.table(s.ML, y + 2, s.CW, ['우선순위', '세부 담보', '현재 / 권장', '상태'], rows, {
-        widths: [92, 168, 190, 65], size: 6.5, rowH: 14.4, align: ['left', 'left', 'left', 'center']
+        widths: [92, 168, 190, 65], size: 6.5, rowH: 14.2, align: ['left', 'left', 'left', 'center']
       });
-      y = s.sectionHead(s.ML, y + 10, s.CW, '03', '이 표를 읽는 법', null);
-      y = s.bullets(s.ML, y + 1, s.CW, [
-        { text: '「없음」은 담보 자체가 없는 상태입니다. 상담 순서에서 가장 먼저 다룹니다.', tone: 'gap' },
-        { text: '「부족」은 담보는 있으나 금액이 권장 기준에 못 미치는 상태입니다. 금액 조정으로 해결됩니다.', tone: 'need' },
-        { text: '「점검」은 절반 이상 채워져 있으나 세부 조건(코드 범위·지급 횟수)을 확인해야 하는 상태입니다.', tone: 'info' },
-        { text: '「충분」은 권장 기준을 넘은 상태입니다. 해지하지 말고 유지하는 것이 원칙입니다.', tone: 'ok' }
-      ], { size: 7, gap: 3 });
-      y = noteStrip(s, y + 6, '권장 기준은 상담 보조용 예시이며, 같은 담보라도 상품별 지급 조건과 약관이 다릅니다. 실제 판단은 증권의 담보명·코드·지급 조건으로 확인합니다.', { size: 6.4 });
-
-      y = s.sectionHead(s.ML, y + 12, s.CW, '04', '다음 상담까지 확인할 것', '증권 원본에서 세 가지만 찾으면 됩니다');
-      const tasks = [];
-      if (!m.state.cov.cancer.similar || !m.state.cov.cancer.treatment) tasks.push('암: 유사암 담보와 주요치료비 특약의 담보명·지급 조건');
-      if (m.state.cov.brain.scope === 'bleed' || m.state.cov.brain.scope === 'stroke') tasks.push('뇌: 담보명 뒤의 코드 범위(I60~I62 / I60~I64 / I60~I69)');
-      if (m.state.cov.heart.scope === 'mi') tasks.push('심장: 급성심근경색 담보의 코드 범위와 심혈관 수술비 특약');
-      if (!m.state.cov.care.nursing || !m.state.cov.care.ltc) tasks.push('간병: 간호간병통합 특약과 장기요양(1~5·인지지원) 담보');
-      if (m.contracts.length) tasks.push(`보유 계약 ${m.contracts.length}건의 갱신 시점과 현재 보험료 구성`);
-      y = s.checks(s.ML, y, s.CW, tasks.slice(0, 4), { size: 7, rowH: 15 });
+      y = noteStrip(s, y + 8, '「없음」은 담보 자체가 없는 상태, 「부족」은 금액이 권장 기준에 못 미치는 상태, 「점검」은 코드 범위·지급 횟수 확인이 필요한 상태입니다. 권장 기준은 상담 보조용 예시이며 실제 판단은 증권의 담보명·코드·지급 조건으로 확인합니다.', { size: 6.4 });
       s.footer({ left: `${m.client.name}님 · 포트폴리오`, right: '03 / 10' });
     });
 
@@ -785,17 +795,22 @@
       ], { size: 7.1 });
       y = s.script(s.ML, y + 4, s.CW, { title: '이렇게 말합니다', text: '"지금 보험료가 앞으로도 계속 같지는 않습니다. 갱신 때 얼마가 되는지 표로 한 번 보시고, 그때를 대비해 지금 구조를 잡아두자는 겁니다."' });
       y += 10;
-      y = s.sectionHead(s.ML, y, s.CW, '04', '갱신 대응 3단계', null);
+      y = s.sectionHead(s.ML, y + 2, s.CW, '04', '계약 납입 · 만기 현황', m.state.contracts.length ? `입력 계약 ${m.contractStats.count}건` : '앱에서 계약을 입력하면 채워집니다');
       const cw8 = (s.CW - 16) / 3;
-      [['① 지금 표로 확인', '갱신 연령·예상 보험료를 증권에서 찾아 표로 적어 둡니다.'],
-       ['② 비갱신 한 칸', '갱신형만 있으면 비갱신 담보를 한 칸 두어 노후 보험료를 낮춥니다.'],
-       ['③ 만기 후 대안', '80·100세 만기 이후를 간병·요양 담보로 미리 설계합니다.']].forEach((c, i) => {
+      const csn = m.contractStats;
+      [
+        ['납입완료', csn.paidUpCount ? `${csn.paidUpCount}건 · ${won(csn.paidUpPremium)}만원` : '없음', csn.paidUpCount ? '보험료 부담 없이 보장만 유지 — 해지하지 않습니다' : '입력된 납입완료 계약이 없습니다', csn.paidUpPremium > 0 ? C.mint : C.gray],
+        ['만기 80·90세', csn.shortMaturityCount ? `${csn.shortMaturityCount}건` : '없음', csn.shortMaturityCount ? '노후에 보장이 먼저 끊겼니다 — 만기 후 대안 설계' : '만기 100세·종신이면 노후 유지에 유리합니다', csn.shortMaturityCount ? C.red : C.mint],
+        ['갱신형 비중', csn.count ? `${csn.renewShare}%` : '—', csn.renewShare >= 60 ? '보험료의 절반 이상이 갱신형 — 갱신 시점 인상 확인' : '갱신형 비중이 크지 않습니다 — 현 구조 유지', csn.renewShare >= 60 ? C.orange : C.mint]
+      ].forEach((c, i) => {
         const x = s.ML + i * (cw8 + 8);
-        s.rect(x, y, cw8, 46, { fill: '#fff', r: 4, stroke: C.line });
-        s.text(c[0], x + 9, y + 8, { size: 6.8, weight: 800, color: C.navy });
-        s.para(c[1], x + 9, y + 20, cw8 - 18, { size: 5.9, color: C.ink2, lh: 1.3 });
+        s.rect(x, y, cw8, 50, { fill: '#fff', r: 4, stroke: C.line });
+        s.rect(x, y, cw8, 2.4, { fill: c[3], r: 1.2 });
+        s.text(c[0], x + 9, y + 9, { size: 6.6, weight: 700, color: C.muted });
+        s.text(c[1], x + 9, y + 18, { size: 10.4, weight: 800, color: c[3] === C.gray ? C.muted : C.navy });
+        s.para(c[2], x + 9, y + 32, cw8 - 18, { size: 5.6, color: C.ink2, lh: 1.25 });
       });
-      y += 56;
+      y += 60;
       if (m.client.ageDay) y = noteStrip(s, y, `상령일 ${m.client.ageDay.label}까지 D-${m.client.ageDay.days}. 이 날이 지나면 보험나이가 ${m.client.ageDay.insuranceAgeAfter}세가 되어 같은 보장도 보험료가 달라질 수 있습니다.`, { size: 6.4, fill: '#FFF9EE', stroke: '#F3E4C6', accent: C.orange });
       s.footer({ left: `${m.client.name}님 · 갱신·노후`, right: '08 / 10' });
     });
@@ -1050,6 +1065,19 @@
       s.text('오늘의 목표', rx + 12, y + 106, { size: 6.2, weight: 700, color: '#9EC0E4' });
       s.para(m.first ? `${m.first.item.name} 한 칸을 결정하고, 다음 약속 날짜를 받는다.` : '금액 조정과 갱신 대비를 정리한다.', rx + 12, y + 115, left - 24, { size: 7, weight: 600, color: '#fff', lh: 1.4 });
       y += 162;
+
+      /* v4: 가족력 · 고지 판정 */
+      const halfW = (s.CW - 8) / 2;
+      s.rect(s.ML, y, halfW, 54, { fill: '#fff', r: 5, stroke: C.line });
+      s.text('가족력', s.ML + 10, y + 7, { size: 6.2, weight: 700, color: C.muted });
+      s.text(m.family.length ? m.familyLabels.join(' · ') : '미입력', s.ML + 10, y + 16, { size: 9.4, weight: 800, color: m.family.length ? C.navy : C.muted });
+      s.para(m.familyNotes.length ? m.familyNotes.map((f) => f.title).join(' · ') + ' — 해당 담보를 우선 점검합니다.' : '가족력을 입력하면 같은 위험의 담보를 먼저 확인합니다.', s.ML + 10, y + 30, halfW - 20, { size: 5.7, color: C.ink2, lh: 1.3 });
+      const ddx = s.ML + halfW + 8;
+      s.rect(ddx, y, halfW, 54, { fill: m.disclosure.tone === 'ok' ? '#F2FBF8' : m.disclosure.tone === 'gap' ? '#FDF2F1' : '#FFFBF3', r: 5, stroke: C.line });
+      s.text('고지 판정 (3개월·1년·5년)', ddx + 10, y + 7, { size: 6.2, weight: 700, color: C.muted });
+      s.text(m.disclosure.label, ddx + 10, y + 16, { size: 9.4, weight: 800, color: m.disclosure.tone === 'ok' ? C.mint : m.disclosure.tone === 'gap' ? C.red : C.orange });
+      s.para(m.disclosure.reasons.length ? m.disclosure.reasons.join(' · ') : '체크된 항목 없음 — 표준체 우선', ddx + 10, y + 30, halfW - 20, { size: 5.7, color: C.ink2, lh: 1.3 });
+      y += 64;
 
       y = secLabel(s, y, '보유 계약');
       y = contractTable(s, m, y, { max: 7 });
@@ -1774,7 +1802,18 @@
         ['입원·수술 / 7일 이상 치료 / 30일 이상 투약 / 10대 질병', '5년', '암·간경화·투석 중 만성신장질환·파킨슨·루게릭'],
         ['—', '2년', '입원·수술(제왕절개 포함)']
       ], { widths: [246, 44, 225], size: 6.3, rowHeight: () => 26, align: ['left', 'center', 'left'] });
-      y += 12;
+      y += 8;
+      /* v4: 입력값 기반 심사 판정 */
+      const dj = m.disclosure;
+      const djCol = dj.tone === 'ok' ? C.mint : dj.tone === 'gap' ? C.red : C.orange;
+      s.rect(s.ML, y, s.CW, 54, { fill: dj.tone === 'ok' ? '#F2FBF8' : dj.tone === 'gap' ? '#FDF2F1' : '#FFFBF3', r: 5, stroke: C.line });
+      s.rect(s.ML, y, 2.6, 54, { fill: djCol, r: 1.3 });
+      s.text('이 고객의 권장 심사', s.ML + 10, y + 6, { size: 6, weight: 700, color: C.muted });
+      s.text(dj.label, s.ML + 10, y + 14, { size: 10.4, weight: 800, color: djCol });
+      s.text(dj.headline, s.ML + 150, y + 8, { size: 6.6, weight: 700, color: C.navy });
+      s.para(dj.advice, s.ML + 150, y + 18, s.CW - 160, { size: 5.8, color: C.ink2, lh: 1.3 });
+      s.text(dj.reasons.length ? `체크: ${dj.reasons.join(' · ')}` : '체크된 항목 없음 — 표준체 우선', s.ML + 10, y + 41, { size: 5.6, weight: 600, color: C.muted });
+      y += 62;
       y = s.sectionHead(s.ML, y, s.CW, '01', '현장에서 자주 틀리는 5가지', '출처: 금융감독원 간편보험 소비자 유의사항(2024.6.13)');
       DISCLOSURE_MISTAKES.forEach((d, i) => {
         s.rect(s.ML, y, s.CW, 26, { fill: i % 2 ? C.sky2 : '#fff', r: 3, stroke: C.line });

@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 상담 가이드 v3 · 1장·10장·30장 PDF</title>
-<meta name="description" content="손해보험 설계사를 위한 현장 상담용 보장분석. 고객용 1장 요약·10장 상세 PDF와 설계사용 30장 상담 플랜북을 앱에서 바로 저장·공유합니다.">
+<title>보장분석 상담 가이드 v4 · 상담자 입력실 + 고객 30장 슬라이드</title>
+<meta name="description" content="손해보험 설계사를 위한 현장 상담용 보장분석. 상담자 상세 입력실에서 진단하고, 고객 화면에서는 30장 시각화 슬라이드로 함께 보며 1장·10장·30장 PDF를 저장·공유합니다.">
 <meta name="theme-color" content="#0a1d33">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
@@ -27,8 +27,8 @@
         </svg>
       </span>
       <div class="brand-text">
-        <h1>보장분석 상담 가이드 <em class="ver">v3</em></h1>
-        <p>1장·10장·30장 PDF 리포트</p>
+        <h1>보장분석 상담 가이드 <em class="ver">v4</em></h1>
+        <p>상담자 입력실 · 고객 30장 슬라이드</p>
       </div>
     </div>
     <div class="viewswitch" role="group" aria-label="화면 모드">
@@ -51,7 +51,7 @@
 </header>
 
 <div class="client-banner" aria-live="polite">
-  <span class="dot"></span> 고객에게 보여주는 화면입니다 · 내부 상담 노트는 숨겨집니다
+  <span class="dot"></span> 고객에게 보여주는 30장 프레젠테이션 화면입니다 · 입력 폼과 내부 상담 노트는 숨겨집니다
 </div>
 
 <main id="main">
@@ -60,8 +60,8 @@
   <section id="view-analysis" class="view is-active" aria-labelledby="tab-analysis">
 
     <div class="intro-card no-print">
-      <div class="intro-eyebrow">BOJANG ANALYSIS V3</div>
-      <h2>한 장 요약부터<br>30장 플랜북까지</h2>
+      <div class="intro-eyebrow">BOJANG ANALYSIS V4</div>
+      <h2>상담자 입력실에서 진단하고<br>고객 화면 30장으로 보여줍니다</h2>
       <p>입력값은 서버로 전송되지 않고 이 화면 안에서만 계산됩니다. PDF는 이 기기에서 직접 만들어 저장·공유합니다.</p>
     </div>
 
@@ -70,7 +70,7 @@
       <div class="wiz-head">
         <div class="wiz-bar"><i id="wiz-bar-fill"></i></div>
         <div class="wiz-meta">
-          <span class="wiz-count" id="wiz-count">1/5</span>
+          <span class="wiz-count" id="wiz-count">1/6</span>
           <span class="wiz-title" id="wiz-title">기본 정보</span>
           <button type="button" class="wiz-expand" id="btn-expand">한눈에 보기</button>
         </div>
@@ -107,6 +107,11 @@
             <div class="field">
               <label class="field-label">성별</label>
               <div class="seg seg-2" id="seg-gender" role="group" aria-label="성별"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">가족력 <span class="hint">해당 항목 모두 선택 · 중복 선택</span></label>
+              <div class="fam-chips" id="family-chips" role="group" aria-label="가족력"></div>
+              <p class="field-note" id="family-note">선택하면 가족력 기반 보완 포인트가 진단·리포트에 함께 반영됩니다.</p>
             </div>
             <div class="field">
               <label class="field-label">직업급수 <span class="hint" id="job-hint">사무·관리직</span></label>
@@ -149,12 +154,23 @@
 
           <div class="card">
             <div class="card-title"><span class="eyebrow">CONTRACT</span> 보유 계약 목록
-              <span class="card-sub">보험사 · 상품명 · 월 보험료 · 갱신</span></div>
+              <span class="card-sub">보험사 · 상품명 · 월 보험료 · 갱신 · 납입 · 만기</span></div>
             <div id="contract-list" class="contracts"></div>
             <div class="contract-add">
               <input type="text" id="ct-insurer" class="text-input sm" placeholder="보험사" maxlength="16" autocomplete="off">
               <input type="text" id="ct-product" class="text-input sm" placeholder="상품명" maxlength="30" autocomplete="off">
               <input type="number" id="ct-premium" class="text-input sm" placeholder="월(만원)" min="0" max="300" step="1" inputmode="numeric">
+              <select id="ct-pay" class="text-input sm ct-select" aria-label="납입상태">
+                <option value="납입중">납입중</option>
+                <option value="납입완료">납입완료</option>
+              </select>
+              <select id="ct-maturity" class="text-input sm ct-select" aria-label="만기">
+                <option value="미입력">만기 선택</option>
+                <option value="80세">80세</option>
+                <option value="90세">90세</option>
+                <option value="100세">100세</option>
+                <option value="종신">종신</option>
+              </select>
               <label class="ct-renew"><input type="checkbox" id="ct-renew"><span>갱신형</span></label>
               <button type="button" id="ct-add" class="btn-ghost">추가</button>
             </div>
@@ -171,6 +187,18 @@
           <div class="card wiz-summary">
             <div class="card-title"><span class="eyebrow">CHECK</span> 입력 요약</div>
             <div id="wiz-summary"></div>
+          </div>
+        </div>
+
+        <div class="wiz-panel" data-step="6">
+          <div class="wiz-panel-title"><span class="n">6</span>간편 고지 체크<em>3개월 · 1년 · 5년 → 표준체 / 간편심사 판정</em></div>
+          <div class="card" id="card-disclosure">
+            <div class="card-title"><span class="eyebrow">DISCLOSURE</span> 알릴 의무 체크
+              <span class="card-sub">해당되는 항목만 터치</span></div>
+            <p class="card-lead">청약서가 묻는 기간 그대로 확인합니다. 체크 결과로 <b>표준체 / 간편심사(3·2·5 · 3·5·5)</b> 권장 판정이 자동으로 표시됩니다.</p>
+            <div id="disclosure-checks" class="disc-checks"></div>
+            <div id="disclosure-verdict" class="verdict"></div>
+            <p class="source-note">간편심사는 3개월(입원·수술·추가검사 소견) / N년(입원·수술) / 5년(암 등 중대질병) 질문 구조입니다. 3·5·5는 N=5(경할증), 3·2·5는 N=2(중할증)이며, 최종 판단은 상품별 청약서 문항과 인수 심사가 기준입니다.</p>
           </div>
         </div>
       </div>
@@ -268,7 +296,7 @@
     <div class="card internal no-print">
       <div class="card-title"><span class="eyebrow">RECENT</span> 최근 상담
         <span class="card-sub">이 기기에만 저장 · 최대 5건</span>
-        <button type="button" class="btn-reset" id="btn-reset">새 상담</button></div>
+        <button type="button" class="btn-reset" id="btn-reset">새 상담 시작</button></div>
       <div id="history-list" class="history"></div>
     </div>
   </section>
@@ -370,6 +398,53 @@
 
 <div class="toast no-print" id="toast" role="status" aria-live="polite"></div>
 
+<!-- ================= 고객 화면 : 30장 프레젠테이션 ================= -->
+<div class="deck" id="deck" hidden aria-hidden="true">
+  <div class="deck-top">
+    <div class="deck-chips" id="deck-chips" role="group" aria-label="영역 점프"></div>
+    <div class="deck-tools">
+      <button type="button" class="deck-filter" id="deck-filter" aria-pressed="false">
+        <span class="df-dot"></span>부족 항목만 보기
+      </button>
+      <button type="button" class="deck-advisor" id="deck-advisor" aria-label="상담자 화면으로 (길게 누르기)">
+        <span class="da-ring" aria-hidden="true"></span>상담자
+      </button>
+    </div>
+  </div>
+  <div class="deck-stage" id="deck-stage" aria-live="polite"></div>
+  <div class="deck-bar">
+    <button type="button" class="db-prev" id="deck-prev" aria-label="이전 슬라이드">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="db-count"><b id="deck-now">01</b><span>/</span><span id="deck-total">30</span></div>
+    <div class="db-progress"><i id="deck-progress-fill"></i></div>
+    <button type="button" class="db-next" id="deck-next" aria-label="다음 슬라이드">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+  <div class="deck-lock" id="deck-lock" hidden>
+    <div class="dl-card" role="dialog" aria-modal="true" aria-labelledby="dl-title">
+      <strong id="dl-title">상담자 화면으로 돌아갈까요?</strong>
+      <p>고객에게는 입력 폼과 내부 상담 노트가 보이지 않도록 잠겨 있습니다. 상담자 모드로 돌아가면 입력 화면이 나타납니다.</p>
+      <div class="dl-actions">
+        <button type="button" class="dl-cancel" id="dl-cancel">고객 화면 유지</button>
+        <button type="button" class="dl-ok" id="dl-ok">상담자 화면으로</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="reset-modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="rm-title">
+    <strong id="rm-title">새 상담을 시작할까요?</strong>
+    <p>지금 입력한 고객명 · 생년월일 · 가족력 · 고지 체크 · 계약 · 담보 금액이 모두 초기화됩니다. 저장한 최근 상담 기록은 그대로 남습니다.</p>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" id="rm-cancel">취소</button>
+      <button type="button" class="modal-ok" id="rm-ok">초기화하고 시작</button>
+    </div>
+  </div>
+</div>
+
 <div class="pdf-overlay" id="pdf-overlay" hidden>
   <div class="pdf-modal" role="status" aria-live="polite">
     <div class="pdf-spin" aria-hidden="true"></div>
@@ -385,6 +460,7 @@
 <script src="./model.js"></script>
 <script src="./pdfkit.js"></script>
 <script src="./report.js"></script>
+<script src="./client.js"></script>
 <script src="./live.js"></script>
 <script src="./app.js"></script>
 </body>

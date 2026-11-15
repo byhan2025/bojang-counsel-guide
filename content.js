@@ -66,11 +66,12 @@ const PRIORITY = [
 
 /* 단계별 위저드 구성 */
 const WIZARD = [
-  { step: 1, key: 'profile', title: '기본 정보', desc: '연령대 · 성별 · 직업급수 · 실손 · 보험료' },
+  { step: 1, key: 'profile', title: '기본 정보', desc: '연령대 · 성별 · 직업급수 · 가족력 · 실손 · 보험료' },
   { step: 2, key: 'cancer', title: '암', desc: '일반암 · 유사암 · 주요치료비 · 재진단' },
   { step: 3, key: 'brainheart', title: '뇌 · 심장', desc: '보장 범위와 수술·치료비' },
   { step: 4, key: 'surgerycare', title: '수술 · 간병', desc: '종수·N대, 일당·요양' },
-  { step: 5, key: 'contract', title: '계약 형태', desc: '적립·갱신·특약 점검' }
+  { step: 5, key: 'contract', title: '계약 · 보험료', desc: '보유 계약 · 납입상태 · 만기 · 갱신 · 특약' },
+  { step: 6, key: 'disclosure', title: '간편 고지', desc: '3개월 · 1년 · 5년 → 표준체 / 간편심사 판정' }
 ];
 
 /* 공개 통계 — 출처·기준연도 명시 (사용자 제공 검증 수치) */
@@ -326,6 +327,27 @@ const GUIDES = {
     ]
   }
 };
+
+/* 가족력 터치 칩 (v4) */
+const FAMILY_HISTORY = [
+  { key: 'cancer', label: '암', note: '부모·형제' },
+  { key: 'brain', label: '뇌혈관', note: '뇌졸중·뇌출혈' },
+  { key: 'heart', label: '심장', note: '협심증·심근경색' },
+  { key: 'dementia', label: '치매', note: '노인성' },
+  { key: 'none', label: '해당 없음', note: '가족력 없음' }
+];
+
+/* 간편 고지(알릴 의무) 체크 항목 (v4)
+   3개월·1년·5년 구조. 간편심사는 3개월 / N년(입원·수술) / 5년(중대질병) 질문입니다. */
+const DISCLOSURE_ITEMS = [
+  { key: 'd3_dx', period: '3개월', label: '질병 확정진단 · 의심소견' },
+  { key: 'd3_in', period: '3개월', label: '입원' },
+  { key: 'd3_op', period: '3개월', label: '수술(제왕절개 포함)' },
+  { key: 'y1_test', period: '1년', label: '추가검사(재검사) 필요소견' },
+  { key: 'y5_inop', period: '5년', label: '입원 · 수술' },
+  { key: 'y5_care', period: '5년', label: '계속 7일 이상 치료' },
+  { key: 'y5_major', period: '5년', label: '중대질병 진단·치료 (암·간경화·투석 중 만성신장질환·파킨슨·루게릭)' }
+];
 
 const DISCLOSURE_GENERAL = [
   { period: '3개월', items: ['질병 확정진단 · 의심소견', '치료 · 입원 · 수술(제왕절개 포함)', '투약', '혈압강하제·신경안정제·수면제 등 상시 복용'] },

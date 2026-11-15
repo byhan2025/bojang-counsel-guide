@@ -11,14 +11,16 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const cv = (item, part) => (state.cov[item.key] && state.cov[item.key][part.key]);
 
-  const HKEY = 'bojang.history.v3';
+  const HKEY = 'bojang.history.v4';
   const VKEY = 'bojang.viewmode.v1';
-  const SKEY = 'bojang.session.v3';
+  const SKEY = 'bojang.session.v4';
 
   const DEFAULT = {
     age: '40', gender: '여', job: '1', silson: '4', premium: 22,
     client: { name: '홍길동', birth: '', consultant: '' },
     contracts: [],
+    family: [],
+    disc: {},
     cov: {
       cancer: { general: 3000, similar: 0, treatment: 0, recur: false },
       brain: { scope: 'vascular', treat: true },
@@ -38,6 +40,8 @@
     age: DEFAULT.age, gender: DEFAULT.gender, job: DEFAULT.job, silson: DEFAULT.silson, premium: DEFAULT.premium,
     client: Object.assign({}, DEFAULT.client, { dateLabel: todayLabel() }),
     contracts: [],
+    family: [],
+    disc: {},
     cov: JSON.parse(JSON.stringify(DEFAULT.cov)),
     flags: Object.assign({}, DEFAULT.flags),
     guide: 'cancer', view: 'advisor', step: 1, expanded: false, tab: 'analysis',
@@ -65,7 +69,8 @@
   function saveSession() {
     lsSet(SKEY, {
       client: state.client, contracts: state.contracts, age: state.age, gender: state.gender,
-      job: state.job, silson: state.silson, premium: state.premium, cov: state.cov, flags: state.flags
+      job: state.job, silson: state.silson, premium: state.premium, cov: state.cov, flags: state.flags,
+      family: state.family, disc: state.disc
     });
   }
   function loadSession() {
@@ -73,6 +78,8 @@
     if (!s) return;
     if (s.client) state.client = Object.assign(state.client, s.client, { dateLabel: todayLabel() });
     if (Array.isArray(s.contracts)) state.contracts = s.contracts;
+    if (Array.isArray(s.family)) state.family = s.family.filter((k) => FAMILY_HISTORY.some((f) => f.key === k));
+    if (s.disc && typeof s.disc === 'object') state.disc = s.disc;
     ['age', 'gender', 'job', 'silson', 'premium'].forEach((k) => { if (s[k] != null) state[k] = s[k]; });
     if (s.cov) state.cov = Object.assign(state.cov, s.cov);
     if (s.flags) state.flags = Object.assign(state.flags, s.flags);
@@ -174,12 +181,89 @@
         syncSegments();
         renderCoverageCards();
         refreshAll();
-        if ($('#age-hint')) $('#age-hint').textContent = '보험나이로 자동選択';
+        if ($('#age-hint')) $('#age-hint').textContent = '보험나이로 자동 선택';
       }
     }
     updateBirthNote();
     saveSession();
     if (state.analyzed) analyze();
+  }
+
+  /* ================= v4: 가족력 · 간편 고지 ================= */
+  function renderFamilyChips() {
+    const host = $('#family-chips');
+    if (!host) return;
+    host.innerHTML = FAMILY_HISTORY.map((f) => {
+      const on = state.family.indexOf(f.key) >= 0;
+      return `<button type="button" class="fam-chip${on ? ' is-on' : ''}${f.key === 'none' ? ' is-none' : ''}" data-fam="${f.key}" aria-pressed="${on}">
+        <b>${f.label}</b><span>${f.note}</span>
+      </button>`;
+    }).join('');
+    $$('.fam-chip', host).forEach((b) => {
+      b.addEventListener('click', () => {
+        const k = b.dataset.fam;
+        if (k === 'none') {
+          state.family = state.family.indexOf('none') >= 0 ? [] : ['none'];
+        } else {
+          state.family = state.family.filter((x) => x !== 'none');
+          state.family = state.family.indexOf(k) >= 0 ? state.family.filter((x) => x !== k) : state.family.concat(k);
+          if (!state.family.length) state.family = [];
+        }
+        renderFamilyChips();
+        refreshAll();
+        saveSession();
+      });
+    });
+    const note = $('#family-note');
+    if (note) {
+      const picked = state.family.filter((k) => k !== 'none');
+      note.textContent = !state.family.length
+        ? '선택하면 가족력 기반 보완 포인트가 진단·리포트에 함께 반영됩니다.'
+        : picked.length
+          ? `선택: ${picked.map((k) => (FAMILY_HISTORY.find((f) => f.key === k) || {}).label).join(' · ')} — ${BojangModel.familyNotes(state)[0] ? BojangModel.familyNotes(state)[0].body : ''}`
+          : '가족력 해당 없음으로 기록했습니다. 이 경우 예방·정기검진 안내 중심으로 설명합니다.';
+      note.classList.add('is-on');
+    }
+    renderSummary();
+  }
+
+  function renderDisclosure() {
+    const host = $('#disclosure-checks');
+    if (!host) return;
+    const groups = ['3개월', '1년', '5년'];
+    host.innerHTML = groups.map((g) => {
+      const items = DISCLOSURE_ITEMS.filter((d) => d.period === g);
+      return `<div class="dc-group">
+        <div class="dc-period">${g}<em>${g === '3개월' ? '최근 3개월 이내' : g === '1년' ? '최근 1년 이내' : '최근 5년 이내'}</em></div>
+        ${items.map((d) => {
+          const on = !!state.disc[d.key];
+          return `<button type="button" class="dc-item${on ? ' is-on' : ''}" data-disc="${d.key}" aria-pressed="${on}">
+            <span class="dc-box" aria-hidden="true"></span><span class="dc-label">${d.label}</span>
+          </button>`;
+        }).join('')}
+      </div>`;
+    }).join('');
+    $$('.dc-item', host).forEach((b) => {
+      b.addEventListener('click', () => {
+        const k = b.dataset.disc;
+        state.disc[k] = !state.disc[k];
+        renderDisclosure();
+        saveSession();
+        renderSummary();
+        if (state.analyzed) analyze();
+      });
+    });
+    const verdict = $('#disclosure-verdict');
+    if (verdict) {
+      const j = BojangModel.disclosureJudge(state);
+      verdict.className = 'verdict tone-' + j.tone;
+      verdict.innerHTML = `
+        <div class="vd-head"><span class="vd-tag">심사 판정</span><strong>${j.label}</strong></div>
+        <p class="vd-main">${j.headline}</p>
+        <p class="vd-advice">${j.advice}</p>
+        ${j.reasons.length ? `<div class="vd-reasons">${j.reasons.map((r) => `<span>${r}</span>`).join('')}</div>` : '<div class="vd-reasons"><span>체크된 항목 없음 — 표준체 우선</span></div>'}
+      `;
+    }
   }
 
   /* ================= 담보 입력 카드 ================= */
@@ -351,6 +435,10 @@
           <div class="ct-main">
             <div class="ct-ins">${esc(c.insurer || '보험사 미입력')} <span class="ct-tag ${c.renew ? '' : 'no'}">${c.renew ? '갱신형' : '비갱신'}</span></div>
             <div class="ct-prod">${esc(c.product || '상품명 미입력')}</div>
+            <div class="ct-meta">
+              <span class="ct-pay ${c.pay === '납입완료' ? 'is-done' : ''}">${c.pay || '납입중'}</span>
+              <span class="ct-mat">만기 ${c.maturity || '미입력'}</span>
+            </div>
           </div>
           <span class="ct-prem">${won(c.premium)}만원</span>
           <button type="button" class="ct-del" data-del="${i}" aria-label="삭제">×</button>
@@ -368,9 +456,10 @@
     if (applyBtn) applyBtn.hidden = !(state.contracts.length && total > 0 && Math.abs(total - Number(state.premium)) >= 1);
     const el = $('#contract-total');
     if (el) {
+      const cs = BojangModel.contractStats(state.contracts);
       el.textContent = state.contracts.length
-        ? `계약 ${state.contracts.length}건 · 합계 월 ${won(total)}만원${Math.abs(total - Number(state.premium)) >= 1 ? ` (입력한 월 보험료 ${won(state.premium)}만원과 다릅니다)` : ''}`
-        : '계약을 추가하면 10장 PDF의 포트폴리오 표가 채워집니다.';
+        ? `계약 ${cs.count}건 · 합계 월 ${won(cs.total)}만원 · 납입중 ${cs.activeCount}건 ${won(cs.activePremium)}만원 · 납입완료 ${cs.paidUpCount}건${cs.shortMaturityCount ? ` · 만기 80·90세 ${cs.shortMaturityCount}건` : ''}${Math.abs(cs.total - Number(state.premium)) >= 1 ? ` (입력한 월 보험료 ${won(state.premium)}만원과 다릅니다)` : ''}`
+        : '계약을 추가하면 10장 PDF의 포트폴리오 표와 노후 전망이 채워집니다.';
     }
   }
 
@@ -379,9 +468,12 @@
     const product = ($('#ct-product').value || '').trim();
     const premium = clamp(Number($('#ct-premium').value || 0), 0, 300);
     const renew = $('#ct-renew').checked;
+    const pay = ($('#ct-pay').value || '납입중');
+    const maturity = ($('#ct-maturity').value || '미입력');
     if (!insurer && !product) { toast('보험사나 상품명을 입력해 주세요'); return; }
-    state.contracts.push({ insurer, product, premium, renew });
+    state.contracts.push({ insurer, product, premium, renew, pay, maturity });
     $('#ct-insurer').value = ''; $('#ct-product').value = ''; $('#ct-premium').value = ''; $('#ct-renew').checked = false;
+    $('#ct-pay').value = '납입중'; $('#ct-maturity').value = '미입력';
     renderContracts(); renderClientStrip(); saveSession();
     if (state.analyzed) analyze();
     toast('계약을 추가했습니다');
@@ -543,6 +635,7 @@
     $('#result').hidden = false;
     $('#save-bar').hidden = false;
     if (window.BojangLive) window.BojangLive.markDirty();
+    if (window.BojangDeck) window.BojangDeck.refresh(state);
   }
 
   function weightNotes(m) {
@@ -711,7 +804,8 @@
       contracts: JSON.parse(JSON.stringify(state.contracts)),
       inputs: {
         age: state.age, gender: state.gender, job: state.job, silson: state.silson,
-        premium: state.premium, cov: JSON.parse(JSON.stringify(state.cov)), flags: Object.assign({}, state.flags)
+        premium: state.premium, cov: JSON.parse(JSON.stringify(state.cov)), flags: Object.assign({}, state.flags),
+        family: state.family.slice(), disc: Object.assign({}, state.disc)
       }
     };
     const next = [entry].concat(state.history).slice(0, 5);
@@ -764,12 +858,46 @@
     state.silson = inputs.silson; state.premium = inputs.premium;
     state.cov = JSON.parse(JSON.stringify(inputs.cov));
     state.flags = Object.assign({}, state.flags, inputs.flags);
+    if (Array.isArray(inputs.family)) state.family = inputs.family.slice();
+    if (inputs.disc) state.disc = Object.assign({}, inputs.disc);
     syncSegments();
+    renderFamilyChips();
+    renderDisclosure();
     renderCoverageCards();
     renderFlags();
     renderSummary();
     $('#premium').value = state.premium;
     saveSession();
+  }
+
+  /* v4: 새 상담 시작 — 확인 모달을 거쳐 입력값을 한 번에 비웁니다 */
+  function resetConsult() {
+    state.age = DEFAULT.age; state.gender = DEFAULT.gender; state.job = DEFAULT.job;
+    state.silson = DEFAULT.silson; state.premium = DEFAULT.premium;
+    state.cov = JSON.parse(JSON.stringify(DEFAULT.cov));
+    state.flags = Object.assign({}, DEFAULT.flags);
+    state.family = [];
+    state.disc = {};
+    state.client = Object.assign({}, DEFAULT.client, { dateLabel: todayLabel() });
+    state.contracts = [];
+    syncSegments();
+    renderClientFields();
+    renderFamilyChips();
+    renderDisclosure();
+    renderCoverageCards();
+    renderFlags();
+    renderContracts();
+    $('#cust-label').value = '';
+    $('#premium').value = state.premium;
+    state.analyzed = false; state.lastResult = null;
+    $('#result').hidden = true;
+    $('#save-bar').hidden = true;
+    setStep(1, true);
+    renderSummary();
+    if (window.BojangDeck) window.BojangDeck.refresh(state, { reset: true });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    saveSession();
+    toast('새 상담을 시작합니다 — 입력값을 모두 비웠습니다');
   }
 
   function syncSegments() {
@@ -806,18 +934,22 @@
 
   /* ================= 화면 모드 ================= */
   function applyView() {
-    document.body.classList.toggle('is-client', state.view === 'client');
+    const isClient = state.view === 'client';
+    document.body.classList.toggle('is-client', isClient);
     $$('.viewswitch button').forEach((b) => {
       const on = b.dataset.mode === state.view;
       b.classList.toggle('is-on', on);
       b.setAttribute('aria-pressed', String(on));
     });
-    if (state.view === 'client') {
+    if (isClient) {
       const active = $('.view.is-active');
       if (active && (active.id === 'view-toolkit' || active.id === 'view-live')) switchView('analysis');
       const liveTab = $('#tab-live'); if (liveTab) liveTab.style.display = 'none';
+      if (!state.analyzed) analyze();
+      if (window.BojangDeck) window.BojangDeck.show(state);
     } else {
       const liveTab = $('#tab-live'); if (liveTab) liveTab.style.display = '';
+      if (window.BojangDeck) window.BojangDeck.hide();
     }
     renderGuideChips();
     renderGuideBody();
@@ -1090,13 +1222,14 @@
 
   /* ================= 위저드 ================= */
   function setStep(n, silent) {
-    state.step = clamp(n, 1, 5);
+    const TOTAL_STEP = WIZARD.length;
+    state.step = clamp(n, 1, TOTAL_STEP);
     $$('.wiz-panel').forEach((p) => p.classList.toggle('is-active', Number(p.dataset.step) === state.step));
-    $('#wiz-count').textContent = `${state.step}/5`;
+    $('#wiz-count').textContent = `${state.step}/${TOTAL_STEP}`;
     $('#wiz-title').textContent = WIZARD[state.step - 1].title;
-    $('#wiz-bar-fill').style.width = ((state.step / 5) * 100) + '%';
+    $('#wiz-bar-fill').style.width = ((state.step / TOTAL_STEP) * 100) + '%';
     $('#wiz-prev').disabled = state.step === 1;
-    $('#wiz-next').textContent = state.step === 5 ? '진단하기' : '다음';
+    $('#wiz-next').textContent = state.step === TOTAL_STEP ? '진단하기' : '다음';
     if (!silent) {
       const top = $('#wizard').getBoundingClientRect().top + window.scrollY - 78;
       window.scrollTo({ top, behavior: 'smooth' });
@@ -1121,11 +1254,19 @@
       return `<div class="sum-row"><span class="sr-rank">${item.rank}</span><strong>${item.name}</strong><span class="sr-val">${BojangModel.summaryOf(state, item, r)}</span><span class="badge badge-${r.level}">${r.label}</span></div>`;
     }).join('');
     const ad = state.client.birth ? BojangModel.nextAgeDay(state.client.birth) : null;
+    const fam = state.family.filter((k) => k !== 'none').map((k) => (FAMILY_HISTORY.find((f) => f.key === k) || {}).label).filter(Boolean);
+    const dj = BojangModel.disclosureJudge(state);
+    const cs = BojangModel.contractStats(state.contracts);
     el.innerHTML = `
       <div class="sum-top">${esc(state.client.name)} · ${state.age}대 ${state.gender} · 직업 ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]} · 월 ${won(state.premium)}만원</div>
       ${ad ? `<div class="sum-top">보험나이 ${BojangModel.insuranceAge(state.client.birth)}세 · 상령일 ${ad.label} (D-${ad.days})</div>` : ''}
+      <div class="sum-tags">
+        <span class="sum-tag">가족력 ${fam.length ? fam.join('·') : (state.family.length ? '해당 없음' : '미입력')}</span>
+        <span class="sum-tag tone-${dj.tone}">${dj.label}</span>
+        <span class="sum-tag">계약 ${cs.count}건${cs.paidUpCount ? ` · 납입완료 ${cs.paidUpCount}` : ''}${cs.shortMaturityCount ? ` · 만기 80·90세 ${cs.shortMaturityCount}` : ''}</span>
+      </div>
       ${rows}
-      <p class="sum-note">위 내용으로 진단하면 점수 · 1장/10장/30장 PDF가 만들어집니다.</p>`;
+      <p class="sum-note">위 내용으로 진단하면 점수 · 고객 30장 슬라이드 · 1장/10장/30장 PDF가 만들어집니다.</p>`;
   }
 
   /* ================= 초기화 ================= */
@@ -1135,6 +1276,8 @@
 
     renderClientFields();
     renderSegments();
+    renderFamilyChips();
+    renderDisclosure();
     renderCoverageCards();
     renderFlags();
     renderContracts();
@@ -1177,7 +1320,7 @@
 
     $('#wiz-prev').addEventListener('click', () => setStep(state.step - 1));
     $('#wiz-next').addEventListener('click', () => {
-      if (state.step === 5) { analyze(); $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' }); toast('진단을 완료했습니다'); }
+      if (state.step === WIZARD.length) { analyze(); $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' }); toast('진단을 완료했습니다'); }
       else setStep(state.step + 1);
     });
     $('#btn-expand').addEventListener('click', toggleExpand);
@@ -1190,21 +1333,12 @@
 
     $('#btn-kakao').addEventListener('click', () => copy(kakaoText(), '카톡 요약을 복사했습니다'));
     $('#btn-save').addEventListener('click', saveConsult);
-    $('#btn-reset').addEventListener('click', () => {
-      applyInputs({
-        age: DEFAULT.age, gender: DEFAULT.gender, job: DEFAULT.job, silson: DEFAULT.silson,
-        premium: DEFAULT.premium, cov: DEFAULT.cov, flags: DEFAULT.flags
-      });
-      state.client = Object.assign({}, DEFAULT.client, { dateLabel: todayLabel() });
-      state.contracts = [];
-      renderClientFields(); renderContracts();
-      $('#cust-label').value = '';
-      state.analyzed = false; state.lastResult = null;
-      $('#result').hidden = true;
-      setStep(1, true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      saveSession();
-      toast('새 상담을 시작합니다');
+    $('#btn-reset').addEventListener('click', () => { $('#reset-modal').hidden = false; });
+    $('#rm-cancel').addEventListener('click', () => { $('#reset-modal').hidden = true; });
+    $('#reset-modal').addEventListener('click', (e) => { if (e.target.id === 'reset-modal') $('#reset-modal').hidden = true; });
+    $('#rm-ok').addEventListener('click', () => {
+      $('#reset-modal').hidden = true;
+      resetConsult();
     });
 
     $$('.pdf-btn').forEach((b) => b.addEventListener('click', () => doPdf(b.dataset.pdf)));
@@ -1240,6 +1374,20 @@
     syncHeaderHeight();
     window.addEventListener('resize', syncHeaderHeight);
     if (window.BojangLive) window.BojangLive.init(state, { copy, toast });
+    if (window.BojangDeck) {
+      window.BojangDeck.init({
+        state: state,
+        toast: toast,
+        copy: copy,
+        doPdf: doPdf,
+        onExit: () => {
+          state.view = 'advisor';
+          lsSet(VKEY, 'advisor');
+          applyView();
+          toast('상담자 화면으로 돌아왔습니다');
+        }
+      });
+    }
   }
 
   document.addEventListener('DOMContentLoaded', init);

@@ -1,5 +1,6 @@
-/* 보장분석 상담 가이드 — 공용 진단 모델 (v3)
-   화면·라이브 상담·PDF 리포트가 모두 이 계산 하나를 씁니다.
+/* 보장분석 상담 가이드 — 공용 진단 모델 (v4)
+   화면·라이브 상담·고객 30장 슬라이드·PDF 리포트가 모두 이 계산 하나를 씁니다.
+   v4 추가: 가족력 · 간편고지 판정 · 계약 납입상태/만기 집계.
    모든 점수·권장선은 상담 보조용 자체 산식이며 보험사 기준이 아닙니다. */
 (function (root) {
   'use strict';
@@ -190,6 +191,88 @@
     return c;
   }
 
+  /* ---------- 가족력 ---------- */
+  const FAMILY_KEYS = ['cancer', 'brain', 'heart', 'dementia'];
+  const FAMILY_NOTE = {
+    cancer: { title: '암 가족력', body: '부모·형제의 암 이력은 같은 연령대에서 발생 위험을 높게 보는 근거가 됩니다. 일반암·유사암 진단비를 기준선 위에 두고, 1회한이 아닌 재진단 담보까지 확인합니다.' },
+    brain: { title: '뇌혈관 가족력', body: '고혈압·당뇨와 함께 뇌경색 위험을 올리는 요인입니다. 뇌출혈이 아니라 뇌혈관질환(I60~I69) 범위로 잡아야 실제 지급 구간이 넓어집니다.' },
+    heart: { title: '심장 가족력', body: '협심증·심근경색 이력이 가족에 있으면 스텐트 시술 구간이 문제가 됩니다. 허혈성심장질환(I20~I25) 범위와 심혈관 수술비를 함께 봅니다.' },
+    dementia: { title: '치매 가족력', body: '노후 간병의 가장 긴 구간입니다. 장기요양 1~5등급·인지지원 담보와 간병 일당을 함께 준비합니다.' }
+  };
+
+  function familyList(state) {
+    const f = (state.family || []).filter((k) => FAMILY_KEYS.indexOf(k) >= 0);
+    return f;
+  }
+
+  function familyNotes(state) {
+    const keys = familyList(state);
+    return keys.map((k) => ({ key: k, label: FAMILY_NOTE[k].title, body: FAMILY_NOTE[k].body }));
+  }
+
+  /* ---------- 간편 고지(알릴 의무) 판정 ---------- */
+  /* 기준: 간편심사는 3개월(입원·수술·추가검사 소견) / N년(입원·수술) / 5년(암 등 중대질병) 구조.
+     3·5·5는 N=5(질문 넓음·경할증), 3·2·5는 N=2(질문 좁음·중할증). 상품별 청약서 문항이 최종 기준입니다. */
+  function disclosureJudge(state) {
+    const d = state.disc || {};
+    const on = (k) => !!d[k];
+    const had3m = on('d3_dx') || on('d3_in') || on('d3_op');
+    const had1y = on('y1_test');
+    const had5yInOp = on('y5_inop') || on('y5_care');
+    const hadMajor = on('y5_major');
+    const reasons = [];
+    if (had3m) reasons.push('최근 3개월 이내 진단·입원·수술 이력');
+    if (had1y) reasons.push('최근 1년 이내 추가검사 필요소견');
+    if (on('y5_inop')) reasons.push('최근 5년 이내 입원·수술 이력');
+    if (on('y5_care')) reasons.push('최근 5년 이내 7일 이상 계속 치료');
+    if (hadMajor) reasons.push('최근 5년 이내 중대질병 진단·치료');
+
+    let code, label, tone, headline, advice;
+    if (had3m) {
+      code = 'hold'; label = '3개월 경과 후 재검토'; tone = 'warn';
+      headline = '간편심사도 3개월 문항을 똑같이 묻습니다';
+      advice = '치료·검사가 마무리된 날부터 3개월이 지난 뒤가 가장 넓은 선택지입니다. 그 전에는 인수 조건이 제한될 수 있어 청약 일정을 조정합니다.';
+    } else if (hadMajor) {
+      code = 'review'; label = '인수 심사 필요'; tone = 'gap';
+      headline = '5년 이내 중대질병은 간편심사에서도 고지 대상입니다';
+      advice = '암·간경화·투석 중 만성신장질환·파킨슨·루게릭은 3·2·5와 3·5·5 모두 5년 문항에 들어갑니다. 일반심사 할증 인수나 상품별 인수 기준을 먼저 확인합니다.';
+    } else if (had5yInOp) {
+      code = 'simple325'; label = '간편심사 3·2·5 검토'; tone = 'need';
+      headline = '5년 이내 입원·수술은 3·5·5 문항에 걸립니다';
+      advice = '2년보다 오래된 이력이면 3·2·5로 통과할 수 있습니다. 2년 이내라면 3·2·5도 걸리므로 초간편 상품이나 일반심사 할증 인수를 함께 봅니다.';
+    } else if (had1y) {
+      code = 'simple355'; label = '간편심사 3·5·5 검토'; tone = 'info';
+      headline = '5년 입원·수술이 없으면 3·5·5가 가장 저렴합니다';
+      advice = '1년 이내 추가검사 소견은 일반심사(3·1·5)의 1년 문항에 해당합니다. 간편심사 3·5·5는 3개월·5년·5년만 묻기 때문에 이 이력으로는 걸리지 않습니다. 검사 결과가 정리되면 일반심사 가능 여부를 다시 확인합니다.';
+    } else {
+      code = 'standard'; label = '표준체 권장'; tone = 'ok';
+      headline = '일반심사(표준체)로 가입 가능한 상태입니다';
+      advice = '간편심사는 보험료가 1.2~2배 수준으로 높고 보장이 제한될 수 있습니다. 표준체로 먼저 심사하는 것이 순서입니다.';
+    }
+    return { code, label, tone, headline, advice, reasons, items: d, checked: reasons.length };
+  }
+
+  /* ---------- 보유 계약 집계 (납입상태·만기) ---------- */
+  const MATURITY = ['80세', '90세', '100세', '종신'];
+  function contractStats(contracts) {
+    const list = contracts || [];
+    const total = list.reduce((a, c) => a + Number(c.premium || 0), 0);
+    const active = list.filter((c) => (c.pay || '납입중') === '납입중');
+    const paidUp = list.filter((c) => c.pay === '납입완료');
+    const activePremium = active.reduce((a, c) => a + Number(c.premium || 0), 0);
+    const renewPremium = list.filter((c) => c.renew).reduce((a, c) => a + Number(c.premium || 0), 0);
+    const maturity = {};
+    list.forEach((c) => { const k = c.maturity || '미입력'; maturity[k] = (maturity[k] || 0) + 1; });
+    const shortMaturity = list.filter((c) => c.maturity === '80세' || c.maturity === '90세');
+    return {
+      count: list.length, total, activePremium, renewPremium,
+      activeCount: active.length, paidUpCount: paidUp.length,
+      paidUpPremium: total - activePremium,
+      maturity, shortMaturityCount: shortMaturity.length,
+      renewShare: total ? Math.round((renewPremium / total) * 100) : 0
+    };
+  }
+
   /* ---------- 보장 구멍 · 보험료 다이어트 ---------- */
   function checkpoints(state, rows, totalSum, annual) {
     const cps = [];
@@ -218,6 +301,21 @@
     if (!state.cov.surgery.injury) cps.push({ level: 'info', title: '상해수술비 없음', body: '질병 수술비만 있으면 사고로 다쳐 수술해도 지급되지 않습니다.' });
     if (!state.cov.care.ltc) cps.push({ level: 'warn', title: '장기요양등급 보장 없음', body: '공식 통계상 장기요양 인정자의 87.4%가 3~5등급·인지지원입니다. 1~2등급만 대비하면 대부분의 구간이 비어 있습니다.' });
     if (!state.cov.care.nursing) cps.push({ level: 'info', title: '간호간병통합서비스 미보장', body: '보호자 없는 병동은 별도 특약이 있어야 지급되는 경우가 많습니다.' });
+
+    /* v4: 가족력 · 고지 판정 · 계약 납입/만기 */
+    familyNotes(state).forEach((f) => {
+      if (f.key === 'cancer' && state.cov.cancer.general < (PRIORITY[0].rec[state.age] || 0)) cps.push({ level: 'warn', title: f.label, body: f.body });
+      else if (f.key === 'brain' && state.cov.brain.scope !== 'vascular') cps.push({ level: 'warn', title: f.label, body: f.body });
+      else if (f.key === 'heart' && state.cov.heart.scope !== 'ischemic' && state.cov.heart.scope !== 'cardiac') cps.push({ level: 'warn', title: f.label, body: f.body });
+      else if (f.key === 'dementia' && !state.cov.care.ltc) cps.push({ level: 'warn', title: f.label, body: f.body });
+      else cps.push({ level: 'info', title: f.label, body: f.body });
+    });
+    const dj = disclosureJudge(state);
+    if (dj.code !== 'standard') cps.push({ level: dj.code === 'review' ? 'danger' : 'info', title: `고지 판정 — ${dj.label}`, body: dj.advice });
+    const cs = contractStats(state.contracts);
+    if (cs.paidUpCount) cps.push({ level: 'info', title: `납입완료 계약 ${cs.paidUpCount}건`, body: '납입이 끝난 계약은 보험료 부담 없이 보장만 유지됩니다. 해지하지 말고 유지하면서, 아낀 보험료를 빈 칸으로 옮깁니다.' });
+    if (cs.shortMaturityCount) cps.push({ level: 'warn', title: `만기 80·90세 계약 ${cs.shortMaturityCount}건`, body: '만기가 짧으면 노후에 보장이 먼저 끊깁니다. 만기 이후를 간병·요양 담보로 미리 설계합니다.' });
+    if (cs.renewShare >= 60 && cs.count) cps.push({ level: 'warn', title: `갱신형 비중 ${cs.renewShare}%`, body: '보험료의 절반 이상이 갱신형이면 갱신 시점 인상 폭이 큽니다. 갱신 연령과 예상 보험료를 표로 확인합니다.' });
 
     if (state.flags.savings) cps.push({ level: 'info', title: '적립(저축)성 특약 확인', body: '보장 대비 저축 비중이 크면 같은 보험료로 보장을 더 넓힐 수 있습니다.' });
     if (state.flags.renew) cps.push({ level: 'warn', title: '갱신형 중심 구조', body: '갱신 시점에 보험료가 크게 오르고, 재가입 심사에서 가입이 막힐 수 있습니다. 갱신 연령과 예상 보험료를 표로 보여 주세요.' });
@@ -260,6 +358,9 @@
     const st = steps(state, rows);
     const needList = rows.filter((x) => x.r.level !== 'ok');
     const contractTotal = (state.contracts || []).reduce((a, c) => a + Number(c.premium || 0), 0);
+    const cstats = contractStats(state.contracts);
+    const family = familyList(state);
+    const disc = disclosureJudge(state);
     const birth = (state.client && state.client.birth) || '';
     const ageDay = nextAgeDay(birth);
     return {
@@ -268,7 +369,9 @@
       counts: counts(parts, state.silson),
       totalSum, annual, premium: Number(state.premium || 0), ratio: annual > 0 ? totalSum / annual : 0,
       checkpoints: cps, steps: st, needList, first: needList[0] || null,
-      contracts: state.contracts || [], contractTotal,
+      contracts: state.contracts || [], contractTotal, contractStats: cstats,
+      family, familyLabels: family.map((k) => FAMILY_NOTE[k].title), familyNotes: familyNotes(state),
+      disclosure: disc, MATURITY,
       client: {
         name: (state.client && state.client.name) || '홍길동',
         consultant: (state.client && state.client.consultant) || '담당 컨설턴트',
@@ -290,6 +393,7 @@
   root.BojangModel = {
     won, clamp, evalItem, summaryOf, weights, computeScore, gradeLetter,
     parseDate, insuranceAge, nextAgeDay, ageBandFromBirth,
-    partRows, counts, checkpoints, steps, full, oneLine, LEVEL_LABEL
+    partRows, counts, checkpoints, steps, full, oneLine, LEVEL_LABEL,
+    FAMILY_KEYS, FAMILY_NOTE, familyList, familyNotes, disclosureJudge, contractStats, MATURITY
   };
 })(typeof window !== 'undefined' ? window : globalThis);

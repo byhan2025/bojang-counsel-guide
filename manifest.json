@@ -1,7 +1,7 @@
 {
-  "name": "보장분석 상담 가이드 · 1장·10장·30장 PDF",
+  "name": "보장분석 상담 가이드 v4 · 고객 30장 슬라이드",
   "short_name": "보장분석",
-  "description": "손해보험 설계사 현장 상담용 보장분석. 고객용 1장·10장 PDF와 설계사용 30장 상담 플랜북을 앱에서 바로 저장·공유",
+  "description": "상담자 상세 입력실에서 5대 담보를 진단하고, 고객 화면에서는 30장 시각화 슬라이드로 함께 보며 1장·10장·30장 PDF를 저장·공유합니다.",
   "lang": "ko-KR",
   "start_url": "./index.html",
   "scope": "./",
@@ -10,8 +10,23 @@
   "background_color": "#f4f6fb",
   "theme_color": "#0b2545",
   "icons": [
-    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "./icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
