@@ -872,6 +872,10 @@ input[type="date"].text-input::-webkit-date-and-time-value{text-align:left;}
 .ct-renew{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-2);letter-spacing:-0.02em;}
 .ct-renew input{width:16px;height:16px;accent-color:var(--navy-600);}
 
+.ct-foot{display:flex;align-items:center;gap:8px;justify-content:space-between;}
+.ct-foot .field-note{margin:0;flex:1;}
+.btn-ghost.sm{padding:7px 11px;font-size:11px;white-space:nowrap;}
+
 /* ---------- PDF 패널 ---------- */
 .pdf-panel{
   margin:14px 0 8px;padding:14px;border-radius:18px;

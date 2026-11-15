@@ -364,6 +364,8 @@
       });
     }
     const total = state.contracts.reduce((a, c) => a + Number(c.premium || 0), 0);
+    const applyBtn = $('#ct-apply');
+    if (applyBtn) applyBtn.hidden = !(state.contracts.length && total > 0 && Math.abs(total - Number(state.premium)) >= 1);
     const el = $('#contract-total');
     if (el) {
       el.textContent = state.contracts.length
@@ -1156,6 +1158,15 @@
       if (state.analyzed) analyze();
     });
     $('#ct-add').addEventListener('click', addContract);
+    $('#ct-apply').addEventListener('click', () => {
+      const total = state.contracts.reduce((a, c) => a + Number(c.premium || 0), 0);
+      if (!total) return;
+      state.premium = clamp(total, 0, 300);
+      $('#premium').value = state.premium;
+      renderSummary(); renderClientStrip(); renderContracts(); saveSession();
+      if (state.analyzed) analyze();
+      toast(`월 보험료를 계약 합계 ${won(state.premium)}만원으로 맞췄습니다`);
+    });
     $('#ct-premium').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addContract(); } });
 
     $('#premium').addEventListener('input', (e) => {
