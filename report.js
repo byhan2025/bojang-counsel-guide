@@ -647,19 +647,21 @@
         s.rect(x, y, half, 150, { fill: gi ? '#FFF7F6' : '#F5F9FE', r: 6, stroke: C.line });
         s.text(title, x + 12, y + 10, { size: 10, weight: 800, color: accent });
         s.text(`${row.item.rank}순위`, x + half - 12, y + 12, { size: 6, weight: 700, color: C.muted, align: 'right' });
-        const cy = y + 84;
+        const cy = y + 78;
         const rr = [40, 29, 17];
         labels.forEach((lb, i) => {
-          if (i >= labels.length) return;
           s.ctx.save();
-          s.ctx.beginPath(); s.ctx.arc(x + 78, cy, rr[i], 0, Math.PI * 2);
+          s.ctx.beginPath(); s.ctx.arc(x + 74, cy, rr[i], 0, Math.PI * 2);
           s.ctx.fillStyle = colors[i]; s.ctx.fill();
-          s.ctx.strokeStyle = '#fff'; s.ctx.lineWidth = 1.2; s.ctx.stroke();
+          s.ctx.strokeStyle = 'rgba(255,255,255,.85)'; s.ctx.lineWidth = 1.2; s.ctx.stroke();
           s.ctx.restore();
         });
-        s.text(labels[0].split(' ')[1] || '', x + 78, cy - 6, { size: 9, weight: 800, color: '#fff', align: 'center' });
-        s.text(labels[1] ? labels[1].split(' ')[1] : '', x + 78, cy + rr[1] - 16, { size: 6.8, weight: 700, color: '#fff', align: 'center' });
-        if (labels[2]) s.text(labels[2].split(' ')[1], x + 78, cy + rr[2] - 10, { size: 6, weight: 700, color: '#fff', align: 'center' });
+        labels.forEach((lb, i) => {
+          const bits = lb.split(' ');
+          const ly = y + 124 + i * 9;
+          s.rect(x + 12, ly + 1, 5, 5, { fill: colors[i], r: 2.5 });
+          s.text(`${bits[0]} ${bits[1] || ''}`, x + 21, ly - 1.2, { size: 5.7, weight: 600, color: C.ink2 });
+        });
 
         // 현재 vs 권장
         const tx = x + 132, tw = half - 144;
