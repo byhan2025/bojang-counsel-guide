@@ -107,6 +107,7 @@ main{max-width:780px;margin:0 auto;padding:16px 16px 10px;}
 
 /* 고객 화면 모드 — 내부 요소 숨김 */
 body.is-client .internal{display:none!important;}
+body.is-client .intro-card{display:none;}
 body.is-client .tabbar{grid-template-columns:repeat(2,1fr);}
 body.is-client .brand-text p{color:#9db4cd;}
 body.is-client .prow-jump{display:none;}
