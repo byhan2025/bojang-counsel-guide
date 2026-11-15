@@ -476,7 +476,7 @@
         const row = $(`.part[data-part="${p.key}"]`, card);
         if (!row) return;
         const badge = $('.mini-badge', row);
-        if (badge && !p.subs) {
+        if (badge) {
           const pct = Math.round(p.fill * 100);
           badge.className = 'mini-badge tone-' + (p.fill >= 1 ? 'ok' : p.fill >= 0.5 ? 'need' : 'gap');
           badge.textContent = pct + '%';
