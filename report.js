@@ -834,11 +834,11 @@
         widths: [86, 214, 56, 88, 71], size: 6.6, rowH: 22, align: ['left', 'left', 'center', 'center', 'right']
       });
       y = s.sectionHead(s.ML, y + 10, s.CW, '03', '보험료 지표', null);
-      y = statTiles(s, s.ML, y + 2, s.CW, [
-        { label: '월 보험료', value: `${won(m.premium)}만원`, sub: '실손 포함 전체' },
-        { label: '연 보험료', value: `${won(m.annual)}만원`, sub: '월 × 12' },
-        { label: '연 대비 진단비', value: m.ratio ? `${m.ratio.toFixed(1)}배` : '—', sub: '12배 이상이면 균형', color: m.ratio && m.ratio < 12 ? C.orange : C.mint },
-        { label: '계약 건수', value: m.contracts.length ? `${m.contracts.length}건` : '—', sub: m.contracts.length ? `합계 ${won(m.contractTotal)}만원` : '앱에서 입력' }
+      y = statTiles(s, s.ML, y + 2, s.CW - 4, [
+        { label: '월 보험료', value: `${won(m.premium)}만원`, sub: '실손 포함 전체', size: 12.5 },
+        { label: '연 보험료', value: `${won(m.annual)}만원`, sub: '월 × 12', size: 12.5 },
+        { label: '연 대비 진단비', value: m.ratio ? `${m.ratio.toFixed(1)}배` : '—', sub: '12배 이상이면 균형', color: m.ratio && m.ratio < 12 ? C.orange : C.mint, size: 12.5 },
+        { label: '계약 건수', value: m.contracts.length ? `${m.contracts.length}건` : '—', sub: m.contracts.length ? `합계 ${won(m.contractTotal)}만원` : '앱에서 입력', size: 12.5 }
       ], { cols: 4, h: 52 });
       y = noteStrip(s, y + 6, '이 점수는 상담 보조용 자체 산식이며 보험사 기준이 아닙니다. 같은 입력이라도 연령대·직업급수·실손 세대에 따라 가중치가 달라집니다.', { size: 6.4 });
       s.footer({ left: `${m.client.name}님 · 보장자산 Summary`, right: '09 / 10' });
