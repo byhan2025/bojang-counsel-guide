@@ -667,19 +667,283 @@ body.is-client .prow-jump{display:none;}
   .viewswitch button{padding:6px 7px;font-size:10px;}
   .brand-text h1{font-size:14.5px;}
 }
-@media print{
-  body{background:#fff;padding:0;}
-  .app-header,.tabbar,.client-banner,.toast,.btn-primary,.btn-kakao,.save-row,.btn-reset,.prow-jump,.copy-mini,.chip-bar{display:none!important;}
-  main{padding:0;max-width:none;}
-  .card,.intro-card,.result-hero{box-shadow:none;border-color:#ccc;break-inside:avoid;}
-  .result-hero{color:#0a1d33;background:#fff;border:1px solid #ccc;}
-  .result-hero *{color:#0a1d33!important;}
-  .ring{display:none;}
-  .acc{break-inside:avoid;}
-  .acc[open] .acc-body{display:block;}
-}
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important;}
+}
+
+/* ================= v2: 위저드 ================= */
+.wizard{margin-top:12px;}
+.wiz-head{margin-bottom:10px;}
+.wiz-bar{height:4px;border-radius:999px;background:#e6ecf5;overflow:hidden;}
+.wiz-bar i{display:block;height:100%;width:20%;border-radius:999px;background:linear-gradient(90deg,#1b4a78,#0fb093);transition:width .3s ease;}
+.wiz-meta{display:flex;align-items:center;gap:8px;margin-top:9px;}
+.wiz-count{font-family:var(--serif);font-size:13px;color:var(--navy-700);font-variant-numeric:tabular-nums;}
+.wiz-title{font-size:12.5px;font-weight:800;color:var(--ink);letter-spacing:-0.02em;}
+.wiz-expand{
+  margin-left:auto;border:1px solid var(--line);background:#fff;color:var(--navy-700);
+  border-radius:999px;padding:5px 11px;font-size:10.5px;font-weight:700;letter-spacing:-0.01em;
+}
+.wiz-expand.is-on{background:var(--navy-800);border-color:var(--navy-800);color:#fff;}
+.wiz-panel{display:none;}
+.wiz-panel.is-active{display:block;animation:fade .22s ease;}
+body.wiz-all .wiz-panel{display:block;margin-bottom:6px;}
+.wiz-panel-title{display:none;}
+body.wiz-all .wiz-panel-title{
+  display:flex;align-items:center;gap:8px;margin:14px 0 8px;
+  font-size:13px;font-weight:800;color:var(--navy-800);letter-spacing:-0.03em;
+  padding-left:2px;
+}
+body.wiz-all .wiz-panel-title .n{
+  display:grid;place-items:center;width:20px;height:20px;border-radius:50%;
+  background:var(--navy-800);color:var(--mint-light);font-size:10.5px;font-weight:800;
+}
+body.wiz-all .wiz-panel-title em{font-style:normal;font-size:10.5px;font-weight:600;color:var(--muted);}
+body.wiz-all .wiz-nav,body.wiz-all .wiz-bar,body.wiz-all .wiz-count{display:none;}
+.wiz-nav{display:flex;gap:8px;margin-top:12px;}
+.wiz-btn{
+  flex:1;border:1px solid var(--line);background:#fff;color:var(--navy-700);
+  border-radius:12px;padding:13px;font-size:13.5px;font-weight:800;letter-spacing:-0.02em;
+}
+.wiz-btn:disabled{opacity:.4;}
+.wiz-btn.primary{background:linear-gradient(135deg,#0a1d33,#1b4a78);border-color:transparent;color:#fff;flex:1.6;}
+
+/* 담보 입력 파트 */
+.cov-card .card-title{gap:8px;margin-bottom:14px;align-items:center;}
+.cov-card .card-title .badge{margin-left:auto;}
+.part{padding:12px 0;border-bottom:1px solid var(--line-2);}
+.part:first-of-type{padding-top:0;}
+.part:last-of-type{border-bottom:0;padding-bottom:0;}
+.part-head{display:flex;align-items:flex-start;gap:8px;margin-bottom:9px;}
+.part-label{flex:1;min-width:0;}
+.part-label strong{display:block;font-size:12.5px;font-weight:800;letter-spacing:-0.02em;}
+.part-label span{display:block;font-size:10px;color:var(--muted);letter-spacing:0;margin-top:1px;}
+.part-side{flex:0 0 auto;}
+.mini-badge{
+  display:inline-block;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:999px;
+  letter-spacing:0;font-variant-numeric:tabular-nums;
+}
+.mini-badge.tone-ok{background:var(--ok-soft);color:var(--ok);}
+.mini-badge.tone-need{background:var(--warn-soft);color:var(--warn);}
+.mini-badge.tone-gap{background:var(--danger-soft);color:var(--danger);}
+.rec-hint{margin-left:auto;font-size:9.5px;color:var(--muted);align-self:center;letter-spacing:0;}
+
+.scale-pick{display:grid;gap:6px;}
+.scale-opt{
+  display:grid;grid-template-columns:16px 1fr auto;align-items:center;gap:8px;
+  border:1px solid var(--line);background:#fbfcfe;border-radius:10px;padding:10px 12px;text-align:left;
+}
+.scale-opt.is-on{background:var(--navy-800);border-color:var(--navy-800);}
+.scale-opt .so-dot{width:14px;height:14px;border-radius:50%;border:1.5px solid #c9d5e3;background:#fff;}
+.scale-opt.is-on .so-dot{border-color:var(--mint-light);background:var(--mint-light);box-shadow:inset 0 0 0 3px var(--navy-800);}
+.so-label{font-size:12.5px;font-weight:800;color:var(--ink);letter-spacing:-0.02em;}
+.scale-opt.is-on .so-label{color:#fff;}
+.so-hint{font-size:10px;color:var(--muted);letter-spacing:0;}
+.scale-opt.is-on .so-hint{color:#9fc0d8;}
+
+.switch-row{
+  display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line-2);cursor:pointer;
+}
+.switch-row:last-of-type{border-bottom:0;}
+.switch-row .part-label{flex:1;}
+.switch-row input{position:absolute;opacity:0;width:0;height:0;}
+.switch-row .sw{
+  flex:0 0 auto;width:42px;height:25px;border-radius:999px;background:#dbe3ee;position:relative;transition:background .18s;
+}
+.switch-row .sw::after{
+  content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px rgba(10,29,51,.25);transition:transform .18s;
+}
+.switch-row input:checked + .sw{background:var(--point);}
+.switch-row input:checked + .sw::after{transform:translateX(17px);}
+.switch-row input:focus-visible + .sw{box-shadow:0 0 0 3px rgba(15,176,147,.25);}
+
+/* 입력 요약 */
+.wiz-summary .sum-top{font-size:11.5px;color:var(--ink-2);letter-spacing:0;margin-bottom:10px;}
+.sum-row{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid var(--line-2);}
+.sum-row:last-of-type{border-bottom:0;}
+.sr-rank{
+  width:18px;height:18px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
+  background:#eef3fa;color:var(--navy-700);font-size:9.5px;font-weight:800;
+}
+.sum-row strong{font-size:12px;letter-spacing:-0.02em;flex:0 0 42px;}
+.sr-val{flex:1;min-width:0;font-size:10.5px;color:var(--muted);letter-spacing:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sum-note{font-size:10px;color:var(--muted);margin-top:10px;letter-spacing:0;}
+
+/* ================= v2: 레이더 · 통계 ================= */
+.radar-wrap{display:flex;justify-content:center;padding:2px 0 4px;}
+.radar{width:100%;max-width:320px;height:auto;}
+.radar .rd-label{font-family:var(--font);font-size:10px;font-weight:800;fill:var(--ink);}
+.radar .rd-value{font-family:var(--font);font-size:9px;font-weight:700;fill:var(--muted);}
+.rd-legend{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px;}
+.rd-legend-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:8px;background:#f7f9fc;}
+.rd-legend-item i{width:7px;height:7px;border-radius:2px;}
+.rd-legend-item span{font-size:9.5px;color:var(--muted);letter-spacing:0;}
+.rd-legend-item b{font-size:11px;color:var(--ink);font-variant-numeric:tabular-nums;}
+
+.stats{display:grid;gap:10px;}
+.stat-card{border:1px solid var(--line);border-radius:12px;padding:13px 13px 11px;background:#fbfcfe;}
+.stat-head{display:flex;align-items:center;gap:8px;}
+.stat-head strong{font-size:12.5px;font-weight:800;color:var(--navy-800);letter-spacing:-0.02em;}
+.stat-badge{
+  margin-left:auto;font-size:11px;font-weight:800;color:#0a7d68;background:var(--point-soft);
+  border-radius:8px;padding:2px 8px;letter-spacing:-0.01em;font-variant-numeric:tabular-nums;
+}
+.stat-sub{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:0;}
+.stat-rows{margin-top:10px;display:grid;gap:7px;}
+.stat-row{display:grid;grid-template-columns:1fr 84px 56px;align-items:center;gap:8px;}
+.stat-row .sl{font-size:10.5px;color:var(--ink-2);letter-spacing:0;}
+.stat-row .sl em{font-style:normal;font-size:9px;color:var(--muted);margin-left:4px;}
+.stat-row .sb{height:7px;border-radius:999px;background:#e9eef6;overflow:hidden;}
+.stat-row .sb i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1b4a78,#3f7ba6);}
+.stat-row .sv{font-size:10.5px;font-weight:800;color:var(--navy-700);text-align:right;font-variant-numeric:tabular-nums;letter-spacing:0;}
+.stat-notes{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;}
+.stat-notes span{font-size:9.5px;color:var(--ink-2);background:#eef4fb;border-radius:6px;padding:3px 7px;letter-spacing:0;}
+.stat-source{font-size:9px;color:var(--muted);margin-top:9px;letter-spacing:0;line-height:1.5;}
+.stk-bar{display:flex;height:18px;border-radius:6px;overflow:hidden;margin-top:11px;background:#e9eef6;}
+.stk-seg{display:flex;align-items:center;justify-content:center;}
+.stk-seg b{font-size:8.5px;color:#fff;font-weight:800;letter-spacing:0;}
+.stk-legend{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:8px;}
+.stk-li{font-size:9.5px;color:var(--ink-2);letter-spacing:0;display:inline-flex;align-items:center;gap:4px;}
+.stk-li i{width:7px;height:7px;border-radius:2px;display:inline-block;}
+
+/* 청구 안내 */
+.claim-guide{display:grid;gap:8px;}
+.claim-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line-2);}
+.claim-row:last-child{border-bottom:0;}
+.cr-rank{
+  width:18px;height:18px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
+  background:var(--navy-800);color:var(--mint-light);font-size:9.5px;font-weight:800;
+}
+.claim-row strong{flex:0 0 44px;font-size:11.5px;letter-spacing:-0.02em;}
+.claim-row span:last-child{flex:1;min-width:0;font-size:10.5px;color:var(--ink-2);letter-spacing:0;line-height:1.5;}
+
+/* PDF 버튼 */
+.btn-pdf{
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  border:1px solid var(--navy-800);background:#fff;color:var(--navy-800);
+  border-radius:14px;padding:14px;font-size:13.5px;font-weight:800;letter-spacing:-0.02em;margin-bottom:8px;
+}
+.btn-pdf:active{background:#eef4fb;}
+.print-head{display:none;}
+
+/* ================= 인쇄(A4) 리포트 ================= */
+@media print{
+  @page{ size:A4; margin:11mm 10mm 12mm; }
+  html,body{
+    background:#fff!important; color:#111!important; padding:0!important; margin:0!important;
+    font-size:10pt; line-height:1.5; letter-spacing:-0.01em;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .no-print,.app-header,.tabbar,.client-banner,.toast,.intro-card,.wizard,.btn-primary,
+  .save-bar,.prow-jump,.copy-mini,.chip-bar,.app-foot,.disclaimer + .no-print{display:none!important;}
+  main{max-width:none;padding:0;margin:0;}
+  .view{display:none!important;}
+  #view-analysis{display:block!important;}
+  #result{display:block!important;margin:0;}
+  .print-head{display:block;margin:0 0 6mm;padding-bottom:3mm;border-bottom:1.2pt solid #0b2545;}
+  .ph-kicker{font-size:7pt;letter-spacing:.22em;color:#b08a3e;font-weight:700;}
+  .ph-title{font-size:17pt;font-weight:800;color:#0b2545;letter-spacing:-0.03em;margin-top:1.5mm;}
+  .ph-meta{display:flex;justify-content:space-between;font-size:8.5pt;color:#4a5d75;margin-top:2mm;}
+
+  .card{
+    border:.6pt solid #d7dfea!important;border-radius:2.5mm!important;box-shadow:none!important;
+    margin:0 0 2.4mm!important;padding:2.6mm 3mm!important;background:#fff!important;
+    break-inside:auto;
+  }
+  .card-title{font-size:9.5pt!important;margin-bottom:1.8mm!important;}
+  .eyebrow{font-size:6.5pt!important;color:#b08a3e!important;border-right:.5pt solid #d7dfea;}
+  .card-sub{font-size:7pt!important;}
+
+  .result-hero{
+    background:#fff!important;color:#0b2545!important;border:1pt solid #0b2545!important;
+    box-shadow:none!important;border-radius:2.5mm!important;padding:3mm!important;margin:0 0 2.4mm!important;
+    position:relative;
+  }
+  .result-hero *{color:#0b2545!important;}
+  .result-hero::before{display:none;}
+  .hero-eyebrow{color:#b08a3e!important;}
+  .hero-input{color:#4a5d75!important;font-size:7.5pt!important;}
+  .score-wrap{gap:5mm!important;}
+  .ring-box{width:22mm!important;height:22mm!important;}
+  .ring-bg{stroke:#e3e9f2!important;}
+  .ring-text strong{font-size:18pt!important;}
+  .ring-text span{color:#6b7f96!important;}
+  .score-copy h3{font-size:10pt!important;}
+  .score-copy p{color:#4a5d75!important;font-size:8pt!important;}
+  .score-grade{border:.5pt solid currentColor;font-size:7.5pt!important;}
+  .hero-stats{gap:1.5mm!important;margin-top:2mm!important;}
+  .hero-stats > div{background:#f7f9fc!important;border:.5pt solid #dfe6ef!important;border-radius:1.5mm!important;padding:1.5mm!important;}
+  .hero-stats span{color:#6b7f96!important;font-size:6.6pt!important;}
+  .hero-stats strong{font-size:8.6pt!important;}
+  .weight-notes{gap:1.5mm!important;margin-top:2.5mm!important;}
+  .weight-notes span{background:#f4f7fb!important;border:.5pt solid #e0e7f0!important;color:#34506e!important;font-size:6.6pt!important;padding:.8mm 1.6mm!important;}
+  .weight-notes span:nth-child(n+4){display:none!important;}
+  .score-formula{color:#5a718b!important;font-size:6.8pt!important;margin-top:2mm!important;}
+
+  .print-break{break-before:page;page-break-before:always;}
+  .prow{break-inside:avoid;padding-bottom:1.2mm!important;}
+  .prow-head{margin-bottom:.8mm!important;gap:1.5mm!important;}
+  .gauge{margin-top:0!important;}
+  .gauge-track{height:1.6mm!important;}
+  .gauge-scale{display:none!important;}
+  .prow-name strong{font-size:9.5pt!important;}
+  .prow-pct{font-size:9.5pt!important;}
+  .badge{border:.5pt solid currentColor;font-size:7pt!important;padding:.6mm 2mm!important;}
+  .gauge-track{background:#eef2f8!important;border:.5pt solid #e0e7f0;}
+  .gauge-fill{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .gauge-scale{font-size:6.4pt!important;margin-top:.8mm!important;}
+  .prow-tail{font-size:6.8pt!important;margin-top:.8mm!important;gap:1mm!important;}
+
+  .stats{grid-template-columns:1fr 1fr!important;gap:2mm!important;}
+  .stat-card{break-inside:avoid;background:#fbfcfe!important;border:.5pt solid #e0e7f0!important;padding:2.4mm!important;border-radius:1.8mm!important;}
+  .stat-head strong{font-size:8pt!important;}
+  .stat-badge{font-size:7pt!important;padding:.4mm 1.6mm!important;}
+  .stat-sub{font-size:6.2pt!important;}
+  .stat-rows{margin-top:1.6mm!important;gap:1.2mm!important;}
+  .stat-row{grid-template-columns:1fr 26mm 15mm!important;gap:1.6mm!important;}
+  .stat-row .sl{font-size:6.4pt!important;}
+  .stat-row .sl em{font-size:5.6pt!important;}
+  .stat-row .sb{height:1.6mm!important;}
+  .stat-row .sv{font-size:6.6pt!important;}
+  .stat-notes{margin-top:1.4mm!important;gap:1mm!important;}
+  .stat-notes span{font-size:5.8pt!important;padding:.4mm 1.2mm!important;}
+  .stat-source{font-size:5.4pt!important;margin-top:1.4mm!important;}
+  .stk-bar{height:3mm!important;margin-top:1.6mm!important;}
+  .stk-seg b{font-size:5.4pt!important;}
+  .stk-legend{gap:1mm 3mm!important;margin-top:1.2mm!important;}
+  .stk-li{font-size:5.8pt!important;}
+  .stat-row .sb i,.stk-seg,.radar polygon,.radar circle{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .radar{max-width:52mm!important;}
+  .radar .rd-label{font-size:6.6pt!important;}
+  .radar .rd-value{font-size:6pt!important;}
+  .rd-legend{gap:1mm!important;margin-top:1mm!important;}
+  .rd-legend-item{background:#f7f9fc!important;padding:1mm .5mm!important;border-radius:1.2mm!important;}
+  .rd-legend-item span{font-size:6pt!important;}
+  .rd-legend-item b{font-size:7pt!important;}
+
+  .steps,.step{break-inside:avoid;}
+  .step-body p{font-size:6.8pt!important;line-height:1.45!important;margin-top:.6mm!important;}
+  .step-body strong{font-size:7.4pt!important;}
+  .step-no{width:4mm!important;height:4mm!important;font-size:6.4pt!important;}
+  .steps{gap:1.6mm!important;}
+  .claim-row{break-inside:avoid;padding:.6mm 0!important;}
+  .claim-row strong{font-size:6.8pt!important;}
+  .claim-row span:last-child{font-size:6.4pt!important;}
+  .cr-rank{width:3.6mm!important;height:3.6mm!important;font-size:5.8pt!important;}
+  .claim-guide{gap:0!important;}
+  .checkpoints{grid-template-columns:1fr 1fr!important;gap:1.6mm!important;}
+  .cp{break-inside:avoid;background:#fff!important;border:.5pt solid #e0e7f0!important;padding:2mm!important;border-radius:1.6mm!important;}
+  .cp-title{font-size:7pt!important;margin-bottom:.6mm!important;}
+  .cp p{font-size:5.9pt!important;line-height:1.4!important;}
+  .checkpoints .cp:nth-child(n+7){display:none!important;}
+
+  /* 고객 리포트에서는 내부 요소 제거 */
+  body.is-client .internal{display:none!important;}
+
+  /* 상담자 리포트에는 실손 비교 등 보조 정보 압축 */
+  .disclaimer{font-size:6.2pt!important;margin-top:1.4mm!important;color:#6b7f96!important;}
+  a{text-decoration:none;color:inherit;}
+  .acc>.acc-body{display:block!important;}
 }
 
 </style>
@@ -722,71 +986,119 @@ body.is-client .prow-jump{display:none;}
   <!-- ================= TAB 1 : 보장분석 ================= -->
   <section id="view-analysis" class="view is-active" aria-labelledby="tab-analysis">
 
-    <div class="intro-card">
+    <div class="intro-card no-print">
       <div class="intro-eyebrow">BOJANG ANALYSIS</div>
       <h2>5대 담보를 한 장으로<br>진단하고 리모델링합니다</h2>
       <p>입력값은 서버로 전송되지 않고 이 화면 안에서만 계산됩니다.</p>
     </div>
 
-    <div class="card">
-      <div class="card-title"><span class="eyebrow">01 · PROFILE</span> 고객 기본 정보</div>
-
-      <div class="field">
-        <label class="field-label">연령대</label>
-        <div class="seg" id="seg-age" role="group" aria-label="연령대"></div>
-      </div>
-
-      <div class="field">
-        <label class="field-label">성별</label>
-        <div class="seg seg-2" id="seg-gender" role="group" aria-label="성별"></div>
-      </div>
-
-      <div class="field">
-        <label class="field-label">직업급수 <span class="hint" id="job-hint">사무·관리직</span></label>
-        <div class="seg seg-3" id="seg-job" role="group" aria-label="직업급수"></div>
-      </div>
-
-      <div class="field">
-        <label class="field-label">실손의료보험 세대</label>
-        <div class="seg seg-wrap" id="seg-silson" role="group" aria-label="실손 세대"></div>
-      </div>
-
-      <div class="field">
-        <label class="field-label" for="premium">현재 월 보험료</label>
-        <div class="input-row">
-          <input id="premium" type="number" inputmode="numeric" min="0" max="300" step="1" value="22">
-          <span class="unit">만원</span>
+    <!-- ---------- 위저드 ---------- -->
+    <div class="wizard no-print" id="wizard">
+      <div class="wiz-head">
+        <div class="wiz-bar"><i id="wiz-bar-fill"></i></div>
+        <div class="wiz-meta">
+          <span class="wiz-count" id="wiz-count">1/5</span>
+          <span class="wiz-title" id="wiz-title">기본 정보</span>
+          <button type="button" class="wiz-expand" id="btn-expand">한눈에 보기</button>
         </div>
-        <p class="field-note">건강보험료 전체(주계약 + 특약, 실손 포함) 기준</p>
+      </div>
+
+      <div class="wiz-panels" id="wiz-panels">
+
+        <div class="wiz-panel is-active" data-step="1">
+          <div class="wiz-panel-title"><span class="n">1</span>기본 정보<em>연령대 · 성별 · 직업급수 · 실손 · 보험료</em></div>
+          <div class="card">
+            <div class="field">
+              <label class="field-label">연령대</label>
+              <div class="seg" id="seg-age" role="group" aria-label="연령대"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">성별</label>
+              <div class="seg seg-2" id="seg-gender" role="group" aria-label="성별"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">직업급수 <span class="hint" id="job-hint">사무·관리직</span></label>
+              <div class="seg seg-3" id="seg-job" role="group" aria-label="직업급수"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">실손의료보험 세대</label>
+              <div class="seg seg-wrap" id="seg-silson" role="group" aria-label="실손 세대"></div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="premium">현재 월 보험료</label>
+              <div class="input-row">
+                <input id="premium" type="number" inputmode="numeric" min="0" max="300" step="1" value="22">
+                <span class="unit">만원</span>
+              </div>
+              <p class="field-note">건강보험료 전체(주계약 + 특약, 실손 포함) 기준</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="wiz-panel" data-step="2">
+          <div class="wiz-panel-title"><span class="n">2</span>암<em>일반암 · 유사암 · 주요치료비 · 재진단</em></div>
+          <div id="card-cancer"></div>
+        </div>
+
+        <div class="wiz-panel" data-step="3">
+          <div class="wiz-panel-title"><span class="n">3</span>뇌 · 심장<em>보장 범위와 수술·치료비</em></div>
+          <div id="card-brain"></div>
+          <div id="card-heart"></div>
+        </div>
+
+        <div class="wiz-panel" data-step="4">
+          <div class="wiz-panel-title"><span class="n">4</span>수술 · 간병<em>종수·N대, 일당·요양</em></div>
+          <div id="card-surgery"></div>
+          <div id="card-care"></div>
+        </div>
+
+        <div class="wiz-panel" data-step="5">
+          <div class="wiz-panel-title"><span class="n">5</span>계약 형태<em>적립 · 갱신 · 특약 점검</em></div>
+          <div class="card">
+            <div class="card-title"><span class="eyebrow">03 · PREMIUM</span> 보험료 구성 <span class="card-sub">해당 항목만 체크</span></div>
+            <div class="checks" id="premium-flags"></div>
+          </div>
+          <div class="card wiz-summary">
+            <div class="card-title"><span class="eyebrow">CHECK</span> 입력 요약</div>
+            <div id="wiz-summary"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wiz-nav" id="wiz-nav">
+        <button type="button" class="wiz-btn" id="wiz-prev">이전</button>
+        <button type="button" class="wiz-btn primary" id="wiz-next">다음</button>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title"><span class="eyebrow">02 · COVERAGE</span> 보유 담보 <span class="card-sub">진단비는 일반암 기준</span></div>
-      <div id="coverage-inputs"></div>
-    </div>
-
-    <div class="card internal">
-      <div class="card-title"><span class="eyebrow">03 · PREMIUM</span> 보험료 구성 <span class="card-sub">해당 항목만 체크</span></div>
-      <div class="checks" id="premium-flags"></div>
-    </div>
-
-    <button class="btn-primary btn-analyze" id="btn-analyze" type="button">
+    <button class="btn-primary btn-analyze no-print" id="btn-analyze" type="button">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3.5-4.5 3 2.5L20 6"/></svg>
-      진단 결과 보기
+      보장분석 진단하기
     </button>
 
+    <!-- ---------- 결과 (인쇄 리포트 본문) ---------- -->
     <div id="result" class="result" hidden aria-live="polite">
-      <div class="result-hero" id="result-hero"></div>
-
-      <div class="card">
-        <div class="card-title"><span class="eyebrow">PRIORITY</span> 5대 우선순위 진단</div>
-        <div id="result-rows" class="priority-rows"></div>
+      <div class="print-head">
+        <div class="ph-kicker">BOJANG ANALYSIS REPORT</div>
+        <div class="ph-title">5대 담보 보장분석 리포트</div>
+        <div class="ph-meta"><span id="ph-client">—</span><span id="ph-date">—</span></div>
       </div>
 
-      <div class="card internal">
-        <div class="card-title"><span class="eyebrow">INTERNAL</span> 보장 구멍 · 보험료 다이어트</div>
-        <div id="result-checkpoints" class="checkpoints"></div>
+      <div class="result-hero" id="result-hero"></div>
+
+      <div class="card" id="radar-card">
+        <div class="card-title"><span class="eyebrow">BALANCE</span> 보장 밸런스 5축</div>
+        <div id="radar"></div>
+      </div>
+
+      <div class="card" id="stats-card">
+        <div class="card-title"><span class="eyebrow">FACTS</span> 왜 이 순서인가 <span class="card-sub">공식 통계</span></div>
+        <div id="stats" class="stats"></div>
+      </div>
+
+      <div class="card print-break">
+        <div class="card-title"><span class="eyebrow">PRIORITY</span> 5대 우선순위 진단</div>
+        <div id="result-rows" class="priority-rows"></div>
       </div>
 
       <div class="card">
@@ -794,7 +1106,21 @@ body.is-client .prow-jump{display:none;}
         <div id="result-steps" class="steps"></div>
       </div>
 
-      <div class="save-bar" id="save-bar" hidden>
+      <div class="card">
+        <div class="card-title"><span class="eyebrow">CLAIM</span> 청구 준비 안내</div>
+        <div id="claim-guide" class="claim-guide"></div>
+      </div>
+
+      <div class="card internal">
+        <div class="card-title"><span class="eyebrow">INTERNAL</span> 보장 구멍 · 보험료 다이어트</div>
+        <div id="result-checkpoints" class="checkpoints"></div>
+      </div>
+
+      <div class="save-bar no-print" id="save-bar">
+        <button class="btn-pdf" id="btn-pdf" type="button">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 13h4M10 17h4"/></svg>
+          PDF 저장 / 리포트 출력
+        </button>
         <button class="btn-kakao" id="btn-kakao" type="button">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 3C6.9 3 3 6.2 3 10.1c0 2.5 1.6 4.7 4 6.1-.2.7-.7 2.4-.8 2.8 0 .4.2.4.4.3.3-.2 2.3-1.6 3.2-2.2.7.1 1.4.2 2.2.2 5.1 0 9-3.2 9-7.2S17.1 3 12 3z"/></svg>
           고객 카톡 요약 복사
@@ -805,10 +1131,10 @@ body.is-client .prow-jump{display:none;}
         </div>
       </div>
 
-      <p class="disclaimer">종합 점수와 권장선은 상담 보조용 자체 산식입니다. 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.</p>
+      <p class="disclaimer">종합 점수·권장선은 상담 보조용 자체 산식입니다. 통계는 각 출처의 공표 수치이며, 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.</p>
     </div>
 
-    <div class="card internal">
+    <div class="card internal no-print">
       <div class="card-title"><span class="eyebrow">RECENT</span> 최근 상담
         <span class="card-sub">이 기기에만 저장 · 최대 5건</span>
         <button type="button" class="btn-reset" id="btn-reset">새 상담</button></div>
@@ -818,7 +1144,7 @@ body.is-client .prow-jump{display:none;}
 
   <!-- ================= TAB 2 : 5대 담보 가이드 ================= -->
   <section id="view-guide" class="view" aria-labelledby="tab-guide">
-    <div class="chip-bar" id="guide-chips" role="tablist" aria-label="5대 담보"></div>
+    <div class="chip-bar no-print" id="guide-chips" role="tablist" aria-label="5대 담보"></div>
     <div id="guide-body" class="guide-body"></div>
   </section>
 
@@ -842,7 +1168,7 @@ body.is-client .prow-jump{display:none;}
           <li><strong>MRI 검사를 위한 당일입원</strong>, 응급실 입원도 '입원'</li>
           <li>질병 <strong>진단만</strong> 받고 치료를 안 했어도 고지 대상</li>
           <li>기간을 <strong>착각</strong>해 잘못 답해도 고지의무 위반 — 마지막 입원·수술일부터 날짜를 센다</li>
-          <li>간편심사도 묻는 항목은 정확히 답해야 하며, 보험료는 일반심사보다 비싸다</li>
+          <li>간편심사도 묶는 항목은 정확히 답해야 하며, 보험료는 일반심사보다 비싸다</li>
         </ul>
       </div>
       <p class="source-note">근거: 금융감독원 「주요 분쟁사례로 알아본 소비자 유의사항 – 간편보험편」(2024.6.13) · 보험업감독업무시행세칙 별표14 · 상법 제651조(해지권: 안 날부터 1개월, 계약일부터 3년)</p>
@@ -876,7 +1202,7 @@ body.is-client .prow-jump{display:none;}
   </section>
 </main>
 
-<nav class="tabbar" role="tablist" aria-label="주요 메뉴">
+<nav class="tabbar no-print" role="tablist" aria-label="주요 메뉴">
   <button class="tab is-active" id="tab-analysis" data-view="analysis" role="tab" aria-selected="true" aria-controls="view-analysis">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3.5-4.5 3 2.5L20 6"/></svg>
     <span>보장분석</span>
@@ -891,7 +1217,7 @@ body.is-client .prow-jump{display:none;}
   </button>
 </nav>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="toast no-print" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 /* 보장분석 상담 가이드 — 콘텐츠 데이터
@@ -900,41 +1226,130 @@ body.is-client .prow-jump{display:none;}
 
 const PRIORITY = [
   {
-    key: 'cancer', rank: 1, name: '암', sub: '암 진단비',
-    need: '진단비 + 치료비의 이중 구조',
+    key: 'cancer', rank: 1, name: '암', sub: '진단비 · 치료비', unit: '만원',
     rec: { '20': 3000, '30': 3000, '40': 5000, '50': 5000, '60': 3000, '70': 2000 },
-    unit: '만원', inputLabel: '일반암 진단비', step: 500, quick: [0, 1000, 2000, 3000, 5000, 10000],
-    weight: 30
+    weight: 30,
+    parts: [
+      { key: 'general', type: 'amount', label: '일반암 진단비', weight: 0.55, factor: 1, step: 500, quick: [0, 1000, 3000, 5000, 10000] },
+      { key: 'similar', type: 'amount', label: '유사암 진단비', hint: '갑상선·기타피부·제자리·경계성', weight: 0.15, factor: 0.2, step: 100, quick: [0, 200, 500, 1000, 2000] },
+      { key: 'treatment', type: 'amount', label: '암 주요치료비', hint: '표적·면역·비급여', weight: 0.2, factor: 0.4, step: 500, quick: [0, 1000, 2000, 3000, 5000] },
+      { key: 'recur', type: 'bool', label: '재진단·전이암 보장', weight: 0.1 }
+    ]
   },
   {
-    key: 'brain', rank: 2, name: '뇌', sub: '뇌혈관 진단비',
-    need: '뇌혈관질환(I60~I69) 기준',
+    key: 'brain', rank: 2, name: '뇌', sub: '뇌혈관', unit: '만원',
     rec: { '20': 2000, '30': 2000, '40': 3000, '50': 3000, '60': 2000, '70': 2000 },
-    unit: '만원', inputLabel: '뇌혈관질환 진단비', step: 500, quick: [0, 1000, 2000, 3000, 5000],
-    weight: 22
+    weight: 22,
+    parts: [
+      { key: 'scope', type: 'scale', label: '보장 범위', weight: 0.7, options: [
+        { v: 'none', label: '미보유', score: 0 },
+        { v: 'bleed', label: '뇌출혈', hint: 'I60~I62', score: 0.45 },
+        { v: 'stroke', label: '뇌졸중', hint: 'I60~I64', score: 0.72 },
+        { v: 'vascular', label: '뇌혈관질환', hint: 'I60~I69', score: 1 }
+      ] },
+      { key: 'treat', type: 'bool', label: '뇌혈관 수술·혈전용해치료비', weight: 0.3 }
+    ]
   },
   {
-    key: 'heart', rank: 3, name: '심장', sub: '허혈성심장 진단비',
-    need: '허혈성심장질환(I20~I25) 기준',
+    key: 'heart', rank: 3, name: '심장', sub: '허혈성심장', unit: '만원',
     rec: { '20': 1000, '30': 1000, '40': 2000, '50': 2000, '60': 1000, '70': 1000 },
-    unit: '만원', inputLabel: '허혈성심장질환 진단비', step: 500, quick: [0, 500, 1000, 2000, 3000],
-    weight: 18
+    weight: 18,
+    parts: [
+      { key: 'scope', type: 'scale', label: '보장 범위', weight: 0.7, options: [
+        { v: 'none', label: '미보유', score: 0 },
+        { v: 'mi', label: '급성심근경색', hint: 'I21~I22', score: 0.45 },
+        { v: 'ischemic', label: '허혈성심장', hint: 'I20~I25', score: 0.8 },
+        { v: 'cardiac', label: '심장질환', hint: '부정맥·판막·심부전', score: 1 }
+      ] },
+      { key: 'surgery', type: 'bool', label: '심혈관 수술비', weight: 0.3 }
+    ]
   },
   {
-    key: 'surgery', rank: 4, name: '수술비', sub: '1~5종 · N대',
-    need: '5종 수술비 + N대 수술비',
+    key: 'surgery', rank: 4, name: '수술비', sub: '종수 · N대', unit: '만원',
     rec: { '20': 500, '30': 500, '40': 500, '50': 500, '60': 300, '70': 300 },
-    unit: '만원', inputLabel: '5종 수술비 1회당', step: 100, quick: [0, 100, 300, 500, 1000],
-    aux: { key: 'nDae', label: 'N대 수술비 보유 (21·22·30대 등)' },
-    weight: 15
+    weight: 15,
+    parts: [
+      { key: 'disease', type: 'amount', label: '질병 1~5종 수술비', hint: '5종 기준 1회당', weight: 0.5, factor: 1, step: 100, quick: [0, 100, 300, 500, 1000] },
+      { key: 'nDae', type: 'bool', label: 'N대 질병수술비', hint: '21·22·30대 등', weight: 0.3 },
+      { key: 'injury', type: 'bool', label: '상해수술비', weight: 0.2 }
+    ]
   },
   {
-    key: 'care', rank: 5, name: '간병비', sub: '일당 · 요양',
-    need: '간병인 사용일당 + 장기요양',
+    key: 'care', rank: 5, name: '간병비', sub: '일당 · 요양', unit: '만원',
     rec: { '20': 8, '30': 8, '40': 10, '50': 10, '60': 10, '70': 10 },
-    unit: '만원', inputLabel: '간병인 사용일당', step: 1, quick: [0, 5, 8, 10, 15],
-    aux: { key: 'longTerm', label: '장기요양등급(1~5·인지지원) 보장 보유' },
-    weight: 15
+    weight: 15,
+    parts: [
+      { key: 'daily', type: 'amount', label: '간병인 사용일당', hint: '1일당', weight: 0.45, factor: 1, step: 1, quick: [0, 5, 8, 10, 15] },
+      { key: 'nursing', type: 'bool', label: '간호간병통합서비스', weight: 0.25 },
+      { key: 'ltc', type: 'bool', label: '장기요양등급(1~5·인지지원)', weight: 0.3 }
+    ]
+  }
+];
+
+/* 단계별 위저드 구성 */
+const WIZARD = [
+  { step: 1, key: 'profile', title: '기본 정보', desc: '연령대 · 성별 · 직업급수 · 실손 · 보험료' },
+  { step: 2, key: 'cancer', title: '암', desc: '일반암 · 유사암 · 주요치료비 · 재진단' },
+  { step: 3, key: 'brainheart', title: '뇌 · 심장', desc: '보장 범위와 수술·치료비' },
+  { step: 4, key: 'surgerycare', title: '수술 · 간병', desc: '종수·N대, 일당·요양' },
+  { step: 5, key: 'contract', title: '계약 형태', desc: '적립·갱신·특약 점검' }
+];
+
+/* 공개 통계 — 출처·기준연도 명시 (사용자 제공 검증 수치) */
+const STATS = [
+  {
+    id: 'death',
+    title: '사망원인 비중',
+    source: '통계청 2024년 사망원인통계',
+    headline: '3대 중증질환 합산',
+    headlineValue: '41.1%',
+    max: 25,
+    rows: [
+      { label: '암', value: 24.8, rank: '1위' },
+      { label: '심장질환', value: 9.4, rank: '2위' },
+      { label: '뇌혈관질환', value: 6.9, rank: '4위' }
+    ]
+  },
+  {
+    id: 'cancer',
+    title: '암 발생 · 생존',
+    source: '보건복지부·중앙암등록본부 2023년 국가암등록통계',
+    headline: '5년 상대생존율',
+    headlineValue: '73.7%',
+    max: 50,
+    rows: [
+      { label: '남자 평생 발생 확률', value: 44.6 },
+      { label: '여자 평생 발생 확률', value: 38.2 }
+    ]
+  },
+  {
+    id: 'stroke',
+    title: '뇌경색 vs 뇌내출혈',
+    source: '중앙심뇌혈관질환센터·건강보험통계 2023',
+    headline: '뇌경색이 약 5.1배',
+    headlineValue: '5.1배',
+    max: 550000,
+    rows: [
+      { label: '뇌경색 I63', value: 528440, unit: '명' },
+      { label: '뇌내출혈 I60~I62', value: 103375, unit: '명' }
+    ],
+    notes: ['뇌경색 입원 평균 62.7일', '1인당 진료비 2,562만 원']
+  },
+  {
+    id: 'ltc',
+    title: '장기요양등급 분포',
+    source: '건보공단 2025 노인장기요양보험 통계연보',
+    headline: '3~5등급·인지지원 합계',
+    headlineValue: '87.4%',
+    stacked: [
+      { label: '1등급', value: 4.5 },
+      { label: '2등급', value: 8.2 },
+      { label: '3등급', value: 26.4 },
+      { label: '4등급', value: 46.8 },
+      { label: '5등급', value: 11.8 },
+      { label: '인지지원', value: 2.4 }
+    ],
+    notes: ['인정자 123만 5,045명', '월평균 급여비 154만 원']
   }
 ];
 
@@ -990,7 +1405,8 @@ const GUIDES = {
       '<b>1회한 담보의 중복</b> — 증권이 여러 개여도 각 담보는 1회씩. 총액이 두꺼워 보여도 재진단은 안 됩니다.',
       '진단비만 있고 <b>항암치료비(표적·면역·방사선)</b> 담보가 없으면 장기 치료에서 공백이 생깁니다.',
       '갑상선암이 림프절로 전이된 경우 <b>원발부위 기준 조항</b>이 있으면 갑상선암으로 분류됩니다. 이 조항의 설명 여부가 다퉈진 지점입니다(대법원 2025.3.13. 선고 2023다250746).',
-      '<b>갱신형</b>은 갱신 시점에 보험료가 크게 오르고, 재가입 심사에서 가입이 막힐 수 있습니다.'
+      '<b>갱신형</b>은 갱신 시점에 보험료가 크게 오르고, 재가입 심사에서 가입이 막힐 수 있습니다.',
+      '<b>재진단·전이암</b> 담보가 따로 있는지 확인하세요. 일반암 1회한만 있으면 재발·전이 때 추가 지급이 없습니다.'
     ],
     claim: [
       '암보장개시일 = 계약일 또는 90일 경과 후(상품별). 90일 이내 진단은 보장 제외입니다.',
@@ -1054,7 +1470,8 @@ const GUIDES = {
       '<b>스텐트·혈관성형술</b>이 수술비 지급 대상인지 상품마다 다릅니다. 약관의 "수술" 정의를 확인하세요.',
       '<b>부정맥·판막·심부전</b>은 별도 담보가 없으면 미보장입니다.',
       '심장 수술비 담보를 아예 안 가진 경우가 많습니다.',
-      'I25(만성 허혈성심장질환) 포함 여부 — 담보명만 보고 판단하지 마세요.'
+      'I25(만성 허혈성심장질환) 포함 여부 — 담보명만 보고 판단하지 마세요.',
+      '<b>심혈관 수술비</b>는 진단비와 별도 담보입니다. 스텐트·우회로 수술비가 있는지 확인하세요.'
     ],
     claim: [
       '심전도 · 심근효소(트로포닌) · <b>관상동맥조영술</b> 결과가 I21 진단의 핵심 근거입니다.',
@@ -1119,7 +1536,8 @@ const GUIDES = {
       '<b>간호간병통합 병동</b>은 별도 특약이 필요합니다.',
       '일수 한도(예: 180일)·연간 한도를 확인하세요.',
       '<b>장기요양은 등급 판정</b>이 전제입니다. 등급이 안 나오면 요양비도 없습니다.',
-      '고령 가입 제한·갱신형 여부 — 부모님 나이에서 가입 가능한지 먼저 봅니다.'
+      '고령 가입 제한·갱신형 여부 — 부모님 나이에서 가입 가능한지 먼저 봅니다.',
+      '<b>체증형</b>은 입원일수가 길어질수록 일당이 올라가는 구조입니다. 장기 입원 위험이 큰 고객에게 유리합니다.'
     ],
     claim: [
       '간병인 이용확인서 · 계약서 · 영수증, 요양보호사 자격 확인서를 준비합니다.',
@@ -1231,7 +1649,7 @@ const OBJECTIONS = [
 
 </script>
 <script>
-/* 보장분석 상담 가이드 — 화면 로직 */
+/* 보장분석 상담 가이드 — 화면 로직 (v2: 위저드 · PDF 리포트 · 통계) */
 (function () {
   'use strict';
 
@@ -1240,31 +1658,43 @@ const OBJECTIONS = [
   const won = (n) => Number(n || 0).toLocaleString('ko-KR');
   const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const cv = (item, part) => (state.cov[item] && state.cov[item][part]);
 
-  const HKEY = 'bojang.history.v1';
+  const HKEY = 'bojang.history.v2';
   const VKEY = 'bojang.viewmode.v1';
 
-  const state = {
-    age: '40',
-    gender: '여',
-    job: '1',
-    silson: '4',
-    premium: 22,
-    cov: { cancer: 3000, brain: 2000, heart: 0, surgery: 300, care: 10 },
-    flags: { nDae: false, longTerm: false, savings: false, renew: true, manyRiders: false },
-    guide: 'cancer',
-    view: 'advisor',
-    analyzed: false,
-    label: '',
-    history: []
+  const DEFAULT = {
+    age: '40', gender: '여', job: '1', silson: '4', premium: 22,
+    cov: {
+      cancer: { general: 3000, similar: 0, treatment: 0, recur: false },
+      brain: { scope: 'vascular', treat: true },
+      heart: { scope: 'mi', surgery: false },
+      surgery: { disease: 300, nDae: false, injury: false },
+      care: { daily: 10, nursing: false, ltc: false, mode: 'normal' }
+    },
+    flags: { savings: false, renew: true, manyRiders: false }
   };
 
-  /* ================= 유틸 ================= */
+  const state = {
+    age: DEFAULT.age, gender: DEFAULT.gender, job: DEFAULT.job, silson: DEFAULT.silson, premium: DEFAULT.premium,
+    cov: JSON.parse(JSON.stringify(DEFAULT.cov)),
+    flags: Object.assign({}, DEFAULT.flags),
+    guide: 'cancer', view: 'advisor', step: 1, expanded: false,
+    analyzed: false, label: '', history: []
+  };
+
+  const CLAIM_SHORT = {
+    cancer: ['진단서 + 조직검사(병리) 결과지', '유사암은 담보별 1회한 문구 확인'],
+    brain: ['진단서 + MRI·CT 판독지', 'I64는 추가 서류를 요구하는 경우 있음'],
+    heart: ['심전도 · 트로포닌 · 관상동맥조영술', 'I20(협심증)과 I21(심근경색) 구분'],
+    surgery: ['수술확인서(수술명·수술방법)', '수술명이 약관 분류표와 일치해야'],
+    care: ['간병인 이용확인서 · 계약서 · 영수증', '장기요양은 인정서(등급판정서)']
+  };
+
+  /* ================= 저장 유틸 ================= */
   function lsGet(key, fallback) {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch (e) { return fallback; }
+    try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+    catch (e) { return fallback; }
   }
   function lsSet(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); return true; }
@@ -1282,10 +1712,7 @@ const OBJECTIONS = [
       b.textContent = it.label;
       b.setAttribute('aria-pressed', String(it.value) === String(current));
       b.addEventListener('click', () => {
-        $$('.seg-btn', el).forEach((x) => {
-          x.classList.remove('is-on');
-          x.setAttribute('aria-pressed', 'false');
-        });
+        $$('.seg-btn', el).forEach((x) => { x.classList.remove('is-on'); x.setAttribute('aria-pressed', 'false'); });
         b.classList.add('is-on');
         b.setAttribute('aria-pressed', 'true');
         onPick(it.value);
@@ -1296,138 +1723,238 @@ const OBJECTIONS = [
 
   function renderSegments() {
     buildSeg($('#seg-age'), AGES.map((a) => ({ value: a, label: a + '대' })), state.age, (v) => {
-      state.age = v;
-      renderCoverageInputs();
-      if (state.analyzed) analyze();
+      state.age = v; renderCoverageCards(); refreshAll(); renderSummary();
     });
     buildSeg($('#seg-gender'), [{ value: '남', label: '남성' }, { value: '여', label: '여성' }], state.gender, (v) => {
-      state.gender = v;
-      if (state.analyzed) analyze();
+      state.gender = v; refreshAll(); renderSummary();
     });
-    buildSeg($('#seg-job'), [
-      { value: '1', label: '1급' }, { value: '2', label: '2급' }, { value: '3', label: '3급' }
-    ], state.job, (v) => {
-      state.job = v;
-      $('#job-hint').textContent = JOB_HINTS[v];
-      if (state.analyzed) analyze();
+    buildSeg($('#seg-job'), [{ value: '1', label: '1급' }, { value: '2', label: '2급' }, { value: '3', label: '3급' }], state.job, (v) => {
+      state.job = v; $('#job-hint').textContent = JOB_HINTS[v]; refreshAll(); renderSummary();
     });
     buildSeg($('#seg-silson'), [
       { value: 'none', label: '없음' }, { value: '1', label: '1세대' }, { value: '2', label: '2세대' },
       { value: '3', label: '3세대' }, { value: '4', label: '4세대' }, { value: '5', label: '5세대' }
     ], state.silson, (v) => {
-      state.silson = v;
-      if (state.analyzed) analyze();
+      state.silson = v; refreshAll(); renderSummary();
     });
     $('#job-hint').textContent = JOB_HINTS[state.job];
     $('#premium').value = state.premium;
   }
 
-  /* ================= 담보 입력 ================= */
-  function renderCoverageInputs() {
-    const host = $('#coverage-inputs');
-    host.innerHTML = '';
-    PRIORITY.forEach((item) => {
-      const rec = item.rec[state.age];
-      const row = document.createElement('div');
-      row.className = 'cov-row';
-      row.dataset.key = item.key;
-      row.innerHTML = `
-        <div class="cov-head">
-          <span class="cov-rank">${item.rank}</span>
-          <div class="cov-title">
-            <strong>${item.name}</strong>
-            <span>${item.inputLabel} · 권장 ${won(rec)}${item.unit}</span>
-          </div>
-          <span class="badge badge-idle" data-badge>미입력</span>
+  /* ================= 담보 입력 카드 ================= */
+  function partBadge(stateKey, part) {
+    const item = PRIORITY.find((p) => p.key === stateKey);
+    const r = evalItem(item);
+    const pr = r.parts.find((p) => p.key === part.key);
+    const pct = Math.round(pr.fill * 100);
+    const tone = pr.fill >= 1 ? 'ok' : pr.fill >= 0.5 ? 'need' : 'gap';
+    return `<span class="mini-badge tone-${tone}">${pct}%</span>`;
+  }
+
+  function amountRowHTML(item, part) {
+    const rec = Math.round(item.rec[state.age] * part.factor);
+    const val = cv(item.key, part.key) || 0;
+    return `
+      <div class="part" data-part="${part.key}">
+        <div class="part-head">
+          <div class="part-label"><strong>${part.label}</strong>${part.hint ? `<span>${part.hint}</span>` : ''}</div>
+          <div class="part-side">${partBadge(item.key, part)}</div>
         </div>
         <div class="input-row">
-          <input type="number" id="cov-${item.key}" inputmode="numeric" min="0" step="${item.step}"
-                 value="${state.cov[item.key]}" aria-label="${item.inputLabel} (${item.unit})">
-          <span class="unit">${item.unit}</span>
+          <input type="number" inputmode="numeric" min="0" step="${part.step}" data-item="${item.key}" data-part="${part.key}"
+                 value="${val}" aria-label="${part.label} (만원)">
+          <span class="unit">만원</span>
         </div>
         <div class="quick-row">
-          ${item.quick.map((q) => `<button type="button" class="quick" data-set="${q}">${q === 0 ? '없음' : won(q)}</button>`).join('')}
+          ${part.quick.map((q) => `<button type="button" class="quick" data-set="${q}" data-item="${item.key}" data-part="${part.key}">${q === 0 ? '없음' : won(q)}</button>`).join('')}
+          <span class="rec-hint">권장 ${won(rec)}만원</span>
         </div>
-        ${item.aux ? `<label class="check check-inline"><input type="checkbox" data-aux="${item.aux.key}" ${state.flags[item.aux.key] ? 'checked' : ''}><span>${item.aux.label}</span></label>` : ''}
-      `;
-      host.appendChild(row);
+      </div>`;
+  }
 
-      const input = $('#cov-' + item.key, row);
+  function scaleRowHTML(item, part) {
+    const cur = cv(item.key, part.key) || 'none';
+    return `
+      <div class="part" data-part="${part.key}">
+        <div class="part-head">
+          <div class="part-label"><strong>${part.label}</strong><span>담보명 기준 · 포함 범위</span></div>
+          <div class="part-side">${partBadge(item.key, part)}</div>
+        </div>
+        <div class="scale-pick">
+          ${part.options.map((o) => `
+            <button type="button" class="scale-opt${cur === o.v ? ' is-on' : ''}" data-item="${item.key}" data-part="${part.key}" data-val="${o.v}">
+              <span class="so-dot"></span>
+              <span class="so-label">${o.label}</span>
+              <span class="so-hint">${o.hint || ''}</span>
+            </button>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  function boolRowHTML(item, part) {
+    const on = !!cv(item.key, part.key);
+    return `
+      <label class="switch-row" data-part="${part.key}">
+        <div class="part-label"><strong>${part.label}</strong>${part.hint ? `<span>${part.hint}</span>` : ''}</div>
+        <input type="checkbox" data-item="${item.key}" data-part="${part.key}" ${on ? 'checked' : ''}>
+        <span class="sw" aria-hidden="true"></span>
+      </label>`;
+  }
+
+  function cardHTML(item, extra) {
+    const r = evalItem(item);
+    return `
+      <div class="card cov-card" data-item="${item.key}">
+        <div class="card-title">
+          <span class="cov-rank">${item.rank}</span>${item.name}
+          <span class="card-sub">${item.sub}</span>
+          <span class="badge badge-${r.level}">${r.label}</span>
+        </div>
+        ${item.parts.map((p) => p.type === 'amount' ? amountRowHTML(item, p) : p.type === 'scale' ? scaleRowHTML(item, p) : boolRowHTML(item, p)).join('')}
+        ${extra || ''}
+      </div>`;
+  }
+
+  function renderCoverageCards() {
+    const cancer = PRIORITY[0], brain = PRIORITY[1], heart = PRIORITY[2], surgery = PRIORITY[3], care = PRIORITY[4];
+    $('#card-cancer').innerHTML = cardHTML(cancer, '');
+    $('#card-brain').innerHTML = cardHTML(brain, '');
+    $('#card-heart').innerHTML = cardHTML(heart, '');
+
+    const careMode = state.cov.care.mode || 'normal';
+    $('#card-surgery').innerHTML = cardHTML(surgery, '');
+    $('#card-care').innerHTML = cardHTML(care, `
+      <div class="part">
+        <div class="part-head"><div class="part-label"><strong>일당 지급 방식</strong><span>체증형은 입원일수 증가 시 증액</span></div></div>
+        <div class="seg seg-2">
+          <button type="button" class="seg-btn${careMode === 'normal' ? ' is-on' : ''}" data-caremode="normal">일반형</button>
+          <button type="button" class="seg-btn${careMode === 'step' ? ' is-on' : ''}" data-caremode="step">체증형</button>
+        </div>
+      </div>`);
+
+    bindCoverageInputs();
+  }
+
+  function bindCoverageInputs() {
+    $$('#wiz-panels input[type="number"][data-item]').forEach((input) => {
       input.addEventListener('input', () => {
-        state.cov[item.key] = clamp(Number(input.value || 0), 0, 100000);
-        updateBadge(item);
+        const it = input.dataset.item, pt = input.dataset.part;
+        state.cov[it][pt] = clamp(Number(input.value || 0), 0, 100000);
+        refreshBadges();
       });
-      $$('.quick', row).forEach((b) => {
-        b.addEventListener('click', () => {
-          state.cov[item.key] = Number(b.dataset.set);
-          input.value = state.cov[item.key];
-          updateBadge(item);
-        });
-      });
-      const aux = $('[data-aux]', row);
-      if (aux) {
-        aux.addEventListener('change', () => {
-          state.flags[item.aux.key] = aux.checked;
-          updateBadge(item);
-        });
-      }
-      updateBadge(item);
     });
-  }
-
-  function evalCoverage(item) {
-    const rec = item.rec[state.age] || 0;
-    const val = Number(state.cov[item.key] || 0);
-    const ratio = rec > 0 ? val / rec : 1;
-    let level, label;
-    if (val <= 0) { level = 'gap'; label = '공백 위험'; }
-    else if (ratio < 0.5) { level = 'gap'; label = '공백 위험'; }
-    else if (ratio < 1) { level = 'need'; label = '보강 필요'; }
-    else { level = 'ok'; label = '적정'; }
-    let note = '';
-    if (item.aux) {
-      const has = !!state.flags[item.aux.key];
-      if (!has) {
-        if (level === 'ok') { level = 'need'; label = '보강 필요'; }
-        note = item.key === 'surgery' ? 'N대 수술비 없음' : '장기요양 보장 없음';
-      }
-    }
-    const gap = Math.max(0, rec - val);
-    const auxOk = item.aux ? !!state.flags[item.aux.key] : true;
-    const fillRatio = clamp(ratio, 0, 1) * (auxOk ? 1 : 0.8);
-    return { rec, val, ratio, level, label, note, gap, auxOk, fillRatio };
-  }
-
-  function updateBadge(item) {
-    const row = $(`.cov-row[data-key="${item.key}"]`);
-    if (!row) return;
-    const r = evalCoverage(item);
-    const b = $('[data-badge]', row);
-    b.className = 'badge badge-' + r.level;
-    b.textContent = r.label;
-  }
-
-  /* ================= 보험료 구성 ================= */
-  const FLAGS = [
-    { key: 'savings', label: '적립(저축)성 특약이 포함돼 있다' },
-    { key: 'renew', label: '갱신형 담보가 중심이다' },
-    { key: 'manyRiders', label: '특약이 6개 이상으로 많다' }
-  ];
-
-  function renderFlags() {
-    const host = $('#premium-flags');
-    host.innerHTML = '';
-    FLAGS.forEach((f) => {
-      const l = document.createElement('label');
-      l.className = 'check';
-      l.innerHTML = `<input type="checkbox" data-flag="${f.key}" ${state.flags[f.key] ? 'checked' : ''}><span>${f.label}</span>`;
-      const cb = $('input', l);
+    $$('#wiz-panels .quick[data-set]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const it = b.dataset.item, pt = b.dataset.part, v = Number(b.dataset.set);
+        state.cov[it][pt] = v;
+        const input = $(`input[data-item="${it}"][data-part="${pt}"]`);
+        if (input) input.value = v;
+        refreshBadges();
+      });
+    });
+    $$('#wiz-panels .scale-opt').forEach((b) => {
+      b.addEventListener('click', () => {
+        const it = b.dataset.item, pt = b.dataset.part;
+        state.cov[it][pt] = b.dataset.val;
+        $$(`.scale-opt[data-item="${it}"][data-part="${pt}"]`).forEach((x) => x.classList.toggle('is-on', x === b));
+        refreshBadges();
+      });
+    });
+    $$('#wiz-panels input[type="checkbox"][data-item]').forEach((cb) => {
       cb.addEventListener('change', () => {
-        state.flags[f.key] = cb.checked;
-        if (state.analyzed) analyze();
+        state.cov[cb.dataset.item][cb.dataset.part] = cb.checked;
+        refreshBadges();
       });
-      host.appendChild(l);
     });
+    $$('[data-caremode]').forEach((b) => {
+      b.addEventListener('click', () => {
+        state.cov.care.mode = b.dataset.caremode;
+        $$('[data-caremode]').forEach((x) => x.classList.toggle('is-on', x === b));
+        refreshBadges();
+      });
+    });
+  }
+
+  function refreshBadges() {
+    PRIORITY.forEach((item) => {
+      const r = evalItem(item);
+      const card = $(`.cov-card[data-item="${item.key}"]`);
+      if (card) {
+        const b = $('.card-title .badge', card);
+        b.className = 'badge badge-' + r.level;
+        b.textContent = r.label;
+        r.parts.forEach((p) => {
+          const row = $(`.part[data-part="${p.key}"]`, card);
+          if (!row) return;
+          const badge = $('.mini-badge', row);
+          if (badge) {
+            const pct = Math.round(p.fill * 100);
+            badge.className = 'mini-badge tone-' + (p.fill >= 1 ? 'ok' : p.fill >= 0.5 ? 'need' : 'gap');
+            badge.textContent = pct + '%';
+          }
+        });
+      }
+    });
+    renderSummary();
+    if (state.analyzed) analyze();
+  }
+
+  function refreshAll() {
+    refreshBadges();
+  }
+
+  /* ================= 평가 ================= */
+  function evalItem(item) {
+    const baseRec = item.rec[state.age] || 0;
+    const parts = item.parts.map((p) => {
+      let fill = 0, rec = 0, val = 0, option = null;
+      if (p.type === 'amount') {
+        rec = Math.round(baseRec * p.factor);
+        val = Number(cv(item.key, p.key) || 0);
+        fill = rec > 0 ? clamp(val / rec, 0, 1) : 0;
+      } else if (p.type === 'scale') {
+        const v = cv(item.key, p.key) || 'none';
+        option = p.options.find((o) => o.v === v) || p.options[0];
+        fill = option.score;
+      } else {
+        val = !!cv(item.key, p.key);
+        fill = val ? 1 : 0;
+      }
+      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option };
+    });
+    const fill = parts.reduce((a, p) => a + p.weight * p.fill, 0);
+    const primary = parts[0].fill;
+    let level, label;
+    if (primary <= 0) { level = 'gap'; label = '공백 위험'; }
+    else if (fill >= 0.9) { level = 'ok'; label = '적정'; }
+    else { level = 'need'; label = '보강 필요'; }
+    return { item, baseRec, parts, fill, level, label, primary };
+  }
+
+  function summaryOf(item, r) {
+    const c = state.cov[item.key] || {};
+    if (item.key === 'cancer') {
+      const bits = [`일반암 ${won(c.general)}만원`];
+      bits.push(c.similar > 0 ? `유사암 ${won(c.similar)}만원` : '유사암 없음');
+      bits.push(c.treatment > 0 ? `치료비 ${won(c.treatment)}만원` : '치료비 없음');
+      if (c.recur) bits.push('재진단 보장');
+      return bits.join(' · ');
+    }
+    if (item.key === 'brain' || item.key === 'heart') {
+      const p = r.parts[0];
+      const opt = p.option || { label: '미보유' };
+      return `${opt.label}${opt.hint ? '(' + opt.hint + ')' : ''}` + (state.cov[item.key][item.key === 'brain' ? 'treat' : 'surgery'] ? ' · 수술비 보유' : '');
+    }
+    if (item.key === 'surgery') {
+      const bits = [`질병 5종 ${won(c.disease)}만원`];
+      bits.push(c.nDae ? 'N대 보유' : 'N대 없음');
+      if (c.injury) bits.push('상해 보유');
+      return bits.join(' · ');
+    }
+    const bits = [`일당 ${won(c.daily)}만원`, c.mode === 'step' ? '체증형' : '일반형'];
+    if (c.nursing) bits.push('간호간병');
+    if (c.ltc) bits.push('장기요양');
+    return bits.join(' · ');
   }
 
   /* ================= 점수 ================= */
@@ -1443,12 +1970,10 @@ const OBJECTIONS = [
   function computeScore(rows) {
     const w = weights();
     let sum = 0, wsum = 0;
-    const parts = rows.map(({ item, r }) => {
+    rows.forEach(({ item, r }) => {
       const ww = w[item.key] || 0;
-      const fill = r.fillRatio != null ? r.fillRatio : clamp(r.val / (r.rec || 1), 0, 1);
-      sum += ww * fill;
+      sum += ww * clamp(r.fill, 0, 1);
       wsum += ww;
-      return { key: item.key, w: ww, fill };
     });
     let score = wsum ? (sum / wsum) * 100 : 0;
     const penalty = [];
@@ -1457,7 +1982,7 @@ const OBJECTIONS = [
     if (state.flags.renew) { score += SCORE_MODEL.penalty.renew; penalty.push({ v: SCORE_MODEL.penalty.renew, t: '갱신형 중심' }); }
     score = Math.round(clamp(score, 0, 100));
     const grade = SCORE_MODEL.grades.find((g) => score >= g.min) || SCORE_MODEL.grades[SCORE_MODEL.grades.length - 1];
-    return { score, grade, parts, penalty, w };
+    return { score, grade, penalty, w };
   }
 
   function weightComments(rows) {
@@ -1476,17 +2001,95 @@ const OBJECTIONS = [
     return out;
   }
 
+  /* ================= 레이더 차트 ================= */
+  function radarSVG(rows) {
+    const cx = 116, cy = 108, R = 74;
+    const n = rows.length;
+    const ang = (i) => -Math.PI / 2 + (i * 2 * Math.PI) / n;
+    const pt = (i, r) => [cx + Math.cos(ang(i)) * R * r, cy + Math.sin(ang(i)) * R * r];
+    const ringPoly = (r) => rows.map((_, i) => pt(i, r).map((v) => v.toFixed(1)).join(',')).join(' ');
+    let s = `<svg viewBox="0 0 240 224" class="radar" role="img" aria-label="보장 밸런스 5축 레이더 차트">`;
+    s += `<defs><linearGradient id="radarFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0fb093" stop-opacity=".35"/><stop offset="100%" stop-color="#1b4a78" stop-opacity=".22"/></linearGradient></defs>`;
+    [0.25, 0.5, 0.75, 1].forEach((r) => {
+      s += `<polygon points="${ringPoly(r)}" fill="none" stroke="#dbe4ef" stroke-width="1"/>`;
+    });
+    rows.forEach((_, i) => {
+      const p = pt(i, 1);
+      s += `<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="#e5ecf5" stroke-width="1"/>`;
+    });
+    const dataPts = rows.map((row, i) => pt(i, clamp(row.r.fill, 0.04, 1)));
+    s += `<polygon points="${dataPts.map((p) => p.map((v) => v.toFixed(1)).join(',')).join(' ')}" fill="url(#radarFill)" stroke="#0fb093" stroke-width="1.8" stroke-linejoin="round"/>`;
+    dataPts.forEach((p) => { s += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="#0fb093"/>`; });
+    rows.forEach((row, i) => {
+      const p = pt(i, 1.235);
+      const anchor = p[0] < cx - 4 ? 'end' : p[0] > cx + 4 ? 'start' : 'middle';
+      const dy = p[1] < cy - 40 ? -3 : p[1] > cy + 40 ? 10 : 3;
+      s += `<text x="${p[0].toFixed(1)}" y="${(p[1] + dy).toFixed(1)}" text-anchor="${anchor}" class="rd-label">${row.item.name}</text>`;
+      s += `<text x="${p[0].toFixed(1)}" y="${(p[1] + dy + 11).toFixed(1)}" text-anchor="${anchor}" class="rd-value">${Math.round(row.r.fill * 100)}%</text>`;
+    });
+    s += `</svg>`;
+    return `<div class="radar-wrap">${s}</div>`;
+  }
+
+  /* ================= 통계 카드 ================= */
+  function fmtVal(v, unit) {
+    return won(v) + (unit || '');
+  }
+
+  function statsHTML() {
+    return STATS.map((st) => {
+      if (st.stacked) {
+        const total = st.stacked.reduce((a, b) => a + b.value, 0);
+        const segs = st.stacked.map((s, i) => {
+          const w = (s.value / total) * 100;
+          const tones = ['#0b2545', '#1b4a78', '#3f7ba6', '#6fa3c4', '#a8c8dc', '#d3e2ee'];
+          return `<span class="stk-seg" style="width:${w.toFixed(2)}%;background:${tones[i % tones.length]}" title="${s.label} ${s.value}%"><b>${s.value >= 8 ? s.value + '%' : ''}</b></span>`;
+        }).join('');
+        const legend = st.stacked.map((s, i) => {
+          const tones = ['#0b2545', '#1b4a78', '#3f7ba6', '#6fa3c4', '#a8c8dc', '#d3e2ee'];
+          return `<span class="stk-li"><i style="background:${tones[i % tones.length]}"></i>${s.label} ${s.value}%</span>`;
+        }).join('');
+        return `
+          <div class="stat-card">
+            <div class="stat-head"><strong>${st.title}</strong><span class="stat-badge">${st.headlineValue}</span></div>
+            <p class="stat-sub">${st.headline}</p>
+            <div class="stk-bar">${segs}</div>
+            <div class="stk-legend">${legend}</div>
+            ${st.notes ? `<div class="stat-notes">${st.notes.map((n) => `<span>${n}</span>`).join('')}</div>` : ''}
+            <p class="stat-source">출처: ${st.source}</p>
+          </div>`;
+      }
+      const rowsHTML = st.rows.map((r) => {
+        const pctW = Math.max(3, (r.value / st.max) * 100);
+        const valText = r.unit === '명' ? fmtVal(r.value, '명') : r.value + '%';
+        return `
+          <div class="stat-row">
+            <span class="sl">${r.label}${r.rank ? `<em>${r.rank}</em>` : ''}</span>
+            <span class="sb"><i style="width:${pctW}%"></i></span>
+            <b class="sv">${valText}</b>
+          </div>`;
+      }).join('');
+      return `
+        <div class="stat-card">
+          <div class="stat-head"><strong>${st.title}</strong><span class="stat-badge">${st.headlineValue}</span></div>
+          <p class="stat-sub">${st.headline}</p>
+          <div class="stat-rows">${rowsHTML}</div>
+          ${st.notes ? `<div class="stat-notes">${st.notes.map((n) => `<span>${n}</span>`).join('')}</div>` : ''}
+          <p class="stat-source">출처: ${st.source}</p>
+        </div>`;
+    }).join('');
+  }
+
   /* ================= 진단 ================= */
   function analyze() {
-    const rows = PRIORITY.map((item) => ({ item, r: evalCoverage(item) }));
+    const rows = PRIORITY.map((item) => ({ item, r: evalItem(item) }));
     const needCount = rows.filter((x) => x.r.level !== 'ok').length;
-    const gapCount = rows.filter((x) => x.r.level === 'gap').length;
     const first = rows.find((x) => x.r.level !== 'ok');
-    const totalDiag = Number(state.cov.cancer) + Number(state.cov.brain) + Number(state.cov.heart);
+    const totalDiag = Number(state.cov.cancer.general || 0) + Number(state.cov.brain.scope !== 'none' ? 0 : 0);
+    const totalSum = rows.reduce((a, x) => a + (x.r.parts[0].type === 'amount' ? Number(x.r.parts[0].val || 0) : 0), 0);
     const annual = Number(state.premium || 0) * 12;
     const sc = computeScore(rows);
 
-    // 점수 히어로
     const R = 52, C = 2 * Math.PI * R;
     const dash = C * (1 - sc.score / 100);
     $('#result-hero').innerHTML = `
@@ -1497,169 +2100,146 @@ const OBJECTIONS = [
       <div class="score-wrap">
         <div class="ring-box">
           <svg viewBox="0 0 120 120" class="ring" aria-hidden="true">
-            <defs>
-              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#8ff0dc"/><stop offset="100%" stop-color="#0fb093"/>
-              </linearGradient>
-            </defs>
+            <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8ff0dc"/><stop offset="100%" stop-color="#0fb093"/></linearGradient></defs>
             <circle cx="60" cy="60" r="${R}" class="ring-bg"/>
-            <circle cx="60" cy="60" r="${R}" class="ring-fg" stroke="url(#ringGrad)"
-                    style="stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${dash.toFixed(1)}"/>
+            <circle cx="60" cy="60" r="${R}" class="ring-fg" stroke="url(#ringGrad)" style="stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${dash.toFixed(1)}"/>
           </svg>
-          <div class="ring-text">
-            <strong>${sc.score}</strong><span>/100</span>
-          </div>
+          <div class="ring-text"><strong>${sc.score}</strong><span>/100</span></div>
         </div>
         <div class="score-copy">
           <span class="score-grade tone-${sc.grade.tone}">${sc.grade.label}</span>
           <h3>${sc.grade.line}</h3>
-          <p>${first ? `1순위 착수 — ${first.item.name}${first.r.gap > 0 ? ' · 부족 ' + won(first.r.gap) + first.item.unit : ' · ' + (first.r.note || '구성 보완')}` : '5대 담보가 모두 기준선을 넘었습니다'}</p>
+          <p>${first ? `1순위 착수 — ${first.item.name} · ${summaryOf(first.item, first.r)}` : '5대 담보가 모두 기준선을 넘었습니다'}</p>
         </div>
       </div>
       <div class="hero-stats">
-        <div><span>총 진단비</span><strong>${won(totalDiag)}만원</strong></div>
+        <div><span>주요 진단비 합계</span><strong>${won(totalSum)}만원</strong></div>
         <div><span>월 보험료</span><strong>${won(state.premium)}만원</strong></div>
-        <div><span>연 보험료 대비</span><strong>${annual > 0 ? (totalDiag / annual).toFixed(1) + '배' : '—'}</strong></div>
+        <div><span>연 보험료 대비</span><strong>${annual > 0 ? (totalSum / annual).toFixed(1) + '배' : '—'}</strong></div>
       </div>
       <div class="weight-notes">
-        ${weightComments(rows).filter((c) => state.view === 'advisor' || !c.internal)
-          .map((c) => `<span class="${c.internal ? 'internal' : ''}">${c.t}</span>`).join('')}
+        ${weightComments(rows).filter((c) => state.view === 'advisor' || !c.internal).map((c) => `<span class="${c.internal ? 'internal' : ''}">${c.t}</span>`).join('')}
       </div>
       <div class="score-formula">${state.view === 'advisor'
         ? '가중치 ' + PRIORITY.map((p) => `${p.name} ${sc.w[p.key]}`).join(' · ') + (sc.penalty.length ? ' / 감점 ' + sc.penalty.map((p) => `${p.t} ${p.v}`).join(', ') : '')
         : '연령대·직업급수·실손 세대를 반영한 가중 평균 (자체 산식)'}</div>
     `;
 
-    // 우선순위 게이지
+    $('#radar').innerHTML = radarSVG(rows);
+    $('#stats').innerHTML = statsHTML();
+
     const rowsHost = $('#result-rows');
     rowsHost.innerHTML = '';
-    rows.forEach(({ item, r }, i) => {
-      const fillPct = clamp(Math.round((r.fillRatio != null ? r.fillRatio : r.val / (r.rec || 1)) * 100), 0, 100);
-      const pct = fillPct;
+    rows.forEach(({ item, r }) => {
+      const pct = Math.round(clamp(r.fill, 0, 1) * 100);
       const el = document.createElement('div');
       el.className = 'prow';
-      let tail;
-      if (r.val <= 0) tail = `미보유 · 권장 ${won(r.rec)}${item.unit}`;
-      else if (r.gap > 0) tail = `보유 ${won(r.val)}${item.unit} · 부족 ${won(r.gap)}${item.unit}`;
-      else tail = `보유 ${won(r.val)}${item.unit}${r.note ? ' · ' + r.note : ' · 기준선 충족'}`;
+      const gaps = r.parts.filter((p) => p.type === 'amount' && p.val < p.rec && p.rec > 0);
+      const tail = summaryOf(item, r) + (gaps.length ? ` · 부족 ${gaps.map((g) => won(g.rec - g.val) + '만원').join(', ')}` : '');
       el.innerHTML = `
         <div class="prow-head">
           <span class="prow-rank">${item.rank}</span>
-          <div class="prow-name"><strong>${item.name}</strong><span>${item.need}</span></div>
+          <div class="prow-name"><strong>${item.name}</strong><span>${item.sub}</span></div>
           <span class="prow-pct tone-${r.level}">${pct}<i>%</i></span>
           <span class="badge badge-${r.level}">${r.label}</span>
         </div>
-        <div class="gauge">
-          <div class="gauge-track">
-            <i class="gauge-fill tone-bg-${r.level}" style="width:${r.val <= 0 ? 0 : Math.max(3, fillPct)}%"></i>
-          </div>
-          <div class="gauge-scale"><span>0</span><span>권장 ${won(r.rec)}${item.unit}</span></div>
-        </div>
+        <div class="gauge"><div class="gauge-track"><i class="gauge-fill tone-bg-${r.level}" style="width:${pct === 0 ? 0 : Math.max(3, pct)}%"></i></div>
+          <div class="gauge-scale"><span>0</span><span>기준선 100%</span></div></div>
         <div class="prow-tail"><span>${tail}</span><button type="button" class="prow-jump" data-jump="${item.key}">가이드 ›</button></div>
       `;
       rowsHost.appendChild(el);
     });
 
-    // 체크포인트 (상담자 전용)
-    const cps = buildCheckpoints(rows, totalDiag, annual);
-    const cpHost = $('#result-checkpoints');
-    cpHost.innerHTML = cps.map((c) => `
-      <div class="cp cp-${c.level}">
-        <div class="cp-title">${c.title}</div>
-        <p>${c.body}</p>
-      </div>`).join('');
+    const cps = buildCheckpoints(rows, totalSum, annual);
+    $('#result-checkpoints').innerHTML = cps.map((c) => `
+      <div class="cp cp-${c.level}"><div class="cp-title">${c.title}</div><p>${c.body}</p></div>`).join('');
 
-    // 리모델링 3단계
     const steps = buildSteps(rows);
     $('#result-steps').innerHTML = steps.map((s, i) => `
-      <div class="step">
-        <div class="step-no">${i + 1}</div>
-        <div class="step-body"><strong>${s.title}</strong><p>${s.body}</p></div>
-      </div>`).join('');
+      <div class="step"><div class="step-no">${i + 1}</div><div class="step-body"><strong>${s.title}</strong><p>${s.body}</p></div></div>`).join('');
 
-    state.lastResult = { rows, needCount, gapCount, first, totalDiag, annual, cps, steps, score: sc };
+    $('#claim-guide').innerHTML = PRIORITY.map((item) => `
+      <div class="claim-row"><span class="cr-rank">${item.rank}</span><strong>${item.name}</strong><span>${CLAIM_SHORT[item.key].join(' · ')}</span></div>`).join('');
+
+    $('#ph-client').textContent = `${state.age}대 ${state.gender} · ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]}`;
+    const d = new Date();
+    $('#ph-date').textContent = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    state.lastResult = { rows, needCount, first, totalSum, annual, cps, steps, score: sc };
     state.analyzed = true;
     $('#result').hidden = false;
     $('#save-bar').hidden = false;
   }
 
-  function buildCheckpoints(rows, totalDiag, annual) {
+  function buildCheckpoints(rows, totalSum, annual) {
     const cps = [];
     if (state.silson === 'none') {
-      cps.push({ level: 'danger', title: '실손 공백', body: '입원·통원 기본부터 막혀 있습니다. 진단비보다 실손이 먼저입니다(건강보험 본인부담·비급여 대비).' });
+      cps.push({ level: 'danger', title: '실손 공백', body: '입원·통원 기본부터 막혀 있습니다. 진단비보다 실손이 먼저입니다.' });
     } else if (state.silson === '1' || state.silson === '2') {
-      cps.push({ level: 'info', title: '실손 1·2세대 — 보험료를 줄일 두 갈래', body: '2026년 11월부터 ①선택형 할인 특약(보장 일부 제외, 30~40% 할인, 기존 계약 유지) ②5세대 전환(3년간 50% 추가 할인, 6개월 한시) 중 선택할 수 있습니다. 다만 5세대로 가면 비중증 비급여 한도 1,000만원·자기부담 50%로 줄고 5년 재가입이 생깁니다. 평소 도수·주사·MRI 이용량으로 판단하세요.' });
+      cps.push({ level: 'info', title: '실손 1·2세대 — 보험료를 줄일 두 갈래', body: '2026년 11월부터 ①선택형 할인 특약(30~40% 할인) ②5세대 전환(3년간 50% 추가 할인, 6개월 한시) 중 선택할 수 있습니다. 5세대는 비중증 비급여 한도 1,000만원·자기부담 50%로 줄고 5년 재가입이 생깁니다.' });
     } else if (state.silson === '3' || state.silson === '4') {
-      cps.push({ level: 'ok', title: `실손 ${state.silson}세대 — 유지 판단`, body: '비급여 한도·자기부담 구조가 5세대보다 넓습니다. 의료 이용이 적다면 보험료 차이를 비교해 볼 수 있지만, 서두를 이유는 없습니다.' });
+      cps.push({ level: 'ok', title: `실손 ${state.silson}세대 — 유지 판단`, body: '비급여 한도·자기부담 구조가 5세대보다 넓습니다. 의료 이용이 적다면 보험료 차이를 비교해 볼 수 있지만 서두를 이유는 없습니다.' });
     } else {
-      cps.push({ level: 'ok', title: '실손 5세대 — 구조 확인', body: '중증(특약1)과 비중증(특약2)이 분리돼 있습니다. 특약2는 연 1,000만원·자기부담 50%이므로 도수·비급여 주사는 사실상 자기부담으로 보십시오.' });
+      cps.push({ level: 'ok', title: '실손 5세대 — 구조 확인', body: '중증(특약1)과 비중증(특약2)이 분리돼 있습니다. 특약2는 연 1,000만원·자기부담 50%이므로 도수·비급여 주사는 사실상 자기부담입니다.' });
     }
 
-    rows.forEach(({ item, r }) => {
-      if (r.level === 'ok') return;
-      if (item.key === 'cancer') {
-        cps.push({ level: 'danger', title: '암 진단비가 얇습니다', body: `권장 ${won(r.rec)}만원 대비 ${r.val > 0 ? won(r.val) + '만원' : '미보유'}. 암은 진단비(목돈)와 치료비를 따로 봐야 하므로, 유사암 담보와 항암치료비까지 함께 확인하세요.` });
-      }
-      if (item.key === 'brain' && r.level === 'gap') {
-        cps.push({ level: 'danger', title: '뇌 보장이 뇌출혈에 갇혀 있을 수 있습니다', body: '뇌경색(I63)은 뇌졸중·뇌혈관질환 담보에만 들어갑니다. 담보명이 "뇌출혈"이면 뇌경색은 지급 대상이 아닙니다.' });
-      }
-      if (item.key === 'heart' && r.level === 'gap') {
-        cps.push({ level: 'danger', title: '심장 공백 — 허혈성심장질환 없음', body: '급성심근경색(I21)만으로는 협심증(I20)과 스텐트 시술 단계를 못 받습니다. 허혈성심장질환(I20~I25) 담보를 우선 채우세요.' });
-      }
-      if (item.key === 'surgery') {
-        cps.push({ level: 'warn', title: '수술비 구성 점검', body: (r.val > 0 ? `5종 ${won(r.val)}만원` : '5종 수술비 미보유') + (state.flags.nDae ? ' + N대 수술비 보유' : ' · N대 수술비 없음') + '. 질병/상해 구분과 횟수 제한(1회한·연간 1회한)을 확인하세요.' });
-      }
-      if (item.key === 'care' && r.level !== 'ok') {
-        cps.push({ level: 'warn', title: '간병 공백 — 매일 나가는 돈', body: '간병비는 진단비로 대체되지 않습니다. 간병인 사용일당(증빙 필요)·간호간병통합·장기요양등급 중 최소 한 갈래를 확보하세요.' });
-      }
-    });
+    const get = (k) => rows.find((x) => x.item.key === k);
+    const cancer = get('cancer'), brain = get('brain'), heart = get('heart'), surgery = get('surgery'), care = get('care');
 
-    if (state.flags.savings) {
-      cps.push({ level: 'info', title: '적립(저축)성 특약 확인', body: '보장 대비 저축 비중이 크면 같은 보험료로 보장을 더 넓힐 수 있습니다. 해지환급금과 보장 비중을 분리해 보여 주세요.' });
+    if (state.cov.cancer.similar <= 0) {
+      cps.push({ level: 'warn', title: '유사암 담보 없음', body: '갑상선암(C73)·기타피부암(C44)·제자리암(D00~D09)·경계성종양(D37~D48)은 일반암에서 빠져 별도 담보로 지급됩니다. 이 담보가 없으면 지급액이 0이거나 아주 작습니다.' });
     }
-    if (state.flags.renew) {
-      cps.push({ level: 'warn', title: '갱신형 중심 구조', body: '갱신 시점에 보험료가 크게 오르고, 재가입 심사에서 가입이 막힐 수 있습니다. 갱신 예정 연령과 예상 보험료를 미리 표로 보여 주세요.' });
+    if (state.cov.cancer.treatment <= 0) {
+      cps.push({ level: 'info', title: '암 주요치료비 없음', body: '표적·면역항암·비급여 치료는 진단비와 별도 축입니다. 진단비만 있으면 장기 치료에서 공백이 생깁니다.' });
     }
-    if (state.flags.manyRiders) {
-      cps.push({ level: 'info', title: '특약 정리 여지', body: '중복·미사용 특약(예: 유사암 중복, 이미 소진된 1회한 담보)을 확인하세요. 정리한 금액으로 우선순위 보강에 배분합니다.' });
+    if (state.cov.brain.scope === 'bleed') {
+      cps.push({ level: 'danger', title: '뇌 보장이 뇌출혈에 갇혀 있습니다', body: '뇌경색(I63)은 뇌졸중·뇌혈관질환 담보에만 들어갑니다. 공식 통계에서도 뇌경색 환자가 뇌내출혈보다 약 5.1배 많습니다.' });
+    } else if (state.cov.brain.scope === 'stroke' || state.cov.brain.scope === 'vascular') {
+      if (!state.cov.brain.treat) cps.push({ level: 'warn', title: '뇌혈관 수술·혈전용해치료비 없음', body: '혈전용해술·스텐트는 약관상 "수술"이 아닌 처치로 분류될 수 있어, 진단비 외 치료비 담보가 따로 필요합니다.' });
     }
-    if (Number(state.premium) >= 40) {
-      cps.push({ level: 'warn', title: `월 ${won(state.premium)}만원 — 구성 점검 우선`, body: '보험료 절대액이 큽니다. 해지가 아니라 배분 문제로 접근하세요. 진단비 대비 보험료가 얇으면 재배치 여지가 큽니다.' });
+    if (state.cov.heart.scope === 'mi') {
+      cps.push({ level: 'danger', title: '심장이 급성심근경색에 갇혀 있습니다', body: '협심증(I20)은 허혈성심장질환(I20~I25) 담보에만 들어갑니다. 스텐트 시술은 협심증 단계에서 많이 이뤄집니다.' });
     }
-    if (annual > 0 && totalDiag / annual < 12) {
-      cps.push({ level: 'warn', title: '보험료 대비 진단비가 얇습니다', body: `연 보험료 ${won(annual)}만원에 핵심 진단비(암·뇌·심장) 합계 ${won(totalDiag)}만원입니다. 지금 내는 돈에서 적립·중복을 덜어내 진단비로 옮기는 재배치를 검토하세요.` });
+    if (state.cov.heart.scope !== 'none' && !state.cov.heart.surgery) {
+      cps.push({ level: 'warn', title: '심혈관 수술비 없음', body: '스텐트·관상동맥우회술 등 심혈관 수술비 담보가 따로 있는지 확인하세요.' });
     }
-    if (Number(state.age) >= 60 && evalCoverage(PRIORITY[4]).level !== 'ok') {
-      cps.push({ level: 'danger', title: '60대 이상 — 간병이 최대 리스크', body: '이 연령대에서 실제로 돈이 새는 곳은 간병입니다. 장기요양등급 보장과 간병 일당을 함께 확인하세요.' });
+    if (!state.cov.surgery.nDae) {
+      cps.push({ level: 'info', title: 'N대 수술비 없음', body: '1~5종만 있으면 큰 수술에서 금액이 부족합니다. N대 수술비는 질환별 한도를 따로 둡니다.' });
     }
-    if (cps.length === 0) {
-      cps.push({ level: 'ok', title: '구조적 구멍 없음', body: '5대 담보와 실손 구성이 기준선을 넘습니다. 이제는 금액 조정과 갱신 대비가 남은 과제입니다.' });
+    if (!state.cov.surgery.injury) {
+      cps.push({ level: 'info', title: '상해수술비 없음', body: '질병 수술비만 있으면 사고로 다쳐 수술해도 지급되지 않습니다.' });
     }
+    if (!state.cov.care.ltc) {
+      cps.push({ level: 'warn', title: '장기요양등급 보장 없음', body: '공식 통계상 장기요양 인정자의 87.4%가 3~5등급·인지지원입니다. 1~2등급만 대비하면 대부분의 구간이 비어 있습니다.' });
+    }
+    if (!state.cov.care.nursing) {
+      cps.push({ level: 'info', title: '간호간병통합서비스 미보장', body: '보호자 없는 병동은 별도 특약이 있어야 지급되는 경우가 많습니다.' });
+    }
+
+    if (state.flags.savings) cps.push({ level: 'info', title: '적립(저축)성 특약 확인', body: '보장 대비 저축 비중이 크면 같은 보험료로 보장을 더 넓힐 수 있습니다.' });
+    if (state.flags.renew) cps.push({ level: 'warn', title: '갱신형 중심 구조', body: '갱신 시점에 보험료가 크게 오르고, 재가입 심사에서 가입이 막힐 수 있습니다. 갱신 연령과 예상 보험료를 표로 보여 주세요.' });
+    if (state.flags.manyRiders) cps.push({ level: 'info', title: '특약 정리 여지', body: '중복·미사용 특약(예: 유사암 중복, 이미 소진된 1회한 담보)을 확인해 우선순위 보강에 배분합니다.' });
+    if (Number(state.premium) >= 40) cps.push({ level: 'warn', title: `월 ${won(state.premium)}만원 — 구성 점검 우선`, body: '보험료 절대액이 큽니다. 해지가 아니라 배분 문제로 접근하세요.' });
+    if (annual > 0 && totalSum / annual < 12) cps.push({ level: 'warn', title: '보험료 대비 진단비가 얇습니다', body: `연 보험료 ${won(annual)}만원에 주요 진단비 합계 ${won(totalSum)}만원입니다. 적립·중복을 덜어 진단비로 옮기는 재배치를 검토하세요.` });
+    if (Number(state.age) >= 60 && care.r.level !== 'ok') cps.push({ level: 'danger', title: '60대 이상 — 간병이 최대 리스크', body: '이 연령대에서 실제로 돈이 새는 곳은 간병입니다. 장기요양등급과 간병 일당을 함께 확인하세요.' });
+
+    if (!cps.length) cps.push({ level: 'ok', title: '구조적 구멍 없음', body: '5대 담보와 실손 구성이 기준선을 넘습니다. 이제는 금액 조정과 갱신 대비가 남은 과제입니다.' });
     return cps;
   }
 
   function buildSteps(rows) {
     const targets = rows.filter((x) => x.r.level !== 'ok').slice(0, 3);
     const targetText = targets.length
-      ? targets.map((x) => `${x.item.name}${x.r.gap > 0 ? ` +${won(x.r.gap)}${x.item.unit}` : ' 구성 보완'}`).join(' → ')
+      ? targets.map((x) => `${x.item.name}(${Math.round(x.r.fill * 100)}%)`).join(' → ')
       : '없음 (금액 조정만)';
     return [
-      {
-        title: '기존 핵심 사수',
-        body: '지금 가진 암·뇌·심장 진단비 중 가장 두꺼운 담보는 해지하지 않습니다. 나이와 병력 때문에 같은 조건으로 다시 들 수 없습니다. 먼저 "무엇을 지킬지"를 정하고 시작하세요.'
-      },
-      {
-        title: '배서 다이어트',
-        body: `적립(저축)성·중복·미사용 특약을 정리해 보험료를 확보합니다.${state.silson === '1' || state.silson === '2' ? ' 실손은 선택형 할인 특약과 5세대 전환을 같은 표에 놓고 비교하세요.' : ' 갱신형은 다음 갱신 시점의 예상 보험료까지 확인합니다.'}`
-      },
-      {
-        title: '우선순위별 핀셋 보강',
-        body: `1순위부터 부족분만 채웁니다. 보강 대상: ${targetText}. 한 번에 다 하지 말고 1순위 한 칸씩, 예산 안에서 끝내세요.`
-      }
+      { title: '기존 핵심 사수', body: '지금 가진 암·뇌·심장 진단비 중 가장 두꺼운 담보는 해지하지 않습니다. 나이와 병력 때문에 같은 조건으로 다시 들 수 없습니다.' },
+      { title: '배서 다이어트', body: `적립(저축)성·중복·미사용 특약을 정리해 보험료를 확보합니다.${state.silson === '1' || state.silson === '2' ? ' 실손은 선택형 할인 특약과 5세대 전환을 같은 표에 놓고 비교하세요.' : ' 갱신형은 다음 갱신 시점의 예상 보험료까지 확인합니다.'}` },
+      { title: '우선순위별 핀셋 보강', body: `1순위부터 부족분만 채웁니다. 보강 대상: ${targetText}. 한 번에 다 하지 말고 1순위 한 칸씩, 예산 안에서 끝내세요.` }
     ];
   }
 
-  /* ================= 카톡 요약 ================= */
+  /* ================= 카톡 · 인쇄 ================= */
   function kakaoText() {
     const res = state.lastResult;
     if (!res) return '';
@@ -1670,26 +2250,25 @@ const OBJECTIONS = [
     L.push('');
     L.push('■ 5대 담보 진단');
     res.rows.forEach(({ item, r }) => {
-      let line = `${item.rank}. ${item.name} ${r.val > 0 ? won(r.val) + item.unit : '0' + item.unit} — ${r.label}`;
-      if (r.level !== 'ok') {
-        if (r.gap > 0) line += ` (권장 ${won(r.rec)}${item.unit}, 부족 ${won(r.gap)}${item.unit})`;
-        else if (r.note) line += ` (${r.note})`;
-      }
-      L.push(line);
+      L.push(`${item.rank}. ${item.name} — ${r.label} (${summaryOf(item, r)})`);
     });
     L.push('');
     const targets = res.rows.filter((x) => x.r.level !== 'ok');
     L.push('■ 먼저 채울 곳');
     if (!targets.length) L.push('· 지금 구조 유지 + 금액 조정');
-    else targets.slice(0, 3).forEach((x, i) => {
-      L.push(`${i + 1}) ${x.item.name} — ${x.r.gap > 0 ? `${won(x.r.gap)}${x.item.unit} 보강` : x.r.note || '구성 보완'}`);
-    });
+    else targets.slice(0, 3).forEach((x, i) => L.push(`${i + 1}) ${x.item.name} — ${summaryOf(x.item, x.r)}`));
     L.push('');
     L.push('■ 리모델링 3단계');
-    res.steps.forEach((s, i) => L.push(`${i + 1}단계 ${s.title} — ${s.body.replace(/\s+/g, ' ').slice(0, 90)}${s.body.length > 90 ? '…' : ''}`));
+    res.steps.forEach((s, i) => L.push(`${i + 1}단계 ${s.title} — ${s.body.replace(/\s+/g, ' ').slice(0, 80)}${s.body.length > 80 ? '…' : ''}`));
     L.push('');
     L.push('※ 상담 참고용 요약입니다. 실제 지급 여부와 금액은 가입하신 상품의 약관과 증권을 기준으로 안내드립니다.');
     return L.join('\n');
+  }
+
+  function doPrint() {
+    if (!state.analyzed) analyze();
+    toast('인쇄 화면을 준비합니다 · 공유 시트에서 "PDF 저장"을 선택하세요');
+    setTimeout(() => { window.print(); }, 350);
   }
 
   /* ================= SVG 도식 ================= */
@@ -1712,7 +2291,6 @@ const OBJECTIONS = [
       out += `<text x="${x + 14}" y="${yy + 34}" class="dg-s on-dark">${esc(t.note)}</text>`;
       out += `<text x="${x + w - 14}" y="${yy + 24}" text-anchor="end" class="dg-code">${esc(t.code)}</text>`;
     });
-    // 포함 화살표
     const ax = 16;
     out += `<path d="M${ax} ${y + bh + 4} L${ax} ${y + 2 * (bh + gap) + bh - 4}" stroke="#9fb8cf" stroke-width="1.2" fill="none" stroke-dasharray="3 3"/>`;
     out += `<path d="M${ax - 3.5} ${y + bh + 8} L${ax} ${y + bh + 2} L${ax + 3.5} ${y + bh + 8}" fill="none" stroke="#9fb8cf" stroke-width="1.2"/>`;
@@ -1723,20 +2301,15 @@ const OBJECTIONS = [
   }
 
   function dgCancer() {
-    const out = [];
-    out.push(`<svg viewBox="0 0 340 250" class="dg" role="img" aria-label="암 보장 구조 도식">
-      <defs>
-        <linearGradient id="cNavy" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#153a60"/><stop offset="100%" stop-color="#0a1d33"/></linearGradient>
-      </defs>
+    return `<svg viewBox="0 0 340 250" class="dg" role="img" aria-label="암 보장 구조 도식">
+      <defs><linearGradient id="cNavy" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#153a60"/><stop offset="100%" stop-color="#0a1d33"/></linearGradient></defs>
       <rect x="8" y="10" width="324" height="140" rx="14" fill="#f7f9fc" stroke="#cfdaea" stroke-dasharray="5 4"/>
       <text x="20" y="30" class="dg-s">악성신생물 분류표 · C00~C97</text>
-
       <rect x="20" y="42" width="138" height="94" rx="10" fill="url(#cNavy)"/>
       <text x="32" y="66" class="dg-l light">일반암</text>
       <text x="32" y="84" class="dg-s on-dark">C00~C97 − 유사암</text>
       <text x="32" y="104" class="dg-s on-dark">진단비 100% 기준</text>
       <text x="32" y="122" class="dg-s on-dark">(상품별 지급액)</text>
-
       <rect x="170" y="42" width="150" height="94" rx="10" fill="#fdf6e6" stroke="#e8c777" stroke-dasharray="4 3"/>
       <text x="182" y="60" class="dg-l dark">유사암 4종</text>
       <rect x="182" y="68" width="60" height="20" rx="6" fill="#fff" stroke="#e8d3a4"/><text x="212" y="82" text-anchor="middle" class="dg-c dark">C73 갑상선</text>
@@ -1744,18 +2317,15 @@ const OBJECTIONS = [
       <rect x="182" y="92" width="60" height="20" rx="6" fill="#fff" stroke="#e8d3a4"/><text x="212" y="106" text-anchor="middle" class="dg-c dark">D00~09 제자리</text>
       <rect x="246" y="92" width="62" height="20" rx="6" fill="#fff" stroke="#e8d3a4"/><text x="277" y="106" text-anchor="middle" class="dg-c dark">D37~48 경계성</text>
       <text x="182" y="128" class="dg-s dark">일반암보다 낮은 금액 · 별도 담보</text>
-
       <path d="M245 142 L245 160" stroke="#c9a44c" stroke-width="1.4" fill="none"/>
       <path d="M240 156 L245 162 L250 156" fill="none" stroke="#c9a44c" stroke-width="1.4"/>
       <rect x="8" y="164" width="324" height="34" rx="10" fill="#fff" stroke="#e4d3a8"/>
       <text x="20" y="185" class="dg-l dark">유사암 진단비</text>
       <text x="320" y="185" text-anchor="end" class="dg-s dark">별도 한도 · "유사암 제외" 문구 확인</text>
-
       <rect x="8" y="208" width="324" height="34" rx="10" fill="#eef4fb" stroke="#cfdaea"/>
       <text x="20" y="229" class="dg-l dark">암 주요치료비</text>
       <text x="320" y="229" text-anchor="end" class="dg-s dark">항암약물 · 방사선 · 수술 — 진단비와 별도 축</text>
-    </svg>`);
-    return out.join('');
+    </svg>`;
   }
 
   function dgSurgery() {
@@ -1795,9 +2365,7 @@ const OBJECTIONS = [
       out += `<rect x="${c.x}" y="10" width="104" height="130" rx="12" fill="${fill}" stroke="${stroke}"/>`;
       out += `<text x="${c.x + 12}" y="32" class="dg-s ${cls}">${c.tag}</text>`;
       out += `<text x="${c.x + 12}" y="52" class="dg-l ${i === 2 ? 'light' : 'dark'}">${c.title}</text>`;
-      c.lines.forEach((l, j) => {
-        out += `<text x="${c.x + 12}" y="${76 + j * 18}" class="dg-s ${cls}">· ${l}</text>`;
-      });
+      c.lines.forEach((l, j) => { out += `<text x="${c.x + 12}" y="${76 + j * 18}" class="dg-s ${cls}">· ${l}</text>`; });
       if (i === 2) out += `<text x="${c.x + 12}" y="130" class="dg-s on-dark">노후 핵심</text>`;
     });
     out += `<path d="M16 168 L318 168" stroke="#8ba0b8" stroke-width="1.2" stroke-dasharray="4 4"/>`;
@@ -1872,8 +2440,7 @@ const OBJECTIONS = [
 
     $$('.copy-mini', host).forEach((b) => {
       b.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         const i = Number(b.dataset.copy);
         copy(g.talk[i].replace(/^"|"$/g, ''), '화법을 복사했습니다');
       });
@@ -1883,33 +2450,19 @@ const OBJECTIONS = [
   /* ================= 탭 3 ================= */
   function renderToolkit() {
     $('#disclosure-general').innerHTML = DISCLOSURE_GENERAL.map((d) => `
-      <div class="disc-row">
-        <div class="disc-period">${d.period}</div>
-        <ul>${d.items.map((i) => `<li>${i}</li>`).join('')}</ul>
-      </div>`).join('');
-
+      <div class="disc-row"><div class="disc-period">${d.period}</div><ul>${d.items.map((i) => `<li>${i}</li>`).join('')}</ul></div>`).join('');
     $('#disclosure-simple').innerHTML = DISCLOSURE_SIMPLE.map((d) => `
-      <div class="disc-row">
-        <div class="disc-period">${d.period}</div>
-        <ul>${d.items.map((i) => `<li>${i}</li>`).join('')}</ul>
-      </div>`).join('');
+      <div class="disc-row"><div class="disc-period">${d.period}</div><ul>${d.items.map((i) => `<li>${i}</li>`).join('')}</ul></div>`).join('');
 
     const rowKeys = ['급여', '비급여', '자기부담', '재가입', '특징'];
-    const cards = $('#silson-cards');
-    if (cards) {
-      cards.innerHTML = SILSON_GENERATIONS.map((g) => `
-        <div class="silson-card${g.gen === '5세대' ? ' is-current' : ''}">
-          <div class="sg-head"><strong>${g.gen}</strong><span>${g.period}</span></div>
-          <dl>${rowKeys.map((k) => `<div><dt>${k}</dt><dd>${g.rows[k]}</dd></div>`).join('')}</dl>
-        </div>`).join('');
-    }
+    $('#silson-cards').innerHTML = SILSON_GENERATIONS.map((g) => `
+      <div class="silson-card${g.gen === '5세대' ? ' is-current' : ''}">
+        <div class="sg-head"><strong>${g.gen}</strong><span>${g.period}</span></div>
+        <dl>${rowKeys.map((k) => `<div><dt>${k}</dt><dd>${g.rows[k]}</dd></div>`).join('')}</dl>
+      </div>`).join('');
     $('#silson-table').innerHTML = `
-      <thead>
-        <tr><th class="sticky-col">구분</th>${SILSON_GENERATIONS.map((g) => `<th><strong>${g.gen}</strong><span>${g.period}</span></th>`).join('')}</tr>
-      </thead>
-      <tbody>
-        ${rowKeys.map((k) => `<tr><th class="sticky-col">${k}</th>${SILSON_GENERATIONS.map((g) => `<td>${g.rows[k]}</td>`).join('')}</tr>`).join('')}
-      </tbody>`;
+      <thead><tr><th class="sticky-col">구분</th>${SILSON_GENERATIONS.map((g) => `<th><strong>${g.gen}</strong><span>${g.period}</span></th>`).join('')}</tr></thead>
+      <tbody>${rowKeys.map((k) => `<tr><th class="sticky-col">${k}</th>${SILSON_GENERATIONS.map((g) => `<td>${g.rows[k]}</td>`).join('')}</tr>`).join('')}</tbody>`;
 
     const ob = $('#objections');
     ob.innerHTML = OBJECTIONS.map((o, i) => `
@@ -1943,6 +2496,44 @@ const OBJECTIONS = [
     });
   }
 
+  /* ================= 위저드 ================= */
+  function setStep(n, silent) {
+    state.step = clamp(n, 1, 5);
+    $$('.wiz-panel').forEach((p) => p.classList.toggle('is-active', Number(p.dataset.step) === state.step));
+    $('#wiz-count').textContent = `${state.step}/5`;
+    $('#wiz-title').textContent = WIZARD[state.step - 1].title;
+    $('#wiz-bar-fill').style.width = ((state.step / 5) * 100) + '%';
+    $('#wiz-prev').disabled = state.step === 1;
+    $('#wiz-next').textContent = state.step === 5 ? '진단하기' : '다음';
+    if (!silent) {
+      const top = $('#wizard').getBoundingClientRect().top + window.scrollY - 78;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+    renderSummary();
+  }
+
+  function toggleExpand() {
+    state.expanded = !state.expanded;
+    document.body.classList.toggle('wiz-all', state.expanded);
+    $('#btn-expand').textContent = state.expanded ? '단계로 보기' : '한눈에 보기';
+    $('#btn-expand').classList.toggle('is-on', state.expanded);
+    if (!state.expanded) setStep(state.step, true);
+    window.scrollTo({ top: $('#wizard').offsetTop - 78, behavior: 'smooth' });
+  }
+
+  function renderSummary() {
+    const el = $('#wiz-summary');
+    if (!el) return;
+    const rows = PRIORITY.map((item) => {
+      const r = evalItem(item);
+      return `<div class="sum-row"><span class="sr-rank">${item.rank}</span><strong>${item.name}</strong><span class="sr-val">${summaryOf(item, r)}</span><span class="badge badge-${r.level}">${r.label}</span></div>`;
+    }).join('');
+    el.innerHTML = `
+      <div class="sum-top">${state.age}대 ${state.gender} · 직업 ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]} · 월 ${won(state.premium)}만원</div>
+      ${rows}
+      <p class="sum-note">위 내용으로 진단하면 점수와 리포트가 만들어집니다.</p>`;
+  }
+
   /* ================= 상담 저장 / 불러오기 ================= */
   function loadHistory() {
     const list = lsGet(HKEY, []);
@@ -1954,24 +2545,17 @@ const OBJECTIONS = [
     if (!state.lastResult) { toast('먼저 진단해 주세요'); return; }
     const label = ($('#cust-label').value || '').trim() || `${state.age}대 ${state.gender}`;
     const entry = {
-      id: 'c' + Date.now(),
-      label,
-      savedAt: new Date().toISOString(),
-      score: state.lastResult.score.score,
-      grade: state.lastResult.score.grade.label,
+      id: 'c' + Date.now(), label, savedAt: new Date().toISOString(),
+      score: state.lastResult.score.score, grade: state.lastResult.score.grade.label,
       inputs: {
         age: state.age, gender: state.gender, job: state.job, silson: state.silson,
-        premium: state.premium, cov: Object.assign({}, state.cov), flags: Object.assign({}, state.flags)
+        premium: state.premium, cov: JSON.parse(JSON.stringify(state.cov)), flags: Object.assign({}, state.flags)
       }
     };
     const next = [entry].concat(state.history).slice(0, 5);
     if (lsSet(HKEY, next)) {
-      state.history = next;
-      renderHistory();
-      toast('최근 상담에 저장했습니다 (최대 5건)');
-    } else {
-      toast('저장 공간을 쓸 수 없습니다');
-    }
+      state.history = next; renderHistory(); toast('최근 상담에 저장했습니다 (최대 5건)');
+    } else toast('저장 공간을 쓸 수 없습니다');
   }
 
   function renderHistory() {
@@ -1986,16 +2570,13 @@ const OBJECTIONS = [
       const when = `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
       return `
         <div class="hist" data-id="${h.id}">
-          <div class="hist-main">
-            <strong>${esc(h.label)}</strong>
-            <span>${when} · ${h.inputs.age}대 ${h.inputs.gender} · 실손 ${SILSON_LABEL[h.inputs.silson]}</span>
-          </div>
+          <div class="hist-main"><strong>${esc(h.label)}</strong>
+            <span>${when} · ${h.inputs.age}대 ${h.inputs.gender} · 실손 ${SILSON_LABEL[h.inputs.silson]}</span></div>
           <span class="hist-score">${h.score}<i>점</i></span>
           <button type="button" class="hist-load" data-load="${h.id}">불러오기</button>
           <button type="button" class="hist-del" data-del="${h.id}" aria-label="삭제">×</button>
         </div>`;
     }).join('');
-
     $$('[data-load]', host).forEach((b) => {
       b.addEventListener('click', () => {
         const h = state.history.find((x) => x.id === b.dataset.load);
@@ -2009,26 +2590,20 @@ const OBJECTIONS = [
     $$('[data-del]', host).forEach((b) => {
       b.addEventListener('click', () => {
         const next = state.history.filter((x) => x.id !== b.dataset.del);
-        if (lsSet(HKEY, next)) {
-          state.history = next;
-          renderHistory();
-          toast('삭제했습니다');
-        }
+        if (lsSet(HKEY, next)) { state.history = next; renderHistory(); toast('삭제했습니다'); }
       });
     });
   }
 
   function applyInputs(inputs) {
-    state.age = inputs.age;
-    state.gender = inputs.gender;
-    state.job = inputs.job;
-    state.silson = inputs.silson;
-    state.premium = inputs.premium;
-    state.cov = Object.assign({}, inputs.cov);
+    state.age = inputs.age; state.gender = inputs.gender; state.job = inputs.job;
+    state.silson = inputs.silson; state.premium = inputs.premium;
+    state.cov = JSON.parse(JSON.stringify(inputs.cov));
     state.flags = Object.assign({}, state.flags, inputs.flags);
     syncSegments();
-    renderCoverageInputs();
+    renderCoverageCards();
     renderFlags();
+    renderSummary();
     $('#premium').value = state.premium;
   }
 
@@ -2042,6 +2617,26 @@ const OBJECTIONS = [
       });
     });
     $('#job-hint').textContent = JOB_HINTS[state.job];
+  }
+
+  /* ================= 보험료 구성 ================= */
+  const FLAGS = [
+    { key: 'savings', label: '적립(저축)성 특약이 포함돼 있다' },
+    { key: 'renew', label: '갱신형 담보가 중심이다' },
+    { key: 'manyRiders', label: '특약이 6개 이상으로 많다' }
+  ];
+
+  function renderFlags() {
+    const host = $('#premium-flags');
+    host.innerHTML = '';
+    FLAGS.forEach((f) => {
+      const l = document.createElement('label');
+      l.className = 'check';
+      l.innerHTML = `<input type="checkbox" data-flag="${f.key}" ${state.flags[f.key] ? 'checked' : ''}><span>${f.label}</span>`;
+      const cb = $('input', l);
+      cb.addEventListener('change', () => { state.flags[f.key] = cb.checked; if (state.analyzed) analyze(); });
+      host.appendChild(l);
+    });
   }
 
   /* ================= 화면 모드 ================= */
@@ -2069,28 +2664,19 @@ const OBJECTIONS = [
     el.textContent = msg;
     el.classList.add('is-on');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('is-on'), 2000);
+    toastTimer = setTimeout(() => el.classList.remove('is-on'), 2200);
   }
 
   async function copy(text, okMsg) {
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-      } else {
+      if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text);
+      else {
         const ta = document.createElement('textarea');
-        ta.value = text;
-        ta.setAttribute('readonly', '');
-        ta.style.position = 'fixed';
-        ta.style.top = '-1000px';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
+        ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.top = '-1000px';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
       }
       toast(okMsg || '복사했습니다');
-    } catch (e) {
-      toast('복사가 막혔습니다. 길게 눌러 직접 선택해 주세요');
-    }
+    } catch (e) { toast('복사가 막혔습니다. 길게 눌러 직접 선택해 주세요'); }
   }
 
   /* ================= 탭 전환 ================= */
@@ -2109,18 +2695,28 @@ const OBJECTIONS = [
     state.view = lsGet(VKEY, 'advisor') === 'client' ? 'client' : 'advisor';
 
     renderSegments();
-    renderCoverageInputs();
+    renderCoverageCards();
     renderFlags();
     renderGuideChips();
     renderGuideBody();
     renderToolkit();
     loadHistory();
     applyView();
+    setStep(1, true);
+    renderSummary();
 
     $('#premium').addEventListener('input', (e) => {
       state.premium = clamp(Number(e.target.value || 0), 0, 300);
+      renderSummary();
       if (state.analyzed) analyze();
     });
+
+    $('#wiz-prev').addEventListener('click', () => setStep(state.step - 1));
+    $('#wiz-next').addEventListener('click', () => {
+      if (state.step === 5) { analyze(); $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' }); toast('진단을 완료했습니다'); }
+      else setStep(state.step + 1);
+    });
+    $('#btn-expand').addEventListener('click', toggleExpand);
 
     $('#btn-analyze').addEventListener('click', () => {
       analyze();
@@ -2129,18 +2725,17 @@ const OBJECTIONS = [
     });
 
     $('#btn-kakao').addEventListener('click', () => copy(kakaoText(), '카톡 요약을 복사했습니다'));
+    $('#btn-pdf').addEventListener('click', doPrint);
     $('#btn-save').addEventListener('click', saveConsult);
     $('#btn-reset').addEventListener('click', () => {
       applyInputs({
-        age: '40', gender: '여', job: '1', silson: '4', premium: 22,
-        cov: { cancer: 3000, brain: 2000, heart: 0, surgery: 300, care: 10 },
-        flags: { nDae: false, longTerm: false, savings: false, renew: true, manyRiders: false }
+        age: DEFAULT.age, gender: DEFAULT.gender, job: DEFAULT.job, silson: DEFAULT.silson,
+        premium: DEFAULT.premium, cov: DEFAULT.cov, flags: DEFAULT.flags
       });
       $('#cust-label').value = '';
-      state.analyzed = false;
-      state.lastResult = null;
+      state.analyzed = false; state.lastResult = null;
       $('#result').hidden = true;
-      $('#save-bar').hidden = true;
+      setStep(1, true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       toast('새 상담을 시작합니다');
     });
@@ -2166,9 +2761,7 @@ const OBJECTIONS = [
     });
 
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-      });
+      window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
     }
   }
 

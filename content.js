@@ -4,41 +4,130 @@
 
 const PRIORITY = [
   {
-    key: 'cancer', rank: 1, name: '암', sub: '암 진단비',
-    need: '진단비 + 치료비의 이중 구조',
+    key: 'cancer', rank: 1, name: '암', sub: '진단비 · 치료비', unit: '만원',
     rec: { '20': 3000, '30': 3000, '40': 5000, '50': 5000, '60': 3000, '70': 2000 },
-    unit: '만원', inputLabel: '일반암 진단비', step: 500, quick: [0, 1000, 2000, 3000, 5000, 10000],
-    weight: 30
+    weight: 30,
+    parts: [
+      { key: 'general', type: 'amount', label: '일반암 진단비', weight: 0.55, factor: 1, step: 500, quick: [0, 1000, 3000, 5000, 10000] },
+      { key: 'similar', type: 'amount', label: '유사암 진단비', hint: '갑상선·기타피부·제자리·경계성', weight: 0.15, factor: 0.2, step: 100, quick: [0, 200, 500, 1000, 2000] },
+      { key: 'treatment', type: 'amount', label: '암 주요치료비', hint: '표적·면역·비급여', weight: 0.2, factor: 0.4, step: 500, quick: [0, 1000, 2000, 3000, 5000] },
+      { key: 'recur', type: 'bool', label: '재진단·전이암 보장', weight: 0.1 }
+    ]
   },
   {
-    key: 'brain', rank: 2, name: '뇌', sub: '뇌혈관 진단비',
-    need: '뇌혈관질환(I60~I69) 기준',
+    key: 'brain', rank: 2, name: '뇌', sub: '뇌혈관', unit: '만원',
     rec: { '20': 2000, '30': 2000, '40': 3000, '50': 3000, '60': 2000, '70': 2000 },
-    unit: '만원', inputLabel: '뇌혈관질환 진단비', step: 500, quick: [0, 1000, 2000, 3000, 5000],
-    weight: 22
+    weight: 22,
+    parts: [
+      { key: 'scope', type: 'scale', label: '보장 범위', weight: 0.7, options: [
+        { v: 'none', label: '미보유', score: 0 },
+        { v: 'bleed', label: '뇌출혈', hint: 'I60~I62', score: 0.45 },
+        { v: 'stroke', label: '뇌졸중', hint: 'I60~I64', score: 0.72 },
+        { v: 'vascular', label: '뇌혈관질환', hint: 'I60~I69', score: 1 }
+      ] },
+      { key: 'treat', type: 'bool', label: '뇌혈관 수술·혈전용해치료비', weight: 0.3 }
+    ]
   },
   {
-    key: 'heart', rank: 3, name: '심장', sub: '허혈성심장 진단비',
-    need: '허혈성심장질환(I20~I25) 기준',
+    key: 'heart', rank: 3, name: '심장', sub: '허혈성심장', unit: '만원',
     rec: { '20': 1000, '30': 1000, '40': 2000, '50': 2000, '60': 1000, '70': 1000 },
-    unit: '만원', inputLabel: '허혈성심장질환 진단비', step: 500, quick: [0, 500, 1000, 2000, 3000],
-    weight: 18
+    weight: 18,
+    parts: [
+      { key: 'scope', type: 'scale', label: '보장 범위', weight: 0.7, options: [
+        { v: 'none', label: '미보유', score: 0 },
+        { v: 'mi', label: '급성심근경색', hint: 'I21~I22', score: 0.45 },
+        { v: 'ischemic', label: '허혈성심장', hint: 'I20~I25', score: 0.8 },
+        { v: 'cardiac', label: '심장질환', hint: '부정맥·판막·심부전', score: 1 }
+      ] },
+      { key: 'surgery', type: 'bool', label: '심혈관 수술비', weight: 0.3 }
+    ]
   },
   {
-    key: 'surgery', rank: 4, name: '수술비', sub: '1~5종 · N대',
-    need: '5종 수술비 + N대 수술비',
+    key: 'surgery', rank: 4, name: '수술비', sub: '종수 · N대', unit: '만원',
     rec: { '20': 500, '30': 500, '40': 500, '50': 500, '60': 300, '70': 300 },
-    unit: '만원', inputLabel: '5종 수술비 1회당', step: 100, quick: [0, 100, 300, 500, 1000],
-    aux: { key: 'nDae', label: 'N대 수술비 보유 (21·22·30대 등)' },
-    weight: 15
+    weight: 15,
+    parts: [
+      { key: 'disease', type: 'amount', label: '질병 1~5종 수술비', hint: '5종 기준 1회당', weight: 0.5, factor: 1, step: 100, quick: [0, 100, 300, 500, 1000] },
+      { key: 'nDae', type: 'bool', label: 'N대 질병수술비', hint: '21·22·30대 등', weight: 0.3 },
+      { key: 'injury', type: 'bool', label: '상해수술비', weight: 0.2 }
+    ]
   },
   {
-    key: 'care', rank: 5, name: '간병비', sub: '일당 · 요양',
-    need: '간병인 사용일당 + 장기요양',
+    key: 'care', rank: 5, name: '간병비', sub: '일당 · 요양', unit: '만원',
     rec: { '20': 8, '30': 8, '40': 10, '50': 10, '60': 10, '70': 10 },
-    unit: '만원', inputLabel: '간병인 사용일당', step: 1, quick: [0, 5, 8, 10, 15],
-    aux: { key: 'longTerm', label: '장기요양등급(1~5·인지지원) 보장 보유' },
-    weight: 15
+    weight: 15,
+    parts: [
+      { key: 'daily', type: 'amount', label: '간병인 사용일당', hint: '1일당', weight: 0.45, factor: 1, step: 1, quick: [0, 5, 8, 10, 15] },
+      { key: 'nursing', type: 'bool', label: '간호간병통합서비스', weight: 0.25 },
+      { key: 'ltc', type: 'bool', label: '장기요양등급(1~5·인지지원)', weight: 0.3 }
+    ]
+  }
+];
+
+/* 단계별 위저드 구성 */
+const WIZARD = [
+  { step: 1, key: 'profile', title: '기본 정보', desc: '연령대 · 성별 · 직업급수 · 실손 · 보험료' },
+  { step: 2, key: 'cancer', title: '암', desc: '일반암 · 유사암 · 주요치료비 · 재진단' },
+  { step: 3, key: 'brainheart', title: '뇌 · 심장', desc: '보장 범위와 수술·치료비' },
+  { step: 4, key: 'surgerycare', title: '수술 · 간병', desc: '종수·N대, 일당·요양' },
+  { step: 5, key: 'contract', title: '계약 형태', desc: '적립·갱신·특약 점검' }
+];
+
+/* 공개 통계 — 출처·기준연도 명시 (사용자 제공 검증 수치) */
+const STATS = [
+  {
+    id: 'death',
+    title: '사망원인 비중',
+    source: '통계청 2024년 사망원인통계',
+    headline: '3대 중증질환 합산',
+    headlineValue: '41.1%',
+    max: 25,
+    rows: [
+      { label: '암', value: 24.8, rank: '1위' },
+      { label: '심장질환', value: 9.4, rank: '2위' },
+      { label: '뇌혈관질환', value: 6.9, rank: '4위' }
+    ]
+  },
+  {
+    id: 'cancer',
+    title: '암 발생 · 생존',
+    source: '보건복지부·중앙암등록본부 2023년 국가암등록통계',
+    headline: '5년 상대생존율',
+    headlineValue: '73.7%',
+    max: 50,
+    rows: [
+      { label: '남자 평생 발생 확률', value: 44.6 },
+      { label: '여자 평생 발생 확률', value: 38.2 }
+    ]
+  },
+  {
+    id: 'stroke',
+    title: '뇌경색 vs 뇌내출혈',
+    source: '중앙심뇌혈관질환센터·건강보험통계 2023',
+    headline: '뇌경색이 약 5.1배',
+    headlineValue: '5.1배',
+    max: 550000,
+    rows: [
+      { label: '뇌경색 I63', value: 528440, unit: '명' },
+      { label: '뇌내출혈 I60~I62', value: 103375, unit: '명' }
+    ],
+    notes: ['뇌경색 입원 평균 62.7일', '1인당 진료비 2,562만 원']
+  },
+  {
+    id: 'ltc',
+    title: '장기요양등급 분포',
+    source: '건보공단 2025 노인장기요양보험 통계연보',
+    headline: '3~5등급·인지지원 합계',
+    headlineValue: '87.4%',
+    stacked: [
+      { label: '1등급', value: 4.5 },
+      { label: '2등급', value: 8.2 },
+      { label: '3등급', value: 26.4 },
+      { label: '4등급', value: 46.8 },
+      { label: '5등급', value: 11.8 },
+      { label: '인지지원', value: 2.4 }
+    ],
+    notes: ['인정자 123만 5,045명', '월평균 급여비 154만 원']
   }
 ];
 
@@ -94,7 +183,8 @@ const GUIDES = {
       '<b>1회한 담보의 중복</b> — 증권이 여러 개여도 각 담보는 1회씩. 총액이 두꺼워 보여도 재진단은 안 됩니다.',
       '진단비만 있고 <b>항암치료비(표적·면역·방사선)</b> 담보가 없으면 장기 치료에서 공백이 생깁니다.',
       '갑상선암이 림프절로 전이된 경우 <b>원발부위 기준 조항</b>이 있으면 갑상선암으로 분류됩니다. 이 조항의 설명 여부가 다퉈진 지점입니다(대법원 2025.3.13. 선고 2023다250746).',
-      '<b>갱신형</b>은 갱신 시점에 보험료가 크게 오르고, 재가입 심사에서 가입이 막힐 수 있습니다.'
+      '<b>갱신형</b>은 갱신 시점에 보험료가 크게 오르고, 재가입 심사에서 가입이 막힐 수 있습니다.',
+      '<b>재진단·전이암</b> 담보가 따로 있는지 확인하세요. 일반암 1회한만 있으면 재발·전이 때 추가 지급이 없습니다.'
     ],
     claim: [
       '암보장개시일 = 계약일 또는 90일 경과 후(상품별). 90일 이내 진단은 보장 제외입니다.',
@@ -158,7 +248,8 @@ const GUIDES = {
       '<b>스텐트·혈관성형술</b>이 수술비 지급 대상인지 상품마다 다릅니다. 약관의 "수술" 정의를 확인하세요.',
       '<b>부정맥·판막·심부전</b>은 별도 담보가 없으면 미보장입니다.',
       '심장 수술비 담보를 아예 안 가진 경우가 많습니다.',
-      'I25(만성 허혈성심장질환) 포함 여부 — 담보명만 보고 판단하지 마세요.'
+      'I25(만성 허혈성심장질환) 포함 여부 — 담보명만 보고 판단하지 마세요.',
+      '<b>심혈관 수술비</b>는 진단비와 별도 담보입니다. 스텐트·우회로 수술비가 있는지 확인하세요.'
     ],
     claim: [
       '심전도 · 심근효소(트로포닌) · <b>관상동맥조영술</b> 결과가 I21 진단의 핵심 근거입니다.',
@@ -223,7 +314,8 @@ const GUIDES = {
       '<b>간호간병통합 병동</b>은 별도 특약이 필요합니다.',
       '일수 한도(예: 180일)·연간 한도를 확인하세요.',
       '<b>장기요양은 등급 판정</b>이 전제입니다. 등급이 안 나오면 요양비도 없습니다.',
-      '고령 가입 제한·갱신형 여부 — 부모님 나이에서 가입 가능한지 먼저 봅니다.'
+      '고령 가입 제한·갱신형 여부 — 부모님 나이에서 가입 가능한지 먼저 봅니다.',
+      '<b>체증형</b>은 입원일수가 길어질수록 일당이 올라가는 구조입니다. 장기 입원 위험이 큰 고객에게 유리합니다.'
     ],
     claim: [
       '간병인 이용확인서 · 계약서 · 영수증, 요양보호사 자격 확인서를 준비합니다.',

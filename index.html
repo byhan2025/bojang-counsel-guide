@@ -53,71 +53,119 @@
   <!-- ================= TAB 1 : 보장분석 ================= -->
   <section id="view-analysis" class="view is-active" aria-labelledby="tab-analysis">
 
-    <div class="intro-card">
+    <div class="intro-card no-print">
       <div class="intro-eyebrow">BOJANG ANALYSIS</div>
       <h2>5대 담보를 한 장으로<br>진단하고 리모델링합니다</h2>
       <p>입력값은 서버로 전송되지 않고 이 화면 안에서만 계산됩니다.</p>
     </div>
 
-    <div class="card">
-      <div class="card-title"><span class="eyebrow">01 · PROFILE</span> 고객 기본 정보</div>
-
-      <div class="field">
-        <label class="field-label">연령대</label>
-        <div class="seg" id="seg-age" role="group" aria-label="연령대"></div>
-      </div>
-
-      <div class="field">
-        <label class="field-label">성별</label>
-        <div class="seg seg-2" id="seg-gender" role="group" aria-label="성별"></div>
-      </div>
-
-      <div class="field">
-        <label class="field-label">직업급수 <span class="hint" id="job-hint">사무·관리직</span></label>
-        <div class="seg seg-3" id="seg-job" role="group" aria-label="직업급수"></div>
-      </div>
-
-      <div class="field">
-        <label class="field-label">실손의료보험 세대</label>
-        <div class="seg seg-wrap" id="seg-silson" role="group" aria-label="실손 세대"></div>
-      </div>
-
-      <div class="field">
-        <label class="field-label" for="premium">현재 월 보험료</label>
-        <div class="input-row">
-          <input id="premium" type="number" inputmode="numeric" min="0" max="300" step="1" value="22">
-          <span class="unit">만원</span>
+    <!-- ---------- 위저드 ---------- -->
+    <div class="wizard no-print" id="wizard">
+      <div class="wiz-head">
+        <div class="wiz-bar"><i id="wiz-bar-fill"></i></div>
+        <div class="wiz-meta">
+          <span class="wiz-count" id="wiz-count">1/5</span>
+          <span class="wiz-title" id="wiz-title">기본 정보</span>
+          <button type="button" class="wiz-expand" id="btn-expand">한눈에 보기</button>
         </div>
-        <p class="field-note">건강보험료 전체(주계약 + 특약, 실손 포함) 기준</p>
+      </div>
+
+      <div class="wiz-panels" id="wiz-panels">
+
+        <div class="wiz-panel is-active" data-step="1">
+          <div class="wiz-panel-title"><span class="n">1</span>기본 정보<em>연령대 · 성별 · 직업급수 · 실손 · 보험료</em></div>
+          <div class="card">
+            <div class="field">
+              <label class="field-label">연령대</label>
+              <div class="seg" id="seg-age" role="group" aria-label="연령대"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">성별</label>
+              <div class="seg seg-2" id="seg-gender" role="group" aria-label="성별"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">직업급수 <span class="hint" id="job-hint">사무·관리직</span></label>
+              <div class="seg seg-3" id="seg-job" role="group" aria-label="직업급수"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">실손의료보험 세대</label>
+              <div class="seg seg-wrap" id="seg-silson" role="group" aria-label="실손 세대"></div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="premium">현재 월 보험료</label>
+              <div class="input-row">
+                <input id="premium" type="number" inputmode="numeric" min="0" max="300" step="1" value="22">
+                <span class="unit">만원</span>
+              </div>
+              <p class="field-note">건강보험료 전체(주계약 + 특약, 실손 포함) 기준</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="wiz-panel" data-step="2">
+          <div class="wiz-panel-title"><span class="n">2</span>암<em>일반암 · 유사암 · 주요치료비 · 재진단</em></div>
+          <div id="card-cancer"></div>
+        </div>
+
+        <div class="wiz-panel" data-step="3">
+          <div class="wiz-panel-title"><span class="n">3</span>뇌 · 심장<em>보장 범위와 수술·치료비</em></div>
+          <div id="card-brain"></div>
+          <div id="card-heart"></div>
+        </div>
+
+        <div class="wiz-panel" data-step="4">
+          <div class="wiz-panel-title"><span class="n">4</span>수술 · 간병<em>종수·N대, 일당·요양</em></div>
+          <div id="card-surgery"></div>
+          <div id="card-care"></div>
+        </div>
+
+        <div class="wiz-panel" data-step="5">
+          <div class="wiz-panel-title"><span class="n">5</span>계약 형태<em>적립 · 갱신 · 특약 점검</em></div>
+          <div class="card">
+            <div class="card-title"><span class="eyebrow">03 · PREMIUM</span> 보험료 구성 <span class="card-sub">해당 항목만 체크</span></div>
+            <div class="checks" id="premium-flags"></div>
+          </div>
+          <div class="card wiz-summary">
+            <div class="card-title"><span class="eyebrow">CHECK</span> 입력 요약</div>
+            <div id="wiz-summary"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wiz-nav" id="wiz-nav">
+        <button type="button" class="wiz-btn" id="wiz-prev">이전</button>
+        <button type="button" class="wiz-btn primary" id="wiz-next">다음</button>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title"><span class="eyebrow">02 · COVERAGE</span> 보유 담보 <span class="card-sub">진단비는 일반암 기준</span></div>
-      <div id="coverage-inputs"></div>
-    </div>
-
-    <div class="card internal">
-      <div class="card-title"><span class="eyebrow">03 · PREMIUM</span> 보험료 구성 <span class="card-sub">해당 항목만 체크</span></div>
-      <div class="checks" id="premium-flags"></div>
-    </div>
-
-    <button class="btn-primary btn-analyze" id="btn-analyze" type="button">
+    <button class="btn-primary btn-analyze no-print" id="btn-analyze" type="button">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3.5-4.5 3 2.5L20 6"/></svg>
-      진단 결과 보기
+      보장분석 진단하기
     </button>
 
+    <!-- ---------- 결과 (인쇄 리포트 본문) ---------- -->
     <div id="result" class="result" hidden aria-live="polite">
-      <div class="result-hero" id="result-hero"></div>
-
-      <div class="card">
-        <div class="card-title"><span class="eyebrow">PRIORITY</span> 5대 우선순위 진단</div>
-        <div id="result-rows" class="priority-rows"></div>
+      <div class="print-head">
+        <div class="ph-kicker">BOJANG ANALYSIS REPORT</div>
+        <div class="ph-title">5대 담보 보장분석 리포트</div>
+        <div class="ph-meta"><span id="ph-client">—</span><span id="ph-date">—</span></div>
       </div>
 
-      <div class="card internal">
-        <div class="card-title"><span class="eyebrow">INTERNAL</span> 보장 구멍 · 보험료 다이어트</div>
-        <div id="result-checkpoints" class="checkpoints"></div>
+      <div class="result-hero" id="result-hero"></div>
+
+      <div class="card" id="radar-card">
+        <div class="card-title"><span class="eyebrow">BALANCE</span> 보장 밸런스 5축</div>
+        <div id="radar"></div>
+      </div>
+
+      <div class="card" id="stats-card">
+        <div class="card-title"><span class="eyebrow">FACTS</span> 왜 이 순서인가 <span class="card-sub">공식 통계</span></div>
+        <div id="stats" class="stats"></div>
+      </div>
+
+      <div class="card print-break">
+        <div class="card-title"><span class="eyebrow">PRIORITY</span> 5대 우선순위 진단</div>
+        <div id="result-rows" class="priority-rows"></div>
       </div>
 
       <div class="card">
@@ -125,7 +173,21 @@
         <div id="result-steps" class="steps"></div>
       </div>
 
-      <div class="save-bar" id="save-bar" hidden>
+      <div class="card">
+        <div class="card-title"><span class="eyebrow">CLAIM</span> 청구 준비 안내</div>
+        <div id="claim-guide" class="claim-guide"></div>
+      </div>
+
+      <div class="card internal">
+        <div class="card-title"><span class="eyebrow">INTERNAL</span> 보장 구멍 · 보험료 다이어트</div>
+        <div id="result-checkpoints" class="checkpoints"></div>
+      </div>
+
+      <div class="save-bar no-print" id="save-bar">
+        <button class="btn-pdf" id="btn-pdf" type="button">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 13h4M10 17h4"/></svg>
+          PDF 저장 / 리포트 출력
+        </button>
         <button class="btn-kakao" id="btn-kakao" type="button">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 3C6.9 3 3 6.2 3 10.1c0 2.5 1.6 4.7 4 6.1-.2.7-.7 2.4-.8 2.8 0 .4.2.4.4.3.3-.2 2.3-1.6 3.2-2.2.7.1 1.4.2 2.2.2 5.1 0 9-3.2 9-7.2S17.1 3 12 3z"/></svg>
           고객 카톡 요약 복사
@@ -136,10 +198,10 @@
         </div>
       </div>
 
-      <p class="disclaimer">종합 점수와 권장선은 상담 보조용 자체 산식입니다. 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.</p>
+      <p class="disclaimer">종합 점수·권장선은 상담 보조용 자체 산식입니다. 통계는 각 출처의 공표 수치이며, 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.</p>
     </div>
 
-    <div class="card internal">
+    <div class="card internal no-print">
       <div class="card-title"><span class="eyebrow">RECENT</span> 최근 상담
         <span class="card-sub">이 기기에만 저장 · 최대 5건</span>
         <button type="button" class="btn-reset" id="btn-reset">새 상담</button></div>
@@ -149,7 +211,7 @@
 
   <!-- ================= TAB 2 : 5대 담보 가이드 ================= -->
   <section id="view-guide" class="view" aria-labelledby="tab-guide">
-    <div class="chip-bar" id="guide-chips" role="tablist" aria-label="5대 담보"></div>
+    <div class="chip-bar no-print" id="guide-chips" role="tablist" aria-label="5대 담보"></div>
     <div id="guide-body" class="guide-body"></div>
   </section>
 
@@ -173,7 +235,7 @@
           <li><strong>MRI 검사를 위한 당일입원</strong>, 응급실 입원도 '입원'</li>
           <li>질병 <strong>진단만</strong> 받고 치료를 안 했어도 고지 대상</li>
           <li>기간을 <strong>착각</strong>해 잘못 답해도 고지의무 위반 — 마지막 입원·수술일부터 날짜를 센다</li>
-          <li>간편심사도 묻는 항목은 정확히 답해야 하며, 보험료는 일반심사보다 비싸다</li>
+          <li>간편심사도 묶는 항목은 정확히 답해야 하며, 보험료는 일반심사보다 비싸다</li>
         </ul>
       </div>
       <p class="source-note">근거: 금융감독원 「주요 분쟁사례로 알아본 소비자 유의사항 – 간편보험편」(2024.6.13) · 보험업감독업무시행세칙 별표14 · 상법 제651조(해지권: 안 날부터 1개월, 계약일부터 3년)</p>
@@ -207,7 +269,7 @@
   </section>
 </main>
 
-<nav class="tabbar" role="tablist" aria-label="주요 메뉴">
+<nav class="tabbar no-print" role="tablist" aria-label="주요 메뉴">
   <button class="tab is-active" id="tab-analysis" data-view="analysis" role="tab" aria-selected="true" aria-controls="view-analysis">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 15l3.5-4.5 3 2.5L20 6"/></svg>
     <span>보장분석</span>
@@ -222,7 +284,7 @@
   </button>
 </nav>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="toast no-print" id="toast" role="status" aria-live="polite"></div>
 
 <script src="./content.js"></script>
 <script src="./app.js"></script>
