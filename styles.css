@@ -2350,3 +2350,15 @@ body{
 .sl-treatline span{font-size:10.6px;font-weight:800;color:#A8494F;}
 .sl-treatline span em{font-style:normal;font-weight:600;color:#8B7A7B;}
 .sl-treatline i{font-style:normal;font-size:9.6px;font-weight:600;color:#9B9091;margin-left:auto;}
+
+/* 카드 틴트 — 블루 계열을 크림·블러시로 통일 */
+.sl-note{background:#FDF7F6;border-color:#F3DCDB;}
+.sl-note.tone-info{background:#FFF9F8;border-color:#F3DCDB;color:#8C3A40;}
+.sl-note.tone-warn{background:#FFFBF2;border-color:#F3DFC0;color:#7A4F12;}
+.sl-note.tone-ok{background:#F4FBF8;border-color:#CDE8DF;color:#0E6B5C;}
+.cmp-card,.risk-card,.care-card{background:#FFFCFB;border-color:#F3E2E1;}
+.t5{background:#FFFBFB;border-color:#F3DCDB;}
+.struct-box{background:#FFFBFB;border-color:#F3DCDB;}
+.side-card{background:#FFFCFB;border-color:#F5E4E3;}
+.cmp-table .ct-line:nth-child(even),.code-table .ct-line:nth-child(even){background:#FFFBFB;}
+.code-table .ct-head,.cmp-table .ct-head{background:var(--wine);}
