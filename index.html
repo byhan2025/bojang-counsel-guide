@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
 <title>보장분석 · 5대 우선순위 상담 가이드</title>
 <meta name="description" content="손해보험 설계사를 위한 현장 상담용 보장분석과 5대 담보(암·뇌·심장·수술비·간병비) 우선순위 가이드">
 <meta name="theme-color" content="#0a1d33">
@@ -106,7 +107,7 @@
       진단 결과 보기
     </button>
 
-    <div id="result" class="result" hidden>
+    <div id="result" class="result" hidden aria-live="polite">
       <div class="result-hero" id="result-hero"></div>
 
       <div class="card">
@@ -139,7 +140,9 @@
     </div>
 
     <div class="card internal">
-      <div class="card-title"><span class="eyebrow">RECENT</span> 최근 상담 <span class="card-sub">이 기기에만 저장 · 최대 5건</span></div>
+      <div class="card-title"><span class="eyebrow">RECENT</span> 최근 상담
+        <span class="card-sub">이 기기에만 저장 · 최대 5건</span>
+        <button type="button" class="btn-reset" id="btn-reset">새 상담</button></div>
       <div id="history-list" class="history"></div>
     </div>
   </section>

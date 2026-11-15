@@ -897,6 +897,20 @@
 
     $('#btn-kakao').addEventListener('click', () => copy(kakaoText(), '카톡 요약을 복사했습니다'));
     $('#btn-save').addEventListener('click', saveConsult);
+    $('#btn-reset').addEventListener('click', () => {
+      applyInputs({
+        age: '40', gender: '여', job: '1', silson: '4', premium: 22,
+        cov: { cancer: 3000, brain: 2000, heart: 0, surgery: 300, care: 10 },
+        flags: { nDae: false, longTerm: false, savings: false, renew: true, manyRiders: false }
+      });
+      $('#cust-label').value = '';
+      state.analyzed = false;
+      state.lastResult = null;
+      $('#result').hidden = true;
+      $('#save-bar').hidden = true;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast('새 상담을 시작합니다');
+    });
 
     $$('.viewswitch button').forEach((b) => {
       b.addEventListener('click', () => {

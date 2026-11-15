@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
 <title>보장분석 · 5대 우선순위 상담 가이드</title>
 <meta name="description" content="손해보험 설계사를 위한 현장 상담용 보장분석과 5대 담보(암·뇌·심장·수술비·간병비) 우선순위 가이드">
 <meta name="theme-color" content="#0a1d33">
@@ -163,6 +164,11 @@ body.is-client .prow-jump{display:none;}
   padding-right:7px;border-right:1px solid var(--line);
   transform:translateY(-1px);
 }
+.btn-reset{
+  border:1px solid var(--line);background:#fff;color:var(--navy-700);
+  border-radius:8px;padding:4px 9px;font-size:10.5px;font-weight:700;letter-spacing:-0.01em;
+}
+.btn-reset:active{background:var(--point-soft);border-color:var(--point);}
 .card-sub{margin-left:auto;font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:0;}
 .card-lead{font-size:12.5px;color:var(--ink-2);margin:-8px 0 14px;}
 
@@ -661,6 +667,17 @@ body.is-client .prow-jump{display:none;}
   .viewswitch button{padding:6px 7px;font-size:10px;}
   .brand-text h1{font-size:14.5px;}
 }
+@media print{
+  body{background:#fff;padding:0;}
+  .app-header,.tabbar,.client-banner,.toast,.btn-primary,.btn-kakao,.save-row,.btn-reset,.prow-jump,.copy-mini,.chip-bar{display:none!important;}
+  main{padding:0;max-width:none;}
+  .card,.intro-card,.result-hero{box-shadow:none;border-color:#ccc;break-inside:avoid;}
+  .result-hero{color:#0a1d33;background:#fff;border:1px solid #ccc;}
+  .result-hero *{color:#0a1d33!important;}
+  .ring{display:none;}
+  .acc{break-inside:avoid;}
+  .acc[open] .acc-body{display:block;}
+}
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important;}
 }
@@ -759,7 +776,7 @@ body.is-client .prow-jump{display:none;}
       진단 결과 보기
     </button>
 
-    <div id="result" class="result" hidden>
+    <div id="result" class="result" hidden aria-live="polite">
       <div class="result-hero" id="result-hero"></div>
 
       <div class="card">
@@ -792,7 +809,9 @@ body.is-client .prow-jump{display:none;}
     </div>
 
     <div class="card internal">
-      <div class="card-title"><span class="eyebrow">RECENT</span> 최근 상담 <span class="card-sub">이 기기에만 저장 · 최대 5건</span></div>
+      <div class="card-title"><span class="eyebrow">RECENT</span> 최근 상담
+        <span class="card-sub">이 기기에만 저장 · 최대 5건</span>
+        <button type="button" class="btn-reset" id="btn-reset">새 상담</button></div>
       <div id="history-list" class="history"></div>
     </div>
   </section>
@@ -2111,6 +2130,20 @@ const OBJECTIONS = [
 
     $('#btn-kakao').addEventListener('click', () => copy(kakaoText(), '카톡 요약을 복사했습니다'));
     $('#btn-save').addEventListener('click', saveConsult);
+    $('#btn-reset').addEventListener('click', () => {
+      applyInputs({
+        age: '40', gender: '여', job: '1', silson: '4', premium: 22,
+        cov: { cancer: 3000, brain: 2000, heart: 0, surgery: 300, care: 10 },
+        flags: { nDae: false, longTerm: false, savings: false, renew: true, manyRiders: false }
+      });
+      $('#cust-label').value = '';
+      state.analyzed = false;
+      state.lastResult = null;
+      $('#result').hidden = true;
+      $('#save-bar').hidden = true;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast('새 상담을 시작합니다');
+    });
 
     $$('.viewswitch button').forEach((b) => {
       b.addEventListener('click', () => {
