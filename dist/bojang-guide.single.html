@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 상담 가이드 v4 · 상담자 입력실 + 고객 30장 슬라이드</title>
+<title>보장분석 상담 가이드 v4.1 · 상담자 입력실 + 고객 30장 슬라이드</title>
 <meta name="description" content="손해보험 설계사를 위한 현장 상담용 보장분석. 상담자 상세 입력실에서 진단하고, 고객 화면에서는 30장 시각화 슬라이드로 함께 보며 1장·10장·30장 PDF를 저장·공유합니다.">
 <meta name="theme-color" content="#0a1d33">
 
@@ -729,6 +729,30 @@ body.wiz-all .wiz-nav,body.wiz-all .wiz-bar,body.wiz-all .wiz-count{display:none
 .mini-badge.tone-gap{background:var(--danger-soft);color:var(--danger);}
 .rec-hint{margin-left:auto;font-size:9.5px;color:var(--muted);align-self:center;letter-spacing:0;}
 
+/* v4.1 직접입력 표식 + 암 주요치료비 5종 */
+.di-tag{
+  flex:0 0 auto;font-size:9.5px;font-weight:800;letter-spacing:-0.01em;
+  color:#0a6b57;background:#e6f7f2;border-radius:7px;padding:4px 7px;white-space:nowrap;
+}
+.treat-group .treat-sum{
+  display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;
+  background:#f3f8fd;border:1px solid #dbe7f3;border-radius:10px;padding:8px 10px;margin-bottom:2px;
+}
+.treat-sum span{font-size:11px;font-weight:700;color:#40597a;letter-spacing:-0.01em;}
+.treat-sum b{font-size:14px;font-weight:800;color:var(--navy-800);letter-spacing:-0.03em;}
+.treat-sum em{font-style:normal;margin-left:5px;font-size:9.5px;font-weight:800;color:#0a6b57;}
+.treat-sum .ts-rec{font-size:9.8px;font-weight:700;color:var(--muted);}
+.sub-row{padding:11px 0;border-top:1px dashed var(--line-2);display:grid;gap:7px;}
+.treat-group .sub-row:first-of-type{border-top:0;padding-top:4px;}
+.sr-head{display:flex;align-items:flex-start;gap:8px;}
+.sr-head .part-label strong{font-size:12px;}
+.sr-head .mini-badge{margin-top:1px;}
+.treat-note{font-size:9.5px;line-height:1.5;color:var(--muted);margin-top:4px;}
+.ct-prem-wrap{display:flex;align-items:center;gap:4px;min-width:0;}
+.ct-prem-wrap .di-tag{padding:3px 5px;font-size:8.5px;}
+.ct-prem-wrap input{min-width:0;}
+.ct-prem-wrap .unit{font-size:10px;}
+
 .scale-pick{display:grid;gap:6px;}
 .scale-opt{
   display:grid;grid-template-columns:16px 1fr auto;align-items:center;gap:8px;
@@ -1331,6 +1355,20 @@ body.is-client .client-banner{display:none!important;}
 .cmp-card .cc-values span{font-size:9.6px;font-weight:600;color:#7f93a8;}
 .cc-pct{font-size:9.5px;font-weight:700;color:#5f7590;}
 
+/* 암 주요치료비 5종 (고객 슬라이드) */
+.t5{border:1px solid #dbe6f2;border-radius:14px;padding:11px 12px;background:#f8fbff;display:grid;gap:8px;}
+.t5-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.t5-head b{font-size:12.6px;font-weight:800;color:var(--navy-800);letter-spacing:-0.03em;}
+.t5-head span{font-size:9.8px;font-weight:700;color:#5f7590;}
+.t5-rows{display:grid;gap:5px;}
+.t5-row{display:grid;grid-template-columns:88px 62px 1fr 34px;align-items:center;gap:7px;}
+.t5-l{font-size:10.2px;font-weight:700;color:#40597a;letter-spacing:-0.02em;}
+.t5-v{font-size:10px;font-weight:800;color:var(--navy-800);text-align:right;}
+.t5-row.is-off .t5-v{color:#b3261e;}
+.t5-bar{height:7px;border-radius:999px;background:#e6eef7;overflow:hidden;}
+.t5-bar i{display:block;height:100%;border-radius:999px;}
+.t5-p{font-size:9.6px;font-weight:800;color:#5f7590;text-align:right;}
+
 /* 구조 */
 .struct{display:grid;gap:10px;}
 .struct-box{border:1px solid #dbe6f2;border-radius:14px;padding:12px;background:#f7fafd;}
@@ -1629,7 +1667,7 @@ body.is-client .client-banner{display:none!important;}
         </svg>
       </span>
       <div class="brand-text">
-        <h1>보장분석 상담 가이드 <em class="ver">v4</em></h1>
+        <h1>보장분석 상담 가이드 <em class="ver">v4.1</em></h1>
         <p>상담자 입력실 · 고객 30장 슬라이드</p>
       </div>
     </div>
@@ -1726,8 +1764,17 @@ body.is-client .client-banner{display:none!important;}
             <div class="field">
               <label class="field-label" for="premium">현재 월 보험료</label>
               <div class="input-row">
-                <input id="premium" type="number" inputmode="numeric" min="0" max="300" step="1" value="22">
+                <span class="di-tag">직접입력</span>
+                <input id="premium" type="number" inputmode="numeric" min="0" max="300" step="1" value="22" placeholder="숫자 입력">
                 <span class="unit">만원</span>
+              </div>
+              <div class="quick-row" id="premium-quick">
+                <button type="button" class="quick" data-premium="10">10</button>
+                <button type="button" class="quick" data-premium="20">20</button>
+                <button type="button" class="quick" data-premium="30">30</button>
+                <button type="button" class="quick" data-premium="40">40</button>
+                <button type="button" class="quick" data-premium="50">50</button>
+                <span class="rec-hint">만원 단위 · 직접 타이핑 가능</span>
               </div>
               <p class="field-note">건강보험료 전체(주계약 + 특약, 실손 포함) 기준</p>
             </div>
@@ -1735,7 +1782,7 @@ body.is-client .client-banner{display:none!important;}
         </div>
 
         <div class="wiz-panel" data-step="2">
-          <div class="wiz-panel-title"><span class="n">2</span>암<em>일반암 · 유사암 · 주요치료비 · 재진단</em></div>
+          <div class="wiz-panel-title"><span class="n">2</span>암<em>일반암 · 유사암 · 주요치료비 5종 · 재진단</em></div>
           <div id="card-cancer"></div>
         </div>
 
@@ -1761,7 +1808,11 @@ body.is-client .client-banner{display:none!important;}
             <div class="contract-add">
               <input type="text" id="ct-insurer" class="text-input sm" placeholder="보험사" maxlength="16" autocomplete="off">
               <input type="text" id="ct-product" class="text-input sm" placeholder="상품명" maxlength="30" autocomplete="off">
-              <input type="number" id="ct-premium" class="text-input sm" placeholder="월(만원)" min="0" max="300" step="1" inputmode="numeric">
+              <div class="ct-prem-wrap">
+                <span class="di-tag">직접입력</span>
+                <input type="number" id="ct-premium" class="text-input sm" placeholder="월 보험료" min="0" max="300" step="1" inputmode="numeric" aria-label="계약 월 보험료 직접입력 (만원)">
+                <span class="unit">만원</span>
+              </div>
               <select id="ct-pay" class="text-input sm ct-select" aria-label="납입상태">
                 <option value="납입중">납입중</option>
                 <option value="납입완료">납입완료</option>
@@ -2062,15 +2113,30 @@ body.is-client .client-banner{display:none!important;}
    기준일 2026-11-15. 수치·제도는 공개 자료(금융위원회·금융감독원) 확인분이며,
    상품별 세부 조건은 가입 약관이 우선합니다. */
 
+/* 암 주요치료비 5종 세분화 (v4.1)
+   각 세부 항목 = 미가입(0) 또는 500만~3,000만원. 직접입력 허용.
+   factor = 연령대별 일반암 권장 진단비 기준선(rec) 대비 비중 → 세부 권장액(500~3,000만원, 100만원 단위). */
+const CANCER_TREAT_MIN = 500;
+const CANCER_TREAT_MAX = 3000;
+const CANCER_TREAT_STEP = 500;
+const CANCER_TREAT_QUICK = [0, 500, 1000, 1500, 2000, 3000];
+const CANCER_TREAT_SUBS = [
+  { key: 'surgery', label: '암수술비', hint: '수술 1회당', factor: 0.20 },
+  { key: 'drug', label: '항암약물치료비', hint: '표적·면역항암', factor: 0.30 },
+  { key: 'radio', label: '항암방사선치료비', hint: '방사선 치료', factor: 0.12 },
+  { key: 'icu', label: '중환자실 입원', hint: '암 치료 중 중환자실', factor: 0.10 },
+  { key: 'extra', label: '비급여 추가 치료비', hint: '비급여 주사·검사', factor: 0.18 }
+];
+
 const PRIORITY = [
   {
-    key: 'cancer', rank: 1, name: '암', sub: '진단비 · 치료비', unit: '만원',
+    key: 'cancer', rank: 1, name: '암', sub: '진단비 · 치료비 5종', unit: '만원',
     rec: { '20': 3000, '30': 3000, '40': 5000, '50': 5000, '60': 3000, '70': 2000 },
     weight: 30,
     parts: [
       { key: 'general', type: 'amount', label: '일반암 진단비', weight: 0.55, factor: 1, step: 500, quick: [0, 1000, 3000, 5000, 10000] },
       { key: 'similar', type: 'amount', label: '유사암 진단비', hint: '갑상선·기타피부·제자리·경계성', weight: 0.15, factor: 0.2, step: 100, quick: [0, 200, 500, 1000, 2000] },
-      { key: 'treatment', type: 'amount', label: '암 주요치료비', hint: '표적·면역·비급여', weight: 0.2, factor: 0.4, step: 500, quick: [0, 1000, 2000, 3000, 5000] },
+      { key: 'treatment', type: 'group', label: '암 주요치료비 5종', hint: '암수술 · 항암약물 · 항암방사선 · 중환자실 · 비급여', weight: 0.2, subs: CANCER_TREAT_SUBS, min: CANCER_TREAT_MIN, max: CANCER_TREAT_MAX, step: CANCER_TREAT_STEP, quick: CANCER_TREAT_QUICK },
       { key: 'recur', type: 'bool', label: '재진단·전이암 보장', weight: 0.1 }
     ]
   },
@@ -2127,7 +2193,7 @@ const PRIORITY = [
 /* 단계별 위저드 구성 */
 const WIZARD = [
   { step: 1, key: 'profile', title: '기본 정보', desc: '연령대 · 성별 · 직업급수 · 가족력 · 실손 · 보험료' },
-  { step: 2, key: 'cancer', title: '암', desc: '일반암 · 유사암 · 주요치료비 · 재진단' },
+  { step: 2, key: 'cancer', title: '암', desc: '일반암 · 유사암 · 주요치료비 5종 · 재진단' },
   { step: 3, key: 'brainheart', title: '뇌 · 심장', desc: '보장 범위와 수술·치료비' },
   { step: 4, key: 'surgerycare', title: '수술 · 간병', desc: '종수·N대, 일당·요양' },
   { step: 5, key: 'contract', title: '계약 · 보험료', desc: '보유 계약 · 납입상태 · 만기 · 갱신 · 특약' },
@@ -2973,15 +3039,84 @@ const PLAN_FRONT = {
 
 </script>
 <script>
-/* 보장분석 상담 가이드 — 공용 진단 모델 (v4)
+/* 보장분석 상담 가이드 — 공용 진단 모델 (v4.1)
    화면·라이브 상담·고객 30장 슬라이드·PDF 리포트가 모두 이 계산 하나를 씁니다.
    v4 추가: 가족력 · 간편고지 판정 · 계약 납입상태/만기 집계.
+   v4.1 추가: 암 주요치료비 5종(암수술·항암약물·항암방사선·중환자실·비급여) 세분화.
    모든 점수·권장선은 상담 보조용 자체 산식이며 보험사 기준이 아닙니다. */
 (function (root) {
   'use strict';
 
   const won = (n) => Number(n || 0).toLocaleString('ko-KR');
   const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+
+  /* ---------- 암 주요치료비 5종 ---------- */
+  const TREAT_SUBS = (typeof CANCER_TREAT_SUBS !== 'undefined' && CANCER_TREAT_SUBS.length)
+    ? CANCER_TREAT_SUBS
+    : [
+      { key: 'surgery', label: '암수술비', hint: '수술 1회당', factor: 0.20 },
+      { key: 'drug', label: '항암약물치료비', hint: '표적·면역항암', factor: 0.30 },
+      { key: 'radio', label: '항암방사선치료비', hint: '방사선 치료', factor: 0.12 },
+      { key: 'icu', label: '중환자실 입원', hint: '암 치료 중 중환자실', factor: 0.10 },
+      { key: 'extra', label: '비급여 추가 치료비', hint: '비급여 주사·검사', factor: 0.18 }
+    ];
+  const TREAT_MIN = 500, TREAT_MAX = 3000;
+  const CANCER_ITEM = () => PRIORITY[0];
+
+  /* 세부 1종의 권장 금액(만원) — 500~3,000만원, 100만원 단위 */
+  function treatRec(baseRec, sub) {
+    const f = (sub && sub.factor) || 0;
+    const raw = Math.round(((Number(baseRec) || 0) * f) / 100) * 100;
+    return clamp(raw, TREAT_MIN, TREAT_MAX);
+  }
+  function treatRecs(baseRec) {
+    return TREAT_SUBS.map((s) => treatRec(baseRec, s));
+  }
+  function emptyTreat() {
+    const o = {};
+    TREAT_SUBS.forEach((s) => { o[s.key] = 0; });
+    return o;
+  }
+  function treatObj(cov) {
+    const t = cov && cov.cancer && cov.cancer.treatment;
+    return (t && typeof t === 'object') ? t : null;
+  }
+  /* 세부 값이 아직 숫자(구버전 단일 항목)여도 합계는 읽힙니다 */
+  function treatSum(state) {
+    const t = state && state.cov && state.cov.cancer ? state.cov.cancer.treatment : 0;
+    if (t && typeof t === 'object') return TREAT_SUBS.reduce((a, s) => a + Number(t[s.key] || 0), 0);
+    return Number(t || 0) || 0;
+  }
+  function treatCount(state) {
+    const t = treatObj(state && state.cov);
+    if (!t) return treatSum(state) > 0 ? 1 : 0;
+    return TREAT_SUBS.filter((s) => Number(t[s.key] || 0) > 0).length;
+  }
+  function treatMissing(state) {
+    const t = treatObj(state && state.cov) || {};
+    return TREAT_SUBS.filter((s) => !(Number(t[s.key] || 0) > 0)).map((s) => s.label);
+  }
+
+  /* 구버전 단일 숫자(cov.cancer.treatment) → 5종으로 분배 (권장 비중대로, 합계 보존) */
+  function normalizeCov(state) {
+    if (!state || !state.cov || !state.cov.cancer) return { migrated: false };
+    const c = state.cov.cancer;
+    const t = c.treatment;
+    if (t && typeof t === 'object') {
+      TREAT_SUBS.forEach((s) => { if (typeof t[s.key] !== 'number') t[s.key] = Number(t[s.key] || 0) || 0; });
+      return { migrated: false };
+    }
+    const legacy = Number(t || 0) || 0;
+    const recs = treatRecs(CANCER_ITEM().rec[state.age] || 0);
+    const recSum = recs.reduce((a, b) => a + b, 0) || 1;
+    const out = emptyTreat();
+    TREAT_SUBS.forEach((s, i) => {
+      out[s.key] = legacy > 0 ? Math.round((legacy * recs[i]) / recSum / 10) * 10 : 0;
+    });
+    c.treatment = out;
+    if (legacy > 0) c.treatmentLegacy = legacy;
+    return { migrated: true, legacy };
+  }
 
   function getVal(state, item, part) {
     const c = state.cov && state.cov[item.key];
@@ -2992,11 +3127,28 @@ const PLAN_FRONT = {
   function evalItem(state, item) {
     const baseRec = item.rec[state.age] || 0;
     const parts = item.parts.map((p) => {
-      let fill = 0, rec = 0, val = 0, option = null;
+      let fill = 0, rec = 0, val = 0, option = null, subs = null;
       if (p.type === 'amount') {
         rec = Math.round(baseRec * p.factor);
         val = Number(getVal(state, item, p) || 0);
         fill = rec > 0 ? clamp(val / rec, 0, 1) : 0;
+      } else if (p.type === 'group') {
+        /* 5종 세분화 — 세부별 권장 대비 충족도(권장 비중 가중) */
+        const raw = getVal(state, item, p);
+        const src = (raw && typeof raw === 'object') ? raw : {};
+        const list = (p.subs || TREAT_SUBS);
+        subs = list.map((sp) => {
+          const srec = treatRec(baseRec, sp);
+          const sval = Number(src[sp.key] || 0) || 0;
+          const sfill = srec > 0 ? clamp(sval / srec, 0, 1) : 0;
+          return {
+            key: sp.key, label: sp.label, hint: sp.hint, rec: srec, val: sval, fill: sfill,
+            pct: Math.round(sfill * 100), level: partLevel(sfill, sval), part: sp
+          };
+        });
+        rec = subs.reduce((a, s) => a + s.rec, 0);
+        val = subs.reduce((a, s) => a + s.val, 0);
+        fill = rec > 0 ? subs.reduce((a, s) => a + Math.min(s.val, s.rec), 0) / rec : 0;
       } else if (p.type === 'scale') {
         const v = getVal(state, item, p) || 'none';
         option = p.options.find((o) => o.v === v) || p.options[0];
@@ -3005,7 +3157,7 @@ const PLAN_FRONT = {
         val = !!getVal(state, item, p);
         fill = val ? 1 : 0;
       }
-      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p };
+      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p, subs };
     });
     const fill = parts.reduce((a, p) => a + p.weight * p.fill, 0);
     const primary = parts[0].fill;
@@ -3022,7 +3174,8 @@ const PLAN_FRONT = {
     if (item.key === 'cancer') {
       const bits = [`일반암 ${won(c.general)}만원`];
       bits.push(c.similar > 0 ? `유사암 ${won(c.similar)}만원` : '유사암 없음');
-      bits.push(c.treatment > 0 ? `치료비 ${won(c.treatment)}만원` : '치료비 없음');
+      const ts = treatSum(state), tc = treatCount(state);
+      bits.push(ts > 0 ? `치료비 5종 ${won(ts)}만원 ${tc}/5` : '치료비 5종 없음');
       if (c.recur) bits.push('재진단 보장');
       return bits.join(' · ');
     }
@@ -3148,10 +3301,12 @@ const PLAN_FRONT = {
           key: p.key, label: p.label, type: p.type,
           fill: p.fill, pct: Math.round(p.fill * 100),
           val: p.val, rec: p.rec, option: p.option,
+          subs: p.subs ? p.subs.map((s) => ({ label: s.label, key: s.key, val: s.val, rec: s.rec, fill: s.fill, pct: s.pct, level: s.level })) : null,
           level: partLevel(p.fill, p.val),
           text: p.type === 'amount' ? `${won(p.val)}만원 / ${won(p.rec)}만원`
-            : p.type === 'scale' ? (p.option ? p.option.label : '미보유')
-              : (p.val ? '보유' : '없음')
+            : p.type === 'group' ? `5종 합계 ${won(p.val)}만원 / ${won(p.rec)}만원`
+              : p.type === 'scale' ? (p.option ? p.option.label : '미보유')
+                : (p.val ? '보유' : '없음')
         });
       });
     });
@@ -3265,7 +3420,12 @@ const PLAN_FRONT = {
     const care = get('care');
 
     if (state.cov.cancer.similar <= 0) cps.push({ level: 'warn', title: '유사암 담보 없음', body: '갑상선암(C73)·기타피부암(C44)·제자리암(D00~D09)·경계성종양(D37~D48)은 일반암에서 빠져 별도 담보로 지급됩니다. 이 담보가 없으면 지급액이 0이거나 아주 작습니다.' });
-    if (state.cov.cancer.treatment <= 0) cps.push({ level: 'info', title: '암 주요치료비 없음', body: '표적·면역항암·비급여 치료는 진단비와 별도 축입니다. 진단비만 있으면 장기 치료에서 공백이 생깁니다.' });
+    if (treatSum(state) <= 0) cps.push({ level: 'warn', title: '암 주요치료비 5종 없음', body: '표적·면역항암·방사선·비급여 치료는 진단비와 별도 축입니다. 진단비만 있으면 장기 치료에서 공백이 생깁니다. 5종(암수술·항암약물·항암방사선·중환자실·비급여)을 각각 확인하세요.' });
+    else {
+      if (!(Number(treatObj(state.cov) ? treatObj(state.cov).drug : 0) > 0)) cps.push({ level: 'info', title: '항암약물치료비 없음', body: '표적·면역항암제는 1년에 수천만원이 나가는 구간입니다. 5종 중에서 가장 먼저 채워야 하는 칸입니다.' });
+      const missing = treatMissing(state);
+      if (missing.length) cps.push({ level: 'info', title: `암 주요치료비 5종 중 ${missing.length}종 비어 있음`, body: `없는 항목: ${missing.join(' · ')}. 한 번에 다 채우지 말고 항암약물 → 비급여 → 수술 순으로 채웁니다.` });
+    }
     if (state.cov.brain.scope === 'bleed') cps.push({ level: 'danger', title: '뇌 보장이 뇌출혈에 갇혀 있습니다', body: '뇌경색(I63)은 뇌졸중·뇌혈관질환 담보에만 들어갑니다. 공식 통계에서도 뇌경색 환자가 뇌내출혈보다 약 5.1배 많습니다.' });
     else if (state.cov.brain.scope === 'stroke' || state.cov.brain.scope === 'vascular') {
       if (!state.cov.brain.treat) cps.push({ level: 'warn', title: '뇌혈관 수술·혈전용해치료비 없음', body: '혈전용해술·스텐트는 약관상 "수술"이 아닌 처치로 분류될 수 있어, 진단비 외 치료비 담보가 따로 필요합니다.' });
@@ -3317,9 +3477,10 @@ const PLAN_FRONT = {
 
   /* ---------- 전체 모델 ---------- */
   function full(state) {
+    normalizeCov(state);
     const rows = PRIORITY.map((item) => {
       const r = evalItem(state, item);
-      const gaps = r.parts.filter((p) => p.type === 'amount' && p.rec > 0 && p.val < p.rec)
+      const gaps = r.parts.filter((p) => (p.type === 'amount' || p.type === 'group') && p.rec > 0 && p.val < p.rec)
         .map((p) => ({ label: p.label, val: p.val, rec: p.rec, need: p.rec - p.val, pct: Math.round(p.fill * 100) }));
       const pct = Math.round(clamp(r.fill, 0, 1) * 100);
       return { item, r, pct, baseRec: r.baseRec, level: r.level, label: r.label, summary: summaryOf(state, item, r), gaps };
@@ -3327,7 +3488,7 @@ const PLAN_FRONT = {
     const parts = partRows(state, rows);
     const sc = computeScore(state, rows);
     const totalSum = Number(state.cov.cancer.general || 0) + Number(state.cov.cancer.similar || 0)
-      + Number(state.cov.cancer.treatment || 0) + Number(state.cov.surgery.disease || 0);
+      + treatSum(state) + Number(state.cov.surgery.disease || 0);
     const annual = Number(state.premium || 0) * 12;
     const cps = checkpoints(state, rows, totalSum, annual);
     const st = steps(state, rows);
@@ -3347,6 +3508,7 @@ const PLAN_FRONT = {
       contracts: state.contracts || [], contractTotal, contractStats: cstats,
       family, familyLabels: family.map((k) => FAMILY_NOTE[k].title), familyNotes: familyNotes(state),
       disclosure: disc, MATURITY,
+      cancerTreat: { subs: (rows[0].r.parts[2].subs || []), sum: treatSum(state), count: treatCount(state), missing: treatMissing(state), legacy: state.cov.cancer.treatmentLegacy || 0 },
       client: {
         name: (state.client && state.client.name) || '홍길동',
         consultant: (state.client && state.client.consultant) || '담당 컨설턴트',
@@ -3369,7 +3531,8 @@ const PLAN_FRONT = {
     won, clamp, evalItem, summaryOf, weights, computeScore, gradeLetter,
     parseDate, insuranceAge, nextAgeDay, ageBandFromBirth,
     partRows, counts, checkpoints, steps, full, oneLine, LEVEL_LABEL,
-    FAMILY_KEYS, FAMILY_NOTE, familyList, familyNotes, disclosureJudge, contractStats, MATURITY
+    FAMILY_KEYS, FAMILY_NOTE, familyList, familyNotes, disclosureJudge, contractStats, MATURITY,
+    TREAT_SUBS, TREAT_MIN, TREAT_MAX, treatRec, treatRecs, emptyTreat, treatObj, treatSum, treatCount, treatMissing, normalizeCov
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -4071,6 +4234,8 @@ const PLAN_FRONT = {
 
   const TONE_COLOR = { ok: C.mint, need: C.orange, gap: C.red, warn: C.orange, danger: C.red, info: C.blue, enough: C.mint, check: C.orange, short: '#E05B52', none: C.gray };
   const LEVEL_LABEL = { enough: '충분', check: '점검', short: '부족', none: '없음' };
+  /* 리포트 표에서 쓰는 5종 짧은 이름 (칸 넘잘 방지) */
+  const TREAT_SHORT = { surgery: '암수술', drug: '항암약물', radio: '항암방사선', icu: '중환자실', extra: '비급여' };
 
   const statById = (id) => STATS.find((s) => s.id === id);
 
@@ -4379,8 +4544,14 @@ const PLAN_FRONT = {
         return [`${r.item.rank}. ${r.item.name}`, { text: cur, weight: 600 }, { text: tgt, color: C.muted }, { text: r.label, badge: r.level, align: 'center' }, { text: r.gaps.length ? `+${won(r.gaps.reduce((a, g) => a + g.need, 0))}만원` : '—', color: r.gaps.length ? C.red : C.muted, weight: 700 }];
       });
       y = s.table(s.ML, y, s.CW, ['우선순위', '현재 보장', '권장 기준', '상태', '부족분'], rows, {
-        widths: [86, 128, 128, 96, 77], size: 6.8, rowH: 19, align: ['left', 'left', 'left', 'center', 'right']
+        widths: [86, 128, 128, 96, 77], size: 6.8, rowH: 16.5, align: ['left', 'left', 'left', 'center', 'right']
       });
+      const sT = m.rows[0].r.parts[2];
+      const tLine = `암 주요치료비 5종 — ${(sT.subs || []).map((x) => `${TREAT_SHORT[x.key] || x.label} ${x.val ? won(x.val) : '없음'}`).join(' · ')} (합계 ${won(sT.val)} / 권장 ${won(sT.rec)}만원)`;
+      s.rect(s.ML, y + 4, s.CW, 12, { fill: '#F5F9FE', r: 3, stroke: '#DCE8F4' });
+      s.rect(s.ML, y + 4, 2, 12, { fill: C.blue, r: 1 });
+      s.text(tLine, s.ML + 8, y + 8, { size: 5.7, weight: 600, color: C.ink2 });
+      y += 18;
 
       y = s.sectionHead(s.ML, y + 12, s.CW, null, '실행 로드맵 3단계', '유지 → 조정 → 보완');
       y = roadmapCards(s, m, y + 1, 82);
@@ -4653,10 +4824,13 @@ const PLAN_FRONT = {
     P.push(function (s) {
       let y = H(s, 5, '1순위 · 암 정밀 분석', '암은 진단비(목돈)와 치료비(장기)를 나눠 봅니다. 이 페이지에서 두 축을 모두 확인합니다.');
       const cr = m.rows[0];
+      const tparts = cr.r.parts[2];
+      const tsubs = tparts.subs || [];
+      const tHave = tsubs.filter((s) => s.val > 0).length;
       const cards = [
         { label: '일반암 진단비', p: cr.r.parts[0], rec: cr.r.parts[0].rec },
         { label: '유사암 진단비', p: cr.r.parts[1], rec: cr.r.parts[1].rec },
-        { label: '암 주요치료비', p: cr.r.parts[2], rec: cr.r.parts[2].rec },
+        { label: '암 주요치료비 5종', p: tparts, rec: tparts.rec, note: `5종 중 ${tHave}종` },
         { label: '재진단·전이', p: cr.r.parts[3], rec: null }
       ];
       const cw = (s.CW - 8 * 3) / 4;
@@ -4667,6 +4841,7 @@ const PLAN_FRONT = {
         if (c.rec != null) {
           s.text(`${won(c.p.val)}만원`, x + 8, y + 19, { size: 13, weight: 800, color: C.navy });
           s.text(`권장 ${won(c.rec)}만원`, x + 8, y + 35, { size: 6, weight: 500, color: C.muted });
+          if (c.note) s.text(c.note, x + 8, y + 48, { size: 5.6, weight: 700, color: tHave >= 5 ? C.mint : C.orange });
           s.gauge(x + 8, y + 60, cw - 16, c.p.fill, { color: c.p.fill >= 0.99 ? C.mint : c.p.fill > 0 ? C.orange : C.red, h: 6 });
           s.text(`${Math.round(c.p.fill * 100)}%`, x + cw - 8, y + 47, { size: 6.4, weight: 700, color: C.ink2, align: 'right' });
         } else {
@@ -4690,17 +4865,16 @@ const PLAN_FRONT = {
         text: PLAYBOOK.cancer.talk[1],
         note: '※ 이 문장은 외우지 말고, 고객 증권의 담보명을 보면서 자기 말로 바꿔 말합니다.'
       });
-      y = s.sectionHead(s.ML, y + 10, s.CW, '04', '설계 권장안', '권장 기준 — 예산에 맞춰 조정합니다');
+      y = s.sectionHead(s.ML, y + 10, s.CW, '04', '설계 권장안 — 암 주요치료비 5종 세부', '권장 기준 — 예산에 맞춰 조정합니다');
       const recs = [
         ['일반암 진단비', `${won(m.state.cov.cancer.general)}만원`, `${won(cr.r.parts[0].rec)}만원`, cr.r.parts[0].fill],
-        ['유사암 진단비', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `${won(cr.r.parts[1].rec)}만원`, cr.r.parts[1].fill],
-        ['암 주요치료비', m.state.cov.cancer.treatment ? `${won(m.state.cov.cancer.treatment)}만원` : '없음', `${won(cr.r.parts[2].rec)}만원`, cr.r.parts[2].fill],
-        ['재진단·전이', m.state.cov.cancer.recur ? '보유' : '없음', '보유 권장', m.state.cov.cancer.recur ? 1 : 0]
-      ];
+        ['유사암 진단비', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `${won(cr.r.parts[1].rec)}만원`, cr.r.parts[1].fill]
+      ].concat(tsubs.map((sp) => [`　· ${sp.label}`, sp.val ? `${won(sp.val)}만원` : '없음', `${won(sp.rec)}만원`, sp.fill]))
+        .concat([['재진단·전이', m.state.cov.cancer.recur ? '보유' : '없음', '보유 권장', m.state.cov.cancer.recur ? 1 : 0]]);
       y = s.table(s.ML, y + 2, s.CW, ['항목', '현재', '권장 기준', '충족도'], recs.map((r) => [
         { text: r[0], weight: 700, color: C.navy }, r[1], { text: r[2], color: C.ink2 },
         { text: `${Math.round(r[3] * 100)}%`, weight: 700, color: r[3] >= 0.99 ? C.mint : r[3] > 0.4 ? C.orange : C.red, align: 'center' }
-      ]), { widths: [140, 130, 150, 95], size: 6.7, rowH: 18, align: ['left', 'center', 'center', 'center'] });
+      ]), { widths: [140, 130, 150, 95], size: 6.4, rowH: 14, align: ['left', 'center', 'center', 'center'] });
       y = noteStrip(s, y + 8, '유사암에 묶는 범위와 지급 비율은 상품마다 다릅니다. 원발부위 기준 조항의 설명 여부가 다퉈진 판례(대법원 2025.3.13. 선고 2023다250746)도 함께 확인하세요.', { size: 6.4 });
       s.footer({ left: `${m.client.name}님 · 1순위 암`, right: '05 / 10' });
     });
@@ -4773,7 +4947,7 @@ const PLAN_FRONT = {
     P.push(function (s) {
       let y = H(s, 7, '수술 · 입원 · 간병 · 실손', '매일 나가는 돈과 한 번 나가는 돈을 함께 봅니다. 의료비 방어력은 이 네 축의 합입니다.');
       const surgery = m.rows[3], care = m.rows[4];
-      const defence = Math.round(((surgery.r.fill + care.r.fill + (m.state.silson === 'none' ? 0 : 1) + (m.state.cov.cancer.treatment > 0 ? 1 : 0)) / 4) * 100);
+      const defence = Math.round(((surgery.r.fill + care.r.fill + (m.state.silson === 'none' ? 0 : 1) + (BK.treatSum(m.state) > 0 ? 1 : 0)) / 4) * 100);
       s.rect(s.ML, y, s.CW, 54, { fill: '#0B2545', r: 6 });
       s.text('의료비 방어력', s.ML + 14, y + 10, { size: 6.4, weight: 700, color: '#9EC0E4' });
       s.text(`${defence}%`, s.ML + 14, y + 19, { size: 22, weight: 800, color: '#fff' });
@@ -4798,7 +4972,7 @@ const PLAN_FRONT = {
       y = s.sectionHead(s.ML, y + 10, s.CW, '02', '의료비 방어력 4축', '지금 어느 축이 비어 있는지');
       const axes4 = [
         ['수술비', m.rows[3].r.fill], ['간병', m.rows[4].r.fill],
-        ['실손', m.state.silson === 'none' ? 0 : 1], ['치료비', m.state.cov.cancer.treatment > 0 ? 1 : 0]
+        ['실손', m.state.silson === 'none' ? 0 : 1], ['치료비 5종', BK.treatCount(m.state) / 5]
       ];
       const aw = (s.CW - 6 * 3) / 4;
       axes4.forEach((a, i) => {
@@ -5300,10 +5474,13 @@ const PLAN_FRONT = {
       y += 10;
       const cr = m.rows[0];
       const cw = (s.CW - 8 * 3) / 4;
+      const tP = cr.r.parts[2];
+      const tS = tP.subs || [];
+      const tN = tS.filter((x) => x.val > 0).length;
       [
         ['일반암', `${won(m.state.cov.cancer.general)}만원`, `권장 ${won(cr.r.parts[0].rec)}만원`, cr.r.parts[0].fill],
         ['유사암', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `권장 ${won(cr.r.parts[1].rec)}만원`, cr.r.parts[1].fill],
-        ['주요치료비', m.state.cov.cancer.treatment ? `${won(m.state.cov.cancer.treatment)}만원` : '없음', `권장 ${won(cr.r.parts[2].rec)}만원`, cr.r.parts[2].fill],
+        ['치료비 5종', `${won(tP.val)}만원 (${tN}/5)`, `권장 ${won(tP.rec)}만원`, tP.fill],
         ['재진단', m.state.cov.cancer.recur ? '보유' : '없음', '권장 보유', m.state.cov.cancer.recur ? 1 : 0]
       ].forEach((c, i) => {
         const x = s.ML + i * (cw + 8);
@@ -5315,7 +5492,9 @@ const PLAN_FRONT = {
       });
       y += 66;
       y = secLabel(s, y, '60초 판독 멘트 (그대로 읽어도 됩니다)');
-      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반암 진단비가 ${won(m.state.cov.cancer.general)}만원입니다. 기준으로 보면 ${Math.round(cr.r.parts[0].fill * 100)}% 수준이고, ${m.state.cov.cancer.similar ? `유사암은 ${won(m.state.cov.cancer.similar)}만원으로` : '유사암 담보는 없어서 갑상선암 같은 경우 0원이 될 수 있고,'} ${m.state.cov.cancer.treatment ? '치료비 담보도 있습니다' : '치료비 담보는 비어 있습니다'}. 제가 보기엔 ${cr.gaps.length ? `${cr.gaps[0].label}가 가장 먼저 손댈 곳입니다` : '금액은 충분하니 재진단 조건을 확인할 차례입니다'}."` });
+      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반암 진단비가 ${won(m.state.cov.cancer.general)}만원입니다. 기준으로 보면 ${Math.round(cr.r.parts[0].fill * 100)}% 수준이고, ${m.state.cov.cancer.similar ? `유사암은 ${won(m.state.cov.cancer.similar)}만원으로` : '유사암 담보는 없어서 갑상선암 같은 경우 0원이 될 수 있고,'} 치료비는 5종 중 ${tN}종이 채워져 합계 ${won(tP.val)}만원입니다. 제가 보기엔 ${cr.gaps.length ? `${cr.gaps[0].label}가 가장 먼저 손댈 곳입니다` : '금액은 충분하니 재진단 조건을 확인할 차례입니다'}."` });
+      y += 6;
+      y = s.bullets(s.ML, y, s.CW, [`치료비 5종 세부 — ${tS.map((x) => `${x.label} ${x.val ? won(x.val) + '만원' : '없음'}`).join(' · ')} (권장 ${won(tP.rec)}만원)`], { size: 6.6 });
       y += 8;
       y = secLabel(s, y, '왜 이렇게 말하는가');
       y = s.bullets(s.ML, y, s.CW, [
@@ -5372,13 +5551,14 @@ const PLAN_FRONT = {
     P.push((s) => {
       let y = head(s, 10, 'PLAN 1 · CANCER', '암 — 설계 권장안 3단계', '예산에 따라 세 단계로 나눠 제시합니다. 고객이 고르게 하는 것이 핵심입니다.');
       const rec = m.rows[0].baseRec;
+      const treatTotal = BK.treatRecs(rec).reduce((a, x) => a + x, 0);
       const round = (v, u) => Math.max(u, Math.round(v / u) * u);
       const mk = (f) => ({
-        g: round(rec * f, 100), s: round(rec * f * 0.2, 100), t: round(rec * f * 0.4, 500)
+        g: round(rec * f, 100), s: round(rec * f * 0.2, 100), t: round(treatTotal * f, 500)
       });
       const tiers = [
         { name: '최소 (지금 예산)', f: 0.6, note: '1순위 한 칸만 채우는 안. 유사암·치료비는 최소선.' },
-        { name: '표준 (권장 기준)', f: 1, note: '일반암·유사암·치료비·재진단을 모두 기준선에 맞추는 안.' },
+        { name: '표준 (권장 기준)', f: 1, note: '일반암·유사암·치료비 5종·재진단을 모두 기준선에 맞추는 안.' },
         { name: '확대 (여유 있을 때)', f: 1.5, note: '가족력·직업 위험이 큰 경우. 일반암을 두껍게.' }
       ];
       tiers.forEach((t, i) => {
@@ -5390,7 +5570,7 @@ const PLAN_FRONT = {
         s.text(t.name, x + 10, y + 10, { size: 8, weight: 800, color: C.navy });
         s.text(`일반암 ${won(d.g)}만원`, x + 10, y + 24, { size: 10, weight: 800, color: C.blue });
         s.text(`유사암 ${won(d.s)}만원`, x + 10, y + 40, { size: 6.6, weight: 600, color: C.ink2 });
-        s.text(`치료비 ${won(d.t)}만원`, x + 10, y + 50, { size: 6.6, weight: 600, color: C.ink2 });
+        s.text(`치료비 5종 합계 ${won(d.t)}만원`, x + 10, y + 50, { size: 6.6, weight: 600, color: C.ink2 });
         s.text(`재진단 ${i === 0 ? '선택' : '포함'}`, x + 10, y + 60, { size: 6.6, weight: 600, color: C.ink2 });
         s.para(t.note, x + 10, y + 74, w - 20, { size: 5.9, color: C.muted, lh: 1.35 });
         y = y;
@@ -6275,14 +6455,16 @@ const PLAN_FRONT = {
 
     /* ---------- 07 암 현재 vs 권장 ---------- */
     const cr = rowOf('cancer');
+    const treat = cr.r.parts[2];
+    const tsubs = treat.subs || [];
+    const treatHave = tsubs.filter((s) => s.val > 0).length;
     add(7, 'cancer', 'cancer', `
       <div class="sl-head"><span class="k">1순위 · 암</span><h2>암 보장, 지금 vs 권장</h2>
-        <p>진단비(목돈)와 치료비(장기)를 나눠서 봅니다. 네 칸이 모두 있어야 빈틈이 없습니다.</p></div>
+        <p>진단비(목돈)와 치료비(장기)를 나눠서 봅니다. 치료비는 5종으로 쪼개서 빈 칸을 찾습니다.</p></div>
       <div class="cmp-grid">
         ${[
           { label: '일반암 진단비', p: cr.r.parts[0] },
-          { label: '유사암 진단비', p: cr.r.parts[1] },
-          { label: '암 주요치료비', p: cr.r.parts[2] }
+          { label: '유사암 진단비', p: cr.r.parts[1] }
         ].map((c) => `
           <div class="cmp-card">
             <span class="cc-label">${c.label}</span>
@@ -6290,11 +6472,23 @@ const PLAN_FRONT = {
             ${bar(c.p.fill, c.p.fill >= 0.99 ? 'ok' : c.p.fill > 0 ? 'need' : 'gap')}
             <span class="cc-pct">충족 ${Math.round(c.p.fill * 100)}%</span>
           </div>`).join('')}
-        <div class="cmp-card">
+        <div class="cmp-card" style="grid-column:1 / -1;">
           <span class="cc-label">재진단·전이 보장</span>
           <div class="cc-values"><b class="bool ${cr.r.parts[3].val ? 'on' : 'off'}">${cr.r.parts[3].val ? '보유' : '없음'}</b><span>두 번째 진단 대비</span></div>
           ${bar(cr.r.parts[3].val ? 1 : 0, cr.r.parts[3].val ? 'ok' : 'gap')}
           <span class="cc-pct">${cr.r.parts[3].val ? '준비됨' : '1회한이면 재발 시 지급 없음'}</span>
+        </div>
+      </div>
+      <div class="t5">
+        <div class="t5-head"><b>암 주요치료비 5종</b><span>합계 ${won(treat.val)}만원 / 권장 ${won(treat.rec)}만원 · ${treatHave}/5종 보유</span></div>
+        <div class="t5-rows">
+          ${tsubs.map((s) => `
+            <div class="t5-row${s.val > 0 ? '' : ' is-off'}">
+              <span class="t5-l">${esc(s.label)}</span>
+              <span class="t5-v">${s.val > 0 ? `${won(s.val)}만원` : '없음'}</span>
+              <div class="t5-bar"><i style="width:${Math.max(2, Math.min(100, s.pct))}%;background:${s.pct >= 100 ? '#12A594' : s.pct > 0 ? '#E8952E' : '#E05B52'}"></i></div>
+              <b class="t5-p" style="color:${s.pct >= 100 ? '#0a6b57' : s.pct > 0 ? '#a5620f' : '#b3261e'}">${s.pct}%</b>
+            </div>`).join('')}
         </div>
       </div>
       ${cr.gaps.length ? noteBox(`부족분 — ${cr.gaps.map((g) => `${g.label} ${won(g.need)}만원`).join(' · ')}`, 'warn') : noteBox('주요 금액은 기준선을 넘었습니다. 다음은 재진단·지급 횟수 점검입니다.', 'ok')}`, { need: needOf('cancer') });
@@ -6317,7 +6511,7 @@ const PLAN_FRONT = {
         </div>
         <div class="struct-side">
           <div class="side-card"><span>진단비</span><b>진단 순간 목돈</b><p>치료로 일을 쉬는 동안의 생활비·소득 공백을 메웁니다.</p></div>
-          <div class="side-card"><span>주요치료비</span><b>치료 기간의 비용</b><p>표적·면역항암, 방사선, 비급여 치료는 진단비와 별도 축입니다.</p></div>
+          <div class="side-card"><span>주요치료비 5종</span><b>치료 기간의 비용</b><p>암수술 · 항암약물 · 항암방사선 · 중환자실 · 비급여. 진단비와 별도 축입니다.</p></div>
           <div class="side-card"><span>재진단</span><b>두 번째 진단</b><p>1회한 담보는 한 번 지급되면 끝입니다. 재발·전이는 별도 담보가 필요합니다.</p></div>
         </div>
       </div>`, { need: needOf('cancer') });
@@ -6362,9 +6556,10 @@ const PLAN_FRONT = {
         <p>한 번에 다 채우지 않습니다. 지금 비어 있는 칸부터 순서대로.</p></div>
       <ol class="steps-list">
         <li><b>① 유사암 칸</b><p>갑상선·제자리·경계성은 일반암에서 빠집니다. 별도 담보가 없으면 0원입니다.</p><em>${cr.r.parts[1].val ? `현재 ${won(cr.r.parts[1].val)}만원` : '현재 없음'} → 권장 ${won(cr.r.parts[1].rec)}만원</em></li>
-        <li><b>② 치료비 칸</b><p>표적·면역항암 시대에는 진단비만으로 부족합니다. 비급여 치료를 별도 축으로 둡니다.</p><em>${cr.r.parts[2].val ? `현재 ${won(cr.r.parts[2].val)}만원` : '현재 없음'} → 권장 ${won(cr.r.parts[2].rec)}만원</em></li>
+        <li><b>② 치료비 5종</b><p>표적·면역항암 시대에는 진단비만으로 부족합니다. 암수술·항암약물·항암방사선·중환자실·비급여를 따로 봅니다.</p><em>5종 중 ${treatHave}종 · ${won(treat.val)}만원 → 권장 ${won(treat.rec)}만원</em></li>
         <li><b>③ 재진단 칸</b><p>1회한 담보는 재발·전이 때 다시 나오지 않습니다. 두 번째 진단을 따로 준비합니다.</p><em>${cr.r.parts[3].val ? '보유' : '없음'} → 보유 권장</em></li>
       </ol>
+      ${treatHave < 5 ? noteBox(`비어 있는 치료비 — ${tsubs.filter((s) => !(s.val > 0)).map((s) => s.label).join(' · ')}`, 'warn') : noteBox('치료비 5종이 모두 채워졌습니다. 이제는 지급 횟수(1회한·재진단)와 가입 시점을 확인합니다.', 'ok')}
       ${noteBox('가입 직후 90일은 보장이 시작되지 않고, 1년 안에 진단되면 절반만 지급되는 상품이 많습니다. 시작 시점을 함께 확인합니다.', 'warn')}
       ${src('권장 금액은 상담 보조용 예시이며, 실제 인수 조건과 보험료는 상품별로 다릅니다.')}`, { need: needOf('cancer') });
 
@@ -7218,7 +7413,8 @@ const PLAN_FRONT = {
     if (k === 'cancer') {
       rows.push(['일반암 진단비', `${won(m.state.cov.cancer.general)}만원`, `${won(row.r.parts[0].rec)}만원`]);
       rows.push(['유사암 진단비', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `${won(row.r.parts[1].rec)}만원`]);
-      rows.push(['주요치료비', m.state.cov.cancer.treatment ? `${won(m.state.cov.cancer.treatment)}만원` : '없음', `${won(row.r.parts[2].rec)}만원`]);
+      rows.push(['주요치료비 5종', `${won(row.r.parts[2].val)}만원 (${row.r.parts[2].subs.filter((s) => s.val > 0).length}/5종)`, `${won(row.r.parts[2].rec)}만원`]);
+      row.r.parts[2].subs.forEach((s) => rows.push([`　${s.label}`, s.val ? `${won(s.val)}만원` : '없음', `${won(s.rec)}만원`]));
       rows.push(['재진단·전이', m.state.cov.cancer.recur ? '보유' : '없음', '보유 권장']);
     } else if (k === 'brain') {
       rows.push(['보장 범위', row.r.parts[0].option ? row.r.parts[0].option.label : '미보유', '뇌혈관질환 I60~I69']);
@@ -7358,7 +7554,7 @@ const PLAN_FRONT = {
     family: [],
     disc: {},
     cov: {
-      cancer: { general: 3000, similar: 0, treatment: 0, recur: false },
+      cancer: { general: 3000, similar: 0, treatment: { surgery: 0, drug: 0, radio: 0, icu: 0, extra: 0 }, recur: false },
       brain: { scope: 'vascular', treat: true },
       heart: { scope: 'mi', surgery: false },
       surgery: { disease: 300, nDae: false, injury: false },
@@ -7419,6 +7615,8 @@ const PLAN_FRONT = {
     ['age', 'gender', 'job', 'silson', 'premium'].forEach((k) => { if (s[k] != null) state[k] = s[k]; });
     if (s.cov) state.cov = Object.assign(state.cov, s.cov);
     if (s.flags) state.flags = Object.assign(state.flags, s.flags);
+    /* v4.1: 구버전 단일 치료비 숫자 → 5종으로 자동 변환 */
+    state.cancerMigration = BojangModel.normalizeCov(state);
   }
 
   /* ================= 모델 ================= */
@@ -7622,14 +7820,61 @@ const PLAN_FRONT = {
           <div class="part-side">${partBadge(item.key, part)}</div>
         </div>
         <div class="input-row">
+          <span class="di-tag">직접입력</span>
           <input type="number" inputmode="numeric" min="0" step="${part.step}" data-item="${item.key}" data-part="${part.key}"
-                 value="${val}" aria-label="${part.label} (만원)">
+                 value="${val}" placeholder="숫자 입력" aria-label="${part.label} 직접입력 (만원)">
           <span class="unit">만원</span>
         </div>
         <div class="quick-row">
           ${part.quick.map((q) => `<button type="button" class="quick" data-set="${q}" data-item="${item.key}" data-part="${part.key}">${q === 0 ? '없음' : won(q)}</button>`).join('')}
           <span class="rec-hint">권장 ${won(rec)}만원</span>
         </div>
+      </div>`;
+  }
+
+  /* v4.1: 암 주요치료비 5종 — 세부마다 직접입력 + 빠른 선택(500~3,000만원) */
+  function groupRowHTML(item, part) {
+    const baseRec = item.rec[state.age] || 0;
+    const cur = cv(item, part);
+    const src = (cur && typeof cur === 'object') ? cur : {};
+    const subs = (part.subs || BojangModel.TREAT_SUBS).map((sp) => {
+      const rec = BojangModel.treatRec(baseRec, sp);
+      const val = Number(src[sp.key] || 0) || 0;
+      const fill = rec > 0 ? clamp(val / rec, 0, 1) : 0;
+      return { sp, rec, val, fill, pct: Math.round(fill * 100) };
+    });
+    const valSum = subs.reduce((a, s) => a + s.val, 0);
+    const recSum = subs.reduce((a, s) => a + s.rec, 0);
+    const have = subs.filter((s) => s.val > 0).length;
+    return `
+      <div class="part treat-group" data-part="${part.key}">
+        <div class="part-head">
+          <div class="part-label"><strong>${part.label}</strong><span>${part.hint}</span></div>
+          <div class="part-side">${partBadge(item.key, part)}</div>
+        </div>
+        <div class="treat-sum">
+          <span>5종 합계 <b>${won(valSum)}</b>만원<em>${have}/5종 보유</em></span>
+          <span class="ts-rec">권장 합계 ${won(recSum)}만원</span>
+        </div>
+        ${subs.map(({ sp, rec, val, pct }) => `
+          <div class="sub-row" data-sub="${sp.key}">
+            <div class="sr-head">
+              <div class="part-label"><strong>${sp.label}</strong><span>${sp.hint}</span></div>
+              <span class="mini-badge tone-${pct >= 100 ? 'ok' : pct >= 50 ? 'need' : 'gap'}">${pct}%</span>
+            </div>
+            <div class="input-row">
+              <span class="di-tag">직접입력</span>
+              <input type="number" inputmode="numeric" min="0" max="${part.max || BojangModel.TREAT_MAX}" step="${part.step || 500}"
+                     data-item="${item.key}" data-part="${part.key}" data-sub="${sp.key}"
+                     value="${val}" placeholder="${part.min || 500}~${won(part.max || BojangModel.TREAT_MAX)}" aria-label="${sp.label} 직접입력 (만원)">
+              <span class="unit">만원</span>
+            </div>
+            <div class="quick-row">
+              ${(part.quick || []).map((q) => `<button type="button" class="quick" data-set="${q}" data-item="${item.key}" data-part="${part.key}" data-sub="${sp.key}">${q === 0 ? '없음' : won(q)}</button>`).join('')}
+              <span class="rec-hint">권장 ${won(rec)}만원</span>
+            </div>
+          </div>`).join('')}
+        <p class="treat-note">각 항목 500만~3,000만원 · 미가입은 0 · 직접입력은 권장 범위 밖 값도 저장됩니다.</p>
       </div>`;
   }
 
@@ -7664,6 +7909,9 @@ const PLAN_FRONT = {
 
   function cardHTML(item, extra) {
     const r = BojangModel.evalItem(state, item);
+    const rowOf = (p) => p.type === 'amount' ? amountRowHTML(item, p)
+      : p.type === 'group' ? groupRowHTML(item, p)
+        : p.type === 'scale' ? scaleRowHTML(item, p) : boolRowHTML(item, p);
     return `
       <div class="card cov-card" data-item="${item.key}">
         <div class="card-title">
@@ -7671,7 +7919,7 @@ const PLAN_FRONT = {
           <span class="card-sub">${item.sub}</span>
           <span class="badge badge-${r.level}">${r.label}</span>
         </div>
-        ${item.parts.map((p) => p.type === 'amount' ? amountRowHTML(item, p) : p.type === 'scale' ? scaleRowHTML(item, p) : boolRowHTML(item, p)).join('')}
+        ${item.parts.map(rowOf).join('')}
         ${extra || ''}
       </div>`;
   }
@@ -7697,17 +7945,30 @@ const PLAN_FRONT = {
   function bindCoverageInputs() {
     $$('#wiz-panels input[type="number"][data-item]').forEach((input) => {
       input.addEventListener('input', () => {
-        const it = input.dataset.item, pt = input.dataset.part;
-        state.cov[it][pt] = clamp(Number(input.value || 0), 0, 100000);
+        const it = input.dataset.item, pt = input.dataset.part, sb = input.dataset.sub;
+        const v = clamp(Number(input.value || 0), 0, 100000);
+        if (sb) {
+          const box = state.cov[it][pt];
+          if (box && typeof box === 'object') box[sb] = v;
+          else state.cov[it][pt] = Object.assign(BojangModel.emptyTreat(), { [sb]: v });
+        } else state.cov[it][pt] = v;
         refreshBadges(); saveSession();
       });
     });
     $$('#wiz-panels .quick[data-set]').forEach((b) => {
       b.addEventListener('click', () => {
-        const it = b.dataset.item, pt = b.dataset.part, v = Number(b.dataset.set);
-        state.cov[it][pt] = v;
-        const input = $(`input[data-item="${it}"][data-part="${pt}"]`);
-        if (input) input.value = v;
+        const it = b.dataset.item, pt = b.dataset.part, sb = b.dataset.sub, v = Number(b.dataset.set);
+        if (sb) {
+          const box = state.cov[it][pt];
+          if (box && typeof box === 'object') box[sb] = v;
+          else state.cov[it][pt] = Object.assign(BojangModel.emptyTreat(), { [sb]: v });
+          const sinput = $(`input[data-item="${it}"][data-part="${pt}"][data-sub="${sb}"]`);
+          if (sinput) sinput.value = v;
+        } else {
+          state.cov[it][pt] = v;
+          const input = $(`input[data-item="${it}"][data-part="${pt}"]:not([data-sub])`);
+          if (input) input.value = v;
+        }
         refreshBadges(); saveSession();
       });
     });
@@ -7746,10 +8007,26 @@ const PLAN_FRONT = {
         const row = $(`.part[data-part="${p.key}"]`, card);
         if (!row) return;
         const badge = $('.mini-badge', row);
-        if (badge) {
+        if (badge && !p.subs) {
           const pct = Math.round(p.fill * 100);
           badge.className = 'mini-badge tone-' + (p.fill >= 1 ? 'ok' : p.fill >= 0.5 ? 'need' : 'gap');
           badge.textContent = pct + '%';
+        }
+        if (p.subs) {
+          p.subs.forEach((s) => {
+            const sr = $(`.sub-row[data-sub="${s.key}"]`, row);
+            if (!sr) return;
+            const b = $('.mini-badge', sr);
+            if (!b) return;
+            b.className = 'mini-badge tone-' + (s.fill >= 1 ? 'ok' : s.fill >= 0.5 ? 'need' : 'gap');
+            b.textContent = s.pct + '%';
+          });
+          const sumEl = $('.treat-sum b', row);
+          if (sumEl) sumEl.textContent = won(p.val);
+          const emEl = $('.treat-sum em', row);
+          if (emEl) emEl.textContent = p.subs.filter((s) => s.val > 0).length + '/5종 보유';
+          const recEl = $('.treat-sum .ts-rec', row);
+          if (recEl) recEl.textContent = `권장 합계 ${won(p.rec)}만원`;
         }
       });
     });
@@ -8193,6 +8470,7 @@ const PLAN_FRONT = {
     state.age = inputs.age; state.gender = inputs.gender; state.job = inputs.job;
     state.silson = inputs.silson; state.premium = inputs.premium;
     state.cov = JSON.parse(JSON.stringify(inputs.cov));
+    BojangModel.normalizeCov(state);
     state.flags = Object.assign({}, state.flags, inputs.flags);
     if (Array.isArray(inputs.family)) state.family = inputs.family.slice();
     if (inputs.disc) state.disc = Object.assign({}, inputs.disc);
@@ -8652,6 +8930,14 @@ const PLAN_FRONT = {
       state.premium = clamp(Number(e.target.value || 0), 0, 300);
       renderSummary(); renderClientStrip(); saveSession();
       if (state.analyzed) analyze();
+    });
+    $$('#premium-quick .quick[data-premium]').forEach((b) => {
+      b.addEventListener('click', () => {
+        state.premium = Number(b.dataset.premium);
+        $('#premium').value = state.premium;
+        renderSummary(); renderClientStrip(); saveSession();
+        if (state.analyzed) analyze();
+      });
     });
 
     $('#wiz-prev').addEventListener('click', () => setStep(state.step - 1));

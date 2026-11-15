@@ -713,6 +713,30 @@ body.wiz-all .wiz-nav,body.wiz-all .wiz-bar,body.wiz-all .wiz-count{display:none
 .mini-badge.tone-gap{background:var(--danger-soft);color:var(--danger);}
 .rec-hint{margin-left:auto;font-size:9.5px;color:var(--muted);align-self:center;letter-spacing:0;}
 
+/* v4.1 직접입력 표식 + 암 주요치료비 5종 */
+.di-tag{
+  flex:0 0 auto;font-size:9.5px;font-weight:800;letter-spacing:-0.01em;
+  color:#0a6b57;background:#e6f7f2;border-radius:7px;padding:4px 7px;white-space:nowrap;
+}
+.treat-group .treat-sum{
+  display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;
+  background:#f3f8fd;border:1px solid #dbe7f3;border-radius:10px;padding:8px 10px;margin-bottom:2px;
+}
+.treat-sum span{font-size:11px;font-weight:700;color:#40597a;letter-spacing:-0.01em;}
+.treat-sum b{font-size:14px;font-weight:800;color:var(--navy-800);letter-spacing:-0.03em;}
+.treat-sum em{font-style:normal;margin-left:5px;font-size:9.5px;font-weight:800;color:#0a6b57;}
+.treat-sum .ts-rec{font-size:9.8px;font-weight:700;color:var(--muted);}
+.sub-row{padding:11px 0;border-top:1px dashed var(--line-2);display:grid;gap:7px;}
+.treat-group .sub-row:first-of-type{border-top:0;padding-top:4px;}
+.sr-head{display:flex;align-items:flex-start;gap:8px;}
+.sr-head .part-label strong{font-size:12px;}
+.sr-head .mini-badge{margin-top:1px;}
+.treat-note{font-size:9.5px;line-height:1.5;color:var(--muted);margin-top:4px;}
+.ct-prem-wrap{display:flex;align-items:center;gap:4px;min-width:0;}
+.ct-prem-wrap .di-tag{padding:3px 5px;font-size:8.5px;}
+.ct-prem-wrap input{min-width:0;}
+.ct-prem-wrap .unit{font-size:10px;}
+
 .scale-pick{display:grid;gap:6px;}
 .scale-opt{
   display:grid;grid-template-columns:16px 1fr auto;align-items:center;gap:8px;
@@ -1314,6 +1338,20 @@ body.is-client .client-banner{display:none!important;}
 .cmp-card .cc-values b.bool.off{color:#b3261e;}
 .cmp-card .cc-values span{font-size:9.6px;font-weight:600;color:#7f93a8;}
 .cc-pct{font-size:9.5px;font-weight:700;color:#5f7590;}
+
+/* 암 주요치료비 5종 (고객 슬라이드) */
+.t5{border:1px solid #dbe6f2;border-radius:14px;padding:11px 12px;background:#f8fbff;display:grid;gap:8px;}
+.t5-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.t5-head b{font-size:12.6px;font-weight:800;color:var(--navy-800);letter-spacing:-0.03em;}
+.t5-head span{font-size:9.8px;font-weight:700;color:#5f7590;}
+.t5-rows{display:grid;gap:5px;}
+.t5-row{display:grid;grid-template-columns:88px 62px 1fr 34px;align-items:center;gap:7px;}
+.t5-l{font-size:10.2px;font-weight:700;color:#40597a;letter-spacing:-0.02em;}
+.t5-v{font-size:10px;font-weight:800;color:var(--navy-800);text-align:right;}
+.t5-row.is-off .t5-v{color:#b3261e;}
+.t5-bar{height:7px;border-radius:999px;background:#e6eef7;overflow:hidden;}
+.t5-bar i{display:block;height:100%;border-radius:999px;}
+.t5-p{font-size:9.6px;font-weight:800;color:#5f7590;text-align:right;}
 
 /* 구조 */
 .struct{display:grid;gap:10px;}

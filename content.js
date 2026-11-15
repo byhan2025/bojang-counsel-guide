@@ -2,15 +2,30 @@
    기준일 2026-11-15. 수치·제도는 공개 자료(금융위원회·금융감독원) 확인분이며,
    상품별 세부 조건은 가입 약관이 우선합니다. */
 
+/* 암 주요치료비 5종 세분화 (v4.1)
+   각 세부 항목 = 미가입(0) 또는 500만~3,000만원. 직접입력 허용.
+   factor = 연령대별 일반암 권장 진단비 기준선(rec) 대비 비중 → 세부 권장액(500~3,000만원, 100만원 단위). */
+const CANCER_TREAT_MIN = 500;
+const CANCER_TREAT_MAX = 3000;
+const CANCER_TREAT_STEP = 500;
+const CANCER_TREAT_QUICK = [0, 500, 1000, 1500, 2000, 3000];
+const CANCER_TREAT_SUBS = [
+  { key: 'surgery', label: '암수술비', hint: '수술 1회당', factor: 0.20 },
+  { key: 'drug', label: '항암약물치료비', hint: '표적·면역항암', factor: 0.30 },
+  { key: 'radio', label: '항암방사선치료비', hint: '방사선 치료', factor: 0.12 },
+  { key: 'icu', label: '중환자실 입원', hint: '암 치료 중 중환자실', factor: 0.10 },
+  { key: 'extra', label: '비급여 추가 치료비', hint: '비급여 주사·검사', factor: 0.18 }
+];
+
 const PRIORITY = [
   {
-    key: 'cancer', rank: 1, name: '암', sub: '진단비 · 치료비', unit: '만원',
+    key: 'cancer', rank: 1, name: '암', sub: '진단비 · 치료비 5종', unit: '만원',
     rec: { '20': 3000, '30': 3000, '40': 5000, '50': 5000, '60': 3000, '70': 2000 },
     weight: 30,
     parts: [
       { key: 'general', type: 'amount', label: '일반암 진단비', weight: 0.55, factor: 1, step: 500, quick: [0, 1000, 3000, 5000, 10000] },
       { key: 'similar', type: 'amount', label: '유사암 진단비', hint: '갑상선·기타피부·제자리·경계성', weight: 0.15, factor: 0.2, step: 100, quick: [0, 200, 500, 1000, 2000] },
-      { key: 'treatment', type: 'amount', label: '암 주요치료비', hint: '표적·면역·비급여', weight: 0.2, factor: 0.4, step: 500, quick: [0, 1000, 2000, 3000, 5000] },
+      { key: 'treatment', type: 'group', label: '암 주요치료비 5종', hint: '암수술 · 항암약물 · 항암방사선 · 중환자실 · 비급여', weight: 0.2, subs: CANCER_TREAT_SUBS, min: CANCER_TREAT_MIN, max: CANCER_TREAT_MAX, step: CANCER_TREAT_STEP, quick: CANCER_TREAT_QUICK },
       { key: 'recur', type: 'bool', label: '재진단·전이암 보장', weight: 0.1 }
     ]
   },
@@ -67,7 +82,7 @@ const PRIORITY = [
 /* 단계별 위저드 구성 */
 const WIZARD = [
   { step: 1, key: 'profile', title: '기본 정보', desc: '연령대 · 성별 · 직업급수 · 가족력 · 실손 · 보험료' },
-  { step: 2, key: 'cancer', title: '암', desc: '일반암 · 유사암 · 주요치료비 · 재진단' },
+  { step: 2, key: 'cancer', title: '암', desc: '일반암 · 유사암 · 주요치료비 5종 · 재진단' },
   { step: 3, key: 'brainheart', title: '뇌 · 심장', desc: '보장 범위와 수술·치료비' },
   { step: 4, key: 'surgerycare', title: '수술 · 간병', desc: '종수·N대, 일당·요양' },
   { step: 5, key: 'contract', title: '계약 · 보험료', desc: '보유 계약 · 납입상태 · 만기 · 갱신 · 특약' },

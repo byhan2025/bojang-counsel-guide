@@ -1,12 +1,81 @@
-/* 보장분석 상담 가이드 — 공용 진단 모델 (v4)
+/* 보장분석 상담 가이드 — 공용 진단 모델 (v4.1)
    화면·라이브 상담·고객 30장 슬라이드·PDF 리포트가 모두 이 계산 하나를 씁니다.
    v4 추가: 가족력 · 간편고지 판정 · 계약 납입상태/만기 집계.
+   v4.1 추가: 암 주요치료비 5종(암수술·항암약물·항암방사선·중환자실·비급여) 세분화.
    모든 점수·권장선은 상담 보조용 자체 산식이며 보험사 기준이 아닙니다. */
 (function (root) {
   'use strict';
 
   const won = (n) => Number(n || 0).toLocaleString('ko-KR');
   const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+
+  /* ---------- 암 주요치료비 5종 ---------- */
+  const TREAT_SUBS = (typeof CANCER_TREAT_SUBS !== 'undefined' && CANCER_TREAT_SUBS.length)
+    ? CANCER_TREAT_SUBS
+    : [
+      { key: 'surgery', label: '암수술비', hint: '수술 1회당', factor: 0.20 },
+      { key: 'drug', label: '항암약물치료비', hint: '표적·면역항암', factor: 0.30 },
+      { key: 'radio', label: '항암방사선치료비', hint: '방사선 치료', factor: 0.12 },
+      { key: 'icu', label: '중환자실 입원', hint: '암 치료 중 중환자실', factor: 0.10 },
+      { key: 'extra', label: '비급여 추가 치료비', hint: '비급여 주사·검사', factor: 0.18 }
+    ];
+  const TREAT_MIN = 500, TREAT_MAX = 3000;
+  const CANCER_ITEM = () => PRIORITY[0];
+
+  /* 세부 1종의 권장 금액(만원) — 500~3,000만원, 100만원 단위 */
+  function treatRec(baseRec, sub) {
+    const f = (sub && sub.factor) || 0;
+    const raw = Math.round(((Number(baseRec) || 0) * f) / 100) * 100;
+    return clamp(raw, TREAT_MIN, TREAT_MAX);
+  }
+  function treatRecs(baseRec) {
+    return TREAT_SUBS.map((s) => treatRec(baseRec, s));
+  }
+  function emptyTreat() {
+    const o = {};
+    TREAT_SUBS.forEach((s) => { o[s.key] = 0; });
+    return o;
+  }
+  function treatObj(cov) {
+    const t = cov && cov.cancer && cov.cancer.treatment;
+    return (t && typeof t === 'object') ? t : null;
+  }
+  /* 세부 값이 아직 숫자(구버전 단일 항목)여도 합계는 읽힙니다 */
+  function treatSum(state) {
+    const t = state && state.cov && state.cov.cancer ? state.cov.cancer.treatment : 0;
+    if (t && typeof t === 'object') return TREAT_SUBS.reduce((a, s) => a + Number(t[s.key] || 0), 0);
+    return Number(t || 0) || 0;
+  }
+  function treatCount(state) {
+    const t = treatObj(state && state.cov);
+    if (!t) return treatSum(state) > 0 ? 1 : 0;
+    return TREAT_SUBS.filter((s) => Number(t[s.key] || 0) > 0).length;
+  }
+  function treatMissing(state) {
+    const t = treatObj(state && state.cov) || {};
+    return TREAT_SUBS.filter((s) => !(Number(t[s.key] || 0) > 0)).map((s) => s.label);
+  }
+
+  /* 구버전 단일 숫자(cov.cancer.treatment) → 5종으로 분배 (권장 비중대로, 합계 보존) */
+  function normalizeCov(state) {
+    if (!state || !state.cov || !state.cov.cancer) return { migrated: false };
+    const c = state.cov.cancer;
+    const t = c.treatment;
+    if (t && typeof t === 'object') {
+      TREAT_SUBS.forEach((s) => { if (typeof t[s.key] !== 'number') t[s.key] = Number(t[s.key] || 0) || 0; });
+      return { migrated: false };
+    }
+    const legacy = Number(t || 0) || 0;
+    const recs = treatRecs(CANCER_ITEM().rec[state.age] || 0);
+    const recSum = recs.reduce((a, b) => a + b, 0) || 1;
+    const out = emptyTreat();
+    TREAT_SUBS.forEach((s, i) => {
+      out[s.key] = legacy > 0 ? Math.round((legacy * recs[i]) / recSum / 10) * 10 : 0;
+    });
+    c.treatment = out;
+    if (legacy > 0) c.treatmentLegacy = legacy;
+    return { migrated: true, legacy };
+  }
 
   function getVal(state, item, part) {
     const c = state.cov && state.cov[item.key];
@@ -17,11 +86,28 @@
   function evalItem(state, item) {
     const baseRec = item.rec[state.age] || 0;
     const parts = item.parts.map((p) => {
-      let fill = 0, rec = 0, val = 0, option = null;
+      let fill = 0, rec = 0, val = 0, option = null, subs = null;
       if (p.type === 'amount') {
         rec = Math.round(baseRec * p.factor);
         val = Number(getVal(state, item, p) || 0);
         fill = rec > 0 ? clamp(val / rec, 0, 1) : 0;
+      } else if (p.type === 'group') {
+        /* 5종 세분화 — 세부별 권장 대비 충족도(권장 비중 가중) */
+        const raw = getVal(state, item, p);
+        const src = (raw && typeof raw === 'object') ? raw : {};
+        const list = (p.subs || TREAT_SUBS);
+        subs = list.map((sp) => {
+          const srec = treatRec(baseRec, sp);
+          const sval = Number(src[sp.key] || 0) || 0;
+          const sfill = srec > 0 ? clamp(sval / srec, 0, 1) : 0;
+          return {
+            key: sp.key, label: sp.label, hint: sp.hint, rec: srec, val: sval, fill: sfill,
+            pct: Math.round(sfill * 100), level: partLevel(sfill, sval), part: sp
+          };
+        });
+        rec = subs.reduce((a, s) => a + s.rec, 0);
+        val = subs.reduce((a, s) => a + s.val, 0);
+        fill = rec > 0 ? subs.reduce((a, s) => a + Math.min(s.val, s.rec), 0) / rec : 0;
       } else if (p.type === 'scale') {
         const v = getVal(state, item, p) || 'none';
         option = p.options.find((o) => o.v === v) || p.options[0];
@@ -30,7 +116,7 @@
         val = !!getVal(state, item, p);
         fill = val ? 1 : 0;
       }
-      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p };
+      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p, subs };
     });
     const fill = parts.reduce((a, p) => a + p.weight * p.fill, 0);
     const primary = parts[0].fill;
@@ -47,7 +133,8 @@
     if (item.key === 'cancer') {
       const bits = [`일반암 ${won(c.general)}만원`];
       bits.push(c.similar > 0 ? `유사암 ${won(c.similar)}만원` : '유사암 없음');
-      bits.push(c.treatment > 0 ? `치료비 ${won(c.treatment)}만원` : '치료비 없음');
+      const ts = treatSum(state), tc = treatCount(state);
+      bits.push(ts > 0 ? `치료비 5종 ${won(ts)}만원 ${tc}/5` : '치료비 5종 없음');
       if (c.recur) bits.push('재진단 보장');
       return bits.join(' · ');
     }
@@ -173,10 +260,12 @@
           key: p.key, label: p.label, type: p.type,
           fill: p.fill, pct: Math.round(p.fill * 100),
           val: p.val, rec: p.rec, option: p.option,
+          subs: p.subs ? p.subs.map((s) => ({ label: s.label, key: s.key, val: s.val, rec: s.rec, fill: s.fill, pct: s.pct, level: s.level })) : null,
           level: partLevel(p.fill, p.val),
           text: p.type === 'amount' ? `${won(p.val)}만원 / ${won(p.rec)}만원`
-            : p.type === 'scale' ? (p.option ? p.option.label : '미보유')
-              : (p.val ? '보유' : '없음')
+            : p.type === 'group' ? `5종 합계 ${won(p.val)}만원 / ${won(p.rec)}만원`
+              : p.type === 'scale' ? (p.option ? p.option.label : '미보유')
+                : (p.val ? '보유' : '없음')
         });
       });
     });
@@ -290,7 +379,12 @@
     const care = get('care');
 
     if (state.cov.cancer.similar <= 0) cps.push({ level: 'warn', title: '유사암 담보 없음', body: '갑상선암(C73)·기타피부암(C44)·제자리암(D00~D09)·경계성종양(D37~D48)은 일반암에서 빠져 별도 담보로 지급됩니다. 이 담보가 없으면 지급액이 0이거나 아주 작습니다.' });
-    if (state.cov.cancer.treatment <= 0) cps.push({ level: 'info', title: '암 주요치료비 없음', body: '표적·면역항암·비급여 치료는 진단비와 별도 축입니다. 진단비만 있으면 장기 치료에서 공백이 생깁니다.' });
+    if (treatSum(state) <= 0) cps.push({ level: 'warn', title: '암 주요치료비 5종 없음', body: '표적·면역항암·방사선·비급여 치료는 진단비와 별도 축입니다. 진단비만 있으면 장기 치료에서 공백이 생깁니다. 5종(암수술·항암약물·항암방사선·중환자실·비급여)을 각각 확인하세요.' });
+    else {
+      if (!(Number(treatObj(state.cov) ? treatObj(state.cov).drug : 0) > 0)) cps.push({ level: 'info', title: '항암약물치료비 없음', body: '표적·면역항암제는 1년에 수천만원이 나가는 구간입니다. 5종 중에서 가장 먼저 채워야 하는 칸입니다.' });
+      const missing = treatMissing(state);
+      if (missing.length) cps.push({ level: 'info', title: `암 주요치료비 5종 중 ${missing.length}종 비어 있음`, body: `없는 항목: ${missing.join(' · ')}. 한 번에 다 채우지 말고 항암약물 → 비급여 → 수술 순으로 채웁니다.` });
+    }
     if (state.cov.brain.scope === 'bleed') cps.push({ level: 'danger', title: '뇌 보장이 뇌출혈에 갇혀 있습니다', body: '뇌경색(I63)은 뇌졸중·뇌혈관질환 담보에만 들어갑니다. 공식 통계에서도 뇌경색 환자가 뇌내출혈보다 약 5.1배 많습니다.' });
     else if (state.cov.brain.scope === 'stroke' || state.cov.brain.scope === 'vascular') {
       if (!state.cov.brain.treat) cps.push({ level: 'warn', title: '뇌혈관 수술·혈전용해치료비 없음', body: '혈전용해술·스텐트는 약관상 "수술"이 아닌 처치로 분류될 수 있어, 진단비 외 치료비 담보가 따로 필요합니다.' });
@@ -342,9 +436,10 @@
 
   /* ---------- 전체 모델 ---------- */
   function full(state) {
+    normalizeCov(state);
     const rows = PRIORITY.map((item) => {
       const r = evalItem(state, item);
-      const gaps = r.parts.filter((p) => p.type === 'amount' && p.rec > 0 && p.val < p.rec)
+      const gaps = r.parts.filter((p) => (p.type === 'amount' || p.type === 'group') && p.rec > 0 && p.val < p.rec)
         .map((p) => ({ label: p.label, val: p.val, rec: p.rec, need: p.rec - p.val, pct: Math.round(p.fill * 100) }));
       const pct = Math.round(clamp(r.fill, 0, 1) * 100);
       return { item, r, pct, baseRec: r.baseRec, level: r.level, label: r.label, summary: summaryOf(state, item, r), gaps };
@@ -352,7 +447,7 @@
     const parts = partRows(state, rows);
     const sc = computeScore(state, rows);
     const totalSum = Number(state.cov.cancer.general || 0) + Number(state.cov.cancer.similar || 0)
-      + Number(state.cov.cancer.treatment || 0) + Number(state.cov.surgery.disease || 0);
+      + treatSum(state) + Number(state.cov.surgery.disease || 0);
     const annual = Number(state.premium || 0) * 12;
     const cps = checkpoints(state, rows, totalSum, annual);
     const st = steps(state, rows);
@@ -372,6 +467,7 @@
       contracts: state.contracts || [], contractTotal, contractStats: cstats,
       family, familyLabels: family.map((k) => FAMILY_NOTE[k].title), familyNotes: familyNotes(state),
       disclosure: disc, MATURITY,
+      cancerTreat: { subs: (rows[0].r.parts[2].subs || []), sum: treatSum(state), count: treatCount(state), missing: treatMissing(state), legacy: state.cov.cancer.treatmentLegacy || 0 },
       client: {
         name: (state.client && state.client.name) || '홍길동',
         consultant: (state.client && state.client.consultant) || '담당 컨설턴트',
@@ -394,6 +490,7 @@
     won, clamp, evalItem, summaryOf, weights, computeScore, gradeLetter,
     parseDate, insuranceAge, nextAgeDay, ageBandFromBirth,
     partRows, counts, checkpoints, steps, full, oneLine, LEVEL_LABEL,
-    FAMILY_KEYS, FAMILY_NOTE, familyList, familyNotes, disclosureJudge, contractStats, MATURITY
+    FAMILY_KEYS, FAMILY_NOTE, familyList, familyNotes, disclosureJudge, contractStats, MATURITY,
+    TREAT_SUBS, TREAT_MIN, TREAT_MAX, treatRec, treatRecs, emptyTreat, treatObj, treatSum, treatCount, treatMissing, normalizeCov
   };
 })(typeof window !== 'undefined' ? window : globalThis);

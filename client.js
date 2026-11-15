@@ -276,14 +276,16 @@
 
     /* ---------- 07 암 현재 vs 권장 ---------- */
     const cr = rowOf('cancer');
+    const treat = cr.r.parts[2];
+    const tsubs = treat.subs || [];
+    const treatHave = tsubs.filter((s) => s.val > 0).length;
     add(7, 'cancer', 'cancer', `
       <div class="sl-head"><span class="k">1순위 · 암</span><h2>암 보장, 지금 vs 권장</h2>
-        <p>진단비(목돈)와 치료비(장기)를 나눠서 봅니다. 네 칸이 모두 있어야 빈틈이 없습니다.</p></div>
+        <p>진단비(목돈)와 치료비(장기)를 나눠서 봅니다. 치료비는 5종으로 쪼개서 빈 칸을 찾습니다.</p></div>
       <div class="cmp-grid">
         ${[
           { label: '일반암 진단비', p: cr.r.parts[0] },
-          { label: '유사암 진단비', p: cr.r.parts[1] },
-          { label: '암 주요치료비', p: cr.r.parts[2] }
+          { label: '유사암 진단비', p: cr.r.parts[1] }
         ].map((c) => `
           <div class="cmp-card">
             <span class="cc-label">${c.label}</span>
@@ -291,11 +293,23 @@
             ${bar(c.p.fill, c.p.fill >= 0.99 ? 'ok' : c.p.fill > 0 ? 'need' : 'gap')}
             <span class="cc-pct">충족 ${Math.round(c.p.fill * 100)}%</span>
           </div>`).join('')}
-        <div class="cmp-card">
+        <div class="cmp-card" style="grid-column:1 / -1;">
           <span class="cc-label">재진단·전이 보장</span>
           <div class="cc-values"><b class="bool ${cr.r.parts[3].val ? 'on' : 'off'}">${cr.r.parts[3].val ? '보유' : '없음'}</b><span>두 번째 진단 대비</span></div>
           ${bar(cr.r.parts[3].val ? 1 : 0, cr.r.parts[3].val ? 'ok' : 'gap')}
           <span class="cc-pct">${cr.r.parts[3].val ? '준비됨' : '1회한이면 재발 시 지급 없음'}</span>
+        </div>
+      </div>
+      <div class="t5">
+        <div class="t5-head"><b>암 주요치료비 5종</b><span>합계 ${won(treat.val)}만원 / 권장 ${won(treat.rec)}만원 · ${treatHave}/5종 보유</span></div>
+        <div class="t5-rows">
+          ${tsubs.map((s) => `
+            <div class="t5-row${s.val > 0 ? '' : ' is-off'}">
+              <span class="t5-l">${esc(s.label)}</span>
+              <span class="t5-v">${s.val > 0 ? `${won(s.val)}만원` : '없음'}</span>
+              <div class="t5-bar"><i style="width:${Math.max(2, Math.min(100, s.pct))}%;background:${s.pct >= 100 ? '#12A594' : s.pct > 0 ? '#E8952E' : '#E05B52'}"></i></div>
+              <b class="t5-p" style="color:${s.pct >= 100 ? '#0a6b57' : s.pct > 0 ? '#a5620f' : '#b3261e'}">${s.pct}%</b>
+            </div>`).join('')}
         </div>
       </div>
       ${cr.gaps.length ? noteBox(`부족분 — ${cr.gaps.map((g) => `${g.label} ${won(g.need)}만원`).join(' · ')}`, 'warn') : noteBox('주요 금액은 기준선을 넘었습니다. 다음은 재진단·지급 횟수 점검입니다.', 'ok')}`, { need: needOf('cancer') });
@@ -318,7 +332,7 @@
         </div>
         <div class="struct-side">
           <div class="side-card"><span>진단비</span><b>진단 순간 목돈</b><p>치료로 일을 쉬는 동안의 생활비·소득 공백을 메웁니다.</p></div>
-          <div class="side-card"><span>주요치료비</span><b>치료 기간의 비용</b><p>표적·면역항암, 방사선, 비급여 치료는 진단비와 별도 축입니다.</p></div>
+          <div class="side-card"><span>주요치료비 5종</span><b>치료 기간의 비용</b><p>암수술 · 항암약물 · 항암방사선 · 중환자실 · 비급여. 진단비와 별도 축입니다.</p></div>
           <div class="side-card"><span>재진단</span><b>두 번째 진단</b><p>1회한 담보는 한 번 지급되면 끝입니다. 재발·전이는 별도 담보가 필요합니다.</p></div>
         </div>
       </div>`, { need: needOf('cancer') });
@@ -363,9 +377,10 @@
         <p>한 번에 다 채우지 않습니다. 지금 비어 있는 칸부터 순서대로.</p></div>
       <ol class="steps-list">
         <li><b>① 유사암 칸</b><p>갑상선·제자리·경계성은 일반암에서 빠집니다. 별도 담보가 없으면 0원입니다.</p><em>${cr.r.parts[1].val ? `현재 ${won(cr.r.parts[1].val)}만원` : '현재 없음'} → 권장 ${won(cr.r.parts[1].rec)}만원</em></li>
-        <li><b>② 치료비 칸</b><p>표적·면역항암 시대에는 진단비만으로 부족합니다. 비급여 치료를 별도 축으로 둡니다.</p><em>${cr.r.parts[2].val ? `현재 ${won(cr.r.parts[2].val)}만원` : '현재 없음'} → 권장 ${won(cr.r.parts[2].rec)}만원</em></li>
+        <li><b>② 치료비 5종</b><p>표적·면역항암 시대에는 진단비만으로 부족합니다. 암수술·항암약물·항암방사선·중환자실·비급여를 따로 봅니다.</p><em>5종 중 ${treatHave}종 · ${won(treat.val)}만원 → 권장 ${won(treat.rec)}만원</em></li>
         <li><b>③ 재진단 칸</b><p>1회한 담보는 재발·전이 때 다시 나오지 않습니다. 두 번째 진단을 따로 준비합니다.</p><em>${cr.r.parts[3].val ? '보유' : '없음'} → 보유 권장</em></li>
       </ol>
+      ${treatHave < 5 ? noteBox(`비어 있는 치료비 — ${tsubs.filter((s) => !(s.val > 0)).map((s) => s.label).join(' · ')}`, 'warn') : noteBox('치료비 5종이 모두 채워졌습니다. 이제는 지급 횟수(1회한·재진단)와 가입 시점을 확인합니다.', 'ok')}
       ${noteBox('가입 직후 90일은 보장이 시작되지 않고, 1년 안에 진단되면 절반만 지급되는 상품이 많습니다. 시작 시점을 함께 확인합니다.', 'warn')}
       ${src('권장 금액은 상담 보조용 예시이며, 실제 인수 조건과 보험료는 상품별로 다릅니다.')}`, { need: needOf('cancer') });
 

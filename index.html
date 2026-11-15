@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 상담 가이드 v4 · 상담자 입력실 + 고객 30장 슬라이드</title>
+<title>보장분석 상담 가이드 v4.1 · 상담자 입력실 + 고객 30장 슬라이드</title>
 <meta name="description" content="손해보험 설계사를 위한 현장 상담용 보장분석. 상담자 상세 입력실에서 진단하고, 고객 화면에서는 30장 시각화 슬라이드로 함께 보며 1장·10장·30장 PDF를 저장·공유합니다.">
 <meta name="theme-color" content="#0a1d33">
 <link rel="manifest" href="./manifest.json">
@@ -27,7 +27,7 @@
         </svg>
       </span>
       <div class="brand-text">
-        <h1>보장분석 상담 가이드 <em class="ver">v4</em></h1>
+        <h1>보장분석 상담 가이드 <em class="ver">v4.1</em></h1>
         <p>상담자 입력실 · 고객 30장 슬라이드</p>
       </div>
     </div>
@@ -124,8 +124,17 @@
             <div class="field">
               <label class="field-label" for="premium">현재 월 보험료</label>
               <div class="input-row">
-                <input id="premium" type="number" inputmode="numeric" min="0" max="300" step="1" value="22">
+                <span class="di-tag">직접입력</span>
+                <input id="premium" type="number" inputmode="numeric" min="0" max="300" step="1" value="22" placeholder="숫자 입력">
                 <span class="unit">만원</span>
+              </div>
+              <div class="quick-row" id="premium-quick">
+                <button type="button" class="quick" data-premium="10">10</button>
+                <button type="button" class="quick" data-premium="20">20</button>
+                <button type="button" class="quick" data-premium="30">30</button>
+                <button type="button" class="quick" data-premium="40">40</button>
+                <button type="button" class="quick" data-premium="50">50</button>
+                <span class="rec-hint">만원 단위 · 직접 타이핑 가능</span>
               </div>
               <p class="field-note">건강보험료 전체(주계약 + 특약, 실손 포함) 기준</p>
             </div>
@@ -133,7 +142,7 @@
         </div>
 
         <div class="wiz-panel" data-step="2">
-          <div class="wiz-panel-title"><span class="n">2</span>암<em>일반암 · 유사암 · 주요치료비 · 재진단</em></div>
+          <div class="wiz-panel-title"><span class="n">2</span>암<em>일반암 · 유사암 · 주요치료비 5종 · 재진단</em></div>
           <div id="card-cancer"></div>
         </div>
 
@@ -159,7 +168,11 @@
             <div class="contract-add">
               <input type="text" id="ct-insurer" class="text-input sm" placeholder="보험사" maxlength="16" autocomplete="off">
               <input type="text" id="ct-product" class="text-input sm" placeholder="상품명" maxlength="30" autocomplete="off">
-              <input type="number" id="ct-premium" class="text-input sm" placeholder="월(만원)" min="0" max="300" step="1" inputmode="numeric">
+              <div class="ct-prem-wrap">
+                <span class="di-tag">직접입력</span>
+                <input type="number" id="ct-premium" class="text-input sm" placeholder="월 보험료" min="0" max="300" step="1" inputmode="numeric" aria-label="계약 월 보험료 직접입력 (만원)">
+                <span class="unit">만원</span>
+              </div>
               <select id="ct-pay" class="text-input sm ct-select" aria-label="납입상태">
                 <option value="납입중">납입중</option>
                 <option value="납입완료">납입완료</option>

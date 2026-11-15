@@ -218,7 +218,8 @@
     if (k === 'cancer') {
       rows.push(['일반암 진단비', `${won(m.state.cov.cancer.general)}만원`, `${won(row.r.parts[0].rec)}만원`]);
       rows.push(['유사암 진단비', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `${won(row.r.parts[1].rec)}만원`]);
-      rows.push(['주요치료비', m.state.cov.cancer.treatment ? `${won(m.state.cov.cancer.treatment)}만원` : '없음', `${won(row.r.parts[2].rec)}만원`]);
+      rows.push(['주요치료비 5종', `${won(row.r.parts[2].val)}만원 (${row.r.parts[2].subs.filter((s) => s.val > 0).length}/5종)`, `${won(row.r.parts[2].rec)}만원`]);
+      row.r.parts[2].subs.forEach((s) => rows.push([`　${s.label}`, s.val ? `${won(s.val)}만원` : '없음', `${won(s.rec)}만원`]));
       rows.push(['재진단·전이', m.state.cov.cancer.recur ? '보유' : '없음', '보유 권장']);
     } else if (k === 'brain') {
       rows.push(['보장 범위', row.r.parts[0].option ? row.r.parts[0].option.label : '미보유', '뇌혈관질환 I60~I69']);

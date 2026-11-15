@@ -10,6 +10,8 @@
 
   const TONE_COLOR = { ok: C.mint, need: C.orange, gap: C.red, warn: C.orange, danger: C.red, info: C.blue, enough: C.mint, check: C.orange, short: '#E05B52', none: C.gray };
   const LEVEL_LABEL = { enough: '충분', check: '점검', short: '부족', none: '없음' };
+  /* 리포트 표에서 쓰는 5종 짧은 이름 (칸 넘잘 방지) */
+  const TREAT_SHORT = { surgery: '암수술', drug: '항암약물', radio: '항암방사선', icu: '중환자실', extra: '비급여' };
 
   const statById = (id) => STATS.find((s) => s.id === id);
 
@@ -318,8 +320,14 @@
         return [`${r.item.rank}. ${r.item.name}`, { text: cur, weight: 600 }, { text: tgt, color: C.muted }, { text: r.label, badge: r.level, align: 'center' }, { text: r.gaps.length ? `+${won(r.gaps.reduce((a, g) => a + g.need, 0))}만원` : '—', color: r.gaps.length ? C.red : C.muted, weight: 700 }];
       });
       y = s.table(s.ML, y, s.CW, ['우선순위', '현재 보장', '권장 기준', '상태', '부족분'], rows, {
-        widths: [86, 128, 128, 96, 77], size: 6.8, rowH: 19, align: ['left', 'left', 'left', 'center', 'right']
+        widths: [86, 128, 128, 96, 77], size: 6.8, rowH: 16.5, align: ['left', 'left', 'left', 'center', 'right']
       });
+      const sT = m.rows[0].r.parts[2];
+      const tLine = `암 주요치료비 5종 — ${(sT.subs || []).map((x) => `${TREAT_SHORT[x.key] || x.label} ${x.val ? won(x.val) : '없음'}`).join(' · ')} (합계 ${won(sT.val)} / 권장 ${won(sT.rec)}만원)`;
+      s.rect(s.ML, y + 4, s.CW, 12, { fill: '#F5F9FE', r: 3, stroke: '#DCE8F4' });
+      s.rect(s.ML, y + 4, 2, 12, { fill: C.blue, r: 1 });
+      s.text(tLine, s.ML + 8, y + 8, { size: 5.7, weight: 600, color: C.ink2 });
+      y += 18;
 
       y = s.sectionHead(s.ML, y + 12, s.CW, null, '실행 로드맵 3단계', '유지 → 조정 → 보완');
       y = roadmapCards(s, m, y + 1, 82);
@@ -592,10 +600,13 @@
     P.push(function (s) {
       let y = H(s, 5, '1순위 · 암 정밀 분석', '암은 진단비(목돈)와 치료비(장기)를 나눠 봅니다. 이 페이지에서 두 축을 모두 확인합니다.');
       const cr = m.rows[0];
+      const tparts = cr.r.parts[2];
+      const tsubs = tparts.subs || [];
+      const tHave = tsubs.filter((s) => s.val > 0).length;
       const cards = [
         { label: '일반암 진단비', p: cr.r.parts[0], rec: cr.r.parts[0].rec },
         { label: '유사암 진단비', p: cr.r.parts[1], rec: cr.r.parts[1].rec },
-        { label: '암 주요치료비', p: cr.r.parts[2], rec: cr.r.parts[2].rec },
+        { label: '암 주요치료비 5종', p: tparts, rec: tparts.rec, note: `5종 중 ${tHave}종` },
         { label: '재진단·전이', p: cr.r.parts[3], rec: null }
       ];
       const cw = (s.CW - 8 * 3) / 4;
@@ -606,6 +617,7 @@
         if (c.rec != null) {
           s.text(`${won(c.p.val)}만원`, x + 8, y + 19, { size: 13, weight: 800, color: C.navy });
           s.text(`권장 ${won(c.rec)}만원`, x + 8, y + 35, { size: 6, weight: 500, color: C.muted });
+          if (c.note) s.text(c.note, x + 8, y + 48, { size: 5.6, weight: 700, color: tHave >= 5 ? C.mint : C.orange });
           s.gauge(x + 8, y + 60, cw - 16, c.p.fill, { color: c.p.fill >= 0.99 ? C.mint : c.p.fill > 0 ? C.orange : C.red, h: 6 });
           s.text(`${Math.round(c.p.fill * 100)}%`, x + cw - 8, y + 47, { size: 6.4, weight: 700, color: C.ink2, align: 'right' });
         } else {
@@ -629,17 +641,16 @@
         text: PLAYBOOK.cancer.talk[1],
         note: '※ 이 문장은 외우지 말고, 고객 증권의 담보명을 보면서 자기 말로 바꿔 말합니다.'
       });
-      y = s.sectionHead(s.ML, y + 10, s.CW, '04', '설계 권장안', '권장 기준 — 예산에 맞춰 조정합니다');
+      y = s.sectionHead(s.ML, y + 10, s.CW, '04', '설계 권장안 — 암 주요치료비 5종 세부', '권장 기준 — 예산에 맞춰 조정합니다');
       const recs = [
         ['일반암 진단비', `${won(m.state.cov.cancer.general)}만원`, `${won(cr.r.parts[0].rec)}만원`, cr.r.parts[0].fill],
-        ['유사암 진단비', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `${won(cr.r.parts[1].rec)}만원`, cr.r.parts[1].fill],
-        ['암 주요치료비', m.state.cov.cancer.treatment ? `${won(m.state.cov.cancer.treatment)}만원` : '없음', `${won(cr.r.parts[2].rec)}만원`, cr.r.parts[2].fill],
-        ['재진단·전이', m.state.cov.cancer.recur ? '보유' : '없음', '보유 권장', m.state.cov.cancer.recur ? 1 : 0]
-      ];
+        ['유사암 진단비', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `${won(cr.r.parts[1].rec)}만원`, cr.r.parts[1].fill]
+      ].concat(tsubs.map((sp) => [`　· ${sp.label}`, sp.val ? `${won(sp.val)}만원` : '없음', `${won(sp.rec)}만원`, sp.fill]))
+        .concat([['재진단·전이', m.state.cov.cancer.recur ? '보유' : '없음', '보유 권장', m.state.cov.cancer.recur ? 1 : 0]]);
       y = s.table(s.ML, y + 2, s.CW, ['항목', '현재', '권장 기준', '충족도'], recs.map((r) => [
         { text: r[0], weight: 700, color: C.navy }, r[1], { text: r[2], color: C.ink2 },
         { text: `${Math.round(r[3] * 100)}%`, weight: 700, color: r[3] >= 0.99 ? C.mint : r[3] > 0.4 ? C.orange : C.red, align: 'center' }
-      ]), { widths: [140, 130, 150, 95], size: 6.7, rowH: 18, align: ['left', 'center', 'center', 'center'] });
+      ]), { widths: [140, 130, 150, 95], size: 6.4, rowH: 14, align: ['left', 'center', 'center', 'center'] });
       y = noteStrip(s, y + 8, '유사암에 묶는 범위와 지급 비율은 상품마다 다릅니다. 원발부위 기준 조항의 설명 여부가 다퉈진 판례(대법원 2025.3.13. 선고 2023다250746)도 함께 확인하세요.', { size: 6.4 });
       s.footer({ left: `${m.client.name}님 · 1순위 암`, right: '05 / 10' });
     });
@@ -712,7 +723,7 @@
     P.push(function (s) {
       let y = H(s, 7, '수술 · 입원 · 간병 · 실손', '매일 나가는 돈과 한 번 나가는 돈을 함께 봅니다. 의료비 방어력은 이 네 축의 합입니다.');
       const surgery = m.rows[3], care = m.rows[4];
-      const defence = Math.round(((surgery.r.fill + care.r.fill + (m.state.silson === 'none' ? 0 : 1) + (m.state.cov.cancer.treatment > 0 ? 1 : 0)) / 4) * 100);
+      const defence = Math.round(((surgery.r.fill + care.r.fill + (m.state.silson === 'none' ? 0 : 1) + (BK.treatSum(m.state) > 0 ? 1 : 0)) / 4) * 100);
       s.rect(s.ML, y, s.CW, 54, { fill: '#0B2545', r: 6 });
       s.text('의료비 방어력', s.ML + 14, y + 10, { size: 6.4, weight: 700, color: '#9EC0E4' });
       s.text(`${defence}%`, s.ML + 14, y + 19, { size: 22, weight: 800, color: '#fff' });
@@ -737,7 +748,7 @@
       y = s.sectionHead(s.ML, y + 10, s.CW, '02', '의료비 방어력 4축', '지금 어느 축이 비어 있는지');
       const axes4 = [
         ['수술비', m.rows[3].r.fill], ['간병', m.rows[4].r.fill],
-        ['실손', m.state.silson === 'none' ? 0 : 1], ['치료비', m.state.cov.cancer.treatment > 0 ? 1 : 0]
+        ['실손', m.state.silson === 'none' ? 0 : 1], ['치료비 5종', BK.treatCount(m.state) / 5]
       ];
       const aw = (s.CW - 6 * 3) / 4;
       axes4.forEach((a, i) => {
@@ -1239,10 +1250,13 @@
       y += 10;
       const cr = m.rows[0];
       const cw = (s.CW - 8 * 3) / 4;
+      const tP = cr.r.parts[2];
+      const tS = tP.subs || [];
+      const tN = tS.filter((x) => x.val > 0).length;
       [
         ['일반암', `${won(m.state.cov.cancer.general)}만원`, `권장 ${won(cr.r.parts[0].rec)}만원`, cr.r.parts[0].fill],
         ['유사암', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `권장 ${won(cr.r.parts[1].rec)}만원`, cr.r.parts[1].fill],
-        ['주요치료비', m.state.cov.cancer.treatment ? `${won(m.state.cov.cancer.treatment)}만원` : '없음', `권장 ${won(cr.r.parts[2].rec)}만원`, cr.r.parts[2].fill],
+        ['치료비 5종', `${won(tP.val)}만원 (${tN}/5)`, `권장 ${won(tP.rec)}만원`, tP.fill],
         ['재진단', m.state.cov.cancer.recur ? '보유' : '없음', '권장 보유', m.state.cov.cancer.recur ? 1 : 0]
       ].forEach((c, i) => {
         const x = s.ML + i * (cw + 8);
@@ -1254,7 +1268,9 @@
       });
       y += 66;
       y = secLabel(s, y, '60초 판독 멘트 (그대로 읽어도 됩니다)');
-      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반암 진단비가 ${won(m.state.cov.cancer.general)}만원입니다. 기준으로 보면 ${Math.round(cr.r.parts[0].fill * 100)}% 수준이고, ${m.state.cov.cancer.similar ? `유사암은 ${won(m.state.cov.cancer.similar)}만원으로` : '유사암 담보는 없어서 갑상선암 같은 경우 0원이 될 수 있고,'} ${m.state.cov.cancer.treatment ? '치료비 담보도 있습니다' : '치료비 담보는 비어 있습니다'}. 제가 보기엔 ${cr.gaps.length ? `${cr.gaps[0].label}가 가장 먼저 손댈 곳입니다` : '금액은 충분하니 재진단 조건을 확인할 차례입니다'}."` });
+      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반암 진단비가 ${won(m.state.cov.cancer.general)}만원입니다. 기준으로 보면 ${Math.round(cr.r.parts[0].fill * 100)}% 수준이고, ${m.state.cov.cancer.similar ? `유사암은 ${won(m.state.cov.cancer.similar)}만원으로` : '유사암 담보는 없어서 갑상선암 같은 경우 0원이 될 수 있고,'} 치료비는 5종 중 ${tN}종이 채워져 합계 ${won(tP.val)}만원입니다. 제가 보기엔 ${cr.gaps.length ? `${cr.gaps[0].label}가 가장 먼저 손댈 곳입니다` : '금액은 충분하니 재진단 조건을 확인할 차례입니다'}."` });
+      y += 6;
+      y = s.bullets(s.ML, y, s.CW, [`치료비 5종 세부 — ${tS.map((x) => `${x.label} ${x.val ? won(x.val) + '만원' : '없음'}`).join(' · ')} (권장 ${won(tP.rec)}만원)`], { size: 6.6 });
       y += 8;
       y = secLabel(s, y, '왜 이렇게 말하는가');
       y = s.bullets(s.ML, y, s.CW, [
@@ -1311,13 +1327,14 @@
     P.push((s) => {
       let y = head(s, 10, 'PLAN 1 · CANCER', '암 — 설계 권장안 3단계', '예산에 따라 세 단계로 나눠 제시합니다. 고객이 고르게 하는 것이 핵심입니다.');
       const rec = m.rows[0].baseRec;
+      const treatTotal = BK.treatRecs(rec).reduce((a, x) => a + x, 0);
       const round = (v, u) => Math.max(u, Math.round(v / u) * u);
       const mk = (f) => ({
-        g: round(rec * f, 100), s: round(rec * f * 0.2, 100), t: round(rec * f * 0.4, 500)
+        g: round(rec * f, 100), s: round(rec * f * 0.2, 100), t: round(treatTotal * f, 500)
       });
       const tiers = [
         { name: '최소 (지금 예산)', f: 0.6, note: '1순위 한 칸만 채우는 안. 유사암·치료비는 최소선.' },
-        { name: '표준 (권장 기준)', f: 1, note: '일반암·유사암·치료비·재진단을 모두 기준선에 맞추는 안.' },
+        { name: '표준 (권장 기준)', f: 1, note: '일반암·유사암·치료비 5종·재진단을 모두 기준선에 맞추는 안.' },
         { name: '확대 (여유 있을 때)', f: 1.5, note: '가족력·직업 위험이 큰 경우. 일반암을 두껍게.' }
       ];
       tiers.forEach((t, i) => {
@@ -1329,7 +1346,7 @@
         s.text(t.name, x + 10, y + 10, { size: 8, weight: 800, color: C.navy });
         s.text(`일반암 ${won(d.g)}만원`, x + 10, y + 24, { size: 10, weight: 800, color: C.blue });
         s.text(`유사암 ${won(d.s)}만원`, x + 10, y + 40, { size: 6.6, weight: 600, color: C.ink2 });
-        s.text(`치료비 ${won(d.t)}만원`, x + 10, y + 50, { size: 6.6, weight: 600, color: C.ink2 });
+        s.text(`치료비 5종 합계 ${won(d.t)}만원`, x + 10, y + 50, { size: 6.6, weight: 600, color: C.ink2 });
         s.text(`재진단 ${i === 0 ? '선택' : '포함'}`, x + 10, y + 60, { size: 6.6, weight: 600, color: C.ink2 });
         s.para(t.note, x + 10, y + 74, w - 20, { size: 5.9, color: C.muted, lh: 1.35 });
         y = y;

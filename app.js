@@ -22,7 +22,7 @@
     family: [],
     disc: {},
     cov: {
-      cancer: { general: 3000, similar: 0, treatment: 0, recur: false },
+      cancer: { general: 3000, similar: 0, treatment: { surgery: 0, drug: 0, radio: 0, icu: 0, extra: 0 }, recur: false },
       brain: { scope: 'vascular', treat: true },
       heart: { scope: 'mi', surgery: false },
       surgery: { disease: 300, nDae: false, injury: false },
@@ -83,6 +83,8 @@
     ['age', 'gender', 'job', 'silson', 'premium'].forEach((k) => { if (s[k] != null) state[k] = s[k]; });
     if (s.cov) state.cov = Object.assign(state.cov, s.cov);
     if (s.flags) state.flags = Object.assign(state.flags, s.flags);
+    /* v4.1: 구버전 단일 치료비 숫자 → 5종으로 자동 변환 */
+    state.cancerMigration = BojangModel.normalizeCov(state);
   }
 
   /* ================= 모델 ================= */
@@ -286,14 +288,61 @@
           <div class="part-side">${partBadge(item.key, part)}</div>
         </div>
         <div class="input-row">
+          <span class="di-tag">직접입력</span>
           <input type="number" inputmode="numeric" min="0" step="${part.step}" data-item="${item.key}" data-part="${part.key}"
-                 value="${val}" aria-label="${part.label} (만원)">
+                 value="${val}" placeholder="숫자 입력" aria-label="${part.label} 직접입력 (만원)">
           <span class="unit">만원</span>
         </div>
         <div class="quick-row">
           ${part.quick.map((q) => `<button type="button" class="quick" data-set="${q}" data-item="${item.key}" data-part="${part.key}">${q === 0 ? '없음' : won(q)}</button>`).join('')}
           <span class="rec-hint">권장 ${won(rec)}만원</span>
         </div>
+      </div>`;
+  }
+
+  /* v4.1: 암 주요치료비 5종 — 세부마다 직접입력 + 빠른 선택(500~3,000만원) */
+  function groupRowHTML(item, part) {
+    const baseRec = item.rec[state.age] || 0;
+    const cur = cv(item, part);
+    const src = (cur && typeof cur === 'object') ? cur : {};
+    const subs = (part.subs || BojangModel.TREAT_SUBS).map((sp) => {
+      const rec = BojangModel.treatRec(baseRec, sp);
+      const val = Number(src[sp.key] || 0) || 0;
+      const fill = rec > 0 ? clamp(val / rec, 0, 1) : 0;
+      return { sp, rec, val, fill, pct: Math.round(fill * 100) };
+    });
+    const valSum = subs.reduce((a, s) => a + s.val, 0);
+    const recSum = subs.reduce((a, s) => a + s.rec, 0);
+    const have = subs.filter((s) => s.val > 0).length;
+    return `
+      <div class="part treat-group" data-part="${part.key}">
+        <div class="part-head">
+          <div class="part-label"><strong>${part.label}</strong><span>${part.hint}</span></div>
+          <div class="part-side">${partBadge(item.key, part)}</div>
+        </div>
+        <div class="treat-sum">
+          <span>5종 합계 <b>${won(valSum)}</b>만원<em>${have}/5종 보유</em></span>
+          <span class="ts-rec">권장 합계 ${won(recSum)}만원</span>
+        </div>
+        ${subs.map(({ sp, rec, val, pct }) => `
+          <div class="sub-row" data-sub="${sp.key}">
+            <div class="sr-head">
+              <div class="part-label"><strong>${sp.label}</strong><span>${sp.hint}</span></div>
+              <span class="mini-badge tone-${pct >= 100 ? 'ok' : pct >= 50 ? 'need' : 'gap'}">${pct}%</span>
+            </div>
+            <div class="input-row">
+              <span class="di-tag">직접입력</span>
+              <input type="number" inputmode="numeric" min="0" max="${part.max || BojangModel.TREAT_MAX}" step="${part.step || 500}"
+                     data-item="${item.key}" data-part="${part.key}" data-sub="${sp.key}"
+                     value="${val}" placeholder="${part.min || 500}~${won(part.max || BojangModel.TREAT_MAX)}" aria-label="${sp.label} 직접입력 (만원)">
+              <span class="unit">만원</span>
+            </div>
+            <div class="quick-row">
+              ${(part.quick || []).map((q) => `<button type="button" class="quick" data-set="${q}" data-item="${item.key}" data-part="${part.key}" data-sub="${sp.key}">${q === 0 ? '없음' : won(q)}</button>`).join('')}
+              <span class="rec-hint">권장 ${won(rec)}만원</span>
+            </div>
+          </div>`).join('')}
+        <p class="treat-note">각 항목 500만~3,000만원 · 미가입은 0 · 직접입력은 권장 범위 밖 값도 저장됩니다.</p>
       </div>`;
   }
 
@@ -328,6 +377,9 @@
 
   function cardHTML(item, extra) {
     const r = BojangModel.evalItem(state, item);
+    const rowOf = (p) => p.type === 'amount' ? amountRowHTML(item, p)
+      : p.type === 'group' ? groupRowHTML(item, p)
+        : p.type === 'scale' ? scaleRowHTML(item, p) : boolRowHTML(item, p);
     return `
       <div class="card cov-card" data-item="${item.key}">
         <div class="card-title">
@@ -335,7 +387,7 @@
           <span class="card-sub">${item.sub}</span>
           <span class="badge badge-${r.level}">${r.label}</span>
         </div>
-        ${item.parts.map((p) => p.type === 'amount' ? amountRowHTML(item, p) : p.type === 'scale' ? scaleRowHTML(item, p) : boolRowHTML(item, p)).join('')}
+        ${item.parts.map(rowOf).join('')}
         ${extra || ''}
       </div>`;
   }
@@ -361,17 +413,30 @@
   function bindCoverageInputs() {
     $$('#wiz-panels input[type="number"][data-item]').forEach((input) => {
       input.addEventListener('input', () => {
-        const it = input.dataset.item, pt = input.dataset.part;
-        state.cov[it][pt] = clamp(Number(input.value || 0), 0, 100000);
+        const it = input.dataset.item, pt = input.dataset.part, sb = input.dataset.sub;
+        const v = clamp(Number(input.value || 0), 0, 100000);
+        if (sb) {
+          const box = state.cov[it][pt];
+          if (box && typeof box === 'object') box[sb] = v;
+          else state.cov[it][pt] = Object.assign(BojangModel.emptyTreat(), { [sb]: v });
+        } else state.cov[it][pt] = v;
         refreshBadges(); saveSession();
       });
     });
     $$('#wiz-panels .quick[data-set]').forEach((b) => {
       b.addEventListener('click', () => {
-        const it = b.dataset.item, pt = b.dataset.part, v = Number(b.dataset.set);
-        state.cov[it][pt] = v;
-        const input = $(`input[data-item="${it}"][data-part="${pt}"]`);
-        if (input) input.value = v;
+        const it = b.dataset.item, pt = b.dataset.part, sb = b.dataset.sub, v = Number(b.dataset.set);
+        if (sb) {
+          const box = state.cov[it][pt];
+          if (box && typeof box === 'object') box[sb] = v;
+          else state.cov[it][pt] = Object.assign(BojangModel.emptyTreat(), { [sb]: v });
+          const sinput = $(`input[data-item="${it}"][data-part="${pt}"][data-sub="${sb}"]`);
+          if (sinput) sinput.value = v;
+        } else {
+          state.cov[it][pt] = v;
+          const input = $(`input[data-item="${it}"][data-part="${pt}"]:not([data-sub])`);
+          if (input) input.value = v;
+        }
         refreshBadges(); saveSession();
       });
     });
@@ -410,10 +475,26 @@
         const row = $(`.part[data-part="${p.key}"]`, card);
         if (!row) return;
         const badge = $('.mini-badge', row);
-        if (badge) {
+        if (badge && !p.subs) {
           const pct = Math.round(p.fill * 100);
           badge.className = 'mini-badge tone-' + (p.fill >= 1 ? 'ok' : p.fill >= 0.5 ? 'need' : 'gap');
           badge.textContent = pct + '%';
+        }
+        if (p.subs) {
+          p.subs.forEach((s) => {
+            const sr = $(`.sub-row[data-sub="${s.key}"]`, row);
+            if (!sr) return;
+            const b = $('.mini-badge', sr);
+            if (!b) return;
+            b.className = 'mini-badge tone-' + (s.fill >= 1 ? 'ok' : s.fill >= 0.5 ? 'need' : 'gap');
+            b.textContent = s.pct + '%';
+          });
+          const sumEl = $('.treat-sum b', row);
+          if (sumEl) sumEl.textContent = won(p.val);
+          const emEl = $('.treat-sum em', row);
+          if (emEl) emEl.textContent = p.subs.filter((s) => s.val > 0).length + '/5종 보유';
+          const recEl = $('.treat-sum .ts-rec', row);
+          if (recEl) recEl.textContent = `권장 합계 ${won(p.rec)}만원`;
         }
       });
     });
@@ -857,6 +938,7 @@
     state.age = inputs.age; state.gender = inputs.gender; state.job = inputs.job;
     state.silson = inputs.silson; state.premium = inputs.premium;
     state.cov = JSON.parse(JSON.stringify(inputs.cov));
+    BojangModel.normalizeCov(state);
     state.flags = Object.assign({}, state.flags, inputs.flags);
     if (Array.isArray(inputs.family)) state.family = inputs.family.slice();
     if (inputs.disc) state.disc = Object.assign({}, inputs.disc);
@@ -1316,6 +1398,14 @@
       state.premium = clamp(Number(e.target.value || 0), 0, 300);
       renderSummary(); renderClientStrip(); saveSession();
       if (state.analyzed) analyze();
+    });
+    $$('#premium-quick .quick[data-premium]').forEach((b) => {
+      b.addEventListener('click', () => {
+        state.premium = Number(b.dataset.premium);
+        $('#premium').value = state.premium;
+        renderSummary(); renderClientStrip(); saveSession();
+        if (state.analyzed) analyze();
+      });
     });
 
     $('#wiz-prev').addEventListener('click', () => setStep(state.step - 1));
