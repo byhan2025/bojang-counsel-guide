@@ -2362,3 +2362,8 @@ body{
 .side-card{background:#FFFCFB;border-color:#F5E4E3;}
 .cmp-table .ct-line:nth-child(even),.code-table .ct-line:nth-child(even){background:#FFFBFB;}
 .code-table .ct-head,.cmp-table .ct-head{background:var(--wine);}
+.t5-bar{background:#F6EAE9;}
+.pr-track,.tm-track,.pmg-track{background:#F3E4E3;}
+.gauge-track,.bar-track{background:#F5E7E6;}
+.stk-bar{background:#F5E7E6;}
+.mini-note{background:#FFFBFB;border-color:#F3DCDB;}
