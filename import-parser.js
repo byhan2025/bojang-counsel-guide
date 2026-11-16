@@ -395,6 +395,10 @@
     if (header.indexOf('%PDF') < 0) {
       return { ok: false, text: '', pages: 0, reason: 'not-pdf', message: 'PDF 파일이 아닌 것 같습니다. 확장자와 내용을 확인해 주세요.' };
     }
+    const noInflate = typeof DecompressionStream === 'undefined';
+    const iosNote = noInflate
+      ? ' 이 브라우저(iOS 16.4 미만 등)는 압축된 PDF 스트림 해독을 지원하지 않습니다 — PDF 뷰어에서 텍스트를 복사해 붙여넣어 주세요.'
+      : '';
     const objs = scanObjects(raw);
     await expandObjectStreams(objs);
     const fonts = await buildFonts(objs);
@@ -446,8 +450,8 @@
       return {
         ok: false, text: '', pages: pageObjs.length, images, reason: 'image-only',
         message: images
-          ? `이 PDF는 이미지로 스캔된 문서입니다(이미지 ${images}개, 추출된 글자 ${textLen}자). 글자가 없어 담보표를 읽지 못했습니다 — 화면을 사진으로 찍는 대신, 보장분석표 텍스트를 복사해 붙여넣어 주세요.`
-          : `이 PDF에서 글자를 찾지 못했습니다(추출된 글자 ${textLen}자). 보장분석표 텍스트를 붙여넣는 방식으로 입력해 주세요.`
+          ? `이 PDF는 이미지로 스캔된 문서입니다(이미지 ${images}개, 추출된 글자 ${textLen}자). 글자가 없어 담보표를 읽지 못했습니다 — 화면을 사진으로 찍는 대신, 보장분석표 텍스트를 복사해 붙여넣어 주세요.${iosNote}`
+          : `이 PDF에서 글자를 찾지 못했습니다(추출된 글자 ${textLen}자). 보장분석표 텍스트를 붙여넣는 방식으로 입력해 주세요.${iosNote}`
       };
     }
     const garbled = looksGarbled(text);
