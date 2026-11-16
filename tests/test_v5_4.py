@@ -319,6 +319,7 @@ def main():
                                         args=["--no-sandbox", "--disable-dev-shm-usage"])
             ctx = browser.new_context(viewport={"width": 430, "height": 932}, device_scale_factor=2)
             page = ctx.new_page()
+            page.add_init_script("window.__BOJANG_CONFIG__ = { SUPABASE_URL: '', SUPABASE_ANON_KEY: '' };")
             page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
             page.on("pageerror", lambda e: errors.append("pageerror: " + str(e)))
             page.on("request", lambda r: external.append(r.url) if not r.url.startswith(base) and not r.url.startswith("data:") else None)
@@ -613,6 +614,7 @@ def main():
             check("단일 HTML: 외부 참조 0", '<script src="./' not in html and '<link rel="stylesheet" href="./' not in html, "refs")
             ctx2 = browser.new_context(viewport={"width": 430, "height": 932})
             p2 = ctx2.new_page()
+            p2.add_init_script("window.__BOJANG_CONFIG__ = { SUPABASE_URL: '', SUPABASE_ANON_KEY: '' };")
             file_errors = []
             p2.on("pageerror", lambda e: file_errors.append(str(e)))
             p2.on("console", lambda m: file_errors.append(m.text) if m.type == "error" else None)

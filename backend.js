@@ -48,12 +48,23 @@
   function trimSlash(u) { return String(u || '').trim().replace(/\/+$/, ''); }
 
   /* =========================================================
-     설정 · 모드
+     설정 · 모드 (서울 리전 Supabase 실서버 기본 연결)
      ========================================================= */
+  const DEFAULT_CFG = {
+    SUPABASE_URL: 'https://ntfhdiujapctomzzaifu.supabase.co',
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50ZmhkaXVqYXBjdG9tenphaWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ3OTYwNjcsImV4cCI6MjExMDM3MjA2N30.UbfQ2UsRliqfbkza4jpeLWN8xQXPVp1gCMtH1XepGm8',
+    VISION_FN: '',
+    BILLING_FN: ''
+  };
+
   function readConfig() {
     const w = root.__BOJANG_CONFIG__ && typeof root.__BOJANG_CONFIG__ === 'object' ? root.__BOJANG_CONFIG__ : {};
     const saved = lsGet(CFG_KEY, {}) || {};
-    const val = (k) => String(w[k] || saved[k] || '').trim();
+    const val = (k) => {
+      if (Object.prototype.hasOwnProperty.call(saved, k) && String(saved[k] || '').trim()) return String(saved[k]).trim();
+      if (Object.prototype.hasOwnProperty.call(w, k)) return String(w[k] || '').trim();
+      return String(DEFAULT_CFG[k] || '').trim();
+    };
     return {
       url: trimSlash(val('SUPABASE_URL')),
       anonKey: val('SUPABASE_ANON_KEY'),
