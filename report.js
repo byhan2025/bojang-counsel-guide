@@ -853,6 +853,8 @@
       });
       y += 62;
       y = noteStrip(s, y + 4, `현재 월 보험료는 ${won(m.premium)}만원(연 ${won(m.annual)}만원)입니다. 보장성 보험료의 상담 기준선은 세후 월 소득의 ${pg.minPct}~${pg.recPct}%이고, 이 금액을 그 기준에 맞추면 세후 월 소득 약 ${won(pg.incomeMin)}~${won(pg.incomeMax)}만원 구간에 해당합니다. 배분을 바꾸는 방법은 해지가 아니라 특약 정리(배서)입니다.`, { size: 6.4 });
+      const recAge = (k) => { const p0 = PRIORITY.find((x) => x.key === k); return (p0 && p0.rec && p0.rec[m.state.age]) || (p0 && p0.tiers ? p0.tiers.rec : 0); };
+      y = noteStrip(s, y + 4, `${m.state.age}대 권장 기준선(상담 보조) — 암 ${won(recAge('cancer'))} · 뇌 ${won(recAge('brain'))} · 심장 ${won(recAge('heart'))} · 수술 ${won(recAge('surgery'))} · 간병 일당 ${won(recAge('care'))}만원. 같은 금액이라도 직업·가족력·실손 세대에 따라 판단이 달라집니다.`, { size: 6.1, fill: C.tint2, accent: C.navy2 });
 
       y = s.sectionHead(s.ML, y + 12, s.CW, '03', '5대 판정 요약', '이 표만 보셔도 순서가 보입니다');
       const rows5 = m.rows.map((r) => [
@@ -863,7 +865,7 @@
         { text: r.gaps.length ? `${won(r.gaps.reduce((a, g) => a + g.need, 0))}만원` : (r.level === 'ok' ? '—' : '범위 점검'), weight: 700, color: r.gaps.length ? C.red : C.muted, align: 'right' }
       ]);
       y = s.table(s.ML, y + 2, s.CW, ['우선순위', '현재 보장', '충족도', '판정', '부족분'], rows5, {
-        widths: [86, 214, 56, 88, 71], size: 6.8, rowH: 20, align: ['left', 'left', 'center', 'center', 'right']
+        widths: [86, 214, 56, 88, 71], size: 6.6, rowH: 25, align: ['left', 'left', 'center', 'center', 'right']
       });
       s.footer({ left: `${m.client.name}님 · 보장 진단 결과`, right: '02 / 10' });
     });
