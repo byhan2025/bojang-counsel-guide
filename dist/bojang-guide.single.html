@@ -8157,7 +8157,9 @@ const PLAN_FRONT = {
     for (let i = 0; i < n; i++) kids.push(`${pageObj(i)} 0 R`);
     obj(2, `<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${n} >>`);
     const title = (meta.title || '보장분석 리포트').replace(/[()\\]/g, ' ');
-    obj(3, `<< /Title (${title.replace(/[^\x20-\x7E]/g, '')}) /Producer (Bojang Guide v3) /Creator (Bojang Guide) >>`);
+    /* v5.9 — PDF 메타데이터에도 같은 버전 상수를 씁니다 (예전에는 v3 로 박혀 있었습니다) */
+    const appVer = (root.BojangVersion && root.BojangVersion.value) ? root.BojangVersion.value : 'v5.9';
+    obj(3, `<< /Title (${title.replace(/[^\x20-\x7E]/g, '')}) /Producer (Bojang Guide ${appVer}) /Creator (Bojang Guide) >>`);
 
     pages.forEach((pg, i) => {
       const pn = pageObj(i);

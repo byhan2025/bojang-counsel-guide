@@ -592,6 +592,9 @@ def main():
             pdf_path = os.path.join(OUT, "v59-detail.pdf")
             with open(pdf_path, "wb") as f:
                 f.write(base64.b64decode(out["b64"]))
+            raw_pdf = open(pdf_path, "rb").read()
+            check("PDF 메타데이터 — Producer 버전 v5.9", b"Bojang Guide v5.9" in raw_pdf and b"Bojang Guide v3" not in raw_pdf,
+                  re.findall(rb"/Producer \(([^)]*)\)", raw_pdf)[:1])
             # 워터마크가 실제로 그려지는지 — 같은 꼬리말을 idMark 유무로 두 번 렌더해 픽셀을 비교합니다
             diff = pg.evaluate("""async () => {
               const page = (s) => s.footer({ left: '워터마크 확인용 꼬리말', right: '01 / 10' });
