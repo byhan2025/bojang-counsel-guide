@@ -617,7 +617,7 @@ def main():
                 check("01p 명함 QR — 40pt 초과(46pt 박스)", qr_w >= 38.0, round(qr_w, 2))
             finally:
                 doc.close()
-            pg.screenshot(path=os.path.join(SHOTS, "ui-cloud-sync.png"), full_page=True)
+            pg.screenshot(path=os.path.join(OUT, "v58-cloud-sync-full.png"), full_page=True)
 
             # =========================================================
             # 10. 360px 넘침 0 · 콘솔 오류 0
