@@ -565,8 +565,9 @@
      ========================================================= */
   function renewChart(s, x, y, w, tr, o) {
     o = o || {};
-    const h = o.h || 126;
+    const h = o.h || 132;
     const padL = 28, padR = 10, padT = 30, padB = 30;
+    const footY = y + h - 8;
     const px = x + padL, py = y + padT, pw = w - padL - padR, ph = h - padT - padB;
     const maxY = Math.max(1, tr.max * 1.1);
     const X = (yr) => px + (yr / 20) * pw;
@@ -634,7 +635,7 @@
     /* 20년 뒤 수치 */
     s.text(`갱신형 ${won(tr.at20.renew)}`, X(20) - 2, Y(tr.at20.renew) - 7, { size: 5.6, weight: 800, color: C.orange, align: 'right' });
     s.text(`비갱신 ${won(tr.at20.level)}`, X(20) - 2, Y(tr.at20.level) + 2, { size: 5.6, weight: 800, color: C.blue, align: 'right' });
-    s.text(`예시 시뮬레이션 — 갱신 5년 주기·연 나이 인상을 가정한 값입니다. 실제 갱신 보험료는 증권의 갱신 보험료 표로 확인하세요.`, x + 10, y + h - 8.5, { size: 5.2, weight: 500, color: C.muted });
+    s.text(`예시 시뮬레이션 — 갱신 5년 주기·연 나이 인상을 가정한 값입니다. 실제 갱신 보험료는 증권의 갱신 보험료 표로 확인하세요.`, x + 10, footY, { size: 5.2, weight: 500, color: C.muted });
     return y + h;
   }
 
@@ -1419,7 +1420,7 @@
       /* v5.7 — 20년 보험료 추이 차트 (갱신형 vs 비갱신형) */
       y = s.sectionHead(s.ML, y + 8, s.CW, '02', '20년 예상 보험료 추이', '갱신형 vs 비갱신형 — 예시 시뮬레이션');
       const tr = BK.renewTrend(m.state);
-      y = renewChart(s, s.ML, y + 2, s.CW, tr, { h: 126 });
+      y = renewChart(s, s.ML, y + 2, s.CW, tr, { h: 132 });
       y = noteStrip(s, y + 5, `현재 입력 기준: 갱신형 담보 ${m.state.flags.renew ? '중심' : '없음'} · 적립성 특약 ${m.state.flags.savings ? '있음' : '없음'}. 갱신 시점에는 보험료 재산정과 인수 심사가 있고, 65세부터 장기요양 신청이 가능하며, 만기 후에는 보장 공백이 생깁니다.`, { size: 5.9 });
       y += 6;
       y = s.sectionHead(s.ML, y, s.CW, '03', '노후 체크포인트 — 담당자 소견', null);
