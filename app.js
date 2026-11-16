@@ -2639,7 +2639,7 @@
     const max = Number(el.getAttribute('max'));
     const cap = isFinite(max) && max > 0 ? max : 100000;
     if (!isFinite(n)) { el.value = '0'; return; }
-    if (n < 0) { el.value = '0'; return; }
+    if (n < 0) { el.value = '0'; try { toast('음수는 입력할 수 없어 0으로 보정했습니다'); } catch (_) {} return; }
     if (n > cap) { el.value = String(cap); }
   }
 
