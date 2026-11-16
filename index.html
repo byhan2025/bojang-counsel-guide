@@ -274,12 +274,12 @@
     <div class="intro-card cap-intro no-print">
       <div class="intro-eyebrow">CAPTURE · VOLATILE</div>
       <h2>찍고, 읽고,<br>바로 지웁니다</h2>
-      <p>앨범에서 고르는 방식이 아니라 카메라가 바로 열립니다. 사진은 기기에 저장되지 않고 서버로도 가지 않습니다.</p>
+      <p>앨범에서 고르는 방식이 아니라 카메라가 바로 열립니다. 사진은 기기·자체 서버에 저장되지 않으며, AI 인식 실행 시에만 외부 AI API(Google Gemini 등)로 전송됩니다.</p>
     </div>
 
     <div class="sec-notice" id="cap-notice" role="note">
       <span class="sn-tag">촬영 전 확인</span>
-      <p>이름·주민등록번호 등 민감정보는 가리고 담보표만 촬영해 주세요. 촬영된 사진은 기기·서버 어디에도 저장되지 않고 분석 직후 메모리에서 즉시 파기됩니다.</p>
+      <p>이름·주민등록번호 등 민감정보는 가리고 담보표만 촬영해 주세요. 촬영된 사진은 기기와 자체 Supabase DB에 저장되지 않고 브라우저 메모리에서 즉시 파기됩니다. AI 인식 실행 시에는 외부 AI API(Google Gemini 등)로 전송되며 공급자 정책이 적용됩니다.</p>
     </div>
 
     <div class="cap-actions">
@@ -364,7 +364,7 @@
     <div class="intro-card no-print">
       <div class="intro-eyebrow" data-app-version-eyebrow>LIFE REPORT · BETA V6.0</div>
       <h2>상담자 입력실에서 진단하고<br>고객 화면 30장으로 보여줍니다</h2>
-      <p>입력값은 서버로 전송되지 않고 이 화면 안에서만 계산됩니다. PDF는 이 기기에서 직접 만들어 저장·공유합니다.</p>
+      <p>입력·계산과 PDF 생성은 이 기기에서 처리됩니다. 로그인해 클라우드 동기화를 켜면 상담 스냅샷(이름·생년월일·연령대·성별·보험료·담보·계약·고지 체크)이 Supabase(서울)에 저장됩니다.</p>
     </div>
 
     <!-- ---------- 위저드 ---------- -->
@@ -941,7 +941,7 @@
   <div class="modal-card hub-card" role="dialog" aria-modal="true" aria-labelledby="ih-title">
     <span class="hub-eyebrow">START · INPUT MODE</span>
     <strong id="ih-title">어떻게 입력할까요?</strong>
-    <p>고객의 보장분석표를 어떤 방법으로 가져올지 먼저 고르세요. 세 가지 모두 이 기기 안에서만 처리되고 서버로 보내지 않습니다.</p>
+    <p>고객의 보장분석표를 어떤 방법으로 가져올지 먼저 고르세요. 수기·PDF는 이 기기에서 처리되며, 사진 AI 인식 실행 시에만 외부 AI API(Google Gemini 등)로 전송되고 앱·자체 서버에는 사진을 저장하지 않습니다.</p>
     <div class="hub-list">
       <button type="button" class="hub-opt" data-mode="manual">
         <span class="ho-ico" aria-hidden="true">✎</span>
@@ -967,7 +967,7 @@
     <div class="hub-foot">
       <span class="hub-last" id="ih-last"></span>
       <button type="button" class="hub-close" id="ih-close">닫기</button>
-      <span>사진·PDF는 저장하지도, 보내지도 않습니다</span>
+      <span>사진·PDF는 기기·자체 서버에 저장하지 않습니다 (AI 인식 시만 외부 AI 전송)</span>
     </div>
   </div>
 </div>
