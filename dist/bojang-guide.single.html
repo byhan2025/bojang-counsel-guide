@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v5.7 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<title>보장분석 라이프 리포트 v5.8 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
 
@@ -3365,6 +3365,94 @@ body.tour-open{overflow:hidden;}
   .tour-invite{right:10px;left:10px;width:auto;bottom:calc(74px + env(safe-area-inset-bottom));}
 }
 
+/* =====================================================================
+   v5.8 — 클라우드 상담 동기화 · 카톡 요약 · 고지의무 체크
+   ===================================================================== */
+.cloud-bar{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:0 0 10px;}
+.btn-cloud{
+  font-family:inherit;display:inline-flex;align-items:center;gap:5px;
+  border:1px solid #cfe3ee;background:#f2f9fc;color:#12557a;
+  border-radius:10px;padding:7px 10px;font-size:11px;font-weight:800;letter-spacing:-0.02em;
+}
+.btn-cloud:hover{background:#e8f4fa;}
+.btn-cloud[disabled]{opacity:.55;}
+.btn-cloud.is-busy{opacity:.6;}
+.cloud-state{font-size:9.6px;font-weight:600;color:var(--muted);letter-spacing:-0.01em;}
+.cloud-state[data-tone="ok"]{color:#0f8a5f;}
+
+.hist.is-cloud{border-color:#cfe9e1;background:#f6fcfa;}
+.hist-cloud{
+  display:inline-block;margin-left:5px;font-size:10px;color:#0f8a5f;
+  vertical-align:middle;
+}
+
+/* 카톡 요약 미리보기 */
+.kakao-overlay{
+  position:fixed;inset:0;z-index:130;display:flex;align-items:flex-end;justify-content:center;
+  background:rgba(6,17,30,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+}
+.kakao-overlay[hidden]{display:none;}
+.kakao-sheet{
+  width:100%;max-width:460px;background:#fff;border-radius:20px 20px 0 0;
+  padding:18px 18px calc(18px + env(safe-area-inset-bottom));
+  box-shadow:0 -18px 50px -28px rgba(6,20,38,.7);
+}
+.kakao-sheet-head{display:flex;flex-direction:column;gap:2px;margin-bottom:10px;}
+.kakao-sheet-head strong{font-size:15px;font-weight:800;color:var(--navy-800);letter-spacing:-0.03em;}
+.kakao-sub{font-size:10.4px;color:var(--muted);letter-spacing:-0.01em;}
+.kakao-preview{
+  margin:0;white-space:pre-wrap;word-break:break-word;font-family:inherit;
+  font-size:12.2px;line-height:1.62;color:var(--ink);letter-spacing:-0.01em;
+  background:#f7fafc;border:1px solid var(--line);border-radius:12px;padding:12px 13px;
+  max-height:46vh;overflow:auto;
+}
+.kakao-actions{display:flex;gap:8px;margin-top:12px;}
+.kakao-copy{
+  flex:1;font-family:inherit;border:0;background:var(--navy-800);color:#fff;
+  border-radius:12px;padding:11px 0;font-size:13px;font-weight:800;letter-spacing:-0.02em;
+}
+.kakao-close{
+  flex:0 0 auto;font-family:inherit;border:1px solid var(--line);background:#fff;color:var(--ink-2);
+  border-radius:12px;padding:11px 18px;font-size:13px;font-weight:700;
+}
+.kakao-hint{margin:9px 0 0;font-size:9.6px;color:var(--muted);line-height:1.5;}
+body.is-modal{overflow:hidden;}
+@media (min-width:560px){
+  .kakao-overlay{align-items:center;padding:24px;}
+  .kakao-sheet{border-radius:20px;padding-bottom:18px;}
+}
+
+/* 고지의무 인터랙티브 체크 */
+.disc-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 10px;}
+.disc-tab{
+  font-family:inherit;display:inline-flex;align-items:center;gap:5px;
+  border:1px solid var(--line);background:#fff;color:var(--ink-2);
+  border-radius:999px;padding:7px 12px;font-size:11px;font-weight:800;letter-spacing:-0.02em;
+}
+.disc-tab em{
+  font-style:normal;font-size:9px;font-weight:800;color:#8B7A7B;
+  background:#f4eef0;border-radius:999px;padding:1px 5px;
+}
+.disc-tab.is-on{border-color:var(--rose-deep,#8E3B46);background:#FDF1F0;color:#7C2B35;}
+.disc-tab.is-on em{background:#8E3B46;color:#fff;}
+.disc-tab.has-on:not(.is-on) em{background:#8E3B46;color:#fff;}
+.disc-panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 12px;}
+.disc-panel .dp-head{font-size:10.6px;font-weight:800;color:var(--ink);margin-bottom:7px;}
+.disc-panel .dp-head span{font-weight:600;color:var(--muted);font-size:9.8px;margin-left:4px;}
+.disc-judge{display:grid;gap:8px;margin-top:10px;}
+@media (min-width:560px){.disc-judge{grid-template-columns:1fr 1fr;}}
+.disc-docs{margin-top:10px;background:#F7FAFD;border:1px solid var(--line);border-radius:14px;padding:12px 13px;}
+.disc-docs .dd-head{font-size:10.6px;font-weight:800;color:var(--navy-700);margin-bottom:6px;}
+.disc-docs ul{display:grid;gap:4px;}
+.disc-docs li{font-size:10.8px;line-height:1.5;color:var(--ink-2);display:flex;gap:6px;}
+.disc-docs li::before{content:"·";color:var(--point);font-weight:800;}
+.disc-actions{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;}
+.disc-actions button{
+  font-family:inherit;font-size:11px;font-weight:800;border-radius:10px;padding:8px 12px;
+  border:1px solid var(--line);background:#fff;color:var(--ink-2);
+}
+.disc-actions .da-copy{background:var(--navy-800);border-color:var(--navy-800);color:#fff;}
+
 </style>
 </head>
 <body>
@@ -3449,8 +3537,8 @@ body.tour-open{overflow:hidden;}
         <span class="hv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0112 8a3.9 3.9 0 017 2.6C19 15.6 12 20 12 20z"/></svg>든든한미래</span>
       </div>
       <div class="hh-top">
-        <span class="hh-eyebrow">LIFE REPORT · BETA V5.7</span>
-        <span class="hh-ver">v5.7 · 2026.11</span>
+        <span class="hh-eyebrow">LIFE REPORT · BETA V5.8</span>
+        <span class="hh-ver">v5.8 · 2026.11</span>
       </div>
       <h2>무엇을 하시겠어요?</h2>
       <p>상담 전 과정을 한 화면에서 시작합니다. 입력은 이 기기 안에서만 계산되고, PDF도 기기에서 직접 만듭니다.</p>
@@ -3589,13 +3677,17 @@ body.tour-open{overflow:hidden;}
       <div class="card-title"><span class="eyebrow">RECENT</span> 최근 상담
         <span class="card-sub" id="home-hist-sub">이 기기에만 저장 · 최대 30건</span>
         <button type="button" class="btn-reset" id="btn-reset">새 상담 시작</button></div>
+      <div class="cloud-bar">
+        <button type="button" class="btn-cloud" data-cloud-sync="1" aria-label="클라우드에서 상담 기록 불러오기">☁ 클라우드에서 불러오기</button>
+        <span class="cloud-state" data-tone="mute">이 기기에만 저장 (로그인하면 클라우드 동기화)</span>
+      </div>
       <div id="history-list" class="history"></div>
     </div>
 
-    <p class="app-foot">기준일 2026-11-16 · v5.7 베타 기준점(암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 특정순환계질환(3~5종) 주요치료비 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리 · 증권 담보 직접 기재 통합형/개별형 · 시니어 큰 글씨 모드 · 불완전판매 방지 경고 · 20년 갱신 보험료 차트 · 명함 QR · 4단계 가이드) 반영 · 상품별 약관 우선</p>
+    <p class="app-foot">기준일 2026-11-16 · v5.8 베타 기준점(클라우드 상담 동기화 · 고지의무 3·1·5 / 간편 3·2·5 체크 · 카톡 요약 1탭 복사 · 사진 AI 직접 기재 담보 인식 · 명함 QR 46pt · 암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 특정순환계질환(3~5종) 주요치료비 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리 · 시니어 큰 글씨 · 불완전판매 경고 · 20년 갱신 차트 · 4단계 가이드) 반영 · 상품별 약관 우선</p>
   </section>
 
-  <!-- ================= v5.3 사진 즉시 촬영 (휘발·미저장) · v5.4 서버 AI 인식 · v5.5 PDF 프리미엄 리포트 · v5.6 증권 담보 직접 기재 · v5.7 시니어·차트·QR·온보딩 ================= -->
+  <!-- ================= v5.3 사진 즉시 촬영 (휘발·미저장) · v5.4 서버 AI 인식 · v5.5 PDF 프리미엄 리포트 · v5.6 증권 담보 직접 기재 · v5.7 시니어·차트·QR·온보딩 · v5.8 클라우드 동기화·고지 체크·카톡 요약 ================= -->
   <section id="view-capture" class="view" aria-label="사진 즉시 촬영">
     <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>사진 즉시 촬영 · 휘발</span><button type="button" class="home-back hub-jump" data-inputhub="1">✎ 입력 방식</button></div>
 
@@ -3950,6 +4042,10 @@ body.tour-open{overflow:hidden;}
       <div class="card-title"><span class="eyebrow">RECENT</span> 최근 상담
         <span class="card-sub" id="result-hist-sub">이 기기에만 저장 · 최대 30건</span>
         <button type="button" class="btn-reset" id="btn-reset2">새 상담 시작</button></div>
+      <div class="cloud-bar">
+        <button type="button" class="btn-cloud" id="btn-cloud-sync" data-cloud-sync="1" aria-label="클라우드에서 상담 기록 불러오기">☁ 클라우드에서 불러오기</button>
+        <span class="cloud-state" data-tone="mute">이 기기에만 저장 (로그인하면 클라우드 동기화)</span>
+      </div>
       <div id="history-list2" class="history"></div>
     </div>
     <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>상담자 상세 입력</span></div>
@@ -4313,6 +4409,23 @@ body.tour-open{overflow:hidden;}
     <div class="pdf-bar"><i id="pdf-bar"></i></div>
     <p id="pdf-msg">페이지를 그리는 중…</p>
     <button type="button" class="pdf-cancel" id="pdf-cancel" hidden>닫기</button>
+  </div>
+</div>
+
+<!-- ================= v5.8 카톡/문자 상담 요약 미리보기 ================= -->
+<div class="kakao-overlay" id="kakao-modal" hidden>
+  <div class="kakao-sheet" role="dialog" aria-modal="true" aria-labelledby="kakao-title">
+    <div class="kakao-sheet-head">
+      <span class="eyebrow">KAKAO · SMS</span>
+      <strong id="kakao-title">고객에게 보낼 요약</strong>
+      <span class="kakao-sub">점수 · 핵심 부족 1~2순위 · 담당자 연락처</span>
+    </div>
+    <pre class="kakao-preview" id="kakao-preview"></pre>
+    <div class="kakao-actions">
+      <button type="button" class="kakao-copy" id="kakao-copy">복사</button>
+      <button type="button" class="kakao-close" id="kakao-close">닫기</button>
+    </div>
+    <p class="kakao-hint">카카오톡·문자에 그대로 붙여넣으세요. 수치는 상담 보조용 자체 산식입니다.</p>
   </div>
 </div>
 
@@ -8145,7 +8258,8 @@ const PLAN_FRONT = {
     }
     const vy = cy + (b.kakao ? 23 : 12);
     const vh = Math.max(30, y + h - 12 - vy);
-    const qs = 40;
+    /* v5.8 — 40 → 46pt: 인쇄·모바일 스캔성 강화(카드 높이는 166 으로 함께 키워 넘침 0) */
+    const qs = 46;
     const hasQR = !!(qrInfo(m) && root.BojangQR);
     const vw = hasQR ? w - 24 - qs - 16 : w - 24;
     s.rect(x + 12, vy, vw, vh, { fill: C.tint2, r: 5, stroke: C.tintLine });
@@ -8853,7 +8967,7 @@ const PLAN_FRONT = {
       s.text(`${m.grade.label} · ${m.counts.enough}개 충분`, s.ML + 48, 266, { size: 6.2, weight: 600, color: C.heroInk2 });
 
       /* 담당자 명함 */
-      nameCard(s, s.W - s.MR - 196, 152, 196, m, { h: 156 });
+      nameCard(s, s.W - s.MR - 196, 152, 196, m, { h: 166 });
 
       let y = 336;
       s.text('이 리포트에서 확인하실 수 있습니다', s.ML, y, { size: 11.6, weight: 800, color: C.navy });
@@ -12441,84 +12555,223 @@ const PLAN_FRONT = {
   /* =========================================================
      ③ 고지사항(알릴의무) 판정 + 청구 서류 1탭 복사
      ========================================================= */
+  /* v5.8 — 고지의무 인터랙티브 체크 (일반 3·1·5 / 간편 3·2·5)
+     · 청약서 문항을 기간 탭(3개월·1년·2년·5년)으로 나눠 탭 한 번으로 체크합니다.
+     · 체크 즉시 ① 일반심사 고지 필요 여부 ② 간편심사 3·2·5 통과 가능 여부
+       ③ 가입 전 준비 서류 ④ 유병자 간편심사 전환 가이드를 다시 그립니다.
+     · 3개월 항목은 2·5년 문항에도 함께 걸리므로 자동으로 함께 켭니다(끄면 함께 꺼짐). */
   const DISC_ITEMS = [
-    { key: 'm3', label: '최근 3개월 이내 진단·입원·수술', period: '3개월' },
-    { key: 'y1', label: '최근 1년 이내 추가검사(재검사) 필요소견', period: '1년' },
-    { key: 'y2', label: '최근 2년 이내 입원·수술', period: '2년' },
-    { key: 'y3', label: '최근 3년 이내 입원·수술', period: '3년' },
-    { key: 'y5', label: '최근 5년 이내 입원·수술·7일 이상 치료', period: '5년' },
-    { key: 'major', label: '최근 5년 이내 중대질병(암·간경화·투석 중 만성신장질환·파킨슨·루게릭)', period: '5년' }
+    { key: 'm3dx', label: '진단(또는 의심 소견)을 받음', period: '3개월', q: '3개월 진단' },
+    { key: 'm3adm', label: '입원', period: '3개월', q: '3개월 입원' },
+    { key: 'm3op', label: '수술', period: '3개월', q: '3개월 수술' },
+    { key: 'y1', label: '추가검사(재검사) 필요 소견', period: '1년', q: '1년 재검사' },
+    { key: 'y2adm', label: '입원', period: '2년', q: '2년 입원' },
+    { key: 'y2op', label: '수술', period: '2년', q: '2년 수술' },
+    { key: 'y3', label: '3년 이내 입원·수술', period: '5년', q: '3년 입원·수술' },
+    { key: 'y5adm', label: '입원', period: '5년', q: '5년 입원' },
+    { key: 'y5op', label: '수술', period: '5년', q: '5년 수술' },
+    { key: 'y5tx', label: '7일 이상 통원치료', period: '5년', q: '5년 통원 7일' },
+    { key: 'major', label: '중대질병 — 암·간경화·투석 중 만성신장질환·파킨슨·루게릭', period: '5년', q: '5년 중대질병' }
   ];
+  const DISC_PERIODS = ['3개월', '1년', '2년', '5년'];
+  const DISC_PERIOD_NOTE = {
+    '3개월': '최근 3개월 이내 — 일반·간편 모두 첫 문항',
+    '1년': '최근 1년 이내 — 일반심사에만 있는 문항',
+    '2년': '최근 2년 이내 — 간편심사 3·2·5의 가운데 문항',
+    '5년': '최근 5년 이내 — 일반 5년 문항 · 간편은 중대질병만'
+  };
   const disc = {};
+  let discPeriod = '3개월';
 
+  const on = (k) => !!disc[k];
+  const anyOn = (keys) => keys.some((k) => disc[k]);
+  const M3 = ['m3dx', 'm3adm', 'm3op'];
+  const Y2 = ['y2adm', 'y2op'];
+  const Y5 = ['y3', 'y5adm', 'y5op', 'y5tx'];
+
+  /* 일반심사(3·1·5) 고지 여부 */
+  function generalJudge() {
+    const hit = [];
+    if (anyOn(M3)) hit.push('3개월 진단·입원·수술');
+    if (on('y1')) hit.push('1년 재검사 소견');
+    if (anyOn(Y2)) hit.push('2년 이내 입원·수술');
+    if (anyOn(Y5)) hit.push('5년 이내 입원·수술·통원');
+    if (on('major')) hit.push('5년 이내 중대질병');
+    return { need: hit.length > 0, hits: hit };
+  }
+  /* 간편심사(3·2·5) — 3개월 진단·입원·수술 / 2년 입원·수술 / 5년 중대질병 */
+  function simpleJudge() {
+    const hit = [];
+    if (anyOn(M3)) hit.push('3개월 진단·입원·수술');
+    if (anyOn(Y2)) hit.push('2년 이내 입원·수술');
+    if (on('major')) hit.push('5년 이내 중대질병');
+    return { need: hit.length > 0, hits: hit };
+  }
+  /* 간편심사 3·5·5 참고 */
+  function simple355Judge() {
+    const hit = [];
+    if (anyOn(M3)) hit.push('3개월');
+    if (anyOn(Y5)) hit.push('5년 이내 입원·수술');
+    if (on('major')) hit.push('5년 중대질병');
+    return { need: hit.length > 0, hits: hit };
+  }
+
+  /* 가입 전 준비 서류 — 체크된 항목에서 역산 */
+  function discDocs() {
+    const docs = [];
+    const add = (s) => { if (!docs.some((d) => d.title === s)) docs.push(s); };
+    if (on('m3dx')) add('진단서 또는 진료확인서 (질병명·진단일 기재)');
+    if (on('m3adm') || anyOn(Y2) || on('y5adm')) add('입·퇴원확인서 (입원일·퇴원일·병명)');
+    if (on('m3op') || anyOn(Y2) || on('y5op') || on('y3')) add('수술확인서 (수술명·수술일·수술방법)');
+    if (on('y1')) add('검사 결과지·판독지 (재검사 소견 문구 확인)');
+    if (on('y5tx')) add('통원 진료확인서·진료비 영수증 (7일 이상 여부)');
+    if (on('major')) add('진단서·조직검사(병리) 결과지, 투석·복약 기록');
+    if (docs.length) {
+      add('청약서 문항과 대조할 날짜 정리표 (마지막 입원·수술일)');
+      add('최근 1년 처방전·복약내역 (약물치료 문항 대비)');
+    }
+    return docs;
+  }
+
+  /* 권장 심사 판정 */
   function judgeDisclosure() {
-    const on = (k) => !!disc[k];
-    if (on('m3')) return {
-      code: 'hold', label: '3개월 경과 후 재검토', tone: 'warn',
-      head: '간편심사도 3개월 문항은 똑같이 묻습니다',
-      body: '치료·검사가 끝난 날부터 3개월이 지난 뒤가 가장 넓은 선택지입니다. 그 전에는 인수 조건이 제한되거나 거절될 수 있어 청약 일정을 조정합니다.'
-    };
-    if (on('major')) return {
-      code: 'review', label: '인수 심사 필요', tone: 'gap',
-      head: '5년 이내 중대질병은 간편심사에서도 고지 대상입니다',
-      body: '3·2·5와 3·5·5 모두 5년 문항에 들어갑니다. 일반심사 할증 인수나 상품별 인수 기준을 먼저 확인합니다.'
-    };
-    if (on('y2')) return {
-      code: 's355', label: '간편심사 3·3·5 이상 검토', tone: 'need',
-      head: '2년 이내 입원·수술은 3·2·5 문항에 걸립니다',
-      body: '3·2·5(N=2)는 2년 문항이 있어 통과가 어렵습니다. 3·3·5 또는 3·5·5를 검토하고, 보험료는 일반심사보다 높아집니다.'
-    };
-    if (on('y3')) return {
-      code: 's355b', label: '간편심사 3·5·5 검토', tone: 'need',
-      head: '2년을 넘고 3년 이내 이력은 3·3·5 문항에 해당합니다',
-      body: '3·5·5(N=5)라면 3년 이내 이력은 걸리지 않습니다. 청약서 문항을 그대로 확인하세요.'
-    };
-    if (on('y5')) return {
-      code: 's355c', label: '간편심사 3·5·5 문항 해당 — 초간편/일반심사 확인', tone: 'need',
-      head: '5년 이내 입원·수술은 모든 간편심사의 5년 문항에 들어갑니다',
-      body: '3·5·5로도 통과가 어렵습니다. 초간편심사 상품이나 일반심사 할증 인수를 함께 놓고 판단합니다.'
-    };
-    if (on('y1')) return {
-      code: 'simple355', label: '표준체 어려움 · 간편심사 3·5·5 검토', tone: 'info',
-      head: '1년 이내 추가검사 소견은 일반심사 1년 문항에 해당합니다',
-      body: '간편심사는 3개월·N년(입원·수술)·5년(중대질병)만 묻기 때문에 이 이력으로는 걸리지 않습니다. 검사 결과가 정리되면 일반심사 가능 여부를 다시 봅니다.'
-    };
+    const g = generalJudge(), s = simpleJudge(), s355 = simple355Judge();
+    if (anyOn(M3)) {
+      return {
+        code: 'hold', label: '3개월 경과 후 재검토', tone: 'warn', g, s, s355,
+        head: '간편심사도 3개월 문항은 똑같이 묻습니다',
+        body: '치료·검사가 끝난 날부터 3개월이 지난 뒤가 가장 넓은 선택지입니다. 그 전에는 인수 조건이 제한되거나 거절될 수 있어 청약 일정을 조정합니다.'
+      };
+    }
+    if (!g.need) {
+      return {
+        code: 'standard', label: '표준체 권장 — 고지 대상 없음', tone: 'ok', g, s, s355,
+        head: '일반심사(3·1·5)에서 고지할 항목이 없습니다',
+        body: '간편심사는 보험료가 1.2~2배 수준으로 높고 보장이 제한될 수 있습니다. 표준체를 먼저 심사하는 것이 순서입니다.'
+      };
+    }
+    if (!s.need) {
+      return {
+        code: 'simple325', label: '유병자 간편심사 3·2·5 전환 검토', tone: 'need', g, s, s355,
+        head: '일반심사에서는 고지 대상이지만 3·2·5 문항은 피해 갑니다',
+        body: '2년을 넘긴 입원·수술(또는 1년 재검사 소견)은 일반심사 5년·1년 문항에만 걸립니다. 간편심사 3·2·5는 3개월·2년·5년 중대질병만 묻기 때문에 통과 가능성이 있습니다. 다만 보험료가 1.2~2배, 가입 금액·특약 제한이 따릅니다.'
+      };
+    }
+    if (!s355.need) {
+      return {
+        code: 'simple355', label: '간편심사 3·5·5 · 초간편 검토', tone: 'need', g, s, s355,
+        head: '3·2·5는 어렵고 3·5·5까지 내려가야 합니다',
+        body: '2년 이내 입원·수술은 3·2·5의 가운데 문항에 걸립니다. 3·5·5(5년 문항) 또는 초간편심사 상품을 함께 놓고, 일반심사 할증 인수와 보험료를 비교합니다.'
+      };
+    }
+    if (on('major')) {
+      return {
+        code: 'review', label: '인수 심사 필요 — 중대질병 이력', tone: 'gap', g, s, s355,
+        head: '5년 이내 중대질병은 모든 간편심사에서 고지 대상입니다',
+        body: '3·2·5와 3·5·5 모두 5년 문항에 들어갑니다. 일반심사 할증 인수나 상품별 인수 기준을 먼저 확인하고, 고지 후 부담보·할증 조건을 고객에게 서면으로 설명합니다.'
+      };
+    }
     return {
-      code: 'standard', label: '표준체 권장', tone: 'ok',
-      head: '일반심사(표준체)로 가입 가능한 상태입니다',
-      body: '간편심사는 보험료가 1.2~2배 수준으로 높고 보장이 제한될 수 있습니다. 표준체를 먼저 심사하는 것이 순서입니다.'
+      code: 's355c', label: '간편심사도 어려움 — 초간편·할증 인수 검토', tone: 'gap', g, s, s355,
+      head: '3·2·5와 3·5·5 문항에 모두 걸립니다',
+      body: '초간편심사 상품이나 일반심사 할증 인수를 함께 놓고 판단합니다. 고지 후 부담보·할증 조건은 서면으로 설명하고 고객 확인을 받습니다.'
     };
+  }
+
+  function disclosureText() {
+    const j = judgeDisclosure();
+    const L = [];
+    L.push('[고지의무 체크 결과]');
+    L.push(`· 체크된 항목: ${DISC_ITEMS.filter((d) => disc[d.key]).map((d) => `${d.period} ${d.label}`).join(' / ') || '없음'}`);
+    L.push(`· 일반심사(3·1·5): ${j.g.need ? '고지 필요 — ' + j.g.hits.join(', ') : '고지 대상 없음'}`);
+    L.push(`· 간편심사(3·2·5): ${j.s.need ? '고지 필요 — ' + j.s.hits.join(', ') : '통과 가능'}`);
+    L.push(`· 권장: ${j.label}`);
+    L.push(`· ${j.head}`);
+    const docs = discDocs();
+    if (docs.length) {
+      L.push('· 준비 서류');
+      docs.forEach((d, i) => L.push(`  ${i + 1}) ${d}`));
+    }
+    L.push('※ 최종 판단은 상품별 청약서 문항과 인수 심사가 기준입니다.');
+    return L.join('\n');
   }
 
   function renderDisclosureTool() {
     const host = $('#disc-tool');
     if (!host) return;
     const j = judgeDisclosure();
+    const items = DISC_ITEMS.filter((d) => d.period === discPeriod);
+    const docs = discDocs();
+    const badge = (p) => {
+      const n = DISC_ITEMS.filter((d) => d.period === p && disc[d.key]).length;
+      return `<em>${n}</em>`;
+    };
     host.innerHTML = `
-      <div class="disc-grid">
-        ${['3개월', '1년', '2·3년', '5년'].map((p) => {
-          const items = DISC_ITEMS.filter((d) => (p === '2·3년' ? (d.period === '2년' || d.period === '3년') : d.period === p));
-          return `<div class="disc-col">
-            <div class="dc-head">${p}</div>
-            ${items.map((d) => `<button type="button" class="dc-tick${disc[d.key] ? ' is-on' : ''}" data-disc="${d.key}" aria-pressed="${!!disc[d.key]}">
-              <span class="dc-box" aria-hidden="true"></span><span>${esc(d.label)}</span></button>`).join('')}
-          </div>`;
-        }).join('')}
+      <div class="disc-tabs" role="tablist" aria-label="고지 문항 기간">
+        ${DISC_PERIODS.map((p) => `<button type="button" role="tab" aria-selected="${p === discPeriod}"
+            class="disc-tab${p === discPeriod ? ' is-on' : ''}${DISC_ITEMS.some((d) => d.period === p && disc[d.key]) ? ' has-on' : ''}"
+            data-disc-period="${p}">${p}${badge(p)}</button>`).join('')}
       </div>
-      <div class="disc-verdict tone-${j.tone}">
+      <div class="disc-panel">
+        <div class="dp-head">${discPeriod} 이내 항목<span>${DISC_PERIOD_NOTE[discPeriod]}</span></div>
+        ${items.map((d) => `<button type="button" class="dc-tick${disc[d.key] ? ' is-on' : ''}" data-disc="${d.key}" aria-pressed="${!!disc[d.key]}">
+          <span class="dc-box" aria-hidden="true"></span><span>${esc(d.label)}</span></button>`).join('')}
+      </div>
+      <div class="disc-judge">
+        <div class="disc-verdict tone-${j.g.need ? 'gap' : 'ok'}">
+          <span class="dv-label">일반심사 3·1·5</span>
+          <b>${j.g.need ? '고지 필요' : '고지 대상 없음'}</b>
+          <p class="dv-head">${j.g.need ? esc(j.g.hits.join(' · ')) : '3개월·1년·5년 문항 모두 해당 없음'}</p>
+          <p class="dv-body">${j.g.need ? '청약서 문항에 사실대로 적어야 합니다. 말로만 알린 것은 고지로 인정되지 않습니다.' : '표준체 심사를 먼저 진행합니다.'}</p>
+        </div>
+        <div class="disc-verdict tone-${j.s.need ? 'need' : 'ok'}">
+          <span class="dv-label">간편심사 3·2·5</span>
+          <b>${j.s.need ? '고지 필요' : '통과 가능'}</b>
+          <p class="dv-head">${j.s.need ? esc(j.s.hits.join(' · ')) : '3개월·2년·5년 중대질병 문항 해당 없음'}</p>
+          <p class="dv-body">${j.s.need ? '3·5·5(5년 문항) 또는 초간편심사로 내려가야 합니다.' : '유병자 간편심사로 전환하면 보험료는 1.2~2배, 가입 금액·특약은 제한됩니다.'}</p>
+        </div>
+      </div>
+      <div class="disc-verdict tone-${j.tone}" id="disc-verdict-main">
         <span class="dv-label">권장 심사</span>
         <b>${esc(j.label)}</b>
         <p class="dv-head">${esc(j.head)}</p>
         <p class="dv-body">${esc(j.body)}</p>
       </div>
+      <div class="disc-docs">
+        <div class="dd-head">가입 전 준비 서류 ${docs.length ? `(${docs.length}건)` : '— 체크하면 자동으로 정리됩니다'}</div>
+        ${docs.length
+          ? `<ul>${docs.map((d) => `<li><span>${esc(d)}</span></li>`).join('')}</ul>`
+          : '<p class="empty">3개월·1년·2년·5년 항목을 탭해 체크하면 필요한 서류가 여기에 바로 나옵니다.</p>'}
+      </div>
+      <div class="disc-actions">
+        <button type="button" class="da-copy" id="disc-copy">결과·서류 카톡 복사</button>
+        <button type="button" id="disc-reset">체크 비우기</button>
+      </div>
       <p class="fc-src">근거 · 보험업감독업무시행세칙 별표14 · 금융감독원 「주요 분쟁사례로 알아본 소비자 유의사항 — 간편보험편」(2024.6.13) · 상법 제651조(해지권: 안 날부터 1개월, 계약일부터 3년). 최종 판단은 상품별 청약서 문항과 인수 심사가 기준입니다.</p>
     `;
-    $$('[data-disc]', host).forEach((b) => b.addEventListener('click', () => {
-      const k = b.dataset.disc;
-      disc[k] = !disc[k];
-      if (k === 'm3' && disc[k]) { ['y2', 'y3', 'y5'].forEach((x) => { disc[x] = true; }); }
+    $$('[data-disc-period]', host).forEach((b) => b.addEventListener('click', () => {
+      discPeriod = b.dataset.discPeriod;
       renderDisclosureTool();
     }));
+    $$('[data-disc]', host).forEach((b) => b.addEventListener('click', () => {
+      const k = b.dataset.disc;
+      const nextVal = !disc[k];
+      disc[k] = nextVal;
+      /* 3개월 이력은 2년·5년 문항에도 함께 걸립니다 */
+      if (M3.indexOf(k) >= 0) {
+        ['y2adm', 'y2op', 'y3', 'y5adm', 'y5op'].forEach((x) => { disc[x] = nextVal; });
+      }
+      if (['y2adm', 'y2op'].indexOf(k) >= 0 && nextVal) { disc.y3 = true; }
+      renderDisclosureTool();
+    }));
+    const cp = $('#disc-copy', host);
+    if (cp) cp.addEventListener('click', () => copy(disclosureText(), '고지 체크 결과를 복사했습니다'));
+    const rs = $('#disc-reset', host);
+    if (rs) rs.addEventListener('click', () => {
+      Object.keys(disc).forEach((k) => { delete disc[k]; });
+      renderDisclosureTool();
+      toast('체크를 비웠습니다');
+    });
   }
 
   let claimTab = 'cancer';
@@ -12685,12 +12938,12 @@ const PLAN_FRONT = {
     if (q) q.addEventListener('input', renderCodes);
   }
 
-  root.BojangTools = { init, renderCodes, renderSilson, renderDisclosureTool, renderClaimDocs, renderPremiumTool };
+  root.BojangTools = { init, renderCodes, renderSilson, renderDisclosureTool, renderClaimDocs, renderPremiumTool, disclosureText, judgeDisclosure };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
 <script>
-/* 보장분석 라이프 리포트 v5.7 — 시니어·차트·QR·온보딩 · 베타 테스트 공개판
+/* 보장분석 라이프 리포트 v5.8 — 클라우드 동기화·고지 체크·카톡 요약 · 베타 테스트 공개판
    · 베타 기간에는 Pro 전 기능(30장 전체 · 1/10/30장 PDF · 고객 30명 · 리모델링 · 화이트라벨)을 잠금 없이 무료 제공
    · v5.4: 계정/구독(backend.js) 연동 — 실서버 구독 상태를 hydrate() 로 반영
    · 정식 출시 예정 요금: 월 5,000원 / 연 50,000원 · 베타 피드백 Google Form + 추첨 사은품 안내
@@ -12933,7 +13186,7 @@ const PLAN_FRONT = {
     if (mark) mark.setAttribute('content', b.name);
     const title = $('#brand-title');
     if (title) title.textContent = b.name;
-    document.title = `${b.name} v5.7 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
+    document.title = `${b.name} v5.8 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
     loadPdfLogo(b.logo);
     /* 상담자 화면의 고객 표지도 새 브랜드로 다시 그립니다 */
     if (root.BojangDeck && root.__bojangState) root.BojangDeck.refresh(root.__bojangState, { reset: true });
@@ -13222,9 +13475,12 @@ const PLAN_FRONT = {
     }
     const loadSub = $('#home-load-sub');
     if (loadSub) loadSub.textContent = open ? '베타 · 고객 30명 저장' : '무료 체험 · 고객 1명';
+    /* v5.8 — 로그인해 클라우드에 연결되면 '기기 + 클라우드 저장'으로 표기 */
+    const cloudOn = !!(root.BojangBackend && root.BojangBackend.isLive && root.BojangBackend.isLive()
+      && root.BojangBackend.hasSession && root.BojangBackend.hasSession());
     ['#home-hist-sub', '#result-hist-sub'].forEach((sel) => {
       const el = $(sel);
-      if (el) el.textContent = open ? '이 기기에만 저장 · 최대 30건' : '이 기기에만 저장 · 무료 1명 (Pro 30명)';
+      if (el) el.textContent = (cloudOn ? '기기 + 클라우드 저장' : '이 기기에만 저장') + (open ? ' · 최대 30건' : ' · 무료 1명 (Pro 30명)');
     });
     /* 베타 기간에는 PDF 버튼 잠금 표시가 없습니다 */
     $$('.pdf-btn').forEach((b) => {
@@ -14179,6 +14435,7 @@ const PLAN_FRONT = {
       await request('/auth/v1/logout', { method: 'POST', token: session.access_token });
     }
     clearSession();
+    consultTable = 'unknown';
     if (root.BojangPlan && root.BojangPlan.hydrate) root.BojangPlan.hydrate(null);
     render();
     return { ok: true, message: '로그아웃했습니다. 이 기기의 상담 기록은 그대로 남아 있습니다.' };
@@ -14206,6 +14463,14 @@ const PLAN_FRONT = {
     await refreshEntitlements();
     /* 기기 브랜드가 기본값 그대로일 때만 서버 브랜드를 내려받습니다(로컬 편집 덮어쓰기 방지) */
     try { await pullBrandSettings({ onlyIfDefault: true }); } catch (e) { /* 오프라인 */ }
+    /* v5.8 — 로그인 직후 최근 상담 기록을 내려받아 PC·모바일 이어보기 */
+    try {
+      const pulled = await pullConsultations(20);
+      if (pulled && pulled.table) consultTable = pulled.table;
+      if (root.dispatchEvent && root.CustomEvent) {
+        root.dispatchEvent(new root.CustomEvent('bojang:cloud', { detail: pulled }));
+      }
+    } catch (e) { /* 오프라인·미적용 테이블은 무시 */ }
   }
 
   /* =========================================================
@@ -14259,7 +14524,7 @@ const PLAN_FRONT = {
     const res = await request('/rest/v1/' + table + (query ? '?' + query : ''), {
       token, headers: { Accept: 'application/json', ...(opts && opts.headers) }
     });
-    return res.ok ? { ok: true, rows: Array.isArray(res.data) ? res.data : [] } : { ok: false, reason: 'rest', message: authError(res) };
+    return res.ok ? { ok: true, rows: Array.isArray(res.data) ? res.data : [] } : { ok: false, reason: 'rest', status: res.status, message: authError(res) };
   }
 
   async function upsertRows(table, row, onConflict) {
@@ -14324,7 +14589,10 @@ const PLAN_FRONT = {
       premium: entry.inputs ? entry.inputs.premium : null,
       silson: entry.inputs ? entry.inputs.silson : null,
       age: entry.inputs ? entry.inputs.age : null,
-      gender: entry.inputs ? entry.inputs.gender : null
+      gender: entry.inputs ? entry.inputs.gender : null,
+      /* v5.8 — consultations 테이블이 없는 프로젝트에서도 다른 기기에서 그대로 열 수 있도록
+         상담 스냅샷을 통째로 담아 둡니다(이미지·주민번호 없음). */
+      entry: entrySnapshot(entry)
     };
     const found = await selectRows('clients', 'select=id&user_id=eq.' + encodeURIComponent(uid) +
       '&display_name=eq.' + encodeURIComponent(display) + '&limit=1');
@@ -14338,6 +14606,177 @@ const PLAN_FRONT = {
     });
     return { ok: r.ok, reason: r.ok ? 'created' : 'rest-error' };
   }
+
+  /* =========================================================
+     v5.8 — 상담 기록 클라우드 동기화 (consultations)
+     · 상담 1건 = consultations 1행. local_id 로 멱등 upsert(id 는 local_id+user 로 만든 결정적 UUID).
+     · 프로젝트에 consultations 테이블이 없으면(PGRST205) clients.payload 로 자동 폴백 —
+       테이블을 아직 적용하지 않아도 PC·모바일 이어보기가 오늘 바로 동작합니다.
+     · 미로그인·오프라인은 조용히 { ok:false, reason:'offline' } 로 끝나고 로컬 저장만 남습니다.
+     ========================================================= */
+  const CONSULT_TABLE = 'consultations';
+  let consultTable = 'unknown';    /* unknown | consultations | clients */
+
+  /** 테이블 미적용(스키마 캐시 없음) 응답인지 */
+  function isMissingTable(res) {
+    if (!res) return false;
+    const msg = String(res.message || res.error || (res.data && (res.data.message || res.data.hint)) || '');
+    return Number(res.status) === 404 || /PGRST20[45]|schema cache|does not exist|Could not find the table/i.test(msg);
+  }
+
+  /** 결정적 UUID — 같은 사용자의 같은 상담 id 는 언제나 같은 uuid (upsert 키) */
+  async function consultUuid(localId) {
+    const uid = (user() && user().id) || '';
+    const seed = 'bojang.consult.v2:' + uid + ':' + String(localId || '');
+    let hex = '';
+    try {
+      if (root.crypto && root.crypto.subtle && root.TextEncoder) {
+        const buf = await root.crypto.subtle.digest('SHA-256', new root.TextEncoder().encode(seed));
+        hex = Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+      }
+    } catch (e) { hex = ''; }
+    if (!hex) {
+      /* https 가 아닌 환경(file://) 폴백 — 4개 FNV-1a 변형으로 32hex */
+      const fnv = (str, seedv) => {
+        let h = seedv >>> 0;
+        for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+        return h.toString(16).padStart(8, '0');
+      };
+      hex = fnv(seed, 0x811c9dc5) + fnv(seed, 0x01000193) + fnv(seed, 0x7fffffff) + fnv(seed + '#', 0x9e3779b9);
+    }
+    const h = hex.slice(0, 32);
+    const variant = ((parseInt(h.slice(16, 18), 16) & 0x3f) | 0x80).toString(16);
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-5' + h.slice(13, 16) + '-' + variant + h.slice(18, 20) + '-' + h.slice(20, 32);
+  }
+
+  /** 로컬 상담 entry → 서버에 남길 스냅샷(이미지·주민번호 없음) */
+  function entrySnapshot(entry) {
+    entry = entry || {};
+    const inp = entry.inputs || {};
+    return {
+      label: String(entry.label || '').slice(0, 40),
+      savedAt: entry.savedAt || new Date().toISOString(),
+      score: entry.score != null ? entry.score : null,
+      letter: entry.letter || null,
+      client: entry.client ? {
+        name: String(entry.client.name || '').slice(0, 20),
+        birth: '', consultant: String(entry.client.consultant || '').slice(0, 20)
+      } : null,
+      contracts: Array.isArray(entry.contracts) ? entry.contracts.slice(0, 30) : [],
+      inputs: {
+        local_id: String(entry.id || ''),
+        age: inp.age != null ? inp.age : null,
+        gender: inp.gender || null,
+        job: inp.job || null,
+        silson: inp.silson || null,
+        premium: inp.premium != null ? inp.premium : null,
+        cov: inp.cov || null,
+        flags: inp.flags || null,
+        family: Array.isArray(inp.family) ? inp.family : [],
+        disc: inp.disc || null
+      }
+    };
+  }
+
+  /** 서버 행 → 앱 상담 entry (불러오기 가능한 형태) */
+  function rowToEntry(row, table) {
+    if (!row) return null;
+    const snap = (table === 'clients')
+      ? ((row.payload && row.payload.entry) || null)
+      : {
+        label: row.label,
+        savedAt: row.consulted_at || row.created_at,
+        score: row.result_json ? row.result_json.score : null,
+        letter: row.result_json ? row.result_json.letter : null,
+        client: row.input_json ? row.input_json.client : null,
+        contracts: row.input_json ? row.input_json.contracts : [],
+        inputs: row.input_json || {}
+      };
+    if (!snap || !snap.inputs || !snap.inputs.cov) return null;
+    const inp = snap.inputs || {};
+    const localId = String(inp.local_id || row.local_id || '').trim() || ('cloud-' + String(row.id || ''));
+    return {
+      id: localId,
+      cloud: true,
+      cloudTable: table,
+      cloudId: row.id || null,
+      label: String(snap.label || row.display_name || (snap.client && snap.client.name) || '고객').slice(0, 40),
+      savedAt: snap.savedAt || row.consulted_at || row.last_contact_at || new Date().toISOString(),
+      score: snap.score != null ? snap.score : (row.payload ? row.payload.score : null),
+      letter: snap.letter || (row.payload ? row.payload.letter : null) || null,
+      client: snap.client || { name: '', birth: '', consultant: '' },
+      contracts: Array.isArray(snap.contracts) ? snap.contracts : [],
+      inputs: {
+        age: inp.age != null ? inp.age : '40',
+        gender: inp.gender || '남',
+        job: inp.job || '1',
+        silson: inp.silson || '4',
+        premium: inp.premium != null ? inp.premium : 0,
+        cov: inp.cov,
+        flags: inp.flags || {},
+        family: Array.isArray(inp.family) ? inp.family : [],
+        disc: inp.disc || {}
+      }
+    };
+  }
+
+  /** 상담 1건을 클라우드에 올립니다 — 실패해도 로컬 저장은 그대로 */
+  async function syncConsultation(entry) {
+    if (!isLive() || !hasSession() || !entry) return { ok: false, reason: 'offline' };
+    const uid = user() && user().id;
+    if (!uid) return { ok: false, reason: 'auth-required' };
+    const snap = entrySnapshot(entry);
+
+    if (consultTable !== 'clients') {
+      const id = await consultUuid(entry.id);
+      const row = {
+        id,
+        user_id: uid,
+        local_id: String(entry.id || ''),
+        label: snap.label || '고객',
+        input_json: Object.assign({}, snap.inputs, { client: snap.client, contracts: snap.contracts }),
+        result_json: { score: snap.score, letter: snap.letter, saved_at: snap.savedAt },
+        consulted_at: snap.savedAt
+      };
+      const res = await upsertRows(CONSULT_TABLE, row, 'id');
+      if (res.ok) { consultTable = 'consultations'; return { ok: true, table: 'consultations', id }; }
+      if (!isMissingTable(res)) return { ok: false, reason: 'rest-error', status: res.status, message: res.message };
+      consultTable = 'clients';   /* 테이블 미적용 — 아래 clients 폴백으로 */
+    }
+
+    const r = await syncClient(entry);
+    return { ok: r.ok, table: 'clients', reason: r.reason, message: r.ok ? '' : 'clients 저장 실패' };
+  }
+
+  /** 최근 상담 기록을 내려받습니다 (다른 기기 이어보기) */
+  async function pullConsultations(limit) {
+    if (!isLive() || !hasSession()) return { ok: false, reason: 'offline', entries: [] };
+    const uid = user() && user().id;
+    if (!uid) return { ok: false, reason: 'auth-required', entries: [] };
+    const n = Math.max(1, Math.min(30, Number(limit) || 20));
+
+    if (consultTable !== 'clients') {
+      const res = await selectRows(CONSULT_TABLE,
+        'select=id,label,local_id,input_json,result_json,consulted_at,created_at&user_id=eq.' + encodeURIComponent(uid) +
+        '&order=consulted_at.desc&limit=' + n);
+      if (res.ok) {
+        consultTable = 'consultations';
+        const entries = res.rows.map((r) => rowToEntry(r, 'consultations')).filter(Boolean);
+        return { ok: true, table: 'consultations', entries };
+      }
+      if (!isMissingTable(res)) return { ok: false, reason: 'rest', status: res.status, message: res.message, entries: [] };
+      consultTable = 'clients';
+    }
+
+    const res2 = await selectRows('clients',
+      'select=id,display_name,payload,last_contact_at&user_id=eq.' + encodeURIComponent(uid) +
+      '&order=last_contact_at.desc&limit=' + n);
+    if (!res2.ok) return { ok: false, reason: 'rest', status: res2.status, message: res2.message, entries: [] };
+    const entries2 = res2.rows.map((r) => rowToEntry(r, 'clients')).filter(Boolean);
+    return { ok: true, table: 'clients', entries: entries2 };
+  }
+
+  function cloudTable() { return consultTable; }
 
   async function pushBrandSettings(brand) {
     if (!isLive() || !hasSession() || !brand) return { ok: false, reason: 'offline' };
@@ -14785,6 +15224,7 @@ const PLAN_FRONT = {
     signUp, signIn, signOut, refreshSession, refreshEntitlements,
     selectRows, insertRow, upsertRows, patchRow,
     syncClient, pushBrandSettings, pullBrandSettings,
+    syncConsultation, pullConsultations, cloudTable, consultUuid,
     parseCoverageVision, subscribe,
     openAccount, closeAccount, render,
     BETA_NOTICE, LIVE_NOTICE, AUTH_REQUIRED, PRICE, CFG_KEY, SESSION_KEY,
@@ -15386,9 +15826,11 @@ const PLAN_FRONT = {
 
     /* --- 간병 --- */
     { field: 'care.nDaily', label: '요양병원 간병인 사용일당', group: '간병', p: 93,
+      exclude: /치매|상해/,
       kw: /(요양\s*병원[^\n]{0,10}간병|요양\s*간병)/ },
     { field: 'care.daily', label: '일반병원 간병인 사용일당', group: '간병', p: 86,
-      exclude: /요양/,
+      /* v5.8 — 중증치매간병비·상해간병일당·장기요양간병비는 '직접 기재' 담보로 보냅니다 */
+      exclude: /요양|치매|상해|장기\s*요양|중증/,
       kw: /(간병\s*인?[^\n]{0,10}(?:일당|사용|비)|간병일당|간병비)/ },
 
     /* --- 기본 정보 --- */
@@ -15397,6 +15839,70 @@ const PLAN_FRONT = {
     { field: 'silsonGen', label: '실손 세대', group: '기본', p: 99, type: 'silson',
       kw: /실손[^\n]{0,12}?(\d)\s*세대|(\d)\s*세대\s*(?:실손|의료비)/ }
   ].sort((a, b) => b.p - a.p);
+
+  /* =========================================================
+     v5.8 — 증권 담보 '직접 기재(custom)' 인식
+     고정 칸에 없는 특약(예: 특정순환계질환(3~5종) 주요치료비)을 사진·PDF·텍스트 인식
+     결과에서 그대로 잡아 state.cov.custom[영역] 으로 넘깁니다.
+     kind:'custom' · area:'cancer|brain|heart|surgery|care' · mode:'bundle|individual'
+     ========================================================= */
+  const CUSTOM_GROUP = { cancer: '암', brain: '뇌', heart: '심장', surgery: '수술', care: '간병' };
+  const CUSTOM_RULES = [
+    { name: '특정순환계질환(3~5종) 주요치료비', area: 'auto', mode: 'bundle',
+      kw: /(특정\s*순환계|순환계\s*질환[^\n]{0,14}주요\s*치료비|3\s*[~\-–]\s*5\s*종[^\n]{0,12}주요\s*치료비)/ },
+    { name: '표적항암약물허가치료비', area: 'cancer', mode: 'individual',
+      kw: /(표적\s*항암\s*약물|표적항암\s*허가|표적\s*항암\s*치료비)/ },
+    { name: '다빈치로봇수술비', area: 'cancer', mode: 'individual',
+      kw: /(다빈치|로봇\s*수술|로봇\s*보조)/ },
+    { name: '중증치매간병비', area: 'care', mode: 'individual',
+      kw: /(중증\s*치매[^\n]{0,8}간병|치매\s*간병)/ },
+    { name: '관절/척추 수술비', area: 'surgery', mode: 'individual',
+      kw: /(관절|척추|디스크)[^\n]{0,10}수술/ },
+    { name: '상해간병일당', area: 'care', mode: 'individual',
+      kw: /상해[^\n]{0,8}간병/ },
+    { name: '장기요양간병비', area: 'care', mode: 'individual',
+      kw: /(장기\s*요양[^\n]{0,8}간병|요양\s*등급[^\n]{0,8}간병)/ },
+    { name: '뇌 중환자실입원일당', area: 'brain', mode: 'individual',
+      kw: /뇌[^\n]{0,8}중환자실/ },
+    { name: '심장 중환자실입원일당', area: 'heart', mode: 'individual',
+      kw: /심장[^\n]{0,8}중환자실/ }
+  ];
+
+  /* 표준 규칙이 이미 먹은 줄은 건드리지 않습니다(이중 반영 방지) */
+  function parseCustomItems(src, usedSegs) {
+    const out = [];
+    const segments = splitSegments(src);
+    let section = null;
+    usedSegs = usedSegs || { has: () => false, add: () => {} };
+    for (const seg of segments) {
+      const amounts = parseAmounts(seg);
+      const sec = detectSection(seg);
+      const isHeading = amounts.length === 0 && seg.replace(/[\[\](){}<>]/g, '').trim().length <= 24 && !!sec;
+      if (isHeading) { section = sec; continue; }
+      if (!amounts.length || usedSegs.has(seg)) continue;
+      const areaHint = sec || section;
+      for (const rule of CUSTOM_RULES) {
+        const m = rule.kw.exec(seg);
+        if (!m) continue;
+        const a = chooseAmount(amounts, m.index, m.index + m[0].length);
+        if (!a) continue;
+        /* 뇌·심장 공통 담보명은 표 머리글에서 영역을 읽고, 모르면 뇌로 둡니다 */
+        const area = rule.area === 'auto' ? (areaHint === 'heart' ? 'heart' : 'brain') : rule.area;
+        if (out.some((x) => x.name === rule.name && x.area === area)) continue;
+        out.push({
+          field: 'custom.' + area, label: rule.name, group: CUSTOM_GROUP[area],
+          value: a.value, unit: '만원',
+          snippet: snip(seg, m.index, m.index + m[0].length),
+          apply: true, kind: 'custom', area, name: rule.name, mode: rule.mode,
+          note: rule.area === 'auto' && areaHint !== 'heart'
+            ? '뇌·심장 공통 담보명 — 심장 쪽에도 같은 담보가 있으면 5대 담보 입력에서 직접 추가하세요.' : null
+        });
+        usedSegs.add(seg);
+        break;
+      }
+    }
+    return out;
+  }
 
   function detectSection(line) {
     const s = line.replace(/[\[\](){}<>]/g, '').replace(/\s+/g, '');
@@ -15457,6 +15963,7 @@ const PLAN_FRONT = {
     const segments = splitSegments(src);
     const found = new Map();
     const items = [];
+    const usedSegs = { set: Object.create(null), has(seg) { return !!this.set[seg]; }, add(seg) { this.set[seg] = true; } };
     let section = null;
     let premium = null;
     let silson = null;
@@ -15504,6 +16011,7 @@ const PLAN_FRONT = {
               silson = gen;
               accepted.push(cand);
               found.set(rule.field, true);
+              usedSegs.add(seg);
               items.push({ field: rule.field, label: rule.label, group: rule.group, value: gen, unit: '세대', snippet: snip(seg, cand.start, cand.end), apply: true, kind: 'silson' });
             }
           }
@@ -15512,6 +16020,7 @@ const PLAN_FRONT = {
         if (rule.type === 'bool') {
           accepted.push(cand);
           found.set(rule.field, true);
+          usedSegs.add(seg);
           items.push({ field: rule.field, label: rule.label, group: rule.group, value: true, unit: '', snippet: snip(seg, cand.start, cand.end), apply: true, kind: 'bool' });
           continue;
         }
@@ -15519,6 +16028,7 @@ const PLAN_FRONT = {
         if (!a) continue;
         accepted.push(cand);
         found.set(rule.field, true);
+        usedSegs.add(seg);
         items.push({
           field: rule.field, label: rule.label, group: rule.group, value: a.value, unit: '만원',
           snippet: snip(seg, cand.start, cand.end), apply: rule.apply !== false, note: rule.note || null, kind: 'cov'
@@ -15547,6 +16057,9 @@ const PLAN_FRONT = {
         }
       }
     }
+
+    /* v5.8 — 직접 기재(증권 단골 특약) 인식 결과를 뒤에 붙입니다 */
+    parseCustomItems(src, usedSegs).forEach((x) => items.push(x));
 
     const order = ['기본', '암', '뇌', '심장', '수술', '간병'];
     items.sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group));
@@ -15707,6 +16220,8 @@ const PLAN_FRONT = {
     VISION_ENDPOINT,
     extractPdfText,
     parseCoverageText,
+    parseCustomItems,
+    CUSTOM_RULES,
     parseAmounts,
     setByPath,
     SAMPLE_TEXT,
@@ -17203,6 +17718,61 @@ const PLAN_FRONT = {
   }
 
   /* ================= 카톡 ================= */
+  function brandContact() {
+    const b = (window.BojangBrand && window.BojangBrand.get && window.BojangBrand.get()) || {};
+    return {
+      name: b.consultant || state.client.consultant || '',
+      title: b.title || '', phone: b.phone || '', kakao: b.kakao || '', brand: b.name || ''
+    };
+  }
+
+  /* v5.8 — 고객에게 바로 보내는 5~6줄 카톡 요약 (점수·핵심 부족 1~2순위·담당자 연락처) */
+  function kakaoSummary() {
+    const res = state.lastResult;
+    if (!res) return '';
+    const m = res.m;
+    const b = brandContact();
+    const L = [];
+    L.push(`[${m.client.name || '고객'}님 보장분석 요약]`);
+    L.push(`· 종합 보장등급 ${m.letter} · ${m.score}점 (${m.grade.label})`);
+    const needs = (m.needList || []).slice(0, 2);
+    if (needs.length) {
+      L.push(`· 먼저 채울 곳 ${needs.map((x, i) => {
+        const g = (x.gaps || [])[0];
+        const label = g && (g.label || g.key) ? String(g.label || g.key) : x.item.name;
+        return `${i + 1}) ${label}`;
+      }).join(' · ')}`);
+    } else L.push('· 지금 구조는 충분합니다 — 금액 배분만 점검');
+    if (m.client.ageDay) L.push(`· 보험나이 ${m.client.insuranceAge}세 · 상령일 ${m.client.ageDay.label} (D-${m.client.ageDay.days})`);
+    const contact = [b.name, b.phone].filter(Boolean).join(' · ');
+    L.push(`· 담당 ${contact || '상담 설계사'}${b.kakao ? ' · ' + b.kakao : ''}`);
+    L.push('※ 상담 참고용 요약입니다. 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.');
+    return L.join('\n');
+  }
+
+  function openKakaoModal(text) {
+    const modal = $('#kakao-modal');
+    if (!modal) return;
+    $('#kakao-preview').textContent = text;
+    modal.hidden = false;
+    document.body.classList.add('is-modal');
+  }
+
+  function closeKakaoModal() {
+    const modal = $('#kakao-modal');
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove('is-modal');
+  }
+
+  async function copyKakaoSummary() {
+    if (!state.lastResult) { toast('먼저 진단해 주세요'); return ''; }
+    const text = kakaoSummary();
+    await copy(text, '카톡 요약을 복사했습니다 — 카톡에 붙여넣으세요');
+    openKakaoModal(text);
+    return text;
+  }
+
   function kakaoText() {
     const res = state.lastResult;
     if (!res) return '';
@@ -17380,27 +17950,90 @@ const PLAN_FRONT = {
     if (lsSet(HKEY, next)) {
       state.history = next; renderHistory();
       toast(window.BojangPlan && window.BojangPlan.unlocked() ? '저장했습니다 (베타 · 최대 30건)' : '무료 체험 · 고객 1명을 저장했습니다 (Pro는 30명)');
-      /* v5.4 — 로그인 + 서버 연결 상태면 클라우드(clients)로도 올립니다 */
+      /* v5.8 — 로그인 + 서버 연결 상태면 클라우드(consultations, 없으면 clients)로도 올립니다 */
       if (window.BojangBackend && window.BojangBackend.isLive && window.BojangBackend.isLive()
           && window.BojangBackend.hasSession && window.BojangBackend.hasSession()) {
-        window.BojangBackend.syncClient(entry).then((r) => {
-          if (r && r.ok) toast('클라우드에도 저장했습니다 — 다른 기기에서 불러올 수 있습니다');
+        const B = window.BojangBackend;
+        const push = B.syncConsultation ? B.syncConsultation(entry) : B.syncClient(entry);
+        push.then((r) => {
+          if (!r || !r.ok) return;
+          toast(r.table === 'clients'
+            ? '클라우드에도 저장했습니다 — 다른 기기에서 불러올 수 있습니다'
+            : '클라우드(상담 기록)에도 저장했습니다 — PC·모바일에서 이어보기');
+          updateCloudBadge();
         }).catch(() => {});
       }
     } else toast('저장 공간을 쓸 수 없습니다');
   }
 
+  /* ================= v5.8 — 클라우드 상담 기록 이어보기 ================= */
+  function cloudReady() {
+    const B = window.BojangBackend;
+    return !!(B && B.isLive && B.isLive() && B.hasSession && B.hasSession());
+  }
+
+  function updateCloudBadge(table) {
+    const list = $$('.cloud-state');
+    if (!list.length) return;
+    const t = table || (window.BojangBackend && window.BojangBackend.cloudTable ? window.BojangBackend.cloudTable() : '');
+    const text = cloudReady()
+      ? (t === 'clients' ? '클라우드 연결 · 기존 고객 표에 저장' : '클라우드 연결 · 상담 기록 동기화')
+      : '이 기기에만 저장 (로그인하면 클라우드 동기화)';
+    list.forEach((el) => { el.textContent = text; el.dataset.tone = cloudReady() ? 'ok' : 'mute'; });
+  }
+
+  /* 서버에서 온 상담을 로컬 목록에 합칩니다 — 로컬에 이미 있는 id 는 로컬 것을 유지 */
+  function ingestCloud(result, opts) {
+    opts = opts || {};
+    if (!result || !result.ok) return { ok: false, added: 0 };
+    const entries = (result.entries || []).filter((e) => e && e.inputs && e.inputs.cov);
+    const byId = {};
+    state.history.forEach((h) => { byId[h.id] = h; });
+    let added = 0;
+    entries.forEach((e) => {
+      const cur = byId[e.id];
+      if (!cur) { byId[e.id] = e; added++; return; }
+      if (cur.cloud) byId[e.id] = Object.assign({}, cur, { cloud: true, cloudTable: e.cloudTable, cloudId: e.cloudId });
+    });
+    const next = Object.keys(byId).map((k) => byId[k])
+      .sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || '')))
+      .slice(0, historyMax());
+    state.history = next;
+    lsSet(HKEY, next);
+    renderHistory();
+    updateCloudBadge(result.table);
+    if (added && !opts.silent) toast(`클라우드에서 상담 ${added}건을 불러왔습니다`);
+    if (opts.manual && !added) toast('클라우드 기록이 이미 이 기기에 있습니다');
+    return { ok: true, added };
+  }
+
+  async function syncHistoryFromCloud(opts) {
+    opts = opts || {};
+    const B = window.BojangBackend;
+    if (!B || !B.pullConsultations) { if (opts.manual) toast('클라우드 동기화를 쓸 수 없습니다'); return { ok: false, added: 0 }; }
+    if (!cloudReady()) {
+      if (opts.manual) toast('로그인하면 다른 기기의 상담 기록을 불러옵니다');
+      updateCloudBadge();
+      return { ok: false, added: 0, reason: 'offline' };
+    }
+    const btn = $('#btn-cloud-sync');
+    if (btn) { btn.disabled = true; btn.classList.add('is-busy'); }    let r = { ok: false, entries: [] };
+    try { r = await B.pullConsultations(20); } catch (e) { r = { ok: false, entries: [] }; }
+    if (btn) { btn.disabled = false; btn.classList.remove('is-busy'); }
+    if (!r.ok) { if (opts.manual) toast('클라우드에서 불러오지 못했습니다'); return { ok: false, added: 0 }; }
+    return ingestCloud(r, opts);
+  }
+
   function renderHistory() {
     const hosts = $$('[id="history-list"], [id="history-list2"]');
-    if (!hosts.length) return;
-    const html = !state.history.length
+    if (!hosts.length) return;    const html = !state.history.length
       ? `<p class="empty">저장된 상담이 없습니다. 진단 후 "상담 저장"을 누르면 이 기기에만 기록됩니다.</p>`
       : state.history.map((h) => {
         const d = new Date(h.savedAt);
         const when = `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
         return `
-        <div class="hist" data-id="${h.id}">
-          <div class="hist-main"><strong>${esc(h.label)}</strong>
+        <div class="hist${h.cloud ? ' is-cloud' : ''}" data-id="${h.id}">
+          <div class="hist-main"><strong>${esc(h.label)}${h.cloud ? '<span class="hist-cloud" title="클라우드에서 불러온 상담">☁</span>' : ''}</strong>
             <span>${when} · ${h.inputs.age}대 ${h.inputs.gender} · 실손 ${SILSON_LABEL[h.inputs.silson]}</span></div>
           <span class="hist-score">${h.score}<i>점</i></span>
           <button type="button" class="hist-load" data-load="${h.id}">불러오기</button>
@@ -17430,6 +18063,12 @@ const PLAN_FRONT = {
         });
       });
     });
+    const subText = (cloudReady() ? '기기 + 클라우드 저장' : '이 기기에만 저장') + ' · 최대 ' + historyMax() + '건';
+    const sub = $('#result-hist-sub');
+    if (sub) sub.textContent = subText;
+    const hsub = $('#home-hist-sub');
+    if (hsub) hsub.textContent = subText;
+    updateCloudBadge();
     renderHome();
   }
 
@@ -17614,6 +18253,22 @@ const PLAN_FRONT = {
       if (it.field === 'silsonGen') {
         const g = String(it.value);
         if (['none', '1', '2', '3', '4', '5'].indexOf(g) >= 0) { state.silson = g; applied++; }
+        return;
+      }
+      if (it.kind === 'custom') {
+        const area = ['cancer', 'brain', 'heart', 'surgery', 'care'].indexOf(String(it.area)) >= 0 ? String(it.area) : 'brain';
+        const box = state.cov.custom || (state.cov.custom = { cancer: [], brain: [], heart: [], surgery: [], care: [] });
+        if (!Array.isArray(box[area])) box[area] = [];
+        const name = String(it.name || it.label || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+        const amount = Math.max(0, Math.round(Number(it.value) || 0));
+        if (!name) return;
+        const exist = box[area].find((x) => String(x.name || '').trim() === name);
+        if (exist) exist.amount = amount;
+        else box[area].push({
+          id: 'cu_' + area + '_' + Date.now() + '_' + box[area].length,
+          name, amount, mode: it.mode === 'individual' ? 'individual' : 'bundle', note: '사진·PDF 인식'
+        });
+        applied++;
         return;
       }
       if (it.kind === 'bool' || it.value === true) {
@@ -18599,7 +19254,26 @@ const PLAN_FRONT = {
       toast('진단을 완료했습니다');
     });
 
-    $('#btn-kakao').addEventListener('click', () => copy(kakaoText(), '카톡 요약을 복사했습니다'));
+    $('#btn-kakao').addEventListener('click', () => { copyKakaoSummary(); });
+    const kakaoCopy = $('#kakao-copy');
+    if (kakaoCopy) kakaoCopy.addEventListener('click', () => { copy(kakaoSummary(), '카톡 요약을 복사했습니다 — 카톡에 붙여넣으세요'); });
+    const kakaoClose = $('#kakao-close');
+    if (kakaoClose) kakaoClose.addEventListener('click', closeKakaoModal);
+    const kakaoModal = $('#kakao-modal');
+    if (kakaoModal) kakaoModal.addEventListener('click', (e) => { if (e.target.id === 'kakao-modal') closeKakaoModal(); });
+    document.addEventListener('keydown', (e) => {
+      const km = $('#kakao-modal');
+      if (e.key === 'Escape' && km && !km.hidden) closeKakaoModal();
+    });
+    const cloudBtn = $('#btn-cloud-sync');
+    if (cloudBtn) cloudBtn.addEventListener('click', () => syncHistoryFromCloud({ manual: true }));
+    $$('[data-cloud-sync]').forEach((b) => {
+      if (b.id === 'btn-cloud-sync') return;
+      b.addEventListener('click', () => syncHistoryFromCloud({ manual: true }));
+    });
+    /* backend 는 window 로 이벤트를 쏩니다 — document 가 아니라 window 에서 받아야 합니다 */
+    window.addEventListener('bojang:cloud', (e) => { ingestCloud(e.detail, { silent: true }); });
+    if (cloudReady()) setTimeout(() => syncHistoryFromCloud({ silent: true }), 900);
     $('#btn-save').addEventListener('click', saveConsult);
     $('#btn-reset').addEventListener('click', () => { $('#reset-modal').hidden = false; });
     $('#rm-cancel').addEventListener('click', () => { $('#reset-modal').hidden = true; });

@@ -26,6 +26,9 @@ import { fail, json, preflight, sha256Hex } from "../_shared/http.ts";
 import { audit, env, requireUser } from "../_shared/supabase.ts";
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
+/* v5.8 — 모델 한 번 호출에 걸 수 있는 상한. Gemini 가 응답하지 않을 때 워커가
+   150초 리소스 한도까지 매달려 546(WORKER_RESOURCE_LIMIT)으로 죽는 것을 막습니다. */
+const UPSTREAM_TIMEOUT_MS = 25_000;
 const MAX_TEXT_CHARS = 20000;
 const RATE_LIMIT_PER_MIN = 6;
 const ALLOWED_MIME = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
@@ -39,6 +42,9 @@ const PROMPT = [
   "3) 월 보험료와 실손 세대가 보이면 각각 '월 보험료 27만원', '실손의료보험 4세대' 처럼 한 줄로 적으세요.",
   "4) 이름·주민등록번호·연락처·주소는 읽지 말고 ●●● 로 가리세요.",
   "5) 표를 읽을 수 없으면 {\"lines\": []} 만 반환하세요.",
+  "6) 보장분석 앱의 고정 칸에 없는 특약도 증권에 적힌 담보명 그대로 한 줄로 남기세요. 특히 아래 이름은 줄이지 말고 그대로 쓰세요.",
+  "   - 특정순환계질환(3~5종) 주요치료비 / 표적항암약물허가치료비 / 다빈치로봇수술비 / 중증치매간병비 / 관절·척추 수술비 / 상해간병일당 / 장기요양간병비 / 뇌·심장 중환자실입원일당",
+  "7) 같은 담보가 뇌 영역과 심장 영역에 따로 적혀 있으면 각각 한 줄로 적으세요(영역 머리글과 함께).",
   '출력은 설명 없이 JSON 하나만: {"lines": ["일반암 진단비 5,000만원", "..."]}',
 ].join("\n");
 
@@ -141,6 +147,7 @@ async function callOpenAI(b64: string, mime: string, model: string): Promise<Vis
   const key = env("OPENAI_API_KEY");
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model,
@@ -165,34 +172,56 @@ async function callOpenAI(b64: string, mime: string, model: string): Promise<Vis
   return { lines: extractLines(raw), model };
 }
 
+/* v5.8 — 무료 등급 Gemini 모델 우선순위
+   · gemini-3.8-flash : 2026-11 시점 신규 사용자에게 열려 있는 기본 Flash (검증됨)
+   · gemini-4-hydrogen : 상위 모델이 열려 있으면 사용 (없으면 404 → 다음 후보)
+   · gemini-flash-latest : 별칭. 모델명이 바뀌어도 따라가는 마지막 안전망
+   · GEMINI_VISION_MODEL 환경변수가 있으면 그 모델을 가장 먼저 시도합니다. */
+const GEMINI_MODEL_CHAIN = ["gemini-3.8-flash", "gemini-4-hydrogen", "gemini-flash-latest"];
+const RETRY_STATUS = [404, 429, 500, 502, 503, 504];
+
+function geminiCandidates(model: string): string[] {
+  const first = String(model || "").trim();
+  const list = first ? [first].concat(GEMINI_MODEL_CHAIN) : GEMINI_MODEL_CHAIN.slice();
+  return list.filter((m, i) => m && list.indexOf(m) === i);
+}
+
 async function callGemini(b64: string, mime: string, model: string): Promise<VisionOut> {
   const key = env("GEMINI_API_KEY");
-  const candidates = model === "gemini-flash-latest" ? [model] : [model, "gemini-flash-latest"];
+  const candidates = geminiCandidates(model);
   let lastStatus = 500;
   for (const m of candidates) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: PROMPT }] },
-        contents: [{
-          role: "user",
-          parts: [
-            { text: "이 보장분석표를 읽어 JSON 으로만 답하세요." },
-            { inline_data: { mime_type: mime, data: b64 } },
-          ],
-        }],
-        generationConfig: { temperature: 0, maxOutputTokens: 1500, responseMimeType: "application/json" },
-      }),
-    });
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: PROMPT }] },
+          contents: [{
+            role: "user",
+            parts: [
+              { text: "이 보장분석표를 읽어 JSON 으로만 답하세요." },
+              { inline_data: { mime_type: mime, data: b64 } },
+            ],
+          }],
+          generationConfig: { temperature: 0, maxOutputTokens: 1500, responseMimeType: "application/json" },
+        }),
+      });
+    } catch {
+      /* 시간 초과·네트워크 실패 → 다음 후보 모델로 */
+      lastStatus = 504;
+      continue;
+    }
     if (res.ok) {
       const data = await res.json();
       const raw = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
       return { lines: extractLines(raw), model: m };
     }
     lastStatus = res.status;
-    if (res.status !== 404 && res.status !== 429 && res.status !== 503) break;
+    if (RETRY_STATUS.indexOf(res.status) < 0) break;
   }
   throw new Error(`gemini_${lastStatus}`);
 }
@@ -252,7 +281,7 @@ Deno.serve(async (req: Request) => {
     if (openaiKey) {
       out = await callOpenAI(b64, mime, env("VISION_MODEL") || "gpt-4o-mini");
     } else {
-      out = await callGemini(b64, mime, env("GEMINI_VISION_MODEL") || "gemini-3.8-flash");
+      out = await callGemini(b64, mime, env("GEMINI_VISION_MODEL") || GEMINI_MODEL_CHAIN[0]);
     }
   } catch (e) {
     b64 = null;

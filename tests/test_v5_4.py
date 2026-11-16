@@ -334,11 +334,11 @@ def main():
             print("2) 버전 · 모드 · 계정 진입점")
             print("=" * 70)
             title = page.title()
-            check("타이틀 v5.4 이상", any(v in title for v in ("v5.4", "v5.5", "v5.6", "v5.7")) and "보장분석 라이프 리포트" in title, title)
-            check("메인 eyebrow V5.4 이상", any(v in page.inner_text(".hh-eyebrow") for v in ("V5.4", "V5.5", "V5.6", "V5.7")), page.inner_text(".hh-eyebrow"))
-            check("메인 버전 표기", any(v in page.inner_text(".hh-ver") for v in ("v5.4", "v5.5", "v5.6", "v5.7")), page.inner_text(".hh-ver"))
+            check("타이틀 v5.4 이상", any(v in title for v in ("v5.4", "v5.5", "v5.6", "v5.7", "v5.8")) and "보장분석 라이프 리포트" in title, title)
+            check("메인 eyebrow V5.4 이상", any(v in page.inner_text(".hh-eyebrow") for v in ("V5.4", "V5.5", "V5.6", "V5.7", "V5.8")), page.inner_text(".hh-eyebrow"))
+            check("메인 버전 표기", any(v in page.inner_text(".hh-ver") for v in ("v5.4", "v5.5", "v5.6", "v5.7", "v5.8")), page.inner_text(".hh-ver"))
             sw = read(os.path.join(ROOT, "sw.js"))
-            check("서비스워커 캐시 v5.4 이상", any(v in sw for v in ("'bojang-guide-v5.4'", "'bojang-guide-v5.5'", "'bojang-guide-v5.6'", "'bojang-guide-v5.7'")), sw.splitlines()[2] if sw else "")
+            check("서비스워커 캐시 v5.4 이상", any(v in sw for v in ("'bojang-guide-v5.4'", "'bojang-guide-v5.5'", "'bojang-guide-v5.6'", "'bojang-guide-v5.7'", "'bojang-guide-v5.8'")), sw.splitlines()[2] if sw else "")
             check("서비스워커 backend.js 포함", "./backend.js" in sw, "asset")
             check("backend.js 모듈 로드", page.evaluate("() => typeof BojangBackend === 'object'"), "BojangBackend")
             check("기본 모드 beta-local", page.evaluate("() => BojangBackend.mode()") == "beta-local",
@@ -542,8 +542,10 @@ def main():
             page.wait_for_timeout(900)
             check("상담 저장", page.evaluate("() => JSON.parse(localStorage.getItem('bojang.history.v4') || '[]').length") > hist_before,
                   hist_before)
-            check("상담 저장 시 clients 동기화", len(MOCK["rest"]) >= 1
-                  and any("/rest/v1/clients" in r["path"] for r in MOCK["rest"]), MOCK["rest"][:1])
+            # v5.8: 상담 1건은 consultations 로 올라가고, 테이블이 없으면 clients 로 폴백합니다
+            check("상담 저장 시 서버 동기화(consultations·clients)", len(MOCK["rest"]) >= 1
+                  and any(("/rest/v1/consultations" in r["path"]) or ("/rest/v1/clients" in r["path"]) for r in MOCK["rest"]),
+                  [r["path"] for r in MOCK["rest"]][:2])
             brand_res = page.evaluate("() => BojangBackend.pushBrandSettings({ name: '테스트 브랜드', slogan: '테스트 슬로건', theme: 'navy', logo: '' })")
             page.wait_for_timeout(400)
             check("브랜드 저장 시 brand_settings 동기화", any("/rest/v1/brand_settings" in r["path"] for r in MOCK["rest"]),

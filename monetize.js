@@ -1,4 +1,4 @@
-/* 보장분석 라이프 리포트 v5.7 — 시니어·차트·QR·온보딩 · 베타 테스트 공개판
+/* 보장분석 라이프 리포트 v5.8 — 클라우드 동기화·고지 체크·카톡 요약 · 베타 테스트 공개판
    · 베타 기간에는 Pro 전 기능(30장 전체 · 1/10/30장 PDF · 고객 30명 · 리모델링 · 화이트라벨)을 잠금 없이 무료 제공
    · v5.4: 계정/구독(backend.js) 연동 — 실서버 구독 상태를 hydrate() 로 반영
    · 정식 출시 예정 요금: 월 5,000원 / 연 50,000원 · 베타 피드백 Google Form + 추첨 사은품 안내
@@ -241,7 +241,7 @@
     if (mark) mark.setAttribute('content', b.name);
     const title = $('#brand-title');
     if (title) title.textContent = b.name;
-    document.title = `${b.name} v5.7 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
+    document.title = `${b.name} v5.8 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
     loadPdfLogo(b.logo);
     /* 상담자 화면의 고객 표지도 새 브랜드로 다시 그립니다 */
     if (root.BojangDeck && root.__bojangState) root.BojangDeck.refresh(root.__bojangState, { reset: true });
@@ -530,9 +530,12 @@
     }
     const loadSub = $('#home-load-sub');
     if (loadSub) loadSub.textContent = open ? '베타 · 고객 30명 저장' : '무료 체험 · 고객 1명';
+    /* v5.8 — 로그인해 클라우드에 연결되면 '기기 + 클라우드 저장'으로 표기 */
+    const cloudOn = !!(root.BojangBackend && root.BojangBackend.isLive && root.BojangBackend.isLive()
+      && root.BojangBackend.hasSession && root.BojangBackend.hasSession());
     ['#home-hist-sub', '#result-hist-sub'].forEach((sel) => {
       const el = $(sel);
-      if (el) el.textContent = open ? '이 기기에만 저장 · 최대 30건' : '이 기기에만 저장 · 무료 1명 (Pro 30명)';
+      if (el) el.textContent = (cloudOn ? '기기 + 클라우드 저장' : '이 기기에만 저장') + (open ? ' · 최대 30건' : ' · 무료 1명 (Pro 30명)');
     });
     /* 베타 기간에는 PDF 버튼 잠금 표시가 없습니다 */
     $$('.pdf-btn').forEach((b) => {

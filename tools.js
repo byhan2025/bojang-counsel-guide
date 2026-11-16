@@ -144,84 +144,223 @@
   /* =========================================================
      ③ 고지사항(알릴의무) 판정 + 청구 서류 1탭 복사
      ========================================================= */
+  /* v5.8 — 고지의무 인터랙티브 체크 (일반 3·1·5 / 간편 3·2·5)
+     · 청약서 문항을 기간 탭(3개월·1년·2년·5년)으로 나눠 탭 한 번으로 체크합니다.
+     · 체크 즉시 ① 일반심사 고지 필요 여부 ② 간편심사 3·2·5 통과 가능 여부
+       ③ 가입 전 준비 서류 ④ 유병자 간편심사 전환 가이드를 다시 그립니다.
+     · 3개월 항목은 2·5년 문항에도 함께 걸리므로 자동으로 함께 켭니다(끄면 함께 꺼짐). */
   const DISC_ITEMS = [
-    { key: 'm3', label: '최근 3개월 이내 진단·입원·수술', period: '3개월' },
-    { key: 'y1', label: '최근 1년 이내 추가검사(재검사) 필요소견', period: '1년' },
-    { key: 'y2', label: '최근 2년 이내 입원·수술', period: '2년' },
-    { key: 'y3', label: '최근 3년 이내 입원·수술', period: '3년' },
-    { key: 'y5', label: '최근 5년 이내 입원·수술·7일 이상 치료', period: '5년' },
-    { key: 'major', label: '최근 5년 이내 중대질병(암·간경화·투석 중 만성신장질환·파킨슨·루게릭)', period: '5년' }
+    { key: 'm3dx', label: '진단(또는 의심 소견)을 받음', period: '3개월', q: '3개월 진단' },
+    { key: 'm3adm', label: '입원', period: '3개월', q: '3개월 입원' },
+    { key: 'm3op', label: '수술', period: '3개월', q: '3개월 수술' },
+    { key: 'y1', label: '추가검사(재검사) 필요 소견', period: '1년', q: '1년 재검사' },
+    { key: 'y2adm', label: '입원', period: '2년', q: '2년 입원' },
+    { key: 'y2op', label: '수술', period: '2년', q: '2년 수술' },
+    { key: 'y3', label: '3년 이내 입원·수술', period: '5년', q: '3년 입원·수술' },
+    { key: 'y5adm', label: '입원', period: '5년', q: '5년 입원' },
+    { key: 'y5op', label: '수술', period: '5년', q: '5년 수술' },
+    { key: 'y5tx', label: '7일 이상 통원치료', period: '5년', q: '5년 통원 7일' },
+    { key: 'major', label: '중대질병 — 암·간경화·투석 중 만성신장질환·파킨슨·루게릭', period: '5년', q: '5년 중대질병' }
   ];
+  const DISC_PERIODS = ['3개월', '1년', '2년', '5년'];
+  const DISC_PERIOD_NOTE = {
+    '3개월': '최근 3개월 이내 — 일반·간편 모두 첫 문항',
+    '1년': '최근 1년 이내 — 일반심사에만 있는 문항',
+    '2년': '최근 2년 이내 — 간편심사 3·2·5의 가운데 문항',
+    '5년': '최근 5년 이내 — 일반 5년 문항 · 간편은 중대질병만'
+  };
   const disc = {};
+  let discPeriod = '3개월';
 
+  const on = (k) => !!disc[k];
+  const anyOn = (keys) => keys.some((k) => disc[k]);
+  const M3 = ['m3dx', 'm3adm', 'm3op'];
+  const Y2 = ['y2adm', 'y2op'];
+  const Y5 = ['y3', 'y5adm', 'y5op', 'y5tx'];
+
+  /* 일반심사(3·1·5) 고지 여부 */
+  function generalJudge() {
+    const hit = [];
+    if (anyOn(M3)) hit.push('3개월 진단·입원·수술');
+    if (on('y1')) hit.push('1년 재검사 소견');
+    if (anyOn(Y2)) hit.push('2년 이내 입원·수술');
+    if (anyOn(Y5)) hit.push('5년 이내 입원·수술·통원');
+    if (on('major')) hit.push('5년 이내 중대질병');
+    return { need: hit.length > 0, hits: hit };
+  }
+  /* 간편심사(3·2·5) — 3개월 진단·입원·수술 / 2년 입원·수술 / 5년 중대질병 */
+  function simpleJudge() {
+    const hit = [];
+    if (anyOn(M3)) hit.push('3개월 진단·입원·수술');
+    if (anyOn(Y2)) hit.push('2년 이내 입원·수술');
+    if (on('major')) hit.push('5년 이내 중대질병');
+    return { need: hit.length > 0, hits: hit };
+  }
+  /* 간편심사 3·5·5 참고 */
+  function simple355Judge() {
+    const hit = [];
+    if (anyOn(M3)) hit.push('3개월');
+    if (anyOn(Y5)) hit.push('5년 이내 입원·수술');
+    if (on('major')) hit.push('5년 중대질병');
+    return { need: hit.length > 0, hits: hit };
+  }
+
+  /* 가입 전 준비 서류 — 체크된 항목에서 역산 */
+  function discDocs() {
+    const docs = [];
+    const add = (s) => { if (!docs.some((d) => d.title === s)) docs.push(s); };
+    if (on('m3dx')) add('진단서 또는 진료확인서 (질병명·진단일 기재)');
+    if (on('m3adm') || anyOn(Y2) || on('y5adm')) add('입·퇴원확인서 (입원일·퇴원일·병명)');
+    if (on('m3op') || anyOn(Y2) || on('y5op') || on('y3')) add('수술확인서 (수술명·수술일·수술방법)');
+    if (on('y1')) add('검사 결과지·판독지 (재검사 소견 문구 확인)');
+    if (on('y5tx')) add('통원 진료확인서·진료비 영수증 (7일 이상 여부)');
+    if (on('major')) add('진단서·조직검사(병리) 결과지, 투석·복약 기록');
+    if (docs.length) {
+      add('청약서 문항과 대조할 날짜 정리표 (마지막 입원·수술일)');
+      add('최근 1년 처방전·복약내역 (약물치료 문항 대비)');
+    }
+    return docs;
+  }
+
+  /* 권장 심사 판정 */
   function judgeDisclosure() {
-    const on = (k) => !!disc[k];
-    if (on('m3')) return {
-      code: 'hold', label: '3개월 경과 후 재검토', tone: 'warn',
-      head: '간편심사도 3개월 문항은 똑같이 묻습니다',
-      body: '치료·검사가 끝난 날부터 3개월이 지난 뒤가 가장 넓은 선택지입니다. 그 전에는 인수 조건이 제한되거나 거절될 수 있어 청약 일정을 조정합니다.'
-    };
-    if (on('major')) return {
-      code: 'review', label: '인수 심사 필요', tone: 'gap',
-      head: '5년 이내 중대질병은 간편심사에서도 고지 대상입니다',
-      body: '3·2·5와 3·5·5 모두 5년 문항에 들어갑니다. 일반심사 할증 인수나 상품별 인수 기준을 먼저 확인합니다.'
-    };
-    if (on('y2')) return {
-      code: 's355', label: '간편심사 3·3·5 이상 검토', tone: 'need',
-      head: '2년 이내 입원·수술은 3·2·5 문항에 걸립니다',
-      body: '3·2·5(N=2)는 2년 문항이 있어 통과가 어렵습니다. 3·3·5 또는 3·5·5를 검토하고, 보험료는 일반심사보다 높아집니다.'
-    };
-    if (on('y3')) return {
-      code: 's355b', label: '간편심사 3·5·5 검토', tone: 'need',
-      head: '2년을 넘고 3년 이내 이력은 3·3·5 문항에 해당합니다',
-      body: '3·5·5(N=5)라면 3년 이내 이력은 걸리지 않습니다. 청약서 문항을 그대로 확인하세요.'
-    };
-    if (on('y5')) return {
-      code: 's355c', label: '간편심사 3·5·5 문항 해당 — 초간편/일반심사 확인', tone: 'need',
-      head: '5년 이내 입원·수술은 모든 간편심사의 5년 문항에 들어갑니다',
-      body: '3·5·5로도 통과가 어렵습니다. 초간편심사 상품이나 일반심사 할증 인수를 함께 놓고 판단합니다.'
-    };
-    if (on('y1')) return {
-      code: 'simple355', label: '표준체 어려움 · 간편심사 3·5·5 검토', tone: 'info',
-      head: '1년 이내 추가검사 소견은 일반심사 1년 문항에 해당합니다',
-      body: '간편심사는 3개월·N년(입원·수술)·5년(중대질병)만 묻기 때문에 이 이력으로는 걸리지 않습니다. 검사 결과가 정리되면 일반심사 가능 여부를 다시 봅니다.'
-    };
+    const g = generalJudge(), s = simpleJudge(), s355 = simple355Judge();
+    if (anyOn(M3)) {
+      return {
+        code: 'hold', label: '3개월 경과 후 재검토', tone: 'warn', g, s, s355,
+        head: '간편심사도 3개월 문항은 똑같이 묻습니다',
+        body: '치료·검사가 끝난 날부터 3개월이 지난 뒤가 가장 넓은 선택지입니다. 그 전에는 인수 조건이 제한되거나 거절될 수 있어 청약 일정을 조정합니다.'
+      };
+    }
+    if (!g.need) {
+      return {
+        code: 'standard', label: '표준체 권장 — 고지 대상 없음', tone: 'ok', g, s, s355,
+        head: '일반심사(3·1·5)에서 고지할 항목이 없습니다',
+        body: '간편심사는 보험료가 1.2~2배 수준으로 높고 보장이 제한될 수 있습니다. 표준체를 먼저 심사하는 것이 순서입니다.'
+      };
+    }
+    if (!s.need) {
+      return {
+        code: 'simple325', label: '유병자 간편심사 3·2·5 전환 검토', tone: 'need', g, s, s355,
+        head: '일반심사에서는 고지 대상이지만 3·2·5 문항은 피해 갑니다',
+        body: '2년을 넘긴 입원·수술(또는 1년 재검사 소견)은 일반심사 5년·1년 문항에만 걸립니다. 간편심사 3·2·5는 3개월·2년·5년 중대질병만 묻기 때문에 통과 가능성이 있습니다. 다만 보험료가 1.2~2배, 가입 금액·특약 제한이 따릅니다.'
+      };
+    }
+    if (!s355.need) {
+      return {
+        code: 'simple355', label: '간편심사 3·5·5 · 초간편 검토', tone: 'need', g, s, s355,
+        head: '3·2·5는 어렵고 3·5·5까지 내려가야 합니다',
+        body: '2년 이내 입원·수술은 3·2·5의 가운데 문항에 걸립니다. 3·5·5(5년 문항) 또는 초간편심사 상품을 함께 놓고, 일반심사 할증 인수와 보험료를 비교합니다.'
+      };
+    }
+    if (on('major')) {
+      return {
+        code: 'review', label: '인수 심사 필요 — 중대질병 이력', tone: 'gap', g, s, s355,
+        head: '5년 이내 중대질병은 모든 간편심사에서 고지 대상입니다',
+        body: '3·2·5와 3·5·5 모두 5년 문항에 들어갑니다. 일반심사 할증 인수나 상품별 인수 기준을 먼저 확인하고, 고지 후 부담보·할증 조건을 고객에게 서면으로 설명합니다.'
+      };
+    }
     return {
-      code: 'standard', label: '표준체 권장', tone: 'ok',
-      head: '일반심사(표준체)로 가입 가능한 상태입니다',
-      body: '간편심사는 보험료가 1.2~2배 수준으로 높고 보장이 제한될 수 있습니다. 표준체를 먼저 심사하는 것이 순서입니다.'
+      code: 's355c', label: '간편심사도 어려움 — 초간편·할증 인수 검토', tone: 'gap', g, s, s355,
+      head: '3·2·5와 3·5·5 문항에 모두 걸립니다',
+      body: '초간편심사 상품이나 일반심사 할증 인수를 함께 놓고 판단합니다. 고지 후 부담보·할증 조건은 서면으로 설명하고 고객 확인을 받습니다.'
     };
+  }
+
+  function disclosureText() {
+    const j = judgeDisclosure();
+    const L = [];
+    L.push('[고지의무 체크 결과]');
+    L.push(`· 체크된 항목: ${DISC_ITEMS.filter((d) => disc[d.key]).map((d) => `${d.period} ${d.label}`).join(' / ') || '없음'}`);
+    L.push(`· 일반심사(3·1·5): ${j.g.need ? '고지 필요 — ' + j.g.hits.join(', ') : '고지 대상 없음'}`);
+    L.push(`· 간편심사(3·2·5): ${j.s.need ? '고지 필요 — ' + j.s.hits.join(', ') : '통과 가능'}`);
+    L.push(`· 권장: ${j.label}`);
+    L.push(`· ${j.head}`);
+    const docs = discDocs();
+    if (docs.length) {
+      L.push('· 준비 서류');
+      docs.forEach((d, i) => L.push(`  ${i + 1}) ${d}`));
+    }
+    L.push('※ 최종 판단은 상품별 청약서 문항과 인수 심사가 기준입니다.');
+    return L.join('\n');
   }
 
   function renderDisclosureTool() {
     const host = $('#disc-tool');
     if (!host) return;
     const j = judgeDisclosure();
+    const items = DISC_ITEMS.filter((d) => d.period === discPeriod);
+    const docs = discDocs();
+    const badge = (p) => {
+      const n = DISC_ITEMS.filter((d) => d.period === p && disc[d.key]).length;
+      return `<em>${n}</em>`;
+    };
     host.innerHTML = `
-      <div class="disc-grid">
-        ${['3개월', '1년', '2·3년', '5년'].map((p) => {
-          const items = DISC_ITEMS.filter((d) => (p === '2·3년' ? (d.period === '2년' || d.period === '3년') : d.period === p));
-          return `<div class="disc-col">
-            <div class="dc-head">${p}</div>
-            ${items.map((d) => `<button type="button" class="dc-tick${disc[d.key] ? ' is-on' : ''}" data-disc="${d.key}" aria-pressed="${!!disc[d.key]}">
-              <span class="dc-box" aria-hidden="true"></span><span>${esc(d.label)}</span></button>`).join('')}
-          </div>`;
-        }).join('')}
+      <div class="disc-tabs" role="tablist" aria-label="고지 문항 기간">
+        ${DISC_PERIODS.map((p) => `<button type="button" role="tab" aria-selected="${p === discPeriod}"
+            class="disc-tab${p === discPeriod ? ' is-on' : ''}${DISC_ITEMS.some((d) => d.period === p && disc[d.key]) ? ' has-on' : ''}"
+            data-disc-period="${p}">${p}${badge(p)}</button>`).join('')}
       </div>
-      <div class="disc-verdict tone-${j.tone}">
+      <div class="disc-panel">
+        <div class="dp-head">${discPeriod} 이내 항목<span>${DISC_PERIOD_NOTE[discPeriod]}</span></div>
+        ${items.map((d) => `<button type="button" class="dc-tick${disc[d.key] ? ' is-on' : ''}" data-disc="${d.key}" aria-pressed="${!!disc[d.key]}">
+          <span class="dc-box" aria-hidden="true"></span><span>${esc(d.label)}</span></button>`).join('')}
+      </div>
+      <div class="disc-judge">
+        <div class="disc-verdict tone-${j.g.need ? 'gap' : 'ok'}">
+          <span class="dv-label">일반심사 3·1·5</span>
+          <b>${j.g.need ? '고지 필요' : '고지 대상 없음'}</b>
+          <p class="dv-head">${j.g.need ? esc(j.g.hits.join(' · ')) : '3개월·1년·5년 문항 모두 해당 없음'}</p>
+          <p class="dv-body">${j.g.need ? '청약서 문항에 사실대로 적어야 합니다. 말로만 알린 것은 고지로 인정되지 않습니다.' : '표준체 심사를 먼저 진행합니다.'}</p>
+        </div>
+        <div class="disc-verdict tone-${j.s.need ? 'need' : 'ok'}">
+          <span class="dv-label">간편심사 3·2·5</span>
+          <b>${j.s.need ? '고지 필요' : '통과 가능'}</b>
+          <p class="dv-head">${j.s.need ? esc(j.s.hits.join(' · ')) : '3개월·2년·5년 중대질병 문항 해당 없음'}</p>
+          <p class="dv-body">${j.s.need ? '3·5·5(5년 문항) 또는 초간편심사로 내려가야 합니다.' : '유병자 간편심사로 전환하면 보험료는 1.2~2배, 가입 금액·특약은 제한됩니다.'}</p>
+        </div>
+      </div>
+      <div class="disc-verdict tone-${j.tone}" id="disc-verdict-main">
         <span class="dv-label">권장 심사</span>
         <b>${esc(j.label)}</b>
         <p class="dv-head">${esc(j.head)}</p>
         <p class="dv-body">${esc(j.body)}</p>
       </div>
+      <div class="disc-docs">
+        <div class="dd-head">가입 전 준비 서류 ${docs.length ? `(${docs.length}건)` : '— 체크하면 자동으로 정리됩니다'}</div>
+        ${docs.length
+          ? `<ul>${docs.map((d) => `<li><span>${esc(d)}</span></li>`).join('')}</ul>`
+          : '<p class="empty">3개월·1년·2년·5년 항목을 탭해 체크하면 필요한 서류가 여기에 바로 나옵니다.</p>'}
+      </div>
+      <div class="disc-actions">
+        <button type="button" class="da-copy" id="disc-copy">결과·서류 카톡 복사</button>
+        <button type="button" id="disc-reset">체크 비우기</button>
+      </div>
       <p class="fc-src">근거 · 보험업감독업무시행세칙 별표14 · 금융감독원 「주요 분쟁사례로 알아본 소비자 유의사항 — 간편보험편」(2024.6.13) · 상법 제651조(해지권: 안 날부터 1개월, 계약일부터 3년). 최종 판단은 상품별 청약서 문항과 인수 심사가 기준입니다.</p>
     `;
-    $$('[data-disc]', host).forEach((b) => b.addEventListener('click', () => {
-      const k = b.dataset.disc;
-      disc[k] = !disc[k];
-      if (k === 'm3' && disc[k]) { ['y2', 'y3', 'y5'].forEach((x) => { disc[x] = true; }); }
+    $$('[data-disc-period]', host).forEach((b) => b.addEventListener('click', () => {
+      discPeriod = b.dataset.discPeriod;
       renderDisclosureTool();
     }));
+    $$('[data-disc]', host).forEach((b) => b.addEventListener('click', () => {
+      const k = b.dataset.disc;
+      const nextVal = !disc[k];
+      disc[k] = nextVal;
+      /* 3개월 이력은 2년·5년 문항에도 함께 걸립니다 */
+      if (M3.indexOf(k) >= 0) {
+        ['y2adm', 'y2op', 'y3', 'y5adm', 'y5op'].forEach((x) => { disc[x] = nextVal; });
+      }
+      if (['y2adm', 'y2op'].indexOf(k) >= 0 && nextVal) { disc.y3 = true; }
+      renderDisclosureTool();
+    }));
+    const cp = $('#disc-copy', host);
+    if (cp) cp.addEventListener('click', () => copy(disclosureText(), '고지 체크 결과를 복사했습니다'));
+    const rs = $('#disc-reset', host);
+    if (rs) rs.addEventListener('click', () => {
+      Object.keys(disc).forEach((k) => { delete disc[k]; });
+      renderDisclosureTool();
+      toast('체크를 비웠습니다');
+    });
   }
 
   let claimTab = 'cancer';
@@ -388,5 +527,5 @@
     if (q) q.addEventListener('input', renderCodes);
   }
 
-  root.BojangTools = { init, renderCodes, renderSilson, renderDisclosureTool, renderClaimDocs, renderPremiumTool };
+  root.BojangTools = { init, renderCodes, renderSilson, renderDisclosureTool, renderClaimDocs, renderPremiumTool, disclosureText, judgeDisclosure };
 })(typeof window !== 'undefined' ? window : globalThis);

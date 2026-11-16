@@ -240,6 +240,7 @@
       await request('/auth/v1/logout', { method: 'POST', token: session.access_token });
     }
     clearSession();
+    consultTable = 'unknown';
     if (root.BojangPlan && root.BojangPlan.hydrate) root.BojangPlan.hydrate(null);
     render();
     return { ok: true, message: '로그아웃했습니다. 이 기기의 상담 기록은 그대로 남아 있습니다.' };
@@ -267,6 +268,14 @@
     await refreshEntitlements();
     /* 기기 브랜드가 기본값 그대로일 때만 서버 브랜드를 내려받습니다(로컬 편집 덮어쓰기 방지) */
     try { await pullBrandSettings({ onlyIfDefault: true }); } catch (e) { /* 오프라인 */ }
+    /* v5.8 — 로그인 직후 최근 상담 기록을 내려받아 PC·모바일 이어보기 */
+    try {
+      const pulled = await pullConsultations(20);
+      if (pulled && pulled.table) consultTable = pulled.table;
+      if (root.dispatchEvent && root.CustomEvent) {
+        root.dispatchEvent(new root.CustomEvent('bojang:cloud', { detail: pulled }));
+      }
+    } catch (e) { /* 오프라인·미적용 테이블은 무시 */ }
   }
 
   /* =========================================================
@@ -320,7 +329,7 @@
     const res = await request('/rest/v1/' + table + (query ? '?' + query : ''), {
       token, headers: { Accept: 'application/json', ...(opts && opts.headers) }
     });
-    return res.ok ? { ok: true, rows: Array.isArray(res.data) ? res.data : [] } : { ok: false, reason: 'rest', message: authError(res) };
+    return res.ok ? { ok: true, rows: Array.isArray(res.data) ? res.data : [] } : { ok: false, reason: 'rest', status: res.status, message: authError(res) };
   }
 
   async function upsertRows(table, row, onConflict) {
@@ -385,7 +394,10 @@
       premium: entry.inputs ? entry.inputs.premium : null,
       silson: entry.inputs ? entry.inputs.silson : null,
       age: entry.inputs ? entry.inputs.age : null,
-      gender: entry.inputs ? entry.inputs.gender : null
+      gender: entry.inputs ? entry.inputs.gender : null,
+      /* v5.8 — consultations 테이블이 없는 프로젝트에서도 다른 기기에서 그대로 열 수 있도록
+         상담 스냅샷을 통째로 담아 둡니다(이미지·주민번호 없음). */
+      entry: entrySnapshot(entry)
     };
     const found = await selectRows('clients', 'select=id&user_id=eq.' + encodeURIComponent(uid) +
       '&display_name=eq.' + encodeURIComponent(display) + '&limit=1');
@@ -399,6 +411,177 @@
     });
     return { ok: r.ok, reason: r.ok ? 'created' : 'rest-error' };
   }
+
+  /* =========================================================
+     v5.8 — 상담 기록 클라우드 동기화 (consultations)
+     · 상담 1건 = consultations 1행. local_id 로 멱등 upsert(id 는 local_id+user 로 만든 결정적 UUID).
+     · 프로젝트에 consultations 테이블이 없으면(PGRST205) clients.payload 로 자동 폴백 —
+       테이블을 아직 적용하지 않아도 PC·모바일 이어보기가 오늘 바로 동작합니다.
+     · 미로그인·오프라인은 조용히 { ok:false, reason:'offline' } 로 끝나고 로컬 저장만 남습니다.
+     ========================================================= */
+  const CONSULT_TABLE = 'consultations';
+  let consultTable = 'unknown';    /* unknown | consultations | clients */
+
+  /** 테이블 미적용(스키마 캐시 없음) 응답인지 */
+  function isMissingTable(res) {
+    if (!res) return false;
+    const msg = String(res.message || res.error || (res.data && (res.data.message || res.data.hint)) || '');
+    return Number(res.status) === 404 || /PGRST20[45]|schema cache|does not exist|Could not find the table/i.test(msg);
+  }
+
+  /** 결정적 UUID — 같은 사용자의 같은 상담 id 는 언제나 같은 uuid (upsert 키) */
+  async function consultUuid(localId) {
+    const uid = (user() && user().id) || '';
+    const seed = 'bojang.consult.v2:' + uid + ':' + String(localId || '');
+    let hex = '';
+    try {
+      if (root.crypto && root.crypto.subtle && root.TextEncoder) {
+        const buf = await root.crypto.subtle.digest('SHA-256', new root.TextEncoder().encode(seed));
+        hex = Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+      }
+    } catch (e) { hex = ''; }
+    if (!hex) {
+      /* https 가 아닌 환경(file://) 폴백 — 4개 FNV-1a 변형으로 32hex */
+      const fnv = (str, seedv) => {
+        let h = seedv >>> 0;
+        for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+        return h.toString(16).padStart(8, '0');
+      };
+      hex = fnv(seed, 0x811c9dc5) + fnv(seed, 0x01000193) + fnv(seed, 0x7fffffff) + fnv(seed + '#', 0x9e3779b9);
+    }
+    const h = hex.slice(0, 32);
+    const variant = ((parseInt(h.slice(16, 18), 16) & 0x3f) | 0x80).toString(16);
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-5' + h.slice(13, 16) + '-' + variant + h.slice(18, 20) + '-' + h.slice(20, 32);
+  }
+
+  /** 로컬 상담 entry → 서버에 남길 스냅샷(이미지·주민번호 없음) */
+  function entrySnapshot(entry) {
+    entry = entry || {};
+    const inp = entry.inputs || {};
+    return {
+      label: String(entry.label || '').slice(0, 40),
+      savedAt: entry.savedAt || new Date().toISOString(),
+      score: entry.score != null ? entry.score : null,
+      letter: entry.letter || null,
+      client: entry.client ? {
+        name: String(entry.client.name || '').slice(0, 20),
+        birth: '', consultant: String(entry.client.consultant || '').slice(0, 20)
+      } : null,
+      contracts: Array.isArray(entry.contracts) ? entry.contracts.slice(0, 30) : [],
+      inputs: {
+        local_id: String(entry.id || ''),
+        age: inp.age != null ? inp.age : null,
+        gender: inp.gender || null,
+        job: inp.job || null,
+        silson: inp.silson || null,
+        premium: inp.premium != null ? inp.premium : null,
+        cov: inp.cov || null,
+        flags: inp.flags || null,
+        family: Array.isArray(inp.family) ? inp.family : [],
+        disc: inp.disc || null
+      }
+    };
+  }
+
+  /** 서버 행 → 앱 상담 entry (불러오기 가능한 형태) */
+  function rowToEntry(row, table) {
+    if (!row) return null;
+    const snap = (table === 'clients')
+      ? ((row.payload && row.payload.entry) || null)
+      : {
+        label: row.label,
+        savedAt: row.consulted_at || row.created_at,
+        score: row.result_json ? row.result_json.score : null,
+        letter: row.result_json ? row.result_json.letter : null,
+        client: row.input_json ? row.input_json.client : null,
+        contracts: row.input_json ? row.input_json.contracts : [],
+        inputs: row.input_json || {}
+      };
+    if (!snap || !snap.inputs || !snap.inputs.cov) return null;
+    const inp = snap.inputs || {};
+    const localId = String(inp.local_id || row.local_id || '').trim() || ('cloud-' + String(row.id || ''));
+    return {
+      id: localId,
+      cloud: true,
+      cloudTable: table,
+      cloudId: row.id || null,
+      label: String(snap.label || row.display_name || (snap.client && snap.client.name) || '고객').slice(0, 40),
+      savedAt: snap.savedAt || row.consulted_at || row.last_contact_at || new Date().toISOString(),
+      score: snap.score != null ? snap.score : (row.payload ? row.payload.score : null),
+      letter: snap.letter || (row.payload ? row.payload.letter : null) || null,
+      client: snap.client || { name: '', birth: '', consultant: '' },
+      contracts: Array.isArray(snap.contracts) ? snap.contracts : [],
+      inputs: {
+        age: inp.age != null ? inp.age : '40',
+        gender: inp.gender || '남',
+        job: inp.job || '1',
+        silson: inp.silson || '4',
+        premium: inp.premium != null ? inp.premium : 0,
+        cov: inp.cov,
+        flags: inp.flags || {},
+        family: Array.isArray(inp.family) ? inp.family : [],
+        disc: inp.disc || {}
+      }
+    };
+  }
+
+  /** 상담 1건을 클라우드에 올립니다 — 실패해도 로컬 저장은 그대로 */
+  async function syncConsultation(entry) {
+    if (!isLive() || !hasSession() || !entry) return { ok: false, reason: 'offline' };
+    const uid = user() && user().id;
+    if (!uid) return { ok: false, reason: 'auth-required' };
+    const snap = entrySnapshot(entry);
+
+    if (consultTable !== 'clients') {
+      const id = await consultUuid(entry.id);
+      const row = {
+        id,
+        user_id: uid,
+        local_id: String(entry.id || ''),
+        label: snap.label || '고객',
+        input_json: Object.assign({}, snap.inputs, { client: snap.client, contracts: snap.contracts }),
+        result_json: { score: snap.score, letter: snap.letter, saved_at: snap.savedAt },
+        consulted_at: snap.savedAt
+      };
+      const res = await upsertRows(CONSULT_TABLE, row, 'id');
+      if (res.ok) { consultTable = 'consultations'; return { ok: true, table: 'consultations', id }; }
+      if (!isMissingTable(res)) return { ok: false, reason: 'rest-error', status: res.status, message: res.message };
+      consultTable = 'clients';   /* 테이블 미적용 — 아래 clients 폴백으로 */
+    }
+
+    const r = await syncClient(entry);
+    return { ok: r.ok, table: 'clients', reason: r.reason, message: r.ok ? '' : 'clients 저장 실패' };
+  }
+
+  /** 최근 상담 기록을 내려받습니다 (다른 기기 이어보기) */
+  async function pullConsultations(limit) {
+    if (!isLive() || !hasSession()) return { ok: false, reason: 'offline', entries: [] };
+    const uid = user() && user().id;
+    if (!uid) return { ok: false, reason: 'auth-required', entries: [] };
+    const n = Math.max(1, Math.min(30, Number(limit) || 20));
+
+    if (consultTable !== 'clients') {
+      const res = await selectRows(CONSULT_TABLE,
+        'select=id,label,local_id,input_json,result_json,consulted_at,created_at&user_id=eq.' + encodeURIComponent(uid) +
+        '&order=consulted_at.desc&limit=' + n);
+      if (res.ok) {
+        consultTable = 'consultations';
+        const entries = res.rows.map((r) => rowToEntry(r, 'consultations')).filter(Boolean);
+        return { ok: true, table: 'consultations', entries };
+      }
+      if (!isMissingTable(res)) return { ok: false, reason: 'rest', status: res.status, message: res.message, entries: [] };
+      consultTable = 'clients';
+    }
+
+    const res2 = await selectRows('clients',
+      'select=id,display_name,payload,last_contact_at&user_id=eq.' + encodeURIComponent(uid) +
+      '&order=last_contact_at.desc&limit=' + n);
+    if (!res2.ok) return { ok: false, reason: 'rest', status: res2.status, message: res2.message, entries: [] };
+    const entries2 = res2.rows.map((r) => rowToEntry(r, 'clients')).filter(Boolean);
+    return { ok: true, table: 'clients', entries: entries2 };
+  }
+
+  function cloudTable() { return consultTable; }
 
   async function pushBrandSettings(brand) {
     if (!isLive() || !hasSession() || !brand) return { ok: false, reason: 'offline' };
@@ -846,6 +1029,7 @@
     signUp, signIn, signOut, refreshSession, refreshEntitlements,
     selectRows, insertRow, upsertRows, patchRow,
     syncClient, pushBrandSettings, pullBrandSettings,
+    syncConsultation, pullConsultations, cloudTable, consultUuid,
     parseCoverageVision, subscribe,
     openAccount, closeAccount, render,
     BETA_NOTICE, LIVE_NOTICE, AUTH_REQUIRED, PRICE, CFG_KEY, SESSION_KEY,

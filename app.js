@@ -1027,6 +1027,61 @@
   }
 
   /* ================= 카톡 ================= */
+  function brandContact() {
+    const b = (window.BojangBrand && window.BojangBrand.get && window.BojangBrand.get()) || {};
+    return {
+      name: b.consultant || state.client.consultant || '',
+      title: b.title || '', phone: b.phone || '', kakao: b.kakao || '', brand: b.name || ''
+    };
+  }
+
+  /* v5.8 — 고객에게 바로 보내는 5~6줄 카톡 요약 (점수·핵심 부족 1~2순위·담당자 연락처) */
+  function kakaoSummary() {
+    const res = state.lastResult;
+    if (!res) return '';
+    const m = res.m;
+    const b = brandContact();
+    const L = [];
+    L.push(`[${m.client.name || '고객'}님 보장분석 요약]`);
+    L.push(`· 종합 보장등급 ${m.letter} · ${m.score}점 (${m.grade.label})`);
+    const needs = (m.needList || []).slice(0, 2);
+    if (needs.length) {
+      L.push(`· 먼저 채울 곳 ${needs.map((x, i) => {
+        const g = (x.gaps || [])[0];
+        const label = g && (g.label || g.key) ? String(g.label || g.key) : x.item.name;
+        return `${i + 1}) ${label}`;
+      }).join(' · ')}`);
+    } else L.push('· 지금 구조는 충분합니다 — 금액 배분만 점검');
+    if (m.client.ageDay) L.push(`· 보험나이 ${m.client.insuranceAge}세 · 상령일 ${m.client.ageDay.label} (D-${m.client.ageDay.days})`);
+    const contact = [b.name, b.phone].filter(Boolean).join(' · ');
+    L.push(`· 담당 ${contact || '상담 설계사'}${b.kakao ? ' · ' + b.kakao : ''}`);
+    L.push('※ 상담 참고용 요약입니다. 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.');
+    return L.join('\n');
+  }
+
+  function openKakaoModal(text) {
+    const modal = $('#kakao-modal');
+    if (!modal) return;
+    $('#kakao-preview').textContent = text;
+    modal.hidden = false;
+    document.body.classList.add('is-modal');
+  }
+
+  function closeKakaoModal() {
+    const modal = $('#kakao-modal');
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove('is-modal');
+  }
+
+  async function copyKakaoSummary() {
+    if (!state.lastResult) { toast('먼저 진단해 주세요'); return ''; }
+    const text = kakaoSummary();
+    await copy(text, '카톡 요약을 복사했습니다 — 카톡에 붙여넣으세요');
+    openKakaoModal(text);
+    return text;
+  }
+
   function kakaoText() {
     const res = state.lastResult;
     if (!res) return '';
@@ -1204,27 +1259,90 @@
     if (lsSet(HKEY, next)) {
       state.history = next; renderHistory();
       toast(window.BojangPlan && window.BojangPlan.unlocked() ? '저장했습니다 (베타 · 최대 30건)' : '무료 체험 · 고객 1명을 저장했습니다 (Pro는 30명)');
-      /* v5.4 — 로그인 + 서버 연결 상태면 클라우드(clients)로도 올립니다 */
+      /* v5.8 — 로그인 + 서버 연결 상태면 클라우드(consultations, 없으면 clients)로도 올립니다 */
       if (window.BojangBackend && window.BojangBackend.isLive && window.BojangBackend.isLive()
           && window.BojangBackend.hasSession && window.BojangBackend.hasSession()) {
-        window.BojangBackend.syncClient(entry).then((r) => {
-          if (r && r.ok) toast('클라우드에도 저장했습니다 — 다른 기기에서 불러올 수 있습니다');
+        const B = window.BojangBackend;
+        const push = B.syncConsultation ? B.syncConsultation(entry) : B.syncClient(entry);
+        push.then((r) => {
+          if (!r || !r.ok) return;
+          toast(r.table === 'clients'
+            ? '클라우드에도 저장했습니다 — 다른 기기에서 불러올 수 있습니다'
+            : '클라우드(상담 기록)에도 저장했습니다 — PC·모바일에서 이어보기');
+          updateCloudBadge();
         }).catch(() => {});
       }
     } else toast('저장 공간을 쓸 수 없습니다');
   }
 
+  /* ================= v5.8 — 클라우드 상담 기록 이어보기 ================= */
+  function cloudReady() {
+    const B = window.BojangBackend;
+    return !!(B && B.isLive && B.isLive() && B.hasSession && B.hasSession());
+  }
+
+  function updateCloudBadge(table) {
+    const list = $$('.cloud-state');
+    if (!list.length) return;
+    const t = table || (window.BojangBackend && window.BojangBackend.cloudTable ? window.BojangBackend.cloudTable() : '');
+    const text = cloudReady()
+      ? (t === 'clients' ? '클라우드 연결 · 기존 고객 표에 저장' : '클라우드 연결 · 상담 기록 동기화')
+      : '이 기기에만 저장 (로그인하면 클라우드 동기화)';
+    list.forEach((el) => { el.textContent = text; el.dataset.tone = cloudReady() ? 'ok' : 'mute'; });
+  }
+
+  /* 서버에서 온 상담을 로컬 목록에 합칩니다 — 로컬에 이미 있는 id 는 로컬 것을 유지 */
+  function ingestCloud(result, opts) {
+    opts = opts || {};
+    if (!result || !result.ok) return { ok: false, added: 0 };
+    const entries = (result.entries || []).filter((e) => e && e.inputs && e.inputs.cov);
+    const byId = {};
+    state.history.forEach((h) => { byId[h.id] = h; });
+    let added = 0;
+    entries.forEach((e) => {
+      const cur = byId[e.id];
+      if (!cur) { byId[e.id] = e; added++; return; }
+      if (cur.cloud) byId[e.id] = Object.assign({}, cur, { cloud: true, cloudTable: e.cloudTable, cloudId: e.cloudId });
+    });
+    const next = Object.keys(byId).map((k) => byId[k])
+      .sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || '')))
+      .slice(0, historyMax());
+    state.history = next;
+    lsSet(HKEY, next);
+    renderHistory();
+    updateCloudBadge(result.table);
+    if (added && !opts.silent) toast(`클라우드에서 상담 ${added}건을 불러왔습니다`);
+    if (opts.manual && !added) toast('클라우드 기록이 이미 이 기기에 있습니다');
+    return { ok: true, added };
+  }
+
+  async function syncHistoryFromCloud(opts) {
+    opts = opts || {};
+    const B = window.BojangBackend;
+    if (!B || !B.pullConsultations) { if (opts.manual) toast('클라우드 동기화를 쓸 수 없습니다'); return { ok: false, added: 0 }; }
+    if (!cloudReady()) {
+      if (opts.manual) toast('로그인하면 다른 기기의 상담 기록을 불러옵니다');
+      updateCloudBadge();
+      return { ok: false, added: 0, reason: 'offline' };
+    }
+    const btn = $('#btn-cloud-sync');
+    if (btn) { btn.disabled = true; btn.classList.add('is-busy'); }    let r = { ok: false, entries: [] };
+    try { r = await B.pullConsultations(20); } catch (e) { r = { ok: false, entries: [] }; }
+    if (btn) { btn.disabled = false; btn.classList.remove('is-busy'); }
+    if (!r.ok) { if (opts.manual) toast('클라우드에서 불러오지 못했습니다'); return { ok: false, added: 0 }; }
+    return ingestCloud(r, opts);
+  }
+
   function renderHistory() {
     const hosts = $$('[id="history-list"], [id="history-list2"]');
-    if (!hosts.length) return;
-    const html = !state.history.length
+    if (!hosts.length) return;    const html = !state.history.length
       ? `<p class="empty">저장된 상담이 없습니다. 진단 후 "상담 저장"을 누르면 이 기기에만 기록됩니다.</p>`
       : state.history.map((h) => {
         const d = new Date(h.savedAt);
         const when = `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
         return `
-        <div class="hist" data-id="${h.id}">
-          <div class="hist-main"><strong>${esc(h.label)}</strong>
+        <div class="hist${h.cloud ? ' is-cloud' : ''}" data-id="${h.id}">
+          <div class="hist-main"><strong>${esc(h.label)}${h.cloud ? '<span class="hist-cloud" title="클라우드에서 불러온 상담">☁</span>' : ''}</strong>
             <span>${when} · ${h.inputs.age}대 ${h.inputs.gender} · 실손 ${SILSON_LABEL[h.inputs.silson]}</span></div>
           <span class="hist-score">${h.score}<i>점</i></span>
           <button type="button" class="hist-load" data-load="${h.id}">불러오기</button>
@@ -1254,6 +1372,12 @@
         });
       });
     });
+    const subText = (cloudReady() ? '기기 + 클라우드 저장' : '이 기기에만 저장') + ' · 최대 ' + historyMax() + '건';
+    const sub = $('#result-hist-sub');
+    if (sub) sub.textContent = subText;
+    const hsub = $('#home-hist-sub');
+    if (hsub) hsub.textContent = subText;
+    updateCloudBadge();
     renderHome();
   }
 
@@ -1438,6 +1562,22 @@
       if (it.field === 'silsonGen') {
         const g = String(it.value);
         if (['none', '1', '2', '3', '4', '5'].indexOf(g) >= 0) { state.silson = g; applied++; }
+        return;
+      }
+      if (it.kind === 'custom') {
+        const area = ['cancer', 'brain', 'heart', 'surgery', 'care'].indexOf(String(it.area)) >= 0 ? String(it.area) : 'brain';
+        const box = state.cov.custom || (state.cov.custom = { cancer: [], brain: [], heart: [], surgery: [], care: [] });
+        if (!Array.isArray(box[area])) box[area] = [];
+        const name = String(it.name || it.label || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+        const amount = Math.max(0, Math.round(Number(it.value) || 0));
+        if (!name) return;
+        const exist = box[area].find((x) => String(x.name || '').trim() === name);
+        if (exist) exist.amount = amount;
+        else box[area].push({
+          id: 'cu_' + area + '_' + Date.now() + '_' + box[area].length,
+          name, amount, mode: it.mode === 'individual' ? 'individual' : 'bundle', note: '사진·PDF 인식'
+        });
+        applied++;
         return;
       }
       if (it.kind === 'bool' || it.value === true) {
@@ -2423,7 +2563,26 @@
       toast('진단을 완료했습니다');
     });
 
-    $('#btn-kakao').addEventListener('click', () => copy(kakaoText(), '카톡 요약을 복사했습니다'));
+    $('#btn-kakao').addEventListener('click', () => { copyKakaoSummary(); });
+    const kakaoCopy = $('#kakao-copy');
+    if (kakaoCopy) kakaoCopy.addEventListener('click', () => { copy(kakaoSummary(), '카톡 요약을 복사했습니다 — 카톡에 붙여넣으세요'); });
+    const kakaoClose = $('#kakao-close');
+    if (kakaoClose) kakaoClose.addEventListener('click', closeKakaoModal);
+    const kakaoModal = $('#kakao-modal');
+    if (kakaoModal) kakaoModal.addEventListener('click', (e) => { if (e.target.id === 'kakao-modal') closeKakaoModal(); });
+    document.addEventListener('keydown', (e) => {
+      const km = $('#kakao-modal');
+      if (e.key === 'Escape' && km && !km.hidden) closeKakaoModal();
+    });
+    const cloudBtn = $('#btn-cloud-sync');
+    if (cloudBtn) cloudBtn.addEventListener('click', () => syncHistoryFromCloud({ manual: true }));
+    $$('[data-cloud-sync]').forEach((b) => {
+      if (b.id === 'btn-cloud-sync') return;
+      b.addEventListener('click', () => syncHistoryFromCloud({ manual: true }));
+    });
+    /* backend 는 window 로 이벤트를 쏩니다 — document 가 아니라 window 에서 받아야 합니다 */
+    window.addEventListener('bojang:cloud', (e) => { ingestCloud(e.detail, { silent: true }); });
+    if (cloudReady()) setTimeout(() => syncHistoryFromCloud({ silent: true }), 900);
     $('#btn-save').addEventListener('click', saveConsult);
     $('#btn-reset').addEventListener('click', () => { $('#reset-modal').hidden = false; });
     $('#rm-cancel').addEventListener('click', () => { $('#reset-modal').hidden = true; });

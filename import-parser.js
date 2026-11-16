@@ -589,9 +589,11 @@
 
     /* --- 간병 --- */
     { field: 'care.nDaily', label: '요양병원 간병인 사용일당', group: '간병', p: 93,
+      exclude: /치매|상해/,
       kw: /(요양\s*병원[^\n]{0,10}간병|요양\s*간병)/ },
     { field: 'care.daily', label: '일반병원 간병인 사용일당', group: '간병', p: 86,
-      exclude: /요양/,
+      /* v5.8 — 중증치매간병비·상해간병일당·장기요양간병비는 '직접 기재' 담보로 보냅니다 */
+      exclude: /요양|치매|상해|장기\s*요양|중증/,
       kw: /(간병\s*인?[^\n]{0,10}(?:일당|사용|비)|간병일당|간병비)/ },
 
     /* --- 기본 정보 --- */
@@ -600,6 +602,70 @@
     { field: 'silsonGen', label: '실손 세대', group: '기본', p: 99, type: 'silson',
       kw: /실손[^\n]{0,12}?(\d)\s*세대|(\d)\s*세대\s*(?:실손|의료비)/ }
   ].sort((a, b) => b.p - a.p);
+
+  /* =========================================================
+     v5.8 — 증권 담보 '직접 기재(custom)' 인식
+     고정 칸에 없는 특약(예: 특정순환계질환(3~5종) 주요치료비)을 사진·PDF·텍스트 인식
+     결과에서 그대로 잡아 state.cov.custom[영역] 으로 넘깁니다.
+     kind:'custom' · area:'cancer|brain|heart|surgery|care' · mode:'bundle|individual'
+     ========================================================= */
+  const CUSTOM_GROUP = { cancer: '암', brain: '뇌', heart: '심장', surgery: '수술', care: '간병' };
+  const CUSTOM_RULES = [
+    { name: '특정순환계질환(3~5종) 주요치료비', area: 'auto', mode: 'bundle',
+      kw: /(특정\s*순환계|순환계\s*질환[^\n]{0,14}주요\s*치료비|3\s*[~\-–]\s*5\s*종[^\n]{0,12}주요\s*치료비)/ },
+    { name: '표적항암약물허가치료비', area: 'cancer', mode: 'individual',
+      kw: /(표적\s*항암\s*약물|표적항암\s*허가|표적\s*항암\s*치료비)/ },
+    { name: '다빈치로봇수술비', area: 'cancer', mode: 'individual',
+      kw: /(다빈치|로봇\s*수술|로봇\s*보조)/ },
+    { name: '중증치매간병비', area: 'care', mode: 'individual',
+      kw: /(중증\s*치매[^\n]{0,8}간병|치매\s*간병)/ },
+    { name: '관절/척추 수술비', area: 'surgery', mode: 'individual',
+      kw: /(관절|척추|디스크)[^\n]{0,10}수술/ },
+    { name: '상해간병일당', area: 'care', mode: 'individual',
+      kw: /상해[^\n]{0,8}간병/ },
+    { name: '장기요양간병비', area: 'care', mode: 'individual',
+      kw: /(장기\s*요양[^\n]{0,8}간병|요양\s*등급[^\n]{0,8}간병)/ },
+    { name: '뇌 중환자실입원일당', area: 'brain', mode: 'individual',
+      kw: /뇌[^\n]{0,8}중환자실/ },
+    { name: '심장 중환자실입원일당', area: 'heart', mode: 'individual',
+      kw: /심장[^\n]{0,8}중환자실/ }
+  ];
+
+  /* 표준 규칙이 이미 먹은 줄은 건드리지 않습니다(이중 반영 방지) */
+  function parseCustomItems(src, usedSegs) {
+    const out = [];
+    const segments = splitSegments(src);
+    let section = null;
+    usedSegs = usedSegs || { has: () => false, add: () => {} };
+    for (const seg of segments) {
+      const amounts = parseAmounts(seg);
+      const sec = detectSection(seg);
+      const isHeading = amounts.length === 0 && seg.replace(/[\[\](){}<>]/g, '').trim().length <= 24 && !!sec;
+      if (isHeading) { section = sec; continue; }
+      if (!amounts.length || usedSegs.has(seg)) continue;
+      const areaHint = sec || section;
+      for (const rule of CUSTOM_RULES) {
+        const m = rule.kw.exec(seg);
+        if (!m) continue;
+        const a = chooseAmount(amounts, m.index, m.index + m[0].length);
+        if (!a) continue;
+        /* 뇌·심장 공통 담보명은 표 머리글에서 영역을 읽고, 모르면 뇌로 둡니다 */
+        const area = rule.area === 'auto' ? (areaHint === 'heart' ? 'heart' : 'brain') : rule.area;
+        if (out.some((x) => x.name === rule.name && x.area === area)) continue;
+        out.push({
+          field: 'custom.' + area, label: rule.name, group: CUSTOM_GROUP[area],
+          value: a.value, unit: '만원',
+          snippet: snip(seg, m.index, m.index + m[0].length),
+          apply: true, kind: 'custom', area, name: rule.name, mode: rule.mode,
+          note: rule.area === 'auto' && areaHint !== 'heart'
+            ? '뇌·심장 공통 담보명 — 심장 쪽에도 같은 담보가 있으면 5대 담보 입력에서 직접 추가하세요.' : null
+        });
+        usedSegs.add(seg);
+        break;
+      }
+    }
+    return out;
+  }
 
   function detectSection(line) {
     const s = line.replace(/[\[\](){}<>]/g, '').replace(/\s+/g, '');
@@ -660,6 +726,7 @@
     const segments = splitSegments(src);
     const found = new Map();
     const items = [];
+    const usedSegs = { set: Object.create(null), has(seg) { return !!this.set[seg]; }, add(seg) { this.set[seg] = true; } };
     let section = null;
     let premium = null;
     let silson = null;
@@ -707,6 +774,7 @@
               silson = gen;
               accepted.push(cand);
               found.set(rule.field, true);
+              usedSegs.add(seg);
               items.push({ field: rule.field, label: rule.label, group: rule.group, value: gen, unit: '세대', snippet: snip(seg, cand.start, cand.end), apply: true, kind: 'silson' });
             }
           }
@@ -715,6 +783,7 @@
         if (rule.type === 'bool') {
           accepted.push(cand);
           found.set(rule.field, true);
+          usedSegs.add(seg);
           items.push({ field: rule.field, label: rule.label, group: rule.group, value: true, unit: '', snippet: snip(seg, cand.start, cand.end), apply: true, kind: 'bool' });
           continue;
         }
@@ -722,6 +791,7 @@
         if (!a) continue;
         accepted.push(cand);
         found.set(rule.field, true);
+        usedSegs.add(seg);
         items.push({
           field: rule.field, label: rule.label, group: rule.group, value: a.value, unit: '만원',
           snippet: snip(seg, cand.start, cand.end), apply: rule.apply !== false, note: rule.note || null, kind: 'cov'
@@ -750,6 +820,9 @@
         }
       }
     }
+
+    /* v5.8 — 직접 기재(증권 단골 특약) 인식 결과를 뒤에 붙입니다 */
+    parseCustomItems(src, usedSegs).forEach((x) => items.push(x));
 
     const order = ['기본', '암', '뇌', '심장', '수술', '간병'];
     items.sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group));
@@ -910,6 +983,8 @@
     VISION_ENDPOINT,
     extractPdfText,
     parseCoverageText,
+    parseCustomItems,
+    CUSTOM_RULES,
     parseAmounts,
     setByPath,
     SAMPLE_TEXT,

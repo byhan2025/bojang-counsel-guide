@@ -116,7 +116,7 @@ def main():
             # 1. 중립 기본값 — 서비스명·부제·네이비·특정 브랜드 미노출
             # =========================================================
             title = page.title()
-            check("타이틀 v5.2 이상 · 중립 서비스명", "보장분석 라이프 리포트" in title and any(v in title for v in ("v5.2", "v5.3", "v5.4", "v5.5", "v5.6", "v5.7")), title)
+            check("타이틀 v5.2 이상 · 중립 서비스명", "보장분석 라이프 리포트" in title and any(v in title for v in ("v5.2", "v5.3", "v5.4", "v5.5", "v5.6", "v5.7", "v5.8")), title)
             h1 = page.inner_text(".brand-text h1").replace("\n", "")
             check("헤더 기본 브랜드 = 보장분석 라이프 리포트", h1 == "보장분석 라이프 리포트", h1)
             sub = page.inner_text(".brand-text p")
@@ -424,7 +424,7 @@ def main():
             # 10. 산출물 · 서비스워커 · 단일 HTML
             # =========================================================
             sw = open(os.path.join(ROOT, "sw.js"), encoding="utf-8").read()
-            check("서비스워커 캐시 v5.2 이상", any(v in sw for v in ("bojang-guide-v5.2", "bojang-guide-v5.3", "bojang-guide-v5.4", "bojang-guide-v5.5", "bojang-guide-v5.6", "bojang-guide-v5.7")), sw.strip().splitlines()[2] if sw else sw)
+            check("서비스워커 캐시 v5.2 이상", any(v in sw for v in ("bojang-guide-v5.2", "bojang-guide-v5.3", "bojang-guide-v5.4", "bojang-guide-v5.5", "bojang-guide-v5.6", "bojang-guide-v5.7", "bojang-guide-v5.8")), sw.strip().splitlines()[2] if sw else sw)
             doc = open(os.path.join(ROOT, "docs", "backend-architecture.md"), encoding="utf-8").read()
             check("백엔드 설계서 요금제 5,000/50,000", "5,000원/월" in doc and "50,000원/년" in doc and "29,000원" not in doc, [k for k in ("5,000원/월", "50,000원/년") if k in doc])
             single = os.path.join(ROOT, "dist", "bojang-guide.single.html")

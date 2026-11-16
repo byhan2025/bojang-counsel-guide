@@ -216,7 +216,8 @@
     }
     const vy = cy + (b.kakao ? 23 : 12);
     const vh = Math.max(30, y + h - 12 - vy);
-    const qs = 40;
+    /* v5.8 — 40 → 46pt: 인쇄·모바일 스캔성 강화(카드 높이는 166 으로 함께 키워 넘침 0) */
+    const qs = 46;
     const hasQR = !!(qrInfo(m) && root.BojangQR);
     const vw = hasQR ? w - 24 - qs - 16 : w - 24;
     s.rect(x + 12, vy, vw, vh, { fill: C.tint2, r: 5, stroke: C.tintLine });
@@ -924,7 +925,7 @@
       s.text(`${m.grade.label} · ${m.counts.enough}개 충분`, s.ML + 48, 266, { size: 6.2, weight: 600, color: C.heroInk2 });
 
       /* 담당자 명함 */
-      nameCard(s, s.W - s.MR - 196, 152, 196, m, { h: 156 });
+      nameCard(s, s.W - s.MR - 196, 152, 196, m, { h: 166 });
 
       let y = 336;
       s.text('이 리포트에서 확인하실 수 있습니다', s.ML, y, { size: 11.6, weight: 800, color: C.navy });
