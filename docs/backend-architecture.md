@@ -1,4 +1,4 @@
-# 보장분석 상담 가이드 v5.1 — 로그인 · 결제 백엔드 설계서
+# 보장분석 라이프 리포트 v5.2 — 로그인 · 결제 백엔드 설계서
 
 > 대상: `apps/bojang-guide/` (PWA · Vanilla JS) 의 다음 단계인 **SaaS 상용화**.
 > 범위: 카카오/구글/이메일 로그인, Free/Pro 권한, 월·연 정기결제, 고객·상담 데이터 동기화, 화이트라벨 저장, PDF 유료 권한 검증.
@@ -481,7 +481,7 @@ Supabase 리전은 **ap-northeast-2(서울)** 를 선택한다. 부득이 싱가
 
 ---
 
-## 9. 프론트엔드 변경점 (v5.1 → 상용)
+## 9. 프론트엔드 변경점 (v5.2 베타 → 상용)
 
 1. `monetize.js`의 `plan` 변수를 `BojangPlan.hydrate(entitlements)`로 교체. 데모 스위치는 `?demo=1`에서만 노출.
 2. `saveConsult()`: 서버 저장 성공 시 로컬 캐시 갱신. 402 응답 → `openPaywall('save2')`.
