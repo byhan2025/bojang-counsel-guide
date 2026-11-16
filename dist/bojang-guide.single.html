@@ -3727,7 +3727,7 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 .app-foot-details .app-foot{margin-top:6px;}
 
 </style>
-<!-- build 2431282ba092 · protected=true -->
+<!-- build 9e4a2b25a48e · protected=true -->
 </head>
 <body>
 
@@ -18950,9 +18950,9 @@ const PLAN_FRONT = {
   const won = (n) => Number(n || 0).toLocaleString('ko-KR');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-  const NOTICE = '이름·주민등록번호 등 민감정보는 가리고 담보표만 촬영해 주세요. 촬영된 사진은 기기·서버 어디에도 저장되지 않고 분석 직후 메모리에서 즉시 파기됩니다.';
+  const NOTICE = '이름·주민등록번호 등 민감정보는 가리고 담보표만 촬영해 주세요. 촬영된 사진은 기기와 자체 Supabase DB에 저장되지 않고 브라우저 메모리에서 즉시 파기됩니다. AI 인식 실행 시에는 외부 AI API(Google Gemini 등)로 전송되며 공급자 정책이 적용됩니다.';
   const BETA_NOTE = '현재 정적 베타 버전에서는 AI 비전 서버 연결 전이라 사진 자동 숫자 추출이 제한됩니다. 3단계 백엔드 연동 시 95% 이상 자동 인식되며, 지금은 PDF 파일 올리기 또는 텍스트 붙여넣기·수기 보완을 함께 사용하실 수 있습니다.';
-  const BADGE = '원본 사진 메모리 파기 완료 ✓ (저장 기록 0건)';
+  const BADGE = '앱·자체 서버 미저장 · 메모리 파기 완료 ✓';
 
   let ctx = null;
   let lastResult = null;

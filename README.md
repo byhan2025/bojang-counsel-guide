@@ -234,8 +234,8 @@ v5.6의 "증권 담보 직접 기재" 위에, 현장에서 바로 체감되는 �
 
 ### 2) 사진 즉시 촬영 — 앨범 선택 없이, 찍고 바로 파기
 - 촬영 버튼은 `<input type="file" accept="image/*" capture="environment">` 로 **카메라를 바로 호출**하며, 앨범 선택 단계가 없습니다. `getUserMedia` 기반 **앱 내 카메라**(전/후면)도 대안으로 제공합니다.
-- 촬영 전 보안 고지: **“이름·주민등록번호 등 민감정보는 가리고 담보표만 촬영해 주세요. 촬영된 사진은 기기·서버 어디에도 저장되지 않고 분석 직후 메모리에서 즉시 파기됩니다.”**
-- 처리 후 `URL.revokeObjectURL` · canvas `width=height=0` · ImageBitmap `close()` · Blob 참조 해제를 수행하고 **`원본 사진 메모리 파기 완료 ✓ (저장 기록 0건)`** 배지를 표시합니다. `localStorage` · `sessionStorage` · `IndexedDB` · 서버 업로드는 **한 번도 쓰지 않습니다**(테스트로 검증).
+- 촬영 전 보안 고지: **“이름·주민등록번호 등 민감정보는 가리고 담보표만 촬영해 주세요. 촬영된 사진은 기기와 자체 Supabase DB에 저장되지 않고 브라우저 메모리에서 즉시 파기됩니다. AI 인식 실행 시에는 외부 AI API(Google Gemini 등)로 전송되며 공급자 정책이 적용됩니다.”**
+- 처리 후 `URL.revokeObjectURL` · canvas `width=height=0` · ImageBitmap `close()` · Blob 참조 해제를 수행하고 **`앱·자체 서버 미저장 · 메모리 파기 완료 ✓`** 배지를 표시합니다. 로컬 저장소(`localStorage` · `sessionStorage` · `IndexedDB`)와 자체 DB에는 사진을 저장하지 않으며, v5.4 이후 AI 비전 인식을 실행한 경우에만 Supabase Edge Function(`parse-coverage-vision`)을 통해 외부 AI API로 전송됩니다.
 - 정적 베타에서는 AI 비전 서버가 없으므로 자동 숫자 추출을 하지 않고, **해상도·대비 전처리 결과와 정직한 한계 안내**를 보여줍니다. 3단계 백엔드 연결용 **`parseWithVisionBackend(blob, endpoint)`** 어댑터를 `import-parser.js`에 준비했습니다(`VISION_ENDPOINT` 값만 채우면 동작).
 
 ### 3) 보장분석 PDF · 텍스트 로컬 추출 (`import-parser.js`)
