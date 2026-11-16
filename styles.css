@@ -2979,3 +2979,110 @@ body{
 @media print{
   #view-capture,#view-import,#input-hub{display:none!important;}
 }
+
+/* =========================================================
+   v5.4 — 계정 / 구독 · 서버 연결 (backend.js)
+   ========================================================= */
+
+/* 헤더 고객 스트립의 계정 버튼 */
+.acct-pill{
+  flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;
+  border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.12);
+  color:#fff;font-size:10px;font-weight:800;letter-spacing:-0.01em;
+  padding:3px 9px 3px 7px;border-radius:999px;max-width:110px;
+}
+.acct-pill b{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70px;}
+.acct-pill:active{background:rgba(255,255,255,.22);}
+@media (max-width:380px){ .acct-pill b{display:none;} .acct-pill{padding:3px 7px;} }
+
+/* 메인 허브 계정/구독 버튼 */
+.acct-hub-btn{background:linear-gradient(160deg,#FFFFFF,#F2F7FC);}
+.acct-hub-btn .hb-ico{color:var(--point);}
+
+/* 모달 */
+.acct-modal .acct-card{
+  max-width:430px;max-height:88vh;overflow-y:auto;position:relative;padding:22px 18px 16px;
+  -webkit-overflow-scrolling:touch;
+}
+.acct-card strong{display:block;margin-top:3px;font-size:17px;line-height:1.32;padding-right:26px;}
+
+.acct-server{margin-top:11px;padding:9px 10px;border-radius:12px;background:#F6FAFD;border:1px solid var(--line);}
+.acct-server-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.acct-chip{
+  display:inline-flex;align-items:center;gap:4px;flex:0 1 auto;min-width:0;margin-right:auto;
+  font-size:10px;font-weight:800;border-radius:999px;padding:4px 9px;letter-spacing:-0.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.acct-chip.is-beta{background:#FDF3DE;color:#8a5a06;border:1px solid #f0dcae;}
+.acct-chip.is-live{background:#E6F7F1;color:#0a6b57;border:1px solid #bfe9db;}
+.acct-chip.is-fail{background:#FDECEC;color:#a32620;border:1px solid #f3c9c6;}
+.acct-chip.is-check{background:#EEF3F9;color:#41597a;border:1px solid #d8e3ef;}
+.acct-mini{
+  flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--ink-2);
+  font-size:9.5px;font-weight:800;padding:4px 7px;border-radius:8px;white-space:nowrap;
+}
+.acct-server-note{margin-top:7px;font-size:10px;line-height:1.55;color:var(--ink-2);word-break:keep-all;}
+
+.acct-dev-panel{margin-top:9px;padding:10px;border-radius:12px;background:#FBFDFF;border:1px dashed var(--line);}
+.acct-label{display:block;margin:6px 0 3px;font-size:9.5px;font-weight:800;letter-spacing:.04em;color:var(--muted);}
+.acct-label:first-child{margin-top:0;}
+.acct-input{
+  width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 10px;
+  font-size:11.5px;color:var(--navy-800);background:#fff;
+}
+.acct-input:focus{outline:none;border-color:var(--point);box-shadow:0 0 0 3px rgba(58,110,165,.12);}
+.acct-dev-row{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;}
+.acct-btn{
+  flex:1 1 auto;min-width:0;border:1px solid var(--line);border-radius:11px;
+  padding:10px 12px;font-size:11.5px;font-weight:800;letter-spacing:-0.01em;background:#fff;color:var(--ink-2);
+}
+.acct-btn.primary{
+  background:linear-gradient(135deg,var(--wine),#7A3F45);border-color:transparent;color:#fff;
+  box-shadow:0 12px 24px -18px rgba(58,38,40,.9);
+}
+.acct-btn.ghost{background:#F4F7FB;}
+.acct-btn:disabled{opacity:.6;box-shadow:none;}
+
+.acct-signedout{margin-top:12px;}
+.acct-tabs{display:flex;gap:5px;padding:3px;border-radius:11px;background:#F1F5FA;border:1px solid var(--line);}
+.acct-tab{
+  flex:1;border:0;background:none;color:var(--ink-2);
+  font-size:11px;font-weight:800;padding:8px;border-radius:8px;
+}
+.acct-tab.is-on{background:#fff;color:var(--navy-800);box-shadow:0 2px 6px rgba(0,0,0,.08);}
+.acct-form{margin-top:9px;display:grid;}
+.acct-form .acct-btn{margin-top:11px;}
+.acct-form .acct-label span{font-weight:700;color:var(--muted);letter-spacing:0;}
+
+.acct-signedin{margin-top:12px;}
+.acct-user{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:12px;background:var(--blush);border:1px solid var(--line);}
+.acct-avatar{
+  flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  background:#fff;border:1px solid var(--line);font-size:14px;
+}
+.acct-user-main{flex:1;min-width:0;display:grid;}
+.acct-user-main b{font-size:11.5px;color:var(--navy-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.acct-user-main em{font-style:normal;font-size:9.5px;color:var(--muted);margin-top:1px;}
+
+.acct-sub{margin-top:13px;padding-top:12px;border-top:1px solid var(--line-2);}
+.acct-sub-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+.acct-sub-head b{font-size:12.5px;color:var(--navy-800);}
+.acct-sub-head span{font-size:9.5px;font-weight:800;color:var(--point);background:var(--blush);border-radius:999px;padding:2px 8px;}
+.acct-plans{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px;}
+.acct-plan{
+  text-align:left;border:1px solid var(--line);border-radius:12px;background:#fff;
+  padding:9px 10px;display:grid;gap:3px;
+}
+.acct-plan.is-on{border-color:var(--point);background:var(--blush);box-shadow:0 0 0 3px rgba(58,110,165,.1);}
+.acct-plan-top{display:flex;align-items:baseline;justify-content:space-between;gap:5px;}
+.acct-plan-top b{font-size:10.5px;font-weight:800;color:var(--ink);}
+.acct-plan-top i{font-style:normal;font-size:12px;font-weight:800;color:var(--point);white-space:nowrap;}
+.acct-plan-note{font-size:8.8px;font-weight:600;color:var(--muted);line-height:1.35;}
+.acct-sub .acct-btn{margin-top:9px;width:100%;}
+.acct-note{margin-top:7px;font-size:8.8px;line-height:1.5;color:var(--muted);word-break:keep-all;}
+.acct-msg{margin-top:10px;font-size:10.5px;line-height:1.55;border-radius:9px;padding:7px 9px;background:#F6FAFD;color:var(--ink-2);word-break:keep-all;}
+.acct-msg:empty{display:none;}
+.acct-msg.tone-ok{background:#E9F8F2;color:#0a6b57;}
+.acct-msg.tone-warn{background:#FDECEC;color:#a32620;}
+.acct-msg.tone-info{background:#FDF3DE;color:#8a5a06;}
+.acct-msg.tone-work{background:#EEF3F9;color:#41597a;}

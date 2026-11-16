@@ -247,9 +247,9 @@ def main():
             # 1. 버전 · 입력 방식 허브
             # =========================================================
             title = page.title()
-            check("타이틀 v5.3", "v5.3" in title and "보장분석 라이프 리포트" in title, title)
-            check("메인 eyebrow V5.3", "V5.3" in page.inner_text(".hh-eyebrow"), page.inner_text(".hh-eyebrow"))
-            check("메인 버전 표기", "v5.3" in page.inner_text(".hh-ver"), page.inner_text(".hh-ver"))
+            check("타이틀 v5.3 이상", ("v5.3" in title or "v5.4" in title) and "보장분석 라이프 리포트" in title, title)
+            check("메인 eyebrow V5.3 이상", ("V5.3" in page.inner_text(".hh-eyebrow") or "V5.4" in page.inner_text(".hh-eyebrow")), page.inner_text(".hh-eyebrow"))
+            check("메인 버전 표기", ("v5.3" in page.inner_text(".hh-ver") or "v5.4" in page.inner_text(".hh-ver")), page.inner_text(".hh-ver"))
             check("새 상담 시작 = 입력 방식 허브", "새 상담 시작" in page.inner_text("#btn-start-consult")
                   and page.get_attribute("#btn-start-consult", "data-inputhub") == "1", page.inner_text("#btn-start-consult"))
 
@@ -540,7 +540,7 @@ def main():
             # =========================================================
             single = os.path.join(ROOT, "dist", "bojang-guide.single.html")
             html = open(single, encoding="utf-8").read()
-            check("단일 HTML: v5.3 모듈 포함", "BojangInputHub" in html and "BojangImport" in html and "v5.3" in html, len(html) // 1024)
+            check("단일 HTML: v5.3 이상 모듈 포함", "BojangInputHub" in html and "BojangImport" in html and ("v5.3" in html or "v5.4" in html), len(html) // 1024)
             check("단일 HTML: 외부 스크립트 참조 0", '<script src="./' not in html and '<script src="http' not in html, "src=./" in html)
             check("단일 HTML: 외부 스타일시트 참조 0", '<link rel="stylesheet" href="./' not in html, "stylesheet" in html)
             ctx2 = browser.new_context(viewport={"width": 430, "height": 932})

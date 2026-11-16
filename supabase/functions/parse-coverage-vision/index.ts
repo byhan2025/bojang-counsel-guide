@@ -1,0 +1,296 @@
+// =====================================================================
+// 보장분석 라이프 리포트 v5.4 — AI 비전 프록시 (parse-coverage-vision)
+//
+// POST /functions/v1/parse-coverage-vision     (Authorization: Bearer <user JWT>)
+//   Content-Type: multipart/form-data
+//     image : image/jpeg|png|webp  (클라이언트 전처리본 · 최대 10MB)
+//     hint? : string               (예: "암/뇌/심장 담보표")
+//   또는 Content-Type: application/json
+//     { "image": "data:image/jpeg;base64,...", "hint": "..." }
+//
+// 200 → {
+//   "ok": true, "schema": "bojang.coverage.v1",
+//   "text": "일반암 진단비 5,000만원\n...",   // v5.3 parseCoverageText() 그대로 재파싱
+//   "items": [], "premium": null, "silson": null,
+//   "model": "gpt-4o-mini", "ms": 1840, "persisted": false, "stored_bytes": 0
+// }
+// 4xx → { "ok": false, "error": "too_large" | "not_coverage_table" | "rate_limited" | "unauthorized" }
+//
+// 휘발성 보장(설계서 §15-2):
+//   · 이미지를 Storage·DB·로그 어디에도 저장하지 않습니다. 메모리에서 base64 로 바꿔 모델에 보낸 뒤
+//     바이트 버퍼·base64 문자열 참조를 즉시 null 로 끊습니다.
+//   · 응답 헤더 Cache-Control: no-store — CDN·프록시 캐시 금지.
+//   · 감사 로그에는 사용자·시각·모델·소요시간·바이트 수만 남기고 이미지/인식 원문은 남기지 않습니다.
+// =====================================================================
+import { fail, json, preflight, sha256Hex } from "../_shared/http.ts";
+import { audit, env, requireUser } from "../_shared/supabase.ts";
+
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_TEXT_CHARS = 20000;
+const RATE_LIMIT_PER_MIN = 6;
+const ALLOWED_MIME = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
+
+const PROMPT = [
+  "당신은 한국 보험 보장분석표(증권 요약표) 판독기입니다.",
+  "이미지에 실제로 보이는 담보명과 금액만 줄 단위로 옮기세요.",
+  "규칙:",
+  "1) 추측하지 마세요. 보이지 않는 담보·금액은 만들지 마세요.",
+  "2) 각 줄은 '담보명 + 금액' 형태로, 금액은 이미지에 적힌 단위(만원/원) 그대로 적으세요.",
+  "3) 월 보험료와 실손 세대가 보이면 각각 '월 보험료 27만원', '실손의료보험 4세대' 처럼 한 줄로 적으세요.",
+  "4) 이름·주민등록번호·연락처·주소는 읽지 말고 ●●● 로 가리세요.",
+  "5) 표를 읽을 수 없으면 {\"lines\": []} 만 반환하세요.",
+  '출력은 설명 없이 JSON 하나만: {"lines": ["일반암 진단비 5,000만원", "..."]}',
+].join("\n");
+
+type Parsed = { bytes: Uint8Array; mime: string; hint: string };
+
+function base64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let bin = "";
+  const CH = 0x8000;
+  for (let i = 0; i < bytes.length; i += CH) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + CH));
+  }
+  return btoa(bin);
+}
+
+async function readInput(req: Request): Promise<Parsed | Response> {
+  const ct = (req.headers.get("content-type") ?? "").toLowerCase();
+
+  if (ct.includes("multipart/form-data")) {
+    const form = await req.formData();
+    const file = form.get("image");
+    const hint = String(form.get("hint") ?? "");
+    if (!file || typeof file === "string") return fail("image_required", 422);
+    const f = file as File;
+    const mime = (f.type || "image/jpeg").toLowerCase();
+    if (!ALLOWED_MIME.includes(mime)) return fail("unsupported_type", 415);
+    if (f.size > MAX_IMAGE_BYTES) return fail("too_large", 413);
+    const bytes = new Uint8Array(await f.arrayBuffer()); // 메모리에서만
+    if (bytes.byteLength > MAX_IMAGE_BYTES) return fail("too_large", 413);
+    if (bytes.byteLength === 0) return fail("image_required", 422);
+    return { bytes, mime, hint };
+  }
+
+  if (ct.includes("application/json")) {
+    let body: { image?: string; hint?: string } = {};
+    try {
+      body = await req.json();
+    } catch {
+      return fail("bad_json", 422);
+    }
+    const raw = String(body.image ?? "");
+    if (!raw) return fail("image_required", 422);
+    const m = /^data:([a-z0-9.+/-]+);base64,(.+)$/i.exec(raw);
+    const mime = (m ? m[1] : "image/jpeg").toLowerCase();
+    const b64 = m ? m[2] : raw;
+    if (!ALLOWED_MIME.includes(mime)) return fail("unsupported_type", 415);
+    if (Math.floor((b64.length * 3) / 4) > MAX_IMAGE_BYTES) return fail("too_large", 413);
+    return { bytes: base64ToBytes(b64), mime, hint: String(body.hint ?? "") };
+  }
+
+  return fail("unsupported_type", 415);
+}
+
+/** 주민등록번호·휴대폰·긴 숫자열을 응답에서 지웁니다(모델이 지시를 어겨도 한 번 더). */
+function maskPii(line: string): string {
+  return line
+    .replace(/\d{6}\s*-\s*\d{7}/g, "●●●●●●-●●●●●●●")
+    .replace(/\b01[016789]\s*-\s*\d{3,4}\s*-\s*\d{4}\b/g, "●●●-●●●●-●●●●")
+    .replace(/\b\d{3}-\d{2}-\d{5}\b/g, "●●●-●●-●●●●●");
+}
+
+function cleanLines(input: unknown): string[] {
+  const arr = Array.isArray(input) ? input : [];
+  const out: string[] = [];
+  for (const v of arr) {
+    const line = maskPii(String(v ?? "").replace(/\s+/g, " ").trim());
+    if (!line) continue;
+    if (line.length > 200) continue;
+    if (out.includes(line)) continue;
+    out.push(line);
+    if (out.join("\n").length > MAX_TEXT_CHARS) break;
+  }
+  return out;
+}
+
+/** 모델 응답 문자열에서 JSON(lines) 또는 평문 줄을 뽑아냅니다. */
+function extractLines(raw: string): string[] {
+  const text = String(raw ?? "").trim();
+  if (!text) return [];
+  const fenced = text.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
+  try {
+    const obj = JSON.parse(fenced);
+    if (obj && Array.isArray(obj.lines)) return cleanLines(obj.lines);
+    if (obj && typeof obj.text === "string") return cleanLines(obj.text.split(/\n+/));
+  } catch {
+    // JSON 이 아니면 평문으로 처리
+  }
+  return cleanLines(text.split(/\n+/));
+}
+
+type VisionOut = { lines: string[]; model: string };
+
+async function callOpenAI(b64: string, mime: string, model: string): Promise<VisionOut> {
+  const key = env("OPENAI_API_KEY");
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      temperature: 0,
+      max_tokens: 1500,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: PROMPT },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "이 보장분석표를 읽어 JSON 으로만 답하세요." },
+            { type: "image_url", image_url: { url: `data:${mime};base64,${b64}`, detail: "high" } },
+          ],
+        },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`openai_${res.status}`);
+  const data = await res.json();
+  const raw = data?.choices?.[0]?.message?.content ?? "";
+  return { lines: extractLines(raw), model };
+}
+
+async function callGemini(b64: string, mime: string, model: string): Promise<VisionOut> {
+  const key = env("GEMINI_API_KEY");
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: PROMPT }] },
+      contents: [{
+        role: "user",
+        parts: [
+          { text: "이 보장분석표를 읽어 JSON 으로만 답하세요." },
+          { inline_data: { mime_type: mime, data: b64 } },
+        ],
+      }],
+      generationConfig: { temperature: 0, maxOutputTokens: 1500, responseMimeType: "application/json" },
+    }),
+  });
+  if (!res.ok) throw new Error(`gemini_${res.status}`);
+  const data = await res.json();
+  const raw = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
+  return { lines: extractLines(raw), model };
+}
+
+/* 레이트 리밋 — 인스턴스 메모리 기준(사용자당 1분 6회).
+   다중 인스턴스에서는 근사치이므로, 유료 트래픽이 커지면 audit_logs 집계 기반으로 승격합니다. */
+const hits = new Map<string, number[]>();
+
+function rateLimited(userId: string): boolean {
+  const now = Date.now();
+  const keep = (hits.get(userId) ?? []).filter((t) => now - t < 60_000);
+  if (keep.length >= RATE_LIMIT_PER_MIN) {
+    hits.set(userId, keep);
+    return true;
+  }
+  keep.push(now);
+  hits.set(userId, keep);
+  if (hits.size > 5000) hits.clear(); // 메모리 상한
+  return false;
+}
+
+Deno.serve(async (req: Request) => {
+  const started = Date.now();
+  if (req.method === "OPTIONS") return preflight();
+  if (req.method !== "POST") return fail("method_not_allowed", 405);
+
+  const auth = await requireUser(req);
+  if (!auth.ok) return fail(auth.code, auth.status);
+  const userId = auth.user.id;
+
+  if (rateLimited(userId)) {
+    return fail("rate_limited", 429, "사진 인식은 1분에 6회까지 가능합니다. 잠시 후 다시 시도해 주세요.");
+  }
+
+  const read = await readInput(req);
+  if (read instanceof Response) return read;
+
+  /* ---- 메모리에서만 처리: 바이트 → base64 → 참조 해제 ---- */
+  let bytes: Uint8Array | null = read.bytes;
+  let b64: string | null = null;
+  let mime = read.mime;
+  const hint = read.hint.slice(0, 120);
+  const byteLength = bytes.byteLength;
+  b64 = bytesToBase64(bytes);
+  bytes.fill(0);
+  bytes = null; // 원본 버퍼 참조 즉시 해제
+
+  const openaiKey = env("OPENAI_API_KEY");
+  const geminiKey = env("GEMINI_API_KEY");
+  if (!openaiKey && !geminiKey) {
+    b64 = null;
+    return fail("provider_not_configured", 503, "AI 비전 키(OPENAI_API_KEY 또는 GEMINI_API_KEY)가 설정되지 않았습니다.");
+  }
+
+  let out: VisionOut;
+  try {
+    if (openaiKey) {
+      out = await callOpenAI(b64, mime, env("VISION_MODEL") || "gpt-4o-mini");
+    } else {
+      out = await callGemini(b64, mime, env("GEMINI_VISION_MODEL") || "gemini-2.0-flash");
+    }
+  } catch (e) {
+    b64 = null;
+    await audit({
+      userId,
+      actor: "user",
+      action: "vision.error",
+      target: "parse-coverage-vision",
+      detail: { bytes: byteLength, ms: Date.now() - started, message: String((e as Error).message).slice(0, 60) },
+      ipHash: await sha256Hex(req.headers.get("x-forwarded-for") ?? "unknown"),
+    });
+    return fail("upstream_error", 502, "AI 비전 호출에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+  }
+  b64 = null; // base64 참조 즉시 해제 — 응답 후 어디에도 남기지 않습니다
+  mime = "";
+
+  const text = out.lines.join("\n").slice(0, MAX_TEXT_CHARS);
+  const ms = Date.now() - started;
+
+  await audit({
+    userId,
+    actor: "user",
+    action: "vision.parse",
+    target: "parse-coverage-vision",
+    detail: { bytes: byteLength, lines: out.lines.length, model: out.model, ms, hint: hint || null },
+    ipHash: await sha256Hex(req.headers.get("x-forwarded-for") ?? "unknown"),
+  });
+
+  if (!out.lines.length) {
+    return fail("not_coverage_table", 422, "담보표로 읽히지 않았습니다. 담보명과 금액이 함께 보이게 다시 촬영해 주세요.");
+  }
+
+  /* v5.3 parseCoverageText() 와 호환되는 표준 스키마.
+     클라이언트는 text 를 다시 파싱해 인식 근거(snippet)까지 검수 화면에 보여줍니다. */
+  return json({
+    ok: true,
+    schema: "bojang.coverage.v1",
+    text,
+    lines: out.lines.length,
+    items: [],
+    premium: null,
+    silson: null,
+    hint: hint || null,
+    model: out.model,
+    ms,
+    persisted: false,
+    stored_bytes: 0,
+  });
+});

@@ -1,8 +1,10 @@
-/* 보장분석 라이프 리포트 v5.3 — 입력 방식 허브 (inputhub.js)
+/* 보장분석 라이프 리포트 v5.4 — 입력 방식 허브 (inputhub.js)
 
    상담을 시작할 때 "수기 입력 / 사진 즉시 촬영(휘발) / 보장분석 PDF·텍스트" 중
    무엇으로 입력할지 먼저 고르게 하고, 촬영·추출 화면과 검수 화면을 맡습니다.
    실제 파싱은 import-parser.js(BojangImport), 상태 반영은 app.js의 applyImport 콜백이 합니다.
+   v5.4: 서버가 연결되고 로그인되어 있으면 촬영본을 실제 AI 비전 엔드포인트로 보내고,
+        응답 텍스트를 같은 검수 화면에 넣습니다. 미연결이면 v5.3 정적 베타 안내를 유지합니다.
 
    휘발 원칙: 촬영 사진은 localStorage · sessionStorage · IndexedDB · 서버 어디에도 쓰지 않고,
    전처리 직후 canvas/bitmap/Blob 참조를 모두 버립니다. */
@@ -132,17 +134,23 @@
       return;
     }
 
-    const blob = result.blob;
-    result.blob = null;   /* 베타: 비전 서버로 보내지 않으므로 축소본도 바로 파기 */
-    if (blob && blob.size != null) { /* 참조만 해제, 저장 없음 */ }
+    let blob = result.blob;
+    result.blob = null;   /* 화면·상태에는 축소본을 남기지 않습니다 */
+
+    /* v5.4 — 실서버 모드 + 로그인 상태면 진짜 AI 비전 엔드포인트로 전송 */
+    const backend = root.BojangBackend;
+    const live = !!(backend && backend.isLive && backend.isLive());
+    const canVision = !!((backend && backend.canUseVision && backend.canUseVision()) || BojangImport.VISION_ENDPOINT);
 
     let vision = null;
-    if (BojangImport.VISION_ENDPOINT) {
-      /* 3단계 백엔드 연동 시에만 실행되는 경로 */
-      vision = await BojangImport.parseWithVisionBackend(blob, BojangImport.VISION_ENDPOINT);
+    if (canVision) {
+      setCapStatus('AI 비전 서버에서 담보표를 읽고 있습니다… (사진은 저장되지 않습니다)', 'work');
+      vision = await BojangImport.parseWithVisionBackend(blob, BojangImport.VISION_ENDPOINT, { filename: 'capture.jpg' });
     }
+    blob = null;   /* 전송 후 축소본 참조도 즉시 해제 */
 
     shotCount += 1;
+    const visionOk = !!(vision && vision.ok && vision.items && vision.items.length);
     $('#cap-result').hidden = false;
     $('#cap-badge').textContent = BADGE;
     $('#cap-meta').innerHTML = `
@@ -153,13 +161,28 @@
     const warn = [];
     if (result.contrast != null && !result.sharpEnough) warn.push('사진 대비가 낮습니다 — 그늘 없이 밝은 곳에서 다시 찍으면 인식률이 올라갑니다.');
     if (!result.bigEnough) warn.push('해상도가 낮습니다 — 담보표가 화면에 크게 차도록 다시 찍어 주세요.');
+    if (vision && !vision.ok && vision.message && canVision) warn.push(vision.message);
     $('#cap-warn').innerHTML = warn.map((w) => `<li>${esc(w)}</li>`).join('');
     $('#cap-warn').hidden = !warn.length;
-    $('#cap-beta').textContent = BETA_NOTE;
+    if (!live) {
+      $('#cap-beta').textContent = BETA_NOTE;
+    } else if (visionOk) {
+      const ms = vision.ms ? ` · ${vision.ms}ms` : '';
+      $('#cap-beta').textContent = `AI 비전 인식 완료 · ${vision.model || 'vision'}${ms} · 사진은 서버에 저장되지 않았습니다(persisted:false)`;
+    } else if (vision && vision.message) {
+      $('#cap-beta').textContent = vision.message;
+    } else {
+      $('#cap-beta').textContent = '서버 연결됨 — 계정에 로그인하면 사진에서 담보 숫자를 자동으로 읽습니다.';
+    }
     $('#cap-shot-count').textContent = String(shotCount);
     setCapStatus(source === 'live' ? '앱 내 카메라 촬영본을 파기했습니다.' : '카메라 촬영본을 파기했습니다.', 'ok');
 
-    if (vision && vision.ok) renderReview(vision, '사진');
+    if (visionOk) {
+      /* 사진 → AI 인식 → 같은 검수 화면(추출 결과)으로 이동 */
+      if (ctx.openView) ctx.openView('import');
+      renderReview(vision, '사진 AI 인식');
+      if (ctx.toast) ctx.toast(`${vision.items.length}건을 사진에서 인식했습니다 — 검수 후 반영하세요`);
+    }
   }
 
   async function captureLiveFrame() {

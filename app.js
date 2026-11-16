@@ -1059,6 +1059,13 @@
     if (lsSet(HKEY, next)) {
       state.history = next; renderHistory();
       toast(window.BojangPlan && window.BojangPlan.unlocked() ? '저장했습니다 (베타 · 최대 30건)' : '무료 체험 · 고객 1명을 저장했습니다 (Pro는 30명)');
+      /* v5.4 — 로그인 + 서버 연결 상태면 클라우드(clients)로도 올립니다 */
+      if (window.BojangBackend && window.BojangBackend.isLive && window.BojangBackend.isLive()
+          && window.BojangBackend.hasSession && window.BojangBackend.hasSession()) {
+        window.BojangBackend.syncClient(entry).then((r) => {
+          if (r && r.ok) toast('클라우드에도 저장했습니다 — 다른 기기에서 불러올 수 있습니다');
+        }).catch(() => {});
+      }
     } else toast('저장 공간을 쓸 수 없습니다');
   }
 
@@ -1268,7 +1275,7 @@
     }
   }
 
-  /* ================= v5.3 자동입력 반영 =================
+  /* ================= v5.3 자동입력 반영 (v5.4: 사진 AI 인식 결과 포함) =================
      검수 화면에서 체크된 항목만 현재 고객 상태에 넣고 점수를 다시 계산합니다.
      field 는 'cancer.treatment.surgery' 같은 경로이며, monthlyPremium·silsonGen은 전용 필드입니다. */
   function applyImport(items, meta) {
@@ -1999,6 +2006,8 @@
     loadHistory();
     renderQuick();
     if (window.BojangPlan) window.BojangPlan.init();
+    /* v5.4 — 계정·구독·서버 연결(실서버 모드 / 베타 오프라인 자동 판별) */
+    if (window.BojangBackend) window.BojangBackend.init();
     renderHome();
     if (window.BojangTools) window.BojangTools.init();
     if (window.BojangInputHub) {

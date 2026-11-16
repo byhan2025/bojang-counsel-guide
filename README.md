@@ -1,4 +1,4 @@
-# 보장분석 라이프 리포트 v5.3 (베타) · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드
+# 보장분석 라이프 리포트 v5.4 (베타) · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드
 
 **라이브:** https://byhan2025.github.io/bojang-counsel-guide/
 (아이폰 Safari로 열고 공유 → 홈 화면에 추가 → 주소창 없는 앱처럼 사용)
@@ -6,6 +6,32 @@
 설계사가 고객과 마주 앉아 화면을 보여주며 상담하는 모바일 웹앱(PWA)입니다.
 빌드 도구 없이 Vanilla HTML/CSS/JS로 동작하고, 홈 화면에 추가하면 앱처럼 열립니다.
 특정 브랜드·소속을 기본값으로 노출하지 않는 **중립 기본 브랜드**로, 내 브랜드(화이트라벨)를 설정하면 헤더·표지·PDF가 내 것으로 바뀝니다.
+
+## v5.4에서 달라진 것 — 백엔드 패키지 · 로그인/구독 · 사진 AI 인식 연동
+
+### 1) Supabase 백엔드 패키지 `supabase/` (즉시 배포 가능)
+- `migrations/001_initial_schema.sql` — `profiles` · `subscriptions` · `clients` · `brand_settings` · `audit_logs` 5개 테이블,
+  **RLS 정책**(본인 행만 · 구독 쓰기는 service_role 만 · `billing_key` 컬럼 권한 차단) · **updated_at 트리거** · `is_pro()` 함수 · 가입 시 프로필 자동 생성 트리거.
+- `functions/parse-coverage-vision` — **Deno Edge Function**. JWT 검증 → multipart/base64 이미지(최대 10MB) → **저장 없이 메모리에서만** OpenAI/Gemini Vision 호출 → v5.3 `parseCoverageText`와 호환되는 표준 JSON(`text`·`items`·`premium`·`silson`·`model`·`ms`) 반환 → 버퍼·base64 참조 즉시 `null` · `Cache-Control: no-store` · CORS · 사용자당 분당 6회 제한 · 주민번호/전화 마스킹.
+- `functions/billing-subscribe` — 월 **5,000원** / 연 **50,000원**. 금액은 서버 상수만 신뢰(클라이언트 금액 무시). 토스페이먼츠 빌링키 발급 + 첫 결제, 포트원 V2 결제 검증(2순위), `BILLING_TEST_MODE=true` 테스트 모드.
+- `functions/billing-webhook` — 토스/포트원 **HMAC 서명 검증**, `audit_logs.dedupe_key` 기반 **멱등**, 구독 상태 동기화(성공→active·기간 연장 / 실패→past_due / 해지·환불→canceled).
+- `config.toml` + `DEPLOY.md` — `supabase link → db push → functions deploy` 1분 명령과 **환경변수 체크리스트**.
+
+### 2) 앱 연동 레이어 `backend.js` (외부 SDK·CDN 없음)
+- `fetch` 만으로 Supabase **Auth**(회원가입·로그인·로그아웃·토큰 자동 갱신) · **PostgREST**(`clients`·`brand_settings` 동기화, `subscriptions` 조회) · **Edge Function** 호출.
+- 설정이 비어 있으면 자동 **`mode: 'beta-local'`**(v5.3과 동일 동작·외부 요청 0), 값이 채워지거나 개발자 설정 패널의 연결 테스트를 통과하면 **`mode: 'live-backend'`**.
+- **👤 계정 / 구독** 버튼(헤더 고객 스트립 + 메인 허브) → 로그인·회원가입 탭, 서버 연결 상태 칩, 구독 상태, 월 5,000원/연 50,000원 플랜 선택, 개발자 설정(URL·anon key 저장·연결 테스트) 모달.
+- 연결 전에는 **“현재 베타 오프라인 모드 · 서버 연결 시 클라우드 동기화 및 AI 사진 인식이 활성화됩니다”** 를 안내하고, 폼 동선은 그대로 확인할 수 있습니다(입력값은 전송·저장되지 않음).
+
+### 3) 사진 → AI 인식 → 검수 화면
+- 서버 연결 + 로그인 상태에서 사진을 찍으면 `parseWithVisionBackend` → `backend.js.parseCoverageVision` → Edge Function으로 전송하고,
+  응답 텍스트를 **같은 `parseCoverageText` 검수 화면**(담보명·금액·근거 원문)에 넣습니다. 사진은 전송 후 참조를 즉시 버립니다.
+- 미연결이면 v5.3의 정적 베타 안내(해상도·대비 + 한계 고지)를 그대로 유지합니다.
+
+### 4) 버전·검증
+- `sw.js` 캐시 **`bojang-guide-v5.4`**, 표기 `v5.4`, 단일 파일 `dist/bojang-guide.single.html` 재생성(외부 참조 0건).
+- `tests/test_v5_4.py` — supabase SQL(pglast 파싱)·Edge Function(deno check) 구문/필수 요소, 계정 모달·로그인 폼·구독 요금·베타 오프라인 동작,
+  **모의(mock) 비전 백엔드로 사진 촬영 → 비전 JSON → 검수 화면 반영 E2E**, v5.2·v5.3 회귀, 콘솔 오류 0, 모바일 넘침 0.
 
 ## v5.3에서 달라진 것 — 자동입력 허브 · 사진 즉시 촬영(휘발) · 보장분석 PDF 로컬 추출
 

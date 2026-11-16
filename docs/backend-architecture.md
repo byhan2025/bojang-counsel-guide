@@ -607,3 +607,22 @@ Authorization: Bearer <user JWT>
 | `VISION_ENDPOINT = ''` | Supabase Functions URL |
 | `preprocessImage()` → 통계만 표시 | 같은 전처리본을 `parseWithVisionBackend()` 로 전송 |
 | PDF/텍스트 로컬 추출 | 그대로 유지(오프라인·비용 0) — 서버는 사진만 보조 |
+
+---
+
+## 16. v5.4 구현 매핑 (이 문서 → 실제 코드)
+
+이 설계서의 1~4단계(M1·M2·M3) 중 **스키마 · 인증 · 구독 결제 · AI 비전 프록시**를 실행 가능한 코드로 옮겼습니다.
+
+| 설계서 위치 | 구현 파일 | 비고 |
+| --- | --- | --- |
+| §2 스키마 · §3 RLS · §3-1 is_pro | `supabase/migrations/001_initial_schema.sql` | `profiles`·`subscriptions`·`clients`·`brand_settings`·`audit_logs`, updated_at 트리거, 가입 시 프로필 자동 생성, `billing_key` 컬럼 권한 차단 |
+| §5-2·§5-3 결제 | `supabase/functions/billing-subscribe/index.ts` | 월 5,000 / 연 50,000 서버 상수, 토스 빌링키 발급+첫 결제, 포트원 V2 검증, `BILLING_TEST_MODE` |
+| §5-5 웹훅 | `supabase/functions/billing-webhook/index.ts` | HMAC 서명 검증, `audit_logs.dedupe_key` 멱등, 상태 전이(active·past_due·canceled) |
+| §15 AI 비전 프록시 | `supabase/functions/parse-coverage-vision/index.ts` | JWT 검증, 10MB 제한, **저장 없는 메모리 처리**, `Cache-Control: no-store`, 분당 6회, PII 마스킹, `parseCoverageText` 호환 JSON |
+| §4-1 entitlements(단순판) | 앱 `backend.js` → `subscriptions` 조회 → `BojangPlan.hydrate()` | 별도 함수 없이 RLS 조회로 처리(초기 단계) |
+| §9 프론트 변경점 | `apps/bojang-guide/backend.js` + `monetize.js`·`import-parser.js`·`app.js` | SDK 없는 fetch 레이어, `beta-local` / `live-backend` 자동 판별, 계정/구독 모달 |
+
+배포 절차·환경변수는 `supabase/DEPLOY.md`, 검증은 `tests/test_v5_4.py`(116항목)를 참고하세요.
+
+**아직 구현하지 않은 것(다음 단계):** `entitlements` 전용 함수와 서버 강제 페이월(§4-2), 기기→계정 마이그레이션 UI(§4-6), 정기결제 배치(`billing-run`, §5-4), PDF 서버 생성·서명 URL(§4-3), 카카오 OAuth 활성화(§1-1).

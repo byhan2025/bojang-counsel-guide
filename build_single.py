@@ -29,6 +29,7 @@ def build():
     live = read("live.js")
     tools = read("tools.js")
     monetize = read("monetize.js")
+    backend = read("backend.js")
     parser = read("import-parser.js")
     inputhub = read("inputhub.js")
     app = read("app.js")
@@ -59,6 +60,7 @@ def build():
         "<script>\n" + live + "\n</script>",
         "<script>\n" + tools + "\n</script>",
         "<script>\n" + monetize + "\n</script>",
+        "<script>\n" + backend + "\n</script>",
         "<script>\n" + parser + "\n</script>",
         "<script>\n" + inputhub + "\n</script>",
         "<script>\n" + app + "\n</script>",
@@ -66,7 +68,7 @@ def build():
     old = ('<script src="./content.js"></script>\n<script src="./playbook.js"></script>\n'
            '<script src="./model.js"></script>\n<script src="./pdfkit.js"></script>\n'
            '<script src="./report.js"></script>\n<script src="./client.js"></script>\n<script src="./live.js"></script>\n<script src="./tools.js"></script>\n'
-           '<script src="./monetize.js"></script>\n<script src="./import-parser.js"></script>\n<script src="./inputhub.js"></script>\n<script src="./app.js"></script>')
+           '<script src="./monetize.js"></script>\n<script src="./backend.js"></script>\n<script src="./import-parser.js"></script>\n<script src="./inputhub.js"></script>\n<script src="./app.js"></script>')
     assert old in html, "script tag block not found"
     html = html.replace(old, bundle)
 

@@ -1,6 +1,7 @@
-/* 보장분석 라이프 리포트 v5.3 — 입력 파서 (import-parser.js)
+/* 보장분석 라이프 리포트 v5.4 — 입력 파서 (import-parser.js)
 
    v5.3의 자동입력 허브가 쓰는 세 가지 엔진을 이 파일 하나에 모았습니다.
+   v5.4: 사진 인식이 실서버 모드에서 backend.js(parse-coverage-vision)로 연결됩니다.
    1) PDF 로컬 텍스트 추출 — 외부 라이브러리·CDN 없이 file:// 에서도 동작하는 경량 추출기
       · FlateDecode(zlib) 스트림은 DecompressionStream('deflate')로 해독
       · 괄호 리터럴 문자열 / 16진(hex) 문자열, UTF-16BE · PDFDocEncoding · UTF-8 해독
@@ -868,6 +869,11 @@
      ========================================================= */
   async function parseWithVisionBackend(blob, endpoint, opts) {
     opts = opts || {};
+    /* v5.4 — 서버 연결 + 로그인 상태면 backend.js 가 JWT·CORS·표준 스키마를 맡고,
+       그 응답을 여기서 parseCoverageText() 로 다시 파싱해 검수 화면에 그대로 넣습니다. */
+    if (root.BojangBackend && root.BojangBackend.canUseVision && root.BojangBackend.canUseVision()) {
+      return root.BojangBackend.parseCoverageVision(blob, opts);
+    }
     const url = endpoint || VISION_ENDPOINT;
     if (!url) {
       return {

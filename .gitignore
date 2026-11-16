@@ -2,3 +2,5 @@ node_modules/
 .DS_Store
 *.log
 tests/out/
+supabase/.env.local
+supabase/.branches/

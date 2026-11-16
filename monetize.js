@@ -1,5 +1,6 @@
-/* 보장분석 라이프 리포트 v5.3 — 베타 테스트 공개판
+/* 보장분석 라이프 리포트 v5.4 — 베타 테스트 공개판
    · 베타 기간에는 Pro 전 기능(30장 전체 · 1/10/30장 PDF · 고객 30명 · 리모델링 · 화이트라벨)을 잠금 없이 무료 제공
+   · v5.4: 계정/구독(backend.js) 연동 — 실서버 구독 상태를 hydrate() 로 반영
    · 정식 출시 예정 요금: 월 5,000원 / 연 50,000원 · 베타 피드백 Google Form + 추첨 사은품 안내
    · 중립 기본 브랜드(Classic Navy) + 화이트라벨(상호·슬로건·설계사 정보·로고 이미지·테마 4종)
    · 리모델링: 보유 계약 유지/감액/정리 + 담보별 보강 금액·추가 보험료 → 보험료·점수·5대 담보 Before/After
@@ -240,7 +241,7 @@
     if (mark) mark.setAttribute('content', b.name);
     const title = $('#brand-title');
     if (title) title.textContent = b.name;
-    document.title = `${b.name} v5.3 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
+    document.title = `${b.name} v5.4 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
     loadPdfLogo(b.logo);
     /* 상담자 화면의 고객 표지도 새 브랜드로 다시 그립니다 */
     if (root.BojangDeck && root.__bojangState) root.BojangDeck.refresh(root.__bojangState, { reset: true });
@@ -251,6 +252,10 @@
     if (!lsSet(BRAND_KEY, normalized)) { toast('저장 공간이 부족합니다 — 로고 이미지를 줄여 주세요'); return false; }
     savedBrand = normalized;
     applyBrand();
+    /* v5.4 — 실서버 로그인 상태면 brand_settings 로 올립니다(베타 오프라인에서는 즉시 반환) */
+    if (root.BojangBackend && root.BojangBackend.pushBrandSettings) {
+      try { root.BojangBackend.pushBrandSettings(normalized); } catch (e) { /* 오프라인 */ }
+    }
     if (!(opts && opts.silent)) toast('브랜드를 저장했습니다 — 헤더·메인·표지·PDF에 반영됩니다');
     return true;
   }
@@ -404,7 +409,7 @@
     wrap.innerHTML = `
       <div class="modal-card bm-card" role="dialog" aria-modal="true" aria-labelledby="bm-title">
         <button type="button" class="pw-x" id="bm-x" aria-label="닫기">×</button>
-        <span class="bm-eyebrow">BETA TEST · V5.3</span>
+        <span class="bm-eyebrow">BETA TEST · V5.4</span>
         <strong id="bm-title">베타 기간 · Pro 전 기능 무료</strong>
         <p class="bm-lead">${BETA_NOTE}. 리모델링 비교기 · 10장·30장 PDF · 화이트라벨(로고) 설정까지 지금 바로 사용할 수 있습니다.</p>
         <div class="bm-feature" id="bm-feature"></div>
@@ -455,7 +460,39 @@
     if (feature === 'remodel' || feature === 'remodelPdf') renderRemodel();
   }
 
-  function openPlanModal() { if (unlocked()) { openBetaModal('plan'); return; } openPaywall('plan'); }
+  function openPlanModal() {
+    /* v5.4 — 실서버 모드에서는 계정/구독 모달이 단일 창구입니다 */
+    if (root.BojangBackend && root.BojangBackend.isLive && root.BojangBackend.isLive()) {
+      root.BojangBackend.openAccount();
+      return;
+    }
+    if (unlocked()) { openBetaModal('plan'); return; }
+    openPaywall('plan');
+  }
+
+  let serverSub = null;   /* 서버 subscriptions 스냅샷 (실서버 모드에서만 존재) */
+
+  /* v5.4 — 실서버 구독 상태를 반영합니다(backend.js 가 호출).
+     null 또는 만료 → free. 베타 기간에는 잠금 UI 를 그대로 열어 두고 배지·상태만 바뀝니다. */
+  function hydrate(ent) {
+    if (!ent || !ent.plan) {
+      serverSub = null;
+      plan = 'free';
+    } else {
+      const live = ['trialing', 'active', 'past_due'].indexOf(String(ent.status || '')) >= 0;
+      serverSub = {
+        plan: ent.plan, status: ent.status || '', billing_cycle: ent.billing_cycle || null,
+        current_period_end: ent.current_period_end || null
+      };
+      plan = ent.plan === 'pro' && live ? 'pro' : 'free';
+    }
+    lsSet(PLAN_KEY, plan);
+    document.documentElement.dataset.plan = plan;
+    if (document.body) document.body.dataset.plan = plan;
+    renderPlanUI();
+    return plan;
+  }
+  function serverPlan() { return serverSub; }
 
   /* =========================================================
      요금제 UI (헤더 배지 · 메인 배너)
@@ -475,7 +512,7 @@
     if (host) {
       host.innerHTML = beta
         ? `<div class="plan-banner is-beta" id="beta-banner-card">
-            <div class="pb-main"><span class="pb-eyebrow">BETA TEST · V5.3</span><b>베타 기간 · Pro 전 기능 무료 <i>FREE</i></b>
+            <div class="pb-main"><span class="pb-eyebrow">BETA TEST · V5.4</span><b>베타 기간 · Pro 전 기능 무료 <i>FREE</i></b>
               <p>${BETA_NOTE}. 리모델링 · 10/30장 PDF · 화이트라벨을 지금 그대로 쓰세요.</p></div>
             <button type="button" class="pb-btn primary" data-beta-open>베타 안내</button>
           </div>`
@@ -944,7 +981,7 @@
             <span class="bp-plan">${BETA ? 'BETA' : (open ? 'PRO' : 'FREE')}</span>
           </div>
           <div class="bp-hero">
-            <span class="bp-eyebrow">LIFE REPORT V5.3</span>
+            <span class="bp-eyebrow">LIFE REPORT V5.4</span>
             <h4 id="bp-hero-name">${brandNameHTML(draft.name)}</h4>
             <p id="bp-hero-slogan">${esc(draft.slogan)}</p>
             <div class="bp-cover">
@@ -1085,7 +1122,7 @@
 
   /* 다른 파일이 쓰는 공개 API */
   root.BojangPlan = {
-    init, currentPlan, isPro, unlocked, setPlan, FREE_SLIDES, FREE_CLIENTS, PRO_CLIENTS,
+    init, currentPlan, isPro, unlocked, setPlan, hydrate, serverPlan, FREE_SLIDES, FREE_CLIENTS, PRO_CLIENTS,
     openPaywall, closePaywall, afterUnlock, openPlanModal, renderPlanUI, openBetaModal, closeBetaModal,
     PRICE, PLAN_ROWS, BETA_ROWS, FEATURES, BETA, BETA_NOTE, FEEDBACK_URL, GIFT_NOTE
   };
