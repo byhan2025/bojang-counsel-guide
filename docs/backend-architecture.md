@@ -121,14 +121,14 @@ create table public.payment_events (
 -- 2-4. 브랜드(화이트라벨)
 create table public.brand_profiles (
   user_id      uuid primary key references auth.users(id) on delete cascade,
-  name         text not null default '보험에 반하다',
-  slogan       text not null default '당신의 삶에 꼭 맞는 보험, 현명한 선택',
+  name         text not null default '보장분석 라이프 리포트',
+  slogan       text not null default '고객 맞춤형 보장 점검 · 리모델링 상담 가이드',
   consultant   text,
   title        text,
   phone        text,
   kakao_url    text,
-  theme        text not null default 'rose' check (theme in ('rose','navy','emerald','charcoal')),
-  logo_path    text,                     -- Storage 경로 (선택)
+  theme        text not null default 'navy' check (theme in ('navy','emerald','rose','charcoal')),
+  logo_path    text,                     -- Storage 경로 (선택 · 앱은 base64 DataURL 저장, 정식판은 Storage)
   updated_at   timestamptz not null default now()
 );
 
@@ -348,8 +348,9 @@ create trigger clients_free_limit before insert on public.clients
 
 | 상품 | 가격 | PG 상품 ID | 비고 |
 | --- | --- | --- | --- |
-| Pro 월 구독 | 29,000원/월 | `pro_month` | 부가세 포함 표시 |
-| Pro 연 구독 | 290,000원/년 | `pro_year` | 2개월 무료 (월 24,167원) |
+| Pro 월 구독 | 5,000원/월 | `pro_month` | 부가세 포함 표시 · 정식 출시 예정가 |
+| Pro 연 구독 | 50,000원/년 | `pro_year` | 2개월 무료 (월 4,167원) · 정식 출시 예정가 |
+| 베타 테스트 | 0원 | `beta` | 2026-11 정식 출시 전 전 기능 무료 |
 | 14일 체험 | 0원 | `trial_14` | 카드 등록 없이 1회. `trialing` |
 
 가격은 `products` 테이블 또는 Edge Function 상수로 두고, 클라이언트가 보낸 금액을 **절대 신뢰하지 않는다**(위변조 방지).
@@ -527,7 +528,7 @@ Supabase 리전은 **ap-northeast-2(서울)** 를 선택한다. 부득이 싱가
 | 도메인·SSL | Cloudflare 무료 | 동일 |
 | Sentry | 무료 5K 이벤트 | Team $26~ |
 
-> 1,000명 × 29,000원 = 월 2,900만원, PG 수수료 약 96만원. Supabase·관측 비용은 100만원 이하로 유지 가능.
+> 1,000명 × 5,000원 = 월 500만원, PG 수수료 약 16.5만원. Supabase·관측 비용은 100만원 이하로 유지 가능.
 
 ---
 

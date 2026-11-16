@@ -924,9 +924,9 @@
     const build = BojangReport.build(kind, state);
     const overflow = [];
     const memoOpts = BojangReport.MEMO[kind] || {};
-    /* v5.1: 무료 체험은 1장 요약만 — 하단에 무료 체험판 워터마크를 넣습니다 */
-    const free = !(window.BojangPlan && window.BojangPlan.isPro());
-    const brand = window.BojangBrand ? window.BojangBrand.get() : { name: '보험에 반하다' };
+    /* v5.2 베타: 전 기능 무료 — 워터마크 없음 (잠금 판정은 BojangPlan.unlocked) */
+    const free = !(window.BojangPlan && window.BojangPlan.unlocked && window.BojangPlan.unlocked());
+    const brand = window.BojangBrand ? window.BojangBrand.get() : { name: '보장분석 라이프 리포트' };
     const watermark = free && kind === 'summary' ? `${brand.name} · 무료 체험판` : '';
     const blob = await PDFKit.renderPages(build.pages, {
       quality: kind === 'summary' ? 0.92 : kind === 'detail' ? 0.86 : 0.83,
@@ -955,8 +955,8 @@
 
   async function doPdf(kind) {
     if (!state.analyzed) analyze();
-    /* v5.1 무료 체험: 1장 요약만 저장 · 10장/30장은 페이월 */
-    if (window.BojangPlan && !window.BojangPlan.isPro() && kind !== 'summary') {
+    /* v5.2 베타: 1·10·30장 모두 저장 가능 — 잠금이 걸린 경우에만 안내 */
+    if (window.BojangPlan && !window.BojangPlan.unlocked() && kind !== 'summary') {
       window.BojangPlan.openPaywall(kind === 'advisor' ? 'pdf30' : 'pdf10');
       return;
     }
@@ -1028,7 +1028,7 @@
 
   /* ================= 상담 저장 ================= */
   function historyMax() {
-    return window.BojangPlan && window.BojangPlan.isPro() ? 30 : 1;
+    return window.BojangPlan && window.BojangPlan.unlocked() ? 30 : 1;
   }
 
   function loadHistory() {
@@ -1039,7 +1039,7 @@
 
   function saveConsult() {
     if (!state.lastResult) { toast('먼저 진단해 주세요'); return; }
-    if (!(window.BojangPlan && window.BojangPlan.isPro()) && state.history.length >= 1) {
+    if (!(window.BojangPlan && window.BojangPlan.unlocked()) && state.history.length >= 1) {
       window.BojangPlan.openPaywall('save2');
       return;
     }
@@ -1058,7 +1058,7 @@
     const next = [entry].concat(state.history).slice(0, historyMax());
     if (lsSet(HKEY, next)) {
       state.history = next; renderHistory();
-      toast(window.BojangPlan && window.BojangPlan.isPro() ? '저장했습니다 (Pro · 최대 30건)' : '무료 체험 · 고객 1명을 저장했습니다 (Pro는 30명)');
+      toast(window.BojangPlan && window.BojangPlan.unlocked() ? '저장했습니다 (베타 · 최대 30건)' : '무료 체험 · 고객 1명을 저장했습니다 (Pro는 30명)');
     } else toast('저장 공간을 쓸 수 없습니다');
   }
 

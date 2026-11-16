@@ -1,4 +1,4 @@
-/* 보험에 반하다 v5.0 — 설계사(FC) 실무 도우미 4종
+/* 보장분석 라이프 리포트 — 설계사(FC) 실무 도우미 4종
    ① 질병코드·약관 사전  ② 실손 세대 비교 & 5세대 체크
    ③ 고지사항 판정 + 청구 서류 1탭 복사  ④ 소득 대비 적정 보험료·리모델링 비교기
    데이터는 content.js(FC_CODES · CLAIM_DOCS · SILSON_FIVE · PREMIUM_GUIDE)를 씁니다. */
@@ -12,10 +12,10 @@
   const state = () => root.__bojangState || { premium: 0, silson: '4', age: '40' };
   const toast = (m) => { if (root.__bojangToast) root.__bojangToast(m); };
   const copy = (t, m) => { if (root.__bojangCopy) root.__bojangCopy(t, m); };
-  /* v5.1 무료/유료 경계 — 무료는 맛보기, Pro는 전체 */
-  const isPro = () => !!(root.BojangPlan && root.BojangPlan.isPro());
+  /* v5.2 베타 — 전 기능 무료(잠금 판정은 BojangPlan.unlocked) */
+  const unlocked = () => !!(root.BojangPlan && root.BojangPlan.unlocked && root.BojangPlan.unlocked());
   const guard = (feature) => {
-    if (isPro()) return true;
+    if (unlocked()) return true;
     if (root.BojangPlan) root.BojangPlan.openPaywall(feature);
     return false;
   };
@@ -48,7 +48,7 @@
     }
     host.innerHTML = list.map((c, idx) => {
       /* 무료 체험은 상위 3개 코드의 요약까지 — 이후는 약관·판례와 복사가 잠깁니다 */
-      const lk = !isPro() && idx >= 3;
+      const lk = !unlocked() && idx >= 3;
       return `
       <article class="code-card${lk ? ' is-locked' : ''}">
         <div class="cc-head">
@@ -261,8 +261,8 @@
         <div class="cs-sec"><h5>꼭 확인하세요</h5><ul class="cs-tips">${c.tips.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>
       </div>
       <div class="claim-actions">
-        <button type="button" class="btn-primary sm" id="claim-copy">${isPro() ? '카톡 복사' : '🔒 Pro에서 카톡 복사'} (${esc(c.title)})</button>
-        <button type="button" class="btn-ghost sm" id="claim-copy-all">${isPro() ? '5대 담보 전체 복사' : '🔒 전체 복사 (Pro)'}</button>
+        <button type="button" class="btn-primary sm" id="claim-copy">${unlocked() ? '카톡 복사' : '🔒 Pro에서 카톡 복사'} (${esc(c.title)})</button>
+        <button type="button" class="btn-ghost sm" id="claim-copy-all">${unlocked() ? '5대 담보 전체 복사' : '🔒 전체 복사 (Pro)'}</button>
       </div>
     `;
     $$('[data-claimtab]', host).forEach((b) => b.addEventListener('click', () => { claimTab = b.dataset.claimtab; renderClaimDocs(); }));

@@ -12,14 +12,24 @@
   const PXH = Math.round(H * DENS);       // 1754
   const FONT = '"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Noto Sans CJK KR","Malgun Gothic","Segoe UI",sans-serif';
 
-  /* v5.0 「보험에 반하다」 — 크림·로즈 아이보리 바탕, 로즈 코랄 포인트, 깊은 와인 텍스트 */
+  /* v5.2 중립 기본 — Classic Navy. 화이트라벨 테마에 맞춰 syncPalette()가 다시 맞춥니다. */
   const C = {
-    navy: '#3A2628', navy2: '#4A2E30', blue: '#C85A60', blue2: '#D96B70', sky: '#FDF0F0', sky2: '#FDF9F8',
-    ink: '#231F20', ink2: '#4C3B3C', muted: '#8B7A7B', line: '#EED9D8', line2: '#F6EAE9',
+    navy: '#16293E', navy2: '#24476B', blue: '#3A6EA5', blue2: '#3A6EA5', sky: '#EAF1F8', sky2: '#F5F8FB',
+    ink: '#15263C', ink2: '#3C536F', muted: '#74879F', line: '#E2E8F1', line2: '#EEF2F8',
     red: '#B3261E', redSoft: '#FDECEA', mint: '#0E9C86', mintSoft: '#E6F6F2',
-    orange: '#C07A2C', orangeSoft: '#FDF2E3', gray: '#9B9091', graySoft: '#F4EBEB',
-    gold: '#B8912F', white: '#FFFFFF', rose: '#D96B70', roseDeep: '#C85A60', wine: '#3A2628', blush: '#FDF0F0', cream: '#FDF9F8'
+    orange: '#C07A2C', orangeSoft: '#FDF2E3', gray: '#8B93A1', graySoft: '#F1F4F8',
+    gold: '#B8912F', white: '#FFFFFF', rose: '#3A6EA5', roseDeep: '#2B5580', wine: '#16293E', blush: '#EAF1F8', cream: '#F5F8FB'
   };
+
+  /* 선택된 브랜드 테마의 색을 PDF 팔레트에 반영 — 기본은 네이비 */
+  function syncPalette() {
+    const B = (root.BojangBrand && root.BojangBrand.get) ? root.BojangBrand.get() : null;
+    const T = (B && root.BojangBrand.themes) ? root.BojangBrand.themes[B.theme] : null;
+    if (!T) return;
+    C.navy = T.wine; C.navy2 = T.deep; C.blue = T.accent; C.blue2 = T.accent;
+    C.rose = T.accent; C.roseDeep = T.deep; C.wine = T.wine; C.blush = T.blush;
+    C.sky = T.blush; C.sky2 = T.bg; C.cream = T.bg;
+  }
 
   const TONE = {
     enough: { fg: '#0E7C69', bg: '#E6F6F2', label: '충분', solid: C.mint },
@@ -202,6 +212,15 @@
     /* ---------- 페이지 머리·꼬리 ---------- */
     brandMark(x, y, size, o) {
       o = o || {};
+      const s = size || 10;
+      /* 업로드한 로고 이미지가 있으면 벡터 하트 대신 그 픽셀을 그립니다 */
+      const img = root.__brandLogoImg;
+      if (img && img.complete && img.naturalWidth) {
+        const ratio = img.naturalWidth / img.naturalHeight || 1;
+        const h = s * 0.92, w = Math.min(s * 1.15, h * ratio);
+        this.ctx.drawImage(img, x, y, w, h);
+        return x + w + 5;
+      }
       const c = this.ctx;
       const sc = (size || 10) / 100;
       c.save();
@@ -229,15 +248,15 @@
       return x + size * 1.2;
     }
     /* 표지용 워드마크: 하트 + 상호(앞말 먹색·끝말 포인트) + 선택 슬로건 + 설계사 연락처
-       v5.1: 화이트라벨 저장값(BojangBrand)을 읽어 상호·슬로건·테마가 PDF 표지에 반영됩니다. */
+       v5.2: 화이트라벨 저장값(BojangBrand)을 읽어 상호·슬로건·로고·테마가 PDF 표지에 반영됩니다. */
     brandWordmark(x, y, o) {
       o = o || {};
       const B = (root.BojangBrand && root.BojangBrand.get) ? root.BojangBrand.get() : null;
       const T = (root.BojangBrand && root.BojangBrand.themes && B) ? (root.BojangBrand.themes[B.theme] || null) : null;
       const accent = o.accent || (T ? T.accent : C.rose);
       const size = o.size || 20;
-      const rawName = B ? B.name : '보험에 반하다';
-      const parts = (root.BojangBrand && root.BojangBrand.parts) ? root.BojangBrand.parts(rawName) : { head: '보험에 ', tail: '반하다' };
+      const rawName = B ? B.name : '보장분석 라이프 리포트';
+      const parts = (root.BojangBrand && root.BojangBrand.parts) ? root.BojangBrand.parts(rawName) : { head: '보장분석 라이프 ', tail: '리포트' };
       const mx = this.brandMark(x, y - size * 0.12, size * 1.15, { lw: 1.05, color: o.markColor || accent });
       const tx = mx + 6;
       if (parts.head) this.text(parts.head, tx, y, { size, weight: 800, color: o.ink || C.ink });
@@ -272,7 +291,7 @@
       this.contentBottom = this.maxY || 0;
       const y = this.H - 26;
       const B = (root.BojangBrand && root.BojangBrand.get) ? root.BojangBrand.get() : null;
-      const brandName = B ? B.name : '보험에 반하다';
+      const brandName = B ? B.name : '보장분석 라이프 리포트';
       const accent = B && root.BojangBrand.themes ? ((root.BojangBrand.themes[B.theme] || {}).deep || C.blue) : C.blue;
       this.line(this.ML, y, this.W - this.MR, y, { color: C.line });
       if (o.brandSlogan && B && B.slogan && !this.suppressBrandSlogan && (this.maxY || 0) < y - 12) {
@@ -287,7 +306,7 @@
         this.text(brandName, this.W - this.MR - w - 8, y + 5, { size: 6.2, weight: 600, color: C.muted, align: 'right' });
       }
     }
-    /* v5.1 무료 체험판 워터마크 — 하단 띠 */
+    /* 무료 체험판 워터마크 — 하단 띠 (베타 기간에는 표시되지 않습니다) */
     watermark(text) {
       if (!text) return;
       const y = this.H - 44;
@@ -682,6 +701,7 @@
      ========================================================= */
   async function renderPages(drawers, opts) {
     opts = opts || {};
+    syncPalette();
     const quality = opts.quality || 0.9;
     const sheet = new Sheet();
     const pages = [];
@@ -762,5 +782,5 @@
     return 'download';
   }
 
-  root.PDFKit = { Sheet, renderPages, saveBlob, fileName, C, TONE, W, H, PXW, PXH, FONT, won };
+  root.PDFKit = { Sheet, renderPages, saveBlob, fileName, C, TONE, W, H, PXW, PXH, FONT, won, syncPalette };
 })(typeof window !== 'undefined' ? window : globalThis);

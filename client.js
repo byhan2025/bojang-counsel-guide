@@ -27,10 +27,11 @@
 
   let S = null, H = null, slides = [], cur = 0, needOnly = false, built = false, lastSig = '';
 
-  /* v5.1 — 무료 체험은 1~6번 요약까지만 열립니다 */
-  function isPro() { return !!(root.BojangPlan && root.BojangPlan.isPro()); }
+  /* v5.2 — 베타 기간에는 30장 전체가 잠금 없이 열립니다 (unlocked()가 잠금을 판정) */
+  function unlocked() { return !!(root.BojangPlan && root.BojangPlan.unlocked && root.BojangPlan.unlocked()); }
+  function isPro() { return unlocked(); }
   function freeLimit() { return (root.BojangPlan && root.BojangPlan.FREE_SLIDES) || 6; }
-  function locked(no) { return !isPro() && Number(no) > freeLimit(); }
+  function locked(no) { return !unlocked() && Number(no) > freeLimit(); }
   function askUpgrade() {
     root.__deckLockNo = cur;
     if (root.BojangPlan) root.BojangPlan.openPaywall('deck');
@@ -154,11 +155,12 @@
     add(1, 'summary', null, `
       <div class="cover">
         <div class="cover-brand">
-          <span class="cb-heart" aria-hidden="true">
-            <svg viewBox="0 0 120 100" fill="none">
+          <span class="cb-heart" aria-hidden="true">${root.BojangBrand && root.BojangBrand.get().logo
+            ? `<img class="brand-logo" src="${root.BojangBrand.get().logo}" alt="">`
+            : `<svg viewBox="0 0 120 100" fill="none">
               <path d="M60 36c0-10 8-18 19-18s19 9 19 21c0 17-19 30-38 42C41 69 22 56 22 39 22 27 31 18 42 18s18 8 18 18z" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M18 78c20 12 52 12 70-2 6-5 12-7 18-7" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" opacity=".6"/>
-            </svg>
+            </svg>`}
           </span>
           <span class="cb-name">${root.BojangBrand ? root.BojangBrand.nameHTML(root.BojangBrand.get().name) : '보험에 <em>반하다</em>'}</span>
         </div>
