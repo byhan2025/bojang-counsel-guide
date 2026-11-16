@@ -245,6 +245,7 @@ def main():
             page.keyboard.press("Escape")
             page.wait_for_timeout(300)
             check("Esc — 투어 닫기", page.evaluate("() => document.getElementById('tour').hidden"), "")
+            check("닫으면 7일 스누즈 기록", page.evaluate("() => !!localStorage.getItem('bojang.tour.snooze')"), "")
 
             # =========================================================
             # 3. 현업 도메인 — 프리셋 · 키워드 배분

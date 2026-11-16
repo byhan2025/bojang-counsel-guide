@@ -3187,7 +3187,7 @@ body{
 .deck.senior .care-card b{font-size:13px;}
 .deck.senior .care-card strong{font-size:19px;}
 .deck.senior .cc-note{font-size:11px;line-height:1.45;}
-.deck.senior .sl-chart svg{max-width:100%;}
+.deck.senior .sl-chart svg{max-width:560px;}
 .deck.senior .sl-chart .rc-head b{font-size:15px;}
 .deck.senior .sl-chart .rc-head span{font-size:11.5px;}
 .deck.senior .sl-chart figcaption{font-size:11px;line-height:1.5;}
@@ -3245,7 +3245,7 @@ body.is-client .deck .sl-warn{background:#FFFBF2;}
 .sl-chart .rc-head{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-bottom:2px;}
 .sl-chart .rc-head b{font-size:12.5px;font-weight:800;color:var(--navy-800);letter-spacing:-0.03em;}
 .sl-chart .rc-head span{font-size:9.8px;font-weight:600;color:var(--muted);}
-.sl-chart svg{display:block;width:100%;height:auto;}
+.sl-chart svg{display:block;width:100%;max-width:560px;height:auto;margin:0 auto;}
 .sl-chart figcaption{margin-top:5px;font-size:9.4px;line-height:1.45;color:var(--muted);}
 .rc-grid{stroke:#EEF2F8;stroke-width:1;}
 .rc-axis{font-size:9px;font-weight:600;fill:#8A9BB0;}

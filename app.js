@@ -2177,6 +2177,16 @@
     try { return localStorage.getItem(TOUR_KEY) === '1'; } catch (e) { return false; }
   }
   function tourMark() { try { localStorage.setItem(TOUR_KEY, '1'); } catch (e) { /* private mode */ } }
+  /* '나중에'·닫기 — 7일 뒤에 다시 조용히 권합니다 (완료 기록과 구분) */
+  const SNOOZE_KEY = 'bojang.tour.snooze';
+  const SNOOZE_MS = 7 * 24 * 3600 * 1000;
+  function tourSnooze() { try { localStorage.setItem(SNOOZE_KEY, String(Date.now())); } catch (e) { /* private mode */ } }
+  function tourSnoozed() {
+    try {
+      const t = Number(localStorage.getItem(SNOOZE_KEY) || 0);
+      return t > 0 && Date.now() - t < SNOOZE_MS;
+    } catch (e) { return false; }
+  }
 
   function tourPlace() {
     const step = TOUR_STEPS[tourIdx];
@@ -2262,14 +2272,11 @@
     if (overlay) { overlay.hidden = true; overlay.setAttribute('aria-hidden', 'true'); }
     document.body.classList.remove('tour-open');
     if (done) tourMark();
-    else if (!tourDone()) {
-      /* 그냥 닫으면 첫 방문 초대 카드를 다시 띄웁니다 */
-      setTimeout(() => { if (!tourDone()) $('#tour-invite').hidden = false; }, 700);
-    }
+    else tourSnooze();
   }
 
   function openInvite() {
-    if (tourDone()) return;
+    if (tourDone() || tourSnoozed()) return;
     /* 입력·상담을 이미 시작했으면 방해하지 않습니다 (메인 화면에서만 초대) */
     if (state.tab && state.tab !== 'home') return;
     const active = $('.view.is-active');
@@ -2461,7 +2468,7 @@
     if (tSkip) tSkip.addEventListener('click', () => tourEnd(true));
     const invStart = $('#tour-invite-start'), invLater = $('#tour-invite-later');
     if (invStart) invStart.addEventListener('click', tourStart);
-    if (invLater) invLater.addEventListener('click', () => { $('#tour-invite').hidden = true; tourMark(); });
+    if (invLater) invLater.addEventListener('click', () => { $('#tour-invite').hidden = true; tourSnooze(); });
     window.addEventListener('resize', () => { if ($('#tour') && !$('#tour').hidden) tourPlace(); });
     document.addEventListener('keydown', (e) => {
       const open = $('#tour') && !$('#tour').hidden;
