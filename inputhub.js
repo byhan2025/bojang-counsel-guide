@@ -89,6 +89,9 @@
 
   function goManual(where) {
     rememberLast(where === 'quick' ? 'quick' : 'analysis');
+    /* v6.0 — '새 상담 시작' 경로에서 연습용 샘플(27만원·5,000만원)이 입력칸에 남지 않도록,
+       샘플 상태이면 빈 상담으로 바꾼 뒤 화면을 엽니다. (실제 입력 중인 상담은 건드리지 않음) */
+    if (ctx.startNewConsult) ctx.startNewConsult();
     closeHub();
     ctx.openView(where === 'quick' ? 'quick' : 'analysis');
     if (ctx.toast) ctx.toast(where === 'quick' ? '한 화면 빠른 입력으로 이동했습니다' : '6단계 입력실로 이동했습니다');

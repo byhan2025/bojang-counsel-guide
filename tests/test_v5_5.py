@@ -162,13 +162,13 @@ def main():
             # 1. v5.5 버전 표기
             # =========================================================
             title = page.title()
-            check("타이틀 v5.5 이상", any(v in title for v in ("v5.5", "v5.6", "v5.7", "v5.8", "v5.9")) and "보장분석 라이프 리포트" in title, title)
-            check("헤더 버전 표기 v5.5 이상", any(v in page.inner_text(".hh-ver") for v in ("v5.5", "v5.6", "v5.7", "v5.8", "v5.9")), page.inner_text(".hh-ver"))
-            check("헤더 eyebrow V5.5 이상", any(v in page.inner_text(".hh-eyebrow") for v in ("V5.5", "V5.6", "V5.7", "V5.8", "V5.9")), page.inner_text(".hh-eyebrow"))
+            check("타이틀 v5.5 이상", re.search(r"v\d+\.\d+", title) is not None and "보장분석 라이프 리포트" in title, title)
+            check("헤더 버전 표기 v5.5 이상", re.search(r"v\d+\.\d+", page.inner_text(".hh-ver")) is not None, page.inner_text(".hh-ver"))
+            check("헤더 eyebrow V5.5 이상", re.search(r"V\d+\.\d+", page.inner_text(".hh-eyebrow")) is not None, page.inner_text(".hh-eyebrow"))
             sw = read(os.path.join(ROOT, "sw.js"))
-            check("서비스워커 캐시 v5.5 이상", any(v in sw for v in ("bojang-guide-v5.5", "bojang-guide-v5.6", "bojang-guide-v5.7", "bojang-guide-v5.8", "bojang-guide-v5.9")), sw.splitlines()[2])
+            check("서비스워커 캐시 v5.5 이상", re.search(r"bojang-guide-v\d+\.\d+", sw) is not None, sw.splitlines()[2])
             man = json.loads(read(os.path.join(ROOT, "manifest.json")))
-            check("manifest v5.5 이상", any(v in man.get("name", "") for v in ("v5.5", "v5.6", "v5.7", "v5.8", "v5.9")), man.get("name"))
+            check("manifest v5.5 이상", re.search(r"v\d+\.\d+", man.get("name", "")) is not None, man.get("name"))
 
             # 소스 정적 검사 — 옛 로즈/와인 하드코딩 색 제거
             rep_src = read(os.path.join(ROOT, "report.js"))
@@ -366,7 +366,7 @@ def main():
             # 9. 단일 HTML 반영 · 콘솔
             # =========================================================
             single = read(os.path.join(ROOT, "dist", "bojang-guide.single.html"))
-            check("단일 HTML — v5.5 이상 문구", any(v in single for v in ("v5.5", "v5.6", "v5.7", "v5.8", "v5.9")) and "리모델링 Before / After" in single and "담당자 소견" in single, "v5.6" in single)
+            check("단일 HTML — v5.5 이상 문구", re.search(r"v\d+\.\d+", single) is not None and "리모델링 Before / After" in single and "담당자 소견" in single, "v5.6" in single)
             check("단일 HTML — 외부 참조 0", single.count('src="./') == 0 and single.count('href="./') == 0, (single.count('src="./'), single.count('href="./')))
             console_errors = [e for e in errors if "favicon" not in e.lower()]
             check("콘솔 오류 0", len(console_errors) == 0, console_errors[:3])

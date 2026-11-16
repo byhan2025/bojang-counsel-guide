@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v5.9 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
-<meta name="app-version" content="v5.9">
+<title>보장분석 라이프 리포트 v6.0 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<meta name="app-version" content="v6.0">
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
 <link rel="manifest" href="./manifest.json">
@@ -98,14 +98,14 @@
         <span class="hv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0112 8a3.9 3.9 0 017 2.6C19 15.6 12 20 12 20z"/></svg>든든한미래</span>
       </div>
       <div class="hh-top">
-        <span class="hh-eyebrow" data-app-version-eyebrow>LIFE REPORT · BETA V5.9</span>
-        <span class="hh-ver" data-app-version-label>v5.9 · 2026.11</span>
+        <span class="hh-eyebrow" data-app-version-eyebrow>LIFE REPORT · BETA V6.0</span>
+        <span class="hh-ver" data-app-version-label>v6.0 · 2026.11</span>
       </div>
       <h2>무엇을 하시겠어요?</h2>
-      <p>상담 전 과정을 한 화면에서 시작합니다. 입력은 이 기기 안에서만 계산되고, PDF도 기기에서 직접 만듭니다.</p>
+      <p>상담 전 과정을 한 화면에서 시작합니다. 입력·계산과 PDF는 <b>이 기기에서</b> 하고, 로그인해 클라우드 동기화를 켜면 상담 스냅샷(이름·생년월일·연령대·성별·보험료·담보·계약·고지 체크)만 <b>Supabase(서울)</b>에 저장됩니다.</p>
       <div class="hh-client" id="home-client"></div>
       <div class="hh-plan" id="home-plan-banner"></div>
-      <!-- ============ v5.9 첫 화면 3버튼 ============ -->
+      <!-- ============ v6.0 첫 화면 3버튼 ============ -->
       <div class="hh-actions hh-actions-v59" id="home-three">
         <button type="button" class="hh-btn primary hh-three" id="btn-start-consult" data-inputhub="1">
           <span class="hb-no" aria-hidden="true">1</span>
@@ -115,7 +115,7 @@
         <div class="hh-three-block" id="home-recent-block">
           <button type="button" class="hh-btn hh-three" id="btn-home-load">
             <span class="hb-no" aria-hidden="true">2</span>
-            <span class="hb-ico" aria-hidden="true">📂</span><b>최근 상담 이어하기 <em class="hb-count" id="home-hist-count">0건</em></b><span id="home-load-sub">베타 · 고객 30명 저장</span>
+            <span class="hb-ico" aria-hidden="true">📂</span><b>최근 상담 이어하기 <em class="hb-count" id="home-hist-count">0건</em></b><span id="home-load-sub">최근 3건 표시 · 최대 30건 저장</span>
           </button>
           <div class="recent-list" id="recent-list" aria-live="polite"></div>
         </div>
@@ -261,7 +261,10 @@
       <a class="bfc-btn" data-feedback href="https://docs.google.com/forms/d/e/1FAIpQLSc2euPXcpWELiGYsBMod8tdC6cWWhPP_I3WgwIfc8zp6aRXUg/viewform" target="_blank" rel="noopener noreferrer">🎁 베타 피드백 남기기</a>
     </div>
 
-    <p class="app-foot">기준일 2026-11-16 · v5.9 베타 기준점(첫 화면 3버튼 · IndexedDB 상담 이력 · 정식 이용약관·개인정보처리방침 · 공식 도메인 잠금 · PDF 발급 워터마크 · 클라우드 상담 동기화 · 고지의무 3·1·5 / 간편 3·2·5 체크 · 카톡 요약 1탭 복사 · 사진 AI 직접 기재 담보 인식 · 명함 QR 46pt · 암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 특정순환계질환(3~5종) 주요치료비 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리 · 시니어 큰 글씨 · 불완전판매 경고 · 20년 갱신 차트 · 4단계 가이드) 반영 · 상품별 약관 우선</p>
+    <details class="app-foot-details">
+      <summary>기준일 · 반영 기능 자세히 보기</summary>
+      <p class="app-foot">기준일 2026-11-16 · v6.0 베타 기준점(첫 화면 3버튼 · IndexedDB 상담 이력 · 정식 이용약관·개인정보처리방침 · 공식 도메인 잠금 · PDF 발급 워터마크 · 클라우드 상담 동기화 · 고지의무 3·1·5 / 간편 3·2·5 체크 · 카톡 요약 1탭 복사 · 사진 AI 직접 기재 담보 인식 · 명함 QR 46pt · 핸드폰 마스터 스마트키(QR·6자리 코드) · 계정 잠금·원격 잠금 · 고객 앞 가림 모드 · 암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 특정순환계질환(3~5종) 주요치료비 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리 · 시니어 큰 글씨 · 불완전판매 경고 · 20년 갱신 차트 · 4단계 가이드) 반영 · 상품별 약관 우선</p>
+    </details>
   </section>
 
   <!-- ================= v5.3 사진 즉시 촬영 (휘발·미저장) · v5.4 서버 AI 인식 · v5.5 PDF 프리미엄 리포트 · v5.6 증권 담보 직접 기재 · v5.7 시니어·차트·QR·온보딩 · v5.8 클라우드 동기화·고지 체크·카톡 요약 ================= -->
@@ -359,7 +362,7 @@
     <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>상담자 상세 입력 (6단계)</span><button type="button" class="home-back hub-jump" data-inputhub="1">✎ 입력 방식</button><button type="button" class="home-back rm-jump" data-home-go="remodel">🏠 리모델링 비교기</button></div>
 
     <div class="intro-card no-print">
-      <div class="intro-eyebrow" data-app-version-eyebrow>LIFE REPORT · BETA V5.9</div>
+      <div class="intro-eyebrow" data-app-version-eyebrow>LIFE REPORT · BETA V6.0</div>
       <h2>상담자 입력실에서 진단하고<br>고객 화면 30장으로 보여줍니다</h2>
       <p>입력값은 서버로 전송되지 않고 이 화면 안에서만 계산됩니다. PDF는 이 기기에서 직접 만들어 저장·공유합니다.</p>
     </div>
@@ -1007,7 +1010,7 @@
   </div>
 </div>
 
-<!-- ================= v5.9 정식 이용약관 · 개인정보처리방침 ================= -->
+<!-- ================= v6.0 정식 이용약관 · 개인정보처리방침 ================= -->
 <div class="modal legal-modal" id="legal-modal" hidden>
   <div class="modal-card legal-card" role="dialog" aria-modal="true" aria-labelledby="legal-title">
     <button type="button" class="pw-x" id="legal-x" aria-label="닫기">×</button>
@@ -1027,7 +1030,7 @@
 
 <footer class="app-legal no-print" id="app-legal">
   <div class="al-brand">
-    <b>보장분석 라이프 리포트 <em data-app-version>v5.9</em></b>
+    <b>보장분석 라이프 리포트 <em data-app-version>v6.0</em></b>
     <span>상담 보조 도구 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다</span>
   </div>
   <div class="al-links">
@@ -1050,6 +1053,8 @@
 <script src="./tools.js"></script>
 <script src="./monetize.js"></script>
 <script src="./backend.js"></script>
+<script src="./qrscan.js"></script>
+<script src="./smartkey.js"></script>
 <script src="./import-parser.js"></script>
 <script src="./inputhub.js"></script>
 <script src="./app.js"></script>

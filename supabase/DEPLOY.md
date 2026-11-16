@@ -1,4 +1,4 @@
-# 보장분석 라이프 리포트 v5.4 — 백엔드 배포 1분 가이드
+# 보장분석 라이프 리포트 v6.0 — 백엔드 배포 1분 가이드
 
 > 이 폴더(`apps/bojang-guide/supabase/`)는 **그대로 실행 가능한 Supabase 패키지**입니다.
 > SQL 마이그레이션 · Edge Function 3종 · 설정 파일이 모두 들어 있고, 앱(`backend.js`)은
@@ -26,11 +26,14 @@ cd apps/bojang-guide
 # 1) 연결 (최초 1회) — PROJECT_REF 는 대시보드 URL의 https://<PROJECT_REF>.supabase.co
 supabase link --project-ref <PROJECT_REF>
 
-# 2) 스키마 적용 — profiles · subscriptions · clients · brand_settings · audit_logs + RLS
+# 2) 스키마 적용 — profiles · subscriptions · clients · brand_settings · audit_logs
+#    + consultations(002) + registered_devices · qr_challenges · pc_sessions(003) + RLS
 supabase db push
 
 # 3) 함수 배포 (JWT 검증 · CORS · 캐시 금지 헤더 포함)
 supabase functions deploy parse-coverage-vision billing-subscribe billing-webhook
+# v6.0 스마트키 (QR 로그인 · 기기 관리 · 원격 잠금)
+supabase functions deploy qr-auth-challenge qr-auth-approve device-manage
 ```
 
 ### 시크릿 등록 (배포 후 1회)
@@ -162,3 +165,26 @@ supabase/
   `audit_logs` 집계 기반으로 승격하세요.
 - **카카오 로그인**: `config.toml` 의 `[auth.external.kakao]` 주석을 풀고 Kakao Developers 키를 넣으면
   웹 OAuth 가 켜집니다(비즈 앱 심사 필요). 앱의 이메일 로그인은 그대로 동작합니다.
+
+---
+
+## v6.0 스마트키 배포 체크 (003 마이그레이션 · 함수 3종)
+
+| 항목 | 내용 |
+| --- | --- |
+| `migrations/003_smartkey_devices.sql` | `registered_devices`(2기기 유니크) · `qr_challenges`(180초·단회 소비) · `pc_sessions`(원격 잠금) + RLS. 여러 번 실행해도 안전합니다. |
+| `functions/qr-auth-challenge` | PC 가 로그아웃 상태여도 호출 가능. PC 키 서명(pc_sig) 검증 → 1회용 코드 발급. 요청 제한 분당 8회. |
+| `functions/qr-auth-approve` | 폰 JWT 필수. 마스터 기기 검증 · 폰 기기 서명 검증 · 원자적 단회 소비 · 만료 검사 · 상담 데이터는 암문(enc)만 저장. |
+| `functions/device-manage` | 기기 목록 · 등록(최대 2) · 기존 PC 밀어내기 · 원격 잠금(세션 무효) · PC 세션 확인. |
+| `parse-coverage-vision` | `x-smartkey-session` 헤더가 있으면 기기·세션을 확인하고, 원격 잠금된 세션이면 `device_revoked` 401. |
+
+배포 전에는 앱이 자동으로 **같은 브라우저 안 모의 릴레이**로 동작합니다(만료·단회·서명 규칙 동일).
+기기를 넘나드는 스마트키 동기화는 위 3개 함수를 배포한 뒤 켜집니다.
+
+```bash
+supabase db push
+supabase functions deploy qr-auth-challenge qr-auth-approve device-manage
+# 확인
+curl -i -X POST "$SUPABASE_URL/functions/v1/qr-auth-challenge" -H "Content-Type: application/json" -d '{}'
+# → 400 bad-request (함수가 살아 있으면 404 가 아닙니다)
+```

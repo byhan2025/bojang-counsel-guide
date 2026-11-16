@@ -67,6 +67,10 @@ FN = {
     "vision": os.path.join(SUP, "functions", "parse-coverage-vision", "index.ts"),
     "billing": os.path.join(SUP, "functions", "billing-subscribe", "index.ts"),
     "webhook": os.path.join(SUP, "functions", "billing-webhook", "index.ts"),
+    # v6.0 스마트키
+    "smartkey_ch": os.path.join(SUP, "functions", "qr-auth-challenge", "index.ts"),
+    "smartkey_ap": os.path.join(SUP, "functions", "qr-auth-approve", "index.ts"),
+    "device_manage": os.path.join(SUP, "functions", "device-manage", "index.ts"),
 }
 
 
@@ -151,7 +155,8 @@ def check_backend_package():
             deno = None
     if deno:
         try:
-            r = subprocess.run([deno, "check", FN["vision"], FN["billing"], FN["webhook"]],
+            r = subprocess.run([deno, "check", FN["vision"], FN["billing"], FN["webhook"],
+                                FN["smartkey_ch"], FN["smartkey_ap"], FN["device_manage"]],
                                capture_output=True, text=True, timeout=300, cwd=os.path.join(SUP, "functions"))
             err = (r.stderr or "").strip().splitlines()
             check("Edge Function deno check 통과", r.returncode == 0, (err[-1] if err else "ok")[:120])
@@ -334,11 +339,11 @@ def main():
             print("2) 버전 · 모드 · 계정 진입점")
             print("=" * 70)
             title = page.title()
-            check("타이틀 v5.4 이상", any(v in title for v in ("v5.4", "v5.5", "v5.6", "v5.7", "v5.8", "v5.9")) and "보장분석 라이프 리포트" in title, title)
-            check("메인 eyebrow V5.4 이상", any(v in page.inner_text(".hh-eyebrow") for v in ("V5.4", "V5.5", "V5.6", "V5.7", "V5.8", "V5.9")), page.inner_text(".hh-eyebrow"))
-            check("메인 버전 표기", any(v in page.inner_text(".hh-ver") for v in ("v5.4", "v5.5", "v5.6", "v5.7", "v5.8", "v5.9")), page.inner_text(".hh-ver"))
+            check("타이틀 v5.4 이상", re.search(r"v\d+\.\d+", title) is not None and "보장분석 라이프 리포트" in title, title)
+            check("메인 eyebrow V5.4 이상", re.search(r"V\d+\.\d+", page.inner_text(".hh-eyebrow")) is not None, page.inner_text(".hh-eyebrow"))
+            check("메인 버전 표기", re.search(r"v\d+\.\d+", page.inner_text(".hh-ver")) is not None, page.inner_text(".hh-ver"))
             sw = read(os.path.join(ROOT, "sw.js"))
-            check("서비스워커 캐시 v5.4 이상", any(v in sw for v in ("'bojang-guide-v5.4'", "'bojang-guide-v5.5'", "'bojang-guide-v5.6'", "'bojang-guide-v5.7'", "'bojang-guide-v5.8'", "'bojang-guide-v5.9'")), sw.splitlines()[2] if sw else "")
+            check("서비스워커 캐시 v5.4 이상", re.search(r"bojang-guide-v\d+\.\d+", sw) is not None, sw.splitlines()[2] if sw else "")
             check("서비스워커 backend.js 포함", "./backend.js" in sw, "asset")
             check("backend.js 모듈 로드", page.evaluate("() => typeof BojangBackend === 'object'"), "BojangBackend")
             check("기본 모드 beta-local", page.evaluate("() => BojangBackend.mode()") == "beta-local",

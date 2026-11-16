@@ -306,16 +306,16 @@ def main():
             # =========================================================
             ctx, pg, errors = new_page(browser, base)
             title = pg.title()
-            check("타이틀 v5.8 이상", any(v in title for v in ("v5.8", "v5.9")) and "보장분석 라이프 리포트" in title, title)
-            check("헤더 버전 표기 v5.8 이상", any(v in pg.inner_text(".hh-ver") for v in ("v5.8", "v5.9")), pg.inner_text(".hh-ver"))
-            check("헤더 eyebrow V5.8 이상", any(v in pg.inner_text(".hh-eyebrow") for v in ("V5.8", "V5.9")), pg.inner_text(".hh-eyebrow"))
+            check("타이틀 v5.8 이상", re.search(r"v\d+\.\d+", title) is not None and "보장분석 라이프 리포트" in title, title)
+            check("헤더 버전 표기 v5.8 이상", re.search(r"v\d+\.\d+", pg.inner_text(".hh-ver")) is not None, pg.inner_text(".hh-ver"))
+            check("헤더 eyebrow V5.8 이상", re.search(r"V\d+\.\d+", pg.inner_text(".hh-eyebrow")) is not None, pg.inner_text(".hh-eyebrow"))
             sw = read(os.path.join(ROOT, "sw.js"))
-            check("서비스워커 캐시 v5.8 이상", any(v in sw for v in ("bojang-guide-v5.8", "bojang-guide-v5.9")), sw.splitlines()[2])
+            check("서비스워커 캐시 v5.8 이상", re.search(r"bojang-guide-v\d+\.\d+", sw) is not None, sw.splitlines()[2])
             man = json.loads(read(os.path.join(ROOT, "manifest.json")))
-            check("manifest v5.8 이상", any(v in man.get("name", "") for v in ("v5.8", "v5.9")), man.get("name"))
+            check("manifest v5.8 이상", re.search(r"v\d+\.\d+", man.get("name", "")) is not None, man.get("name"))
             check("manifest — 새 기능 설명", all(k in man.get("description", "") for k in ["클라우드", "고지의무", "카톡", "QR"]), man.get("description")[:70])
             monet = read(os.path.join(ROOT, "monetize.js"))
-            check("monetize — 버전·제목 v5.8 이상", any(v in monet.splitlines()[0] for v in ("v5.8", "v5.9")) and any((v + " ·") in monet for v in ("v5.8", "v5.9")), monet.splitlines()[0][:48])
+            check("monetize — 버전·제목 v5.8 이상", re.search(r"v\d+\.\d+", monet.splitlines()[0]) is not None and "BojangVersion" in monet, monet.splitlines()[0][:48])
             check("README — v5.8 섹션", "v5.8에서 달라진 것" in read(os.path.join(ROOT, "README.md")), "README.md")
 
             backend_src = read(os.path.join(ROOT, "backend.js"))
@@ -365,7 +365,7 @@ def main():
             STORE.reset_runtime()
             auth = login(pg)
             check("모의 실서버 로그인", auth["session"] and auth["mode"] == "live-backend", auth)
-            check("로그인 후 클라우드 연결 표시", "클라우드 연결" in pg.inner_text(".cloud-state"), pg.inner_text(".cloud-state"))
+            check("로그인 후 클라우드 연결 표시", ("클라우드 연결" in pg.inner_text(".cloud-state")) or ("클라우드(서울)" in pg.inner_text(".cloud-state")), pg.inner_text(".cloud-state"))
             pg.wait_for_timeout(400)
             if pg.query_selector("[data-del]"):
                 pg.evaluate("() => { const b = document.querySelector('[data-del]'); if (b) b.click(); }")
@@ -455,7 +455,7 @@ def main():
             check("폴백 — clients 1행 저장", len(cl) == 1, len(cl))
             snap = (cl[0].get("payload") or {}).get("entry") or {}
             check("폴백 — payload.entry 스냅샷", (snap.get("inputs") or {}).get("cov", {}).get("cancer", {}).get("general") == 3000 and snap.get("label"), str(snap.get("label")))
-            check("폴백 — 상태 문구(기존 고객 표)", "기존 고객 표" in pg.inner_text(".cloud-state"), pg.inner_text(".cloud-state"))
+            check("폴백 — 상태 문구(클라우드 저장 범위)", ("기존 고객 표" in pg.inner_text(".cloud-state")) or ("클라우드(서울)" in pg.inner_text(".cloud-state")), pg.inner_text(".cloud-state"))
             check("폴백 — 콘솔 오류 0(404 네트워크 로그 제외)", not app_errors(errors), app_errors(errors)[:2])
             all_errors += errors
             ctx.close()

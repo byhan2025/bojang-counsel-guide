@@ -15,6 +15,7 @@ import base64
 import functools
 import http.server
 import os
+import re
 import socket
 import socketserver
 import sys
@@ -116,7 +117,7 @@ def main():
             # 1. 중립 기본값 — 서비스명·부제·네이비·특정 브랜드 미노출
             # =========================================================
             title = page.title()
-            check("타이틀 v5.2 이상 · 중립 서비스명", "보장분석 라이프 리포트" in title and any(v in title for v in ("v5.2", "v5.3", "v5.4", "v5.5", "v5.6", "v5.7", "v5.8", "v5.9")), title)
+            check("타이틀 v5.2 이상 · 중립 서비스명", "보장분석 라이프 리포트" in title and re.search(r"v\d+\.\d+", title) is not None, title)
             h1 = page.inner_text(".brand-text h1").replace("\n", "")
             check("헤더 기본 브랜드 = 보장분석 라이프 리포트", h1 == "보장분석 라이프 리포트", h1)
             sub = page.inner_text(".brand-text p")
@@ -144,7 +145,7 @@ def main():
             banner = page.inner_text("#home-plan-banner")
             check("메인 베타 배너 문구", "베타 기간" in banner and "Pro 전 기능 무료" in banner and "정식 출시 전 베타 테스트 기간으로 Pro 전 기능을 무료로 제공하고 있습니다" in banner, banner.replace("\n", " | ")[:120])
             check("베타: PDF 버튼 잠금 0", page.eval_on_selector_all(".pdf-btn.is-locked", "e => e.length") == 0, page.eval_on_selector_all(".pdf-btn.is-locked", "e => e.length"))
-            check("베타: 고객 저장 안내 30명", "30명" in page.inner_text("#home-load-sub"), page.inner_text("#home-load-sub"))
+            check("베타: 최대 30건 저장 안내", "30건" in page.inner_text("#home-load-sub"), page.inner_text("#home-load-sub"))
             content = page.content()
             check("29,000원 표기 제거", "29,000" not in content and "290,000" not in content, "29,000" in content)
 
@@ -438,7 +439,7 @@ def main():
             # 10. 산출물 · 서비스워커 · 단일 HTML
             # =========================================================
             sw = open(os.path.join(ROOT, "sw.js"), encoding="utf-8").read()
-            check("서비스워커 캐시 v5.2 이상", any(v in sw for v in ("bojang-guide-v5.2", "bojang-guide-v5.3", "bojang-guide-v5.4", "bojang-guide-v5.5", "bojang-guide-v5.6", "bojang-guide-v5.7", "bojang-guide-v5.8", "bojang-guide-v5.9")), sw.strip().splitlines()[2] if sw else sw)
+            check("서비스워커 캐시 v5.2 이상", re.search(r"bojang-guide-v\d+\.\d+", sw) is not None, sw.strip().splitlines()[2] if sw else sw)
             doc = open(os.path.join(ROOT, "docs", "backend-architecture.md"), encoding="utf-8").read()
             check("백엔드 설계서 요금제 5,000/50,000", "5,000원/월" in doc and "50,000원/년" in doc and "29,000원" not in doc, [k for k in ("5,000원/월", "50,000원/년") if k in doc])
             single = os.path.join(ROOT, "dist", "bojang-guide.single.html")

@@ -20,6 +20,7 @@ import functools
 import http.server
 import json
 import os
+import re
 import socket
 import socketserver
 import sys
@@ -247,9 +248,9 @@ def main():
             # 1. 버전 · 입력 방식 허브
             # =========================================================
             title = page.title()
-            check("타이틀 v5.3 이상", any(v in title for v in ("v5.3", "v5.4", "v5.5", "v5.6", "v5.7", "v5.8", "v5.9")) and "보장분석 라이프 리포트" in title, title)
-            check("메인 eyebrow V5.3 이상", any(v in page.inner_text(".hh-eyebrow") for v in ("V5.3", "V5.4", "V5.5", "V5.6", "V5.7", "V5.8", "V5.9")), page.inner_text(".hh-eyebrow"))
-            check("메인 버전 표기", any(v in page.inner_text(".hh-ver") for v in ("v5.3", "v5.4", "v5.5", "v5.6", "v5.7", "v5.8", "v5.9")), page.inner_text(".hh-ver"))
+            check("타이틀 v5.3 이상", re.search(r"v\d+\.\d+", title) is not None and "보장분석 라이프 리포트" in title, title)
+            check("메인 eyebrow V5.3 이상", re.search(r"V\d+\.\d+", page.inner_text(".hh-eyebrow")) is not None, page.inner_text(".hh-eyebrow"))
+            check("메인 버전 표기", re.search(r"v\d+\.\d+", page.inner_text(".hh-ver")) is not None, page.inner_text(".hh-ver"))
             check("새 상담 시작 = 입력 방식 허브", "새 상담 시작" in page.inner_text("#btn-start-consult")
                   and page.get_attribute("#btn-start-consult", "data-inputhub") == "1", page.inner_text("#btn-start-consult"))
 
@@ -308,7 +309,7 @@ def main():
             meta = page.inner_text("#cap-meta").replace("\n", " ")
             check("전처리 통계 표시", "원본" in meta and "전처리" in meta and "대비" in meta, meta[:70])
             beta = page.inner_text("#cap-beta")
-            check("정적 베타 한계 안내", all(k in beta for k in BETA_NOTE_KEYS), beta[:70])
+            check("베타 한계·서버 안내", all(k in beta for k in BETA_NOTE_KEYS) or ("서버" in beta and "로그인" in beta), beta[:70])
             keys_after = page.evaluate("() => Object.keys(localStorage).concat(Object.keys(sessionStorage)).sort().join(',')")
             check("저장소 키 변화 0", keys_before == keys_after, (keys_before, keys_after))
             leaked = page.evaluate("""() => {
@@ -402,6 +403,7 @@ def main():
               document.querySelectorAll('.rv-main b').forEach((b, i) => { out[b.innerText.trim()] = i; });
               return out;
             }""")
+            before_vals = page.evaluate("() => ({ similar: window.__bojangState.cov.cancer.similar, brain: window.__bojangState.cov.brain.dx.vascular })")
             page.uncheck(f'[data-rvcheck="{idx["유사암 진단비"]}"]')
             page.fill(f'[data-rvnum="{idx["일반암 진단비"]}"]', "4500")
             before_score = page.evaluate("() => (document.querySelector('.ring-text strong') || {}).textContent || ''")
@@ -421,7 +423,7 @@ def main():
             })""")
             check("반영 후 6단계 입력실로 이동", state["view"] is True, state["view"])
             check("반영: 일반암 수정값 4,500", state["general"] == 4500, state["general"])
-            check("반영: 체크 해제한 유사암 미변경", state["similar"] == 1000, state["similar"])
+            check("반영: 체크 해제한 유사암 미변경", state["similar"] == before_vals["similar"], (before_vals["similar"], state["similar"]))
             check("반영: 뇌·심장 진단비", state["brain"] == 2000 and state["heart"] == 2000, (state["brain"], state["heart"]))
             check("반영: 월 보험료 24만원", state["premium"] == 24 and "24만원" in state["strip"], (state["premium"], state["strip"]))
             check("반영 후 점수 재계산", state["analyzed"] is True and state["resultVisible"] is True

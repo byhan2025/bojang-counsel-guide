@@ -23,7 +23,7 @@
 //   · 감사 로그에는 사용자·시각·모델·소요시간·바이트 수만 남기고 이미지/인식 원문은 남기지 않습니다.
 // =====================================================================
 import { fail, json, preflight, sha256Hex } from "../_shared/http.ts";
-import { audit, env, requireUser } from "../_shared/supabase.ts";
+import { admin, audit, env, requireUser } from "../_shared/supabase.ts";
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
 /* v5.8 — 모델 한 번 호출에 걸 수 있는 상한. Gemini 가 응답하지 않을 때 워커가
@@ -251,6 +251,20 @@ Deno.serve(async (req: Request) => {
   const auth = await requireUser(req);
   if (!auth.ok) return fail(auth.code, auth.status);
   const userId = auth.user.id;
+
+  /* v6.0 — 스마트키 기기·세션 검증 보강.
+     PC 가 원격 잠금된 세션으로는 AI 사진 인식을 호출할 수 없습니다.
+     헤더가 없으면(휴대폰 단독 사용) 기존과 동일하게 동작합니다. */
+  const skSession = (req.headers.get("x-smartkey-session") ?? "").trim();
+  if (skSession) {
+    const { data: session } = await admin()
+      .from("pc_sessions")
+      .select("token, user_id, revoked_at")
+      .eq("token", skSession)
+      .maybeSingle();
+    if (!session || session.user_id !== userId) return fail("device_unverified", 401, "이 기기 세션을 확인할 수 없습니다.");
+    if (session.revoked_at) return fail("device_revoked", 401, "원격 잠금된 PC에서는 서버 기능을 쓸 수 없습니다.");
+  }
 
   if (rateLimited(userId)) {
     return fail("rate_limited", 429, "사진 인식은 1분에 6회까지 가능합니다. 잠시 후 다시 시도해 주세요.");

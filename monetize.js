@@ -1,4 +1,4 @@
-/* 보장분석 라이프 리포트 v5.9 — 첫 화면 3버튼·IndexedDB·약관/개인정보·도메인 잠금 · 베타 테스트 공개판
+/* 보장분석 라이프 리포트 v6.0 — 첫 화면 3버튼·IndexedDB·약관/개인정보·도메인 잠금 · 베타 테스트 공개판
    · 베타 기간에는 Pro 전 기능(30장 전체 · 1/10/30장 PDF · 고객 30명 · 리모델링 · 화이트라벨)을 잠금 없이 무료 제공
    · v5.4: 계정/구독(backend.js) 연동 — 실서버 구독 상태를 hydrate() 로 반영
    · 정식 출시 예정 요금: 월 5,000원 / 연 50,000원 · 베타 피드백 Google Form + 추첨 사은품 안내
@@ -19,6 +19,9 @@
   const PLAN_KEY = 'bojang.plan.v1';
   const BRAND_KEY = 'bojang.brand.v1';
   const REMODEL_KEY = 'bojang.remodel.v1';
+  /* v6.0 — 버전 표기는 version.js 단일 상수에서 가져옵니다 */
+  const VER = (root.BojangVersion && root.BojangVersion.short()) || 'v6.0';
+  const VER_UPPER = VER.toUpperCase();
   const FREE_SLIDES = 6;
   const FREE_CLIENTS = 1;
   const PRO_CLIENTS = 30;
@@ -241,7 +244,7 @@
     if (mark) mark.setAttribute('content', b.name);
     const title = $('#brand-title');
     if (title) title.textContent = b.name;
-    document.title = root.BojangVersion ? root.BojangVersion.title(b.name) : `${b.name} v5.9 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
+    document.title = root.BojangVersion ? root.BojangVersion.title(b.name) : `${b.name} ${VER} · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
     loadPdfLogo(b.logo);
     /* 상담자 화면의 고객 표지도 새 브랜드로 다시 그립니다 */
     if (root.BojangDeck && root.__bojangState) root.BojangDeck.refresh(root.__bojangState, { reset: true });
@@ -409,7 +412,7 @@
     wrap.innerHTML = `
       <div class="modal-card bm-card" role="dialog" aria-modal="true" aria-labelledby="bm-title">
         <button type="button" class="pw-x" id="bm-x" aria-label="닫기">×</button>
-        <span class="bm-eyebrow">BETA TEST · V5.9</span>
+        <span class="bm-eyebrow">BETA TEST · ${VER_UPPER}</span>
         <strong id="bm-title">베타 기간 · Pro 전 기능 무료</strong>
         <p class="bm-lead">${BETA_NOTE}. 리모델링 비교기 · 10장·30장 PDF · 화이트라벨(로고) 설정까지 지금 바로 사용할 수 있습니다.</p>
         <div class="bm-feature" id="bm-feature"></div>
@@ -512,7 +515,7 @@
     if (host) {
       host.innerHTML = beta
         ? `<div class="plan-banner is-beta" id="beta-banner-card">
-            <div class="pb-main"><span class="pb-eyebrow">BETA TEST · V5.9</span><b>베타 기간 · Pro 전 기능 무료 <i>FREE</i></b>
+            <div class="pb-main"><span class="pb-eyebrow">BETA TEST · ${VER_UPPER}</span><b>베타 기간 · Pro 전 기능 무료 <i>FREE</i></b>
               <p>${BETA_NOTE}. 리모델링 · 10/30장 PDF · 화이트라벨을 지금 그대로 쓰세요.</p></div>
             <button type="button" class="pb-btn primary" data-beta-open>베타 안내</button>
           </div>`
@@ -529,7 +532,8 @@
           </div>`;
     }
     const loadSub = $('#home-load-sub');
-    if (loadSub) loadSub.textContent = open ? '베타 · 고객 30명 저장' : '무료 체험 · 고객 1명';
+    /* v6.0 — 무엇이 보이고 무엇이 저장되는지 한 줄로 명확히 */
+    if (loadSub) loadSub.textContent = open ? '최근 3건 표시 · 최대 30건 저장' : '최근 3건 표시 · 무료 체험 1건 저장';
     /* v5.8 — 로그인해 클라우드에 연결되면 '기기 + 클라우드 저장'으로 표기 */
     const cloudOn = !!(root.BojangBackend && root.BojangBackend.isLive && root.BojangBackend.isLive()
       && root.BojangBackend.hasSession && root.BojangBackend.hasSession());
@@ -1094,7 +1098,7 @@
             <span class="bp-plan">${BETA ? 'BETA' : (open ? 'PRO' : 'FREE')}</span>
           </div>
           <div class="bp-hero">
-            <span class="bp-eyebrow">LIFE REPORT V5.9</span>
+            <span class="bp-eyebrow">LIFE REPORT ${VER_UPPER}</span>
             <h4 id="bp-hero-name">${brandNameHTML(draft.name)}</h4>
             <p id="bp-hero-slogan">${esc(draft.slogan)}</p>
             <div class="bp-cover">

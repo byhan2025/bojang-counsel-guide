@@ -91,6 +91,8 @@
   function isLive() { return state.mode === 'live-backend'; }
   function hasSession() { return !!(session && session.access_token); }
   function user() { return session && session.user ? session.user : null; }
+  /* v6.0 — 스마트키 승인 시 폰 JWT 검증용 (토큰 원문은 화면에 노출하지 않습니다) */
+  function sessionToken() { return (session && session.access_token) || ''; }
   function canUseVision() { return isLive() && hasSession() && !!functionUrl(VISION_PATH); }
   function mode() { return state.mode; }
   function notice() { return isLive() ? (hasSession() ? LIVE_NOTICE : AUTH_REQUIRED) : BETA_NOTICE; }
@@ -664,7 +666,15 @@
     try {
       res = await fetch(url, {
         method: 'POST',
-        headers: { Authorization: 'Bearer ' + (token || cfg.anonKey), apikey: cfg.anonKey },
+        headers: Object.assign({
+          Authorization: 'Bearer ' + (token || cfg.anonKey), apikey: cfg.anonKey
+        }, (function () {
+          /* v6.0 — PC 세션이 있으면 서버가 원격 잠금 여부를 확인할 수 있도록 세션 토큰을 함께 보냅니다 */
+          try {
+            const sk = root.BojangSmartKey && root.BojangSmartKey.pc ? root.BojangSmartKey.pc.state() : null;
+            return sk && sk.session && sk.session.token ? { 'x-smartkey-session': sk.session.token } : {};
+          } catch (e) { return {}; }
+        })()),
         body: form,
         cache: 'no-store',
         credentials: 'omit'
@@ -1048,7 +1058,7 @@
 
   root.BojangBackend = {
     init, configure, clearConfig, testConnection,
-    mode, isLive, hasSession, user, canUseVision, notice,
+    mode, isLive, hasSession, user, canUseVision, notice, sessionToken,
     signUp, signIn, signOut, refreshSession, refreshEntitlements,
     selectRows, insertRow, upsertRows, patchRow,
     syncClient, pushBrandSettings, pullBrandSettings,

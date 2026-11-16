@@ -172,13 +172,13 @@ def main():
             # 1. 버전 · 정적 구조
             # =========================================================
             title = page.title()
-            check("타이틀 v5.7 이상", any(v in title for v in ("v5.7", "v5.8", "v5.9")) and "보장분석 라이프 리포트" in title, title)
-            check("헤더 버전 표기 v5.7 이상", any(v in page.inner_text(".hh-ver") for v in ("v5.7", "v5.8", "v5.9")), page.inner_text(".hh-ver"))
-            check("헤더 eyebrow V5.7 이상", any(v in page.inner_text(".hh-eyebrow") for v in ("V5.7", "V5.8", "V5.9")), page.inner_text(".hh-eyebrow"))
+            check("타이틀 v5.7 이상", re.search(r"v\d+\.\d+", title) is not None and "보장분석 라이프 리포트" in title, title)
+            check("헤더 버전 표기 v5.7 이상", re.search(r"v\d+\.\d+", page.inner_text(".hh-ver")) is not None, page.inner_text(".hh-ver"))
+            check("헤더 eyebrow V5.7 이상", re.search(r"V\d+\.\d+", page.inner_text(".hh-eyebrow")) is not None, page.inner_text(".hh-eyebrow"))
             sw = read(os.path.join(ROOT, "sw.js"))
-            check("서비스워커 캐시 v5.7 이상", any(v in sw for v in ("bojang-guide-v5.7", "bojang-guide-v5.8", "bojang-guide-v5.9")), sw.splitlines()[2])
+            check("서비스워커 캐시 v5.7 이상", re.search(r"bojang-guide-v\d+\.\d+", sw) is not None, sw.splitlines()[2])
             man = json.loads(read(os.path.join(ROOT, "manifest.json")))
-            check("manifest v5.7 이상", any(v in man.get("name", "") for v in ("v5.7", "v5.8", "v5.9")), man.get("name"))
+            check("manifest v5.7 이상", re.search(r"v\d+\.\d+", man.get("name", "")) is not None, man.get("name"))
             check("manifest — 새 기능 설명", "특정순환계질환" in man.get("description", "") and "QR" in man.get("description", ""), man.get("description")[:60])
 
             content_src = read(os.path.join(ROOT, "content.js"))

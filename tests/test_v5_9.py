@@ -236,31 +236,32 @@ def main():
             hide_tour(pg)
             ver_src = read(os.path.join(ROOT, "version.js"))
             decls = re.findall(r"const APP_VERSION = '([^']+)'", ver_src)
-            check("version.js — APP_VERSION 단일 선언", decls == ["v5.9"], decls)
-            check("window.APP_VERSION = v5.9", pg.evaluate("() => window.APP_VERSION") == "v5.9", pg.evaluate("() => window.APP_VERSION"))
-            check("BojangVersion.value", pg.evaluate("() => BojangVersion.value") == "v5.9", pg.evaluate("() => BojangVersion.value"))
-            check("헤더 eyebrow = APP_VERSION", pg.inner_text(".hh-eyebrow").strip() == "LIFE REPORT · BETA V5.9", pg.inner_text(".hh-eyebrow"))
-            check("헤더 버전 표기 = v5.9", pg.inner_text(".hh-ver").strip().startswith("v5.9"), pg.inner_text(".hh-ver"))
-            check("타이틀 v5.9", "v5.9" in pg.title() and "보장분석 라이프 리포트" in pg.title(), pg.title())
+            VER = decls[0] if decls else "v6.0"          # v5.9 검사는 이후 버전에서도 회귀 검사로 유지
+            check("version.js — APP_VERSION 단일 선언", len(decls) == 1, decls)
+            check("window.APP_VERSION = " + VER, pg.evaluate("() => window.APP_VERSION") == VER, pg.evaluate("() => window.APP_VERSION"))
+            check("BojangVersion.value", pg.evaluate("() => BojangVersion.value") == VER, pg.evaluate("() => BojangVersion.value"))
+            check("헤더 eyebrow = APP_VERSION", pg.inner_text(".hh-eyebrow").strip() == "LIFE REPORT · BETA " + VER.upper(), pg.inner_text(".hh-eyebrow"))
+            check("헤더 버전 표기 = " + VER, pg.inner_text(".hh-ver").strip().startswith(VER), pg.inner_text(".hh-ver"))
+            check("타이틀 " + VER, VER in pg.title() and "보장분석 라이프 리포트" in pg.title(), pg.title())
             pg.evaluate("() => BojangApp.switchView('analysis')")
             pg.wait_for_timeout(300)
-            check("입력 영역 eyebrow V5.9", "V5.9" in pg.inner_text("#view-analysis .intro-eyebrow"), pg.inner_text("#view-analysis .intro-eyebrow"))
+            check("입력 영역 eyebrow " + VER.upper(), VER.upper() in pg.inner_text("#view-analysis .intro-eyebrow"), pg.inner_text("#view-analysis .intro-eyebrow"))
             pg.evaluate("() => BojangPlan.openBetaModal('plan')")
             pg.wait_for_timeout(400)
-            check("모달 eyebrow V5.9", "V5.9" in pg.inner_text("#beta-modal .bm-eyebrow"), pg.inner_text("#beta-modal .bm-eyebrow"))
+            check("모달 eyebrow " + VER.upper(), VER.upper() in pg.inner_text("#beta-modal .bm-eyebrow"), pg.inner_text("#beta-modal .bm-eyebrow"))
             pg.evaluate("() => { const m = document.getElementById('beta-modal'); if (m) m.hidden = true; }")
             sw = read(os.path.join(ROOT, "sw.js"))
-            check("서비스워커 캐시 bojang-guide-v5.9", "const CACHE = 'bojang-guide-v5.9';" in sw, sw.splitlines()[2])
+            check("서비스워커 캐시 bojang-guide-" + VER, "const CACHE = 'bojang-guide-" + VER + "';" in sw, sw.splitlines()[2])
             man = json.loads(read(os.path.join(ROOT, "manifest.json")))
-            check("manifest v5.9", "v5.9" in man.get("name", ""), man.get("name"))
-            check("manifest — v5.9 기능 설명", all(k in man.get("description", "") for k in ["3버튼", "IndexedDB", "이용약관", "도메인"]), man.get("description")[:80])
+            check("manifest " + VER, VER in man.get("name", ""), man.get("name"))
+            check("manifest — 핵심 기능 설명", all(k in man.get("description", "") for k in ["3버튼", "IndexedDB", "이용약관", "도메인"]), man.get("description")[:80])
             html = read(os.path.join(ROOT, "index.html"))
             leftovers = [v for v in ("v5.2", "v5.5", "v5.8") if re.search(r"(?:v|V)" + v[1:] + r"\s*(?:·|베타|BETA|\)|$)", html)]
             check("index.html — v5.2·v5.5·v5.8 표기 0", not leftovers, leftovers)
             monet = read(os.path.join(ROOT, "monetize.js"))
             check("monetize — BojangVersion 단일 출처", "BojangVersion.title" in monet and "V5.5" not in monet, "monetize.js")
             check("PDF/앱 — 버전 상수 참조", "BojangVersion" in read(os.path.join(ROOT, "app.js")), "app.js")
-            check("단일 HTML — v5.9 표기", "v5.9" in read(os.path.join(ROOT, "dist", "bojang-guide.single.html")), "dist")
+            check("단일 HTML — " + VER + " 표기", VER in read(os.path.join(ROOT, "dist", "bojang-guide.single.html")), "dist")
 
             # =========================================================
             # 2. 결함 ①: 새 상담 시작 = 진짜 빈 상담 / 샘플은 별도 버튼
@@ -525,8 +526,8 @@ def main():
             pg.wait_for_timeout(300)
             privacy = pg.inner_text("#legal-body")
             check("개인정보 탭 전환", pg.inner_text("#legal-title") == "개인정보처리방침", pg.inner_text("#legal-title"))
-            check("방침 — 사진 즉시 휘발(서버 저장 0건)", "휘발" in privacy and "서버 저장 0건" in privacy, "")
-            check("방침 — Gemini 비전 1회 전송 고지", "Gemini" in privacy and "1회 전송" in privacy, "")
+            check("방침 — 사진을 앱·자체 서버에 저장하지 않음", ("저장하지 않습니다" in privacy) and ("서버 저장 0건" in privacy or "자체 Supabase DB" in privacy), "")
+            check("방침 — 외부 AI API 전송·공급자 정책 고지", "외부 AI API" in privacy and "Gemini" in privacy and ("공급자" in privacy), "")
             check("방침 — 클라우드 동기화 보관 항목", "클라우드" in privacy and "상담 스냅샷" in privacy and "Supabase" in privacy, "")
             check("방침 — IndexedDB·localStorage 구분", "IndexedDB" in privacy and "localStorage" in privacy, "")
             pg.screenshot(path=os.path.join(SHOTS, "ui-privacy-terms.png"), full_page=False)
@@ -593,7 +594,7 @@ def main():
             with open(pdf_path, "wb") as f:
                 f.write(base64.b64decode(out["b64"]))
             raw_pdf = open(pdf_path, "rb").read()
-            check("PDF 메타데이터 — Producer 버전 v5.9", b"Bojang Guide v5.9" in raw_pdf and b"Bojang Guide v3" not in raw_pdf,
+            check("PDF 메타데이터 — Producer 버전 " + VER, ("Bojang Guide " + VER).encode() in raw_pdf and b"Bojang Guide v3" not in raw_pdf,
                   re.findall(rb"/Producer \(([^)]*)\)", raw_pdf)[:1])
             # 워터마크가 실제로 그려지는지 — 같은 꼬리말을 idMark 유무로 두 번 렌더해 픽셀을 비교합니다
             diff = pg.evaluate("""async () => {
