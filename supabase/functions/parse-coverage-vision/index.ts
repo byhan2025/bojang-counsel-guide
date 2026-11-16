@@ -167,26 +167,34 @@ async function callOpenAI(b64: string, mime: string, model: string): Promise<Vis
 
 async function callGemini(b64: string, mime: string, model: string): Promise<VisionOut> {
   const key = env("GEMINI_API_KEY");
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: PROMPT }] },
-      contents: [{
-        role: "user",
-        parts: [
-          { text: "이 보장분석표를 읽어 JSON 으로만 답하세요." },
-          { inline_data: { mime_type: mime, data: b64 } },
-        ],
-      }],
-      generationConfig: { temperature: 0, maxOutputTokens: 1500, responseMimeType: "application/json" },
-    }),
-  });
-  if (!res.ok) throw new Error(`gemini_${res.status}`);
-  const data = await res.json();
-  const raw = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
-  return { lines: extractLines(raw), model };
+  const candidates = model === "gemini-flash-latest" ? [model] : [model, "gemini-flash-latest"];
+  let lastStatus = 500;
+  for (const m of candidates) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: PROMPT }] },
+        contents: [{
+          role: "user",
+          parts: [
+            { text: "이 보장분석표를 읽어 JSON 으로만 답하세요." },
+            { inline_data: { mime_type: mime, data: b64 } },
+          ],
+        }],
+        generationConfig: { temperature: 0, maxOutputTokens: 1500, responseMimeType: "application/json" },
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const raw = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
+      return { lines: extractLines(raw), model: m };
+    }
+    lastStatus = res.status;
+    if (res.status !== 404 && res.status !== 429 && res.status !== 503) break;
+  }
+  throw new Error(`gemini_${lastStatus}`);
 }
 
 /* 레이트 리밋 — 인스턴스 메모리 기준(사용자당 1분 6회).
@@ -244,7 +252,7 @@ Deno.serve(async (req: Request) => {
     if (openaiKey) {
       out = await callOpenAI(b64, mime, env("VISION_MODEL") || "gpt-4o-mini");
     } else {
-      out = await callGemini(b64, mime, env("GEMINI_VISION_MODEL") || "gemini-2.0-flash");
+      out = await callGemini(b64, mime, env("GEMINI_VISION_MODEL") || "gemini-3.8-flash");
     }
   } catch (e) {
     b64 = null;
