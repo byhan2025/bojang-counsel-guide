@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v5.6 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<title>보장분석 라이프 리포트 v5.7 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
 
@@ -3168,6 +3168,203 @@ body{
   .chip-custom{font-size:9.5px;padding:5px 8px;}
 }
 
+/* ================================================================
+   v5.7 · 시니어 큰 글씨 모드 · 불완전판매 방지 경고 · 갱신 보험료 차트
+   ================================================================ */
+
+/* ---------- 큰 글씨 모드 토글 ---------- */
+.deck-senior{
+  display:flex;align-items:center;gap:4px;
+  border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);
+  color:#c8d9ea;font-size:10.5px;font-weight:800;letter-spacing:-0.02em;
+  padding:5px 9px;border-radius:999px;font-family:inherit;white-space:nowrap;
+}
+.deck-senior span{font-size:11px;line-height:1;}
+.deck-senior.is-on{background:#ffd47a;border-color:#ffd47a;color:#3d2a05;}
+
+/* ---------- 큰 글씨 모드 — 고객 화면(30장) ---------- */
+.deck.senior .sl-inner{padding:20px 16px 24px;gap:15px;}
+.deck.senior .sl-head .k{font-size:11.5px;letter-spacing:.08em;}
+.deck.senior .sl-head h2{font-size:27px;line-height:1.26;letter-spacing:-0.035em;}
+.deck.senior .sl-head p{font-size:15px;line-height:1.55;}
+.deck.senior .sl-src{font-size:11px;line-height:1.5;}
+.deck.senior .sl-note{font-size:14.5px;line-height:1.6;padding:13px 14px;}
+.deck.senior .sl-tile .st-label{font-size:12.5px;}
+.deck.senior .sl-tile .st-value{font-size:23px;}
+.deck.senior .sl-tile .st-value em{font-size:12px;}
+.deck.senior .sl-tile .st-sub{font-size:11.5px;}
+.deck.senior .pri-row{padding:13px 12px;}
+.deck.senior .pri-top strong{font-size:17px;}
+.deck.senior .pri-sub{font-size:11.5px;}
+.deck.senior .pri-pct{font-size:17px;}
+.deck.senior .pri-sum{font-size:13px;line-height:1.5;}
+.deck.senior .pri-badge{font-size:11.5px;padding:4px 9px;}
+.deck.senior .sl-bar{height:10px;}
+.deck.senior .care-card b{font-size:13px;}
+.deck.senior .care-card strong{font-size:19px;}
+.deck.senior .cc-note{font-size:11px;line-height:1.45;}
+.deck.senior .sl-chart svg{max-width:100%;}
+.deck.senior .sl-chart .rc-head b{font-size:15px;}
+.deck.senior .sl-chart .rc-head span{font-size:11.5px;}
+.deck.senior .sl-chart figcaption{font-size:11px;line-height:1.5;}
+.deck.senior .sl-warn ul li{font-size:13px;line-height:1.5;}
+.deck.senior .sl-warn .sw-head b{font-size:13px;}
+.deck.senior .sl-warn .sw-head span{font-size:11px;}
+/* 세로형 한 줄 카드 — 시니어가 한 번에 한 항목씩 읽도록 */
+.deck.senior .grid2,
+.deck.senior .tile-grid.two,
+.deck.senior .tile-grid.three,
+.deck.senior .care-grid,
+.deck.senior .conc-side,
+.deck.senior .dist-row,
+.deck.senior .struct,
+.deck.senior .struct-side,
+.deck.senior .sil-opts,
+.deck.senior .road{grid-template-columns:1fr!important;display:grid;gap:10px;}
+.deck.senior .dist-row{justify-items:center;}
+.deck.senior .pri-row{grid-template-columns:38px 1fr;}
+.deck.senior .summary-2col,
+.deck.senior .split-2{grid-template-columns:1fr!important;}
+.deck.senior .sl-head,
+.deck.senior .sl-note,
+.deck.senior .sl-warn,
+.deck.senior .pri-row,
+.deck.senior .sl-tile,
+.deck.senior .care-card,
+.deck.senior .sl-chart{min-width:0;}
+.deck.senior .sl-head h2,
+.deck.senior .sl-head p,
+.deck.senior .sl-note,
+.deck.senior .sl-warn li,
+.deck.senior .pri-sum{overflow-wrap:anywhere;word-break:keep-all;}
+
+/* ---------- 불완전판매 방지 경고 (고객 화면) ---------- */
+.sl-warn{
+  border:1px solid #F3DFC0;background:#FFFBF2;border-radius:14px;
+  padding:11px 12px 12px;display:flex;flex-direction:column;gap:7px;
+  border-left:4px solid #D9821B;
+}
+.sl-warn .sw-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.sl-warn .sw-head b{font-size:11.6px;font-weight:800;color:#8A5A0C;letter-spacing:-0.02em;}
+.sl-warn .sw-head span{font-size:9.8px;font-weight:600;color:#A9762A;}
+.sl-warn ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px;}
+.sl-warn ul li{
+  position:relative;padding-left:12px;font-size:11.4px;line-height:1.5;color:#6E4A12;
+}
+.sl-warn ul li::before{
+  content:"";position:absolute;left:2px;top:6px;width:4px;height:4px;border-radius:50%;background:#D9821B;
+}
+body.is-client .deck .sl-warn{background:#FFFBF2;}
+
+/* ---------- 갱신형 vs 비갱신형 20년 차트 ---------- */
+.sl-chart{margin:0;border:1px solid var(--line);border-radius:14px;background:#fff;padding:11px 11px 9px;}
+.sl-chart .rc-head{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-bottom:2px;}
+.sl-chart .rc-head b{font-size:12.5px;font-weight:800;color:var(--navy-800);letter-spacing:-0.03em;}
+.sl-chart .rc-head span{font-size:9.8px;font-weight:600;color:var(--muted);}
+.sl-chart svg{display:block;width:100%;height:auto;}
+.sl-chart figcaption{margin-top:5px;font-size:9.4px;line-height:1.45;color:var(--muted);}
+.rc-grid{stroke:#EEF2F8;stroke-width:1;}
+.rc-axis{font-size:9px;font-weight:600;fill:#8A9BB0;}
+.rc-axis.rc-strong{font-weight:800;fill:#3C536F;}
+.rc-line{fill:none;stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round;}
+.rc-line.rc-renew{stroke:#C07A2C;}
+.rc-line.rc-level{stroke:#1264B0;}
+.rc-area{fill:rgba(192,122,44,.14);stroke:none;}
+.rc-cross{stroke:#D9382F;stroke-width:1.2;stroke-dasharray:3 3;}
+.rc-dot{fill:#fff;stroke:#D9382F;stroke-width:1.8;}
+.rc-pill{fill:#FDEEED;stroke:#F5D5D1;stroke-width:.8;}
+.rc-pill-t{font-size:9.4px;font-weight:800;fill:#A6291F;}
+.rc-end{font-size:9.6px;font-weight:800;}
+.rc-renew-t{fill:#C07A2C;}
+.rc-level-t{fill:#1264B0;}
+.rc-legend text{font-size:9.6px;}
+
+/* 360px — 토글·차트가 넘치지 않게 */
+@media (max-width:380px){
+  .deck-senior{padding:5px 7px;font-size:9.6px;}
+  .deck.senior .sl-head h2{font-size:24px;}
+  .deck.senior .sl-head p{font-size:14px;}
+  .sl-chart{padding:9px 8px 8px;}
+  .sl-chart .rc-head span{display:none;}
+}
+/* 시니어 모드 — 타임라인은 줄바꿈해 한눈에 */
+.deck.senior .timeline{flex-wrap:wrap;overflow-x:visible;}
+.deck.senior .tl-item{flex:1 1 44%;}
+
+/* ================================================================
+   v5.7 · 첫 방문 4단계 퀵 가이드 투어
+   ================================================================ */
+.tour-btn{
+  display:flex;align-items:center;gap:4px;
+  border:1px solid var(--line);background:#fff;color:var(--point);
+  font-family:inherit;font-size:11px;font-weight:800;letter-spacing:-0.02em;
+  padding:6px 10px;border-radius:999px;white-space:nowrap;
+}
+.tour-btn span{
+  display:grid;place-items:center;width:15px;height:15px;border-radius:50%;
+  background:var(--blush);color:var(--point);font-size:10px;font-weight:800;
+}
+.tour-btn:active{background:var(--blush);}
+
+.tour{position:fixed;inset:0;z-index:120;}
+.tour[hidden]{display:none!important;}
+.tour-spot{
+  position:fixed;border-radius:14px;border:2px solid var(--point);
+  box-shadow:0 0 0 9999px rgba(7,18,32,.66);
+  transition:top .18s ease,left .18s ease,width .18s ease,height .18s ease;
+  pointer-events:none;
+}
+.tour-card{
+  position:fixed;z-index:121;background:#fff;border-radius:16px;
+  padding:15px 16px 14px;box-shadow:0 18px 42px -18px rgba(6,20,38,.62);
+  border:1px solid var(--line);display:flex;flex-direction:column;gap:9px;
+  max-width:520px;margin:0 auto;
+}
+.tc-top{display:flex;align-items:center;gap:8px;}
+.tc-eyebrow{font-size:9px;font-weight:800;letter-spacing:.14em;color:var(--point);}
+.tc-step{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--muted);}
+.tc-close{
+  width:24px;height:24px;border:0;border-radius:50%;background:#F1F4F8;color:#6B7F98;
+  font-size:12px;font-weight:800;line-height:1;font-family:inherit;
+}
+.tc-title{font-size:16px;font-weight:800;color:var(--navy-800);letter-spacing:-0.03em;line-height:1.3;}
+.tc-body{margin:0;font-size:12.6px;line-height:1.6;color:var(--ink-2);word-break:keep-all;}
+.tc-dots{display:flex;gap:5px;}
+.tc-dots i{width:7px;height:7px;border-radius:50%;background:#DDE5EF;}
+.tc-dots i.is-done{background:var(--point);opacity:.5;}
+.tc-dots i.is-on{background:var(--point);width:18px;border-radius:999px;}
+.tc-actions{display:flex;align-items:center;gap:7px;margin-top:2px;}
+.tc-actions button{
+  font-family:inherit;border-radius:10px;font-size:12px;font-weight:800;letter-spacing:-0.02em;
+  padding:9px 14px;border:1px solid var(--line);background:#fff;color:var(--ink-2);
+}
+.tc-actions .tc-skip{margin-right:auto;border-color:transparent;background:transparent;color:var(--muted);padding:9px 4px;}
+.tc-actions .tc-next{background:var(--navy-800);border-color:var(--navy-800);color:#fff;min-width:78px;}
+.tc-actions .tc-prev:disabled{opacity:.4;}
+
+.tour-invite{
+  position:fixed;right:14px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:70;
+  pointer-events:none;
+  width:min(330px,calc(100vw - 28px));
+  background:#fff;border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 20px 40px -24px rgba(6,20,38,.6);padding:13px 14px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.tour-invite[hidden]{display:none!important;}
+.ti-body b{font-size:13.5px;font-weight:800;color:var(--navy-800);}
+.ti-body p{margin:3px 0 0;font-size:11.6px;line-height:1.5;color:var(--ink-2);}
+.ti-body p b{font-size:11.6px;color:var(--point);}
+.ti-actions{display:flex;gap:7px;justify-content:flex-end;}
+.ti-actions button{font-family:inherit;font-size:11.8px;font-weight:800;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-2);pointer-events:auto;}
+.ti-actions .ti-start{background:var(--point);border-color:var(--point);color:#fff;}
+body.tour-open{overflow:hidden;}
+@media (max-width:420px){
+  .tour-card{padding:13px 13px 12px;}
+  .tc-title{font-size:15px;}
+  .tc-body{font-size:12px;}
+  .tour-invite{right:10px;left:10px;width:auto;bottom:calc(74px + env(safe-area-inset-bottom));}
+}
+
 </style>
 </head>
 <body>
@@ -3186,6 +3383,9 @@ body{
         <p>고객 맞춤형 보장 점검 · 리모델링 상담 가이드</p>
       </div>
     </div>
+    <button type="button" class="tour-btn" id="btn-tour" aria-label="4단계 사용 가이드 열기">
+      <span aria-hidden="true">?</span> 가이드
+    </button>
     <button type="button" class="home-btn" id="btn-home" aria-label="메인 화면으로">
       <span aria-hidden="true">🏠</span> 메인
     </button>
@@ -3249,8 +3449,8 @@ body{
         <span class="hv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0112 8a3.9 3.9 0 017 2.6C19 15.6 12 20 12 20z"/></svg>든든한미래</span>
       </div>
       <div class="hh-top">
-        <span class="hh-eyebrow">LIFE REPORT · BETA V5.6</span>
-        <span class="hh-ver">v5.6 · 2026.11</span>
+        <span class="hh-eyebrow">LIFE REPORT · BETA V5.7</span>
+        <span class="hh-ver">v5.7 · 2026.11</span>
       </div>
       <h2>무엇을 하시겠어요?</h2>
       <p>상담 전 과정을 한 화면에서 시작합니다. 입력은 이 기기 안에서만 계산되고, PDF도 기기에서 직접 만듭니다.</p>
@@ -3268,6 +3468,9 @@ body{
         </button>
         <button type="button" class="hh-btn" id="btn-json-import">
           <span class="hb-ico">⬆</span><b>JSON 가져오기</b><span>파일 또는 붙여넣기</span>
+        </button>
+        <button type="button" class="hh-btn" id="btn-tour-home">
+          <span class="hb-ico">?</span><b>4단계 사용 가이드</b><span>입력 → 5대 담보 → 리모델링 → PDF 저장</span>
         </button>
         <button type="button" class="hh-btn acct-hub-btn" id="btn-account-home" data-account="1">
           <span class="hb-ico">👤</span><b>계정 / 구독</b><span id="acct-hub-sub">로그인 · 구독 상태 · 서버 연결</span>
@@ -3389,10 +3592,10 @@ body{
       <div id="history-list" class="history"></div>
     </div>
 
-    <p class="app-foot">기준일 2026-11-16 · v5.6 베타 기준점(암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 치료비 3종 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리 · 증권 담보 직접 기재 통합형/개별형) 반영 · 상품별 약관 우선</p>
+    <p class="app-foot">기준일 2026-11-16 · v5.7 베타 기준점(암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 특정순환계질환(3~5종) 주요치료비 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리 · 증권 담보 직접 기재 통합형/개별형 · 시니어 큰 글씨 모드 · 불완전판매 방지 경고 · 20년 갱신 보험료 차트 · 명함 QR · 4단계 가이드) 반영 · 상품별 약관 우선</p>
   </section>
 
-  <!-- ================= v5.3 사진 즉시 촬영 (휘발·미저장) · v5.4 서버 AI 인식 · v5.5 PDF 프리미엄 리포트 · v5.6 증권 담보 직접 기재 ================= -->
+  <!-- ================= v5.3 사진 즉시 촬영 (휘발·미저장) · v5.4 서버 AI 인식 · v5.5 PDF 프리미엄 리포트 · v5.6 증권 담보 직접 기재 · v5.7 시니어·차트·QR·온보딩 ================= -->
   <section id="view-capture" class="view" aria-label="사진 즉시 촬영">
     <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>사진 즉시 촬영 · 휘발</span><button type="button" class="home-back hub-jump" data-inputhub="1">✎ 입력 방식</button></div>
 
@@ -3971,6 +4174,36 @@ body{
 
 <div class="toast no-print" id="toast" role="status" aria-live="polite"></div>
 
+<!-- ================= v5.7 첫 방문 4단계 퀵 가이드 투어 ================= -->
+<div class="tour" id="tour" hidden aria-hidden="true">
+  <div class="tour-spot" id="tour-spot" aria-hidden="true"></div>
+  <div class="tour-card" id="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title" aria-describedby="tour-body">
+    <div class="tc-top">
+      <span class="tc-eyebrow">QUICK GUIDE</span>
+      <span class="tc-step" id="tour-step">1 / 4</span>
+      <button type="button" class="tc-close" id="tour-close" aria-label="가이드 닫기">✕</button>
+    </div>
+    <b class="tc-title" id="tour-title">입력 허브</b>
+    <p class="tc-body" id="tour-body"></p>
+    <div class="tc-dots" id="tour-dots" aria-hidden="true"></div>
+    <div class="tc-actions">
+      <button type="button" class="tc-skip" id="tour-skip">건너뛰기</button>
+      <button type="button" class="tc-prev" id="tour-prev">이전</button>
+      <button type="button" class="tc-next" id="tour-next">다음</button>
+    </div>
+  </div>
+</div>
+<div class="tour-invite" id="tour-invite" hidden>
+  <div class="ti-body">
+    <b>처음이신가요?</b>
+    <p>4단계로 <b>입력 → 5대 담보 → 리모델링 → PDF 저장</b>을 안내합니다.</p>
+  </div>
+  <div class="ti-actions">
+    <button type="button" class="ti-start" id="tour-invite-start">가이드 보기</button>
+    <button type="button" class="ti-later" id="tour-invite-later">나중에</button>
+  </div>
+</div>
+
 <!-- ================= 고객 화면 : 30장 프레젠테이션 ================= -->
 <div class="deck" id="deck" hidden aria-hidden="true">
   <div class="deck-top">
@@ -3979,6 +4212,9 @@ body{
       <button type="button" class="deck-home" id="deck-home" aria-label="메인 화면으로">🏠 메인</button>
       <button type="button" class="deck-filter" id="deck-filter" aria-pressed="false">
         <span class="df-dot"></span>부족 항목만 보기
+      </button>
+      <button type="button" class="deck-senior" id="deck-senior" aria-pressed="false" aria-label="큰 글씨 모드 — 고객 화면의 글씨와 숫자를 크게">
+        <span aria-hidden="true">🔍</span>큰 글씨
       </button>
       <button type="button" class="deck-advisor" id="deck-advisor" aria-label="상담자 화면으로 (길게 누르기)">
         <span class="da-ring" aria-hidden="true"></span>상담자
@@ -4240,14 +4476,16 @@ const CUSTOM_PRESETS = {
     { name: '항암방사선치료비', mode: 'individual' },
     { name: '암 주요치료비(통합)', mode: 'bundle' }
   ],
+  /* v5.7 — 실무 기준: 뇌·심장 주요치료비는 '특정순환계질환(3~5종) 주요치료비' 한 담보로
+     파는 상품이 주류입니다. 1순위 프리셋을 이 담보명으로 두고, 개별형 상품은 뒤 칩으로 남깁니다. */
   brain: [
-    { name: '순환계 주요치료비(통합)', mode: 'bundle' },
+    { name: '특정순환계질환(3~5종) 주요치료비', mode: 'bundle' },
     { name: '혈전용해치료비', mode: 'individual' },
     { name: '뇌혈관수술비', mode: 'individual' },
     { name: '뇌 중환자실입원일당', mode: 'individual' }
   ],
   heart: [
-    { name: '순환계 주요치료비(통합)', mode: 'bundle' },
+    { name: '특정순환계질환(3~5종) 주요치료비', mode: 'bundle' },
     { name: '관상동맥성형술(스텐트)', mode: 'individual' },
     { name: '관상동맥우회술', mode: 'individual' },
     { name: '심장 중환자실입원일당', mode: 'individual' }
@@ -4601,6 +4839,60 @@ const GUIDES = {
       '장기요양은 인정서(등급판정서) + 급여이용내역서가 필요합니다.',
       '요양비는 급여 종류(방문요양·방문간호·복지용구)별로 한도가 다릅니다.',
       '입원일수와 실제 간병 사용일이 일치해야 하므로 사용일지를 남겨 두세요.'
+    ]
+  }
+};
+
+/* v5.7 — 불완전판매 방지 경고 (고객 화면 · 10장 상세 PDF · 리모델링 1장 PDF에 자동 표시)
+   상담 자리에서 반드시 말로 확인해야 하는 지급 제한·감액·면책 조건만 담습니다.
+   각 항목은 짧은 한 문장으로, 배지/스트립에 그대로 인쇄할 수 있는 길이로 유지합니다. */
+const SALE_WARNINGS = {
+  cancer: {
+    label: '암', title: '상담 시 구두 설명 필수',
+    items: [
+      '보장개시일 90일 — 90일 내 진단은 보장 제외',
+      '가입 1년 미만 진단은 50%만 지급',
+      '"유사암 제외" 문구·1회한 여부 확인'
+    ]
+  },
+  brain: {
+    label: '뇌', title: '상담 시 구두 설명 필수',
+    items: [
+      '혈전용해제 치료와 혈전제거술은 다른 담보',
+      '뇌출혈만 있으면 뇌경색(I63)은 미지급',
+      '가입 1년 미만 진단은 감액 가능'
+    ]
+  },
+  heart: {
+    label: '심장', title: '상담 시 구두 설명 필수',
+    items: [
+      '스텐트·혈관성형술 수술비 지급 여부 확인',
+      '혈전용해제와 혈전제거술 구분 확인',
+      '급성심근경색만 있으면 협심증은 미지급'
+    ]
+  },
+  surgery: {
+    label: '수술', title: '상담 시 구두 설명 필수',
+    items: [
+      '가입 1년 미만 수술은 50% 감액이 흔함',
+      '시술·중재술은 "수술"이 아닐 수 있음',
+      '종수 분류표가 상품마다 다름'
+    ]
+  },
+  care: {
+    label: '간병', title: '상담 시 구두 설명 필수',
+    items: [
+      '하루 8시간 기준 — 못 채우면 감액·미지급',
+      '가족 간병은 업체 등록·결제 증빙 필요',
+      '요양병원은 별도 담보 — 제외 문구 확인'
+    ]
+  },
+  remodel: {
+    label: '리모델링·신규', title: '해지·신규 가입 전 확인',
+    items: [
+      '해지 전 해지환급금·재가입 조건 확인',
+      '신규 담보 90일 면책·1년 미만 감액',
+      '상령일 이후 보험료 인상 — 가입 시점 판단'
     ]
   }
 };
@@ -5449,12 +5741,16 @@ const PLAN_FRONT = {
     brain: [
       ['lysis', /혈전|용해|tpa|트롬|제거술/i],
       ['icu', /중환자실|집중치료/],
-      ['surgery', /수술|스텐트|색전|성형|개두|관혈|우회/]
+      ['surgery', /수술|스텐트|색전|성형|개두|관혈|우회/],
+      /* v5.7 — 특정순환계질환(3~5종) 주요치료비: 혈전용해·수술을 한 담보로 묶은 통합형.
+         중환자실 일당이 아니라 치료비 축(혈전용해·수술)에만 배분합니다. */
+      ['main', /특정순환계|3\s*[~\-–]\s*5\s*종|순환계\s*주요치료비|주요치료비/]
     ],
     heart: [
       ['lysis', /혈전|용해|tpa|트롬/i],
       ['icu', /중환자실|집중치료/],
-      ['surgery', /수술|스텐트|성형|우회|개흉|관혈/]
+      ['surgery', /수술|스텐트|성형|우회|개흉|관혈/],
+      ['main', /특정순환계|3\s*[~\-–]\s*5\s*종|순환계\s*주요치료비|주요치료비/]
     ]
   };
   const CUSTOM_DX_RE = /진단비|진단/;
@@ -5509,10 +5805,16 @@ const PLAN_FRONT = {
       let skip = CUSTOM_DX_RE.test(x.name);
       if (!skip && map.length) {
         const hit = map.find((m) => m[1].test(x.name));
-        if (hit && byKey[hit[0]] != null) target = hit[0];
+        if (hit && (hit[0] === 'main' || byKey[hit[0]] != null)) target = hit[0];
       }
       if (!skip && x.amount > 0) {
-        if (target) byKey[target] += x.amount;
+        if (target === 'main') {
+          /* 통합형 주요치료비 — 혈전용해·수술 두 칸에 권장 비율로 나눕니다(중환자실 제외) */
+          const mains = list.filter((s) => s.key === 'lysis' || s.key === 'surgery');
+          const msum = mains.reduce((a, s) => a + (Number(s.rec) || 0), 0);
+          if (msum > 0) mains.forEach((s) => { byKey[s.key] += (x.amount * (Number(s.rec) || 0)) / msum; });
+          else if (recSum > 0) list.forEach((s) => { byKey[s.key] += (x.amount * (Number(s.rec) || 0)) / recSum; });
+        } else if (target) byKey[target] += x.amount;
         else if (recSum > 0) list.forEach((s) => { byKey[s.key] += (x.amount * (Number(s.rec) || 0)) / recSum; });
       }
       rows.push({ id: x.id, name: x.name, amount: x.amount, mode: x.mode, sub: target, skip });
@@ -6323,6 +6625,50 @@ const PLAN_FRONT = {
   }
 
 
+  /* =========================================================
+     v5.7 — 갱신형 vs 비갱신형 20년 보험료 추이 (예시 시뮬레이션)
+     고객이 지금 내는 월 보험료(P)를 기준으로 두 구조의 20년 곡선을 그립니다.
+       · 비갱신형: 가입 시 비싸지만 만기까지 일정 — P × 1.22 고정
+       · 갱신형  : 가입 시 저렴(P × 0.55)하고, 매년 나이 인상(연 6%) +
+                   5년 주기 갱신 인상(×1.20)이 겹칩니다.
+     실제 갱신 보험료는 상품·나이·인수 결과에 따라 다르므로, 화면·PDF에는
+     항상 '예시 시뮬레이션 · 증권 갱신 보험료 표로 확인' 각주를 함께 표시합니다.
+     ========================================================= */
+  const RENEW_TREND = { years: 20, start: 0.55, annual: 1.06, step: 1.20, stepYears: 5, level: 1.22 };
+  function renewTrend(state) {
+    const st = state || {};
+    const input = Number(st.premium || 0) || 0;
+    const base = input > 0 ? input : 25;
+    const startAge = insuranceAge(st.client && st.client.birth) || (Number(st.age) || 40);
+    const years = [], renew = [], level = [];
+    for (let t = 0; t <= RENEW_TREND.years; t += 1) {
+      const steps = Math.floor(t / RENEW_TREND.stepYears);
+      const r = base * RENEW_TREND.start * Math.pow(RENEW_TREND.annual, t) * Math.pow(RENEW_TREND.step, steps);
+      years.push(t);
+      renew.push(Math.round(r * 10) / 10);
+      level.push(Math.round(base * RENEW_TREND.level * 10) / 10);
+    }
+    /* 두 곡선이 교차하는 해 — 선형 보간 */
+    let crossYear = null;
+    for (let t = 1; t < renew.length; t += 1) {
+      const d0 = renew[t - 1] - level[t - 1], d1 = renew[t] - level[t];
+      if (d0 <= 0 && d1 >= 0) {
+        crossYear = Math.round((t - 1 + (Math.abs(d0) / (Math.abs(d0) + Math.abs(d1) || 1))) * 10) / 10;
+        break;
+      }
+      if (d0 >= 0) { crossYear = 0; break; }
+    }
+    const last = renew[renew.length - 1], lv = level[level.length - 1];
+    return {
+      base, assumed: input <= 0, startAge, endAge: startAge + RENEW_TREND.years,
+      years, renew, level, crossYear,
+      crossAge: crossYear == null ? null : Math.round(startAge + crossYear),
+      at20: { renew: last, level: lv, diff: Math.round((last - lv) * 10) / 10, pct: lv > 0 ? Math.round(((last - lv) / lv) * 100) : 0 },
+      ticks: [0, 5, 10, 15, 20],
+      max: Math.max.apply(null, renew.concat(level))
+    };
+  }
+
   function oneLine(state, m) {
     if (!m.needList.length) return '5대 담보가 기준선을 넘었습니다. 금액 조정과 갱신 대비가 남은 과제입니다.';
     const x = m.needList[0];
@@ -6339,7 +6685,8 @@ const PLAN_FRONT = {
     neuroSum, neuroCount, neuroMissing, groupObj, groupSum, normalizeState, normalizeCov, stageOf, partLevel,
     dxObj, dxTotal, dxCoreVal, dxScenarios, dxShort, DX_SUBS, DX_MAX, simulate,
     CUSTOM_KEYS, CUSTOM_AREA_LABEL, CUSTOM_MODE_LABEL, CUSTOM_MAP,
-    customList, customTotal, customAll, customCredits, sanitizeCustom
+    customList, customTotal, customAll, customCredits, sanitizeCustom,
+    renewTrend, RENEW_TREND
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -7183,6 +7530,403 @@ const PLAN_FRONT = {
 
 </script>
 <script>
+/* 보장분석 라이프 리포트 v5.7 — QR 코드 생성기 (외부 라이브러리·네트워크 0)
+   명함의 카카오톡 상담 링크 · 전화번호(tel:)를 PDF에 스캔 가능한 QR로 인쇄합니다.
+   · 바이트 모드(UTF-8) · 오류정정 M · 버전 1~10 자동 선택 · 마스크 8종 자동 평가
+   · 반환값: { size, modules[y][x] (1=검정), version, mask, text }
+   · 그리기 도우미: svg(text, {px, quiet}) — HTML, matrix(text) — PDF/Canvas */
+(function (root) {
+  'use strict';
+
+  /* 오류정정 M — 버전별 [블록당 EC 코드워드, [[블록 수, 데이터 코드워드], ...]] */
+  const EC_M = {
+    1: [10, [[1, 16]]],
+    2: [16, [[1, 28]]],
+    3: [26, [[1, 44]]],
+    4: [18, [[2, 32]]],
+    5: [24, [[2, 43]]],
+    6: [16, [[4, 27]]],
+    7: [18, [[4, 31]]],
+    8: [22, [[2, 38], [2, 39]]],
+    9: [22, [[3, 36], [2, 37]]],
+    10: [26, [[4, 43], [1, 44]]]
+  };
+  const ALIGN = {
+    1: [], 2: [6, 18], 3: [6, 22], 4: [6, 26], 5: [6, 30],
+    6: [6, 34], 7: [6, 22, 38], 8: [6, 24, 42], 9: [6, 26, 46], 10: [6, 28, 50]
+  };
+  const MAX_VERSION = 10;
+
+  /* ---------- UTF-8 바이트 ---------- */
+  function utf8(str) {
+    const s = String(str == null ? '' : str);
+    const out = [];
+    for (let i = 0; i < s.length; i += 1) {
+      let c = s.charCodeAt(i);
+      if (c >= 0xD800 && c <= 0xDBFF && i + 1 < s.length) {
+        const c2 = s.charCodeAt(i + 1);
+        if (c2 >= 0xDC00 && c2 <= 0xDFFF) {
+          c = 0x10000 + ((c - 0xD800) << 10) + (c2 - 0xDC00);
+          i += 1;
+        }
+      }
+      if (c < 0x80) out.push(c);
+      else if (c < 0x800) out.push(0xC0 | (c >> 6), 0x80 | (c & 0x3F));
+      else if (c < 0x10000) out.push(0xE0 | (c >> 12), 0x80 | ((c >> 6) & 0x3F), 0x80 | (c & 0x3F));
+      else out.push(0xF0 | (c >> 18), 0x80 | ((c >> 12) & 0x3F), 0x80 | ((c >> 6) & 0x3F), 0x80 | (c & 0x3F));
+    }
+    return out;
+  }
+
+  /* ---------- GF(256) · Reed-Solomon ---------- */
+  const EXP = new Array(512);
+  const LOG = new Array(256);
+  (function initGF() {
+    let x = 1;
+    for (let i = 0; i < 255; i += 1) {
+      EXP[i] = x;
+      LOG[x] = i;
+      x <<= 1;
+      if (x & 0x100) x ^= 0x11D;
+    }
+    for (let i = 255; i < 512; i += 1) EXP[i] = EXP[i - 255];
+  })();
+  const gfMul = (a, b) => (a === 0 || b === 0 ? 0 : EXP[LOG[a] + LOG[b]]);
+
+  function rsGen(deg) {
+    let poly = [1];
+    for (let i = 0; i < deg; i += 1) {
+      const next = new Array(poly.length + 1).fill(0);
+      for (let j = 0; j < poly.length; j += 1) {
+        next[j] ^= poly[j];
+        next[j + 1] ^= gfMul(poly[j], EXP[i]);
+      }
+      poly = next;
+    }
+    return poly;
+  }
+
+  function rsEncode(data, ecLen) {
+    const gen = rsGen(ecLen);
+    const out = new Array(ecLen).fill(0);
+    for (let i = 0; i < data.length; i += 1) {
+      const factor = data[i] ^ out[0];
+      out.shift();
+      out.push(0);
+      if (factor) {
+        for (let j = 0; j < ecLen; j += 1) out[j] ^= gfMul(gen[j + 1], factor);
+      }
+    }
+    return out;
+  }
+
+  /* ---------- 비트 버퍼 ---------- */
+  function BitBuf() { this.bits = []; }
+  BitBuf.prototype.put = function (val, len) {
+    for (let i = len - 1; i >= 0; i -= 1) this.bits.push((val >>> i) & 1);
+  };
+  BitBuf.prototype.len = function () { return this.bits.length; };
+  BitBuf.prototype.bytes = function () {
+    const out = [];
+    for (let i = 0; i < this.bits.length; i += 8) {
+      let b = 0;
+      for (let j = 0; j < 8; j += 1) b = (b << 1) | (this.bits[i + j] || 0);
+      out.push(b);
+    }
+    return out;
+  };
+
+  function capacityBits(version) {
+    const spec = EC_M[version];
+    return spec[1].reduce((a, g) => a + g[0] * g[1], 0) * 8;
+  }
+
+  function fitVersion(byteLen) {
+    for (let v = 1; v <= MAX_VERSION; v += 1) {
+      const countBits = v < 10 ? 8 : 16;
+      const need = 4 + countBits + byteLen * 8;
+      if (need <= capacityBits(v)) return v;
+    }
+    return null;
+  }
+
+  /* ---------- 매트릭스 ---------- */
+  function blank(size) {
+    const m = [];
+    for (let y = 0; y < size; y += 1) m.push(new Array(size).fill(null));
+    return m;
+  }
+
+  function bch15(data) {
+    let d = data << 10;
+    for (let i = 4; i >= 0; i -= 1) {
+      if (d & (1 << (i + 10))) d ^= 0x537 << i;
+    }
+    return ((data << 10) | (d & 0x3FF)) ^ 0x5412;
+  }
+  function bch18(version) {
+    let d = version << 12;
+    for (let i = 5; i >= 0; i -= 1) {
+      if (d & (1 << (i + 12))) d ^= 0x1F25 << i;
+    }
+    return (version << 12) | (d & 0xFFF);
+  }
+
+  function finder(m, x, y) {
+    for (let dy = -1; dy <= 7; dy += 1) {
+      for (let dx = -1; dx <= 7; dx += 1) {
+        const X = x + dx, Y = y + dy;
+        if (X < 0 || Y < 0 || Y >= m.length || X >= m.length) continue;
+        const edge = (dx >= 0 && dx <= 6 && (dy === 0 || dy === 6)) || (dy >= 0 && dy <= 6 && (dx === 0 || dx === 6));
+        const core = dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4;
+        m[Y][X] = edge || core ? 1 : 0;
+      }
+    }
+  }
+
+  function align(m, cx, cy) {
+    for (let dy = -2; dy <= 2; dy += 1) {
+      for (let dx = -2; dx <= 2; dx += 1) {
+        const edge = Math.max(Math.abs(dx), Math.abs(dy));
+        m[cy + dy][cx + dx] = edge === 2 || edge === 0 ? 1 : 0;
+      }
+    }
+  }
+
+  const MASKS = [
+    (y, x) => (y + x) % 2 === 0,
+    (y) => y % 2 === 0,
+    (y, x) => x % 3 === 0,
+    (y, x) => (y + x) % 3 === 0,
+    (y, x) => (Math.floor(y / 2) + Math.floor(x / 3)) % 2 === 0,
+    (y, x) => ((y * x) % 2) + ((y * x) % 3) === 0,
+    (y, x) => (((y * x) % 2) + ((y * x) % 3)) % 2 === 0,
+    (y, x) => (((y + x) % 2) + ((y * x) % 3)) % 2 === 0
+  ];
+
+  function penalty(m) {
+    const n = m.length;
+    let score = 0;
+    /* 규칙 1 — 같은 색 5개 이상 연속 */
+    for (let y = 0; y < n; y += 1) {
+      let run = 1;
+      for (let x = 1; x < n; x += 1) {
+        if (m[y][x] === m[y][x - 1]) run += 1;
+        else { if (run >= 5) score += 3 + (run - 5); run = 1; }
+      }
+      if (run >= 5) score += 3 + (run - 5);
+    }
+    for (let x = 0; x < n; x += 1) {
+      let run = 1;
+      for (let y = 1; y < n; y += 1) {
+        if (m[y][x] === m[y - 1][x]) run += 1;
+        else { if (run >= 5) score += 3 + (run - 5); run = 1; }
+      }
+      if (run >= 5) score += 3 + (run - 5);
+    }
+    /* 규칙 2 — 2×2 같은 색 블록 */
+    for (let y = 0; y < n - 1; y += 1) {
+      for (let x = 0; x < n - 1; x += 1) {
+        const v = m[y][x];
+        if (v === m[y][x + 1] && v === m[y + 1][x] && v === m[y + 1][x + 1]) score += 3;
+      }
+    }
+    /* 규칙 3 — 1:1:3:1:1 유사 패턴 */
+    const pat = [1, 0, 1, 1, 1, 0, 1];
+    const scan = (get) => {
+      for (let i = 0; i + 6 < n; i += 1) {
+        let hit = true;
+        for (let k = 0; k < 7; k += 1) if (get(i + k) !== pat[k]) { hit = false; break; }
+        if (!hit) continue;
+        const before = i >= 4 ? [0, 0, 0, 0].every((_, k) => get(i - 4 + k) === 0) : false;
+        const after = i + 10 < n ? [0, 0, 0, 0].every((_, k) => get(i + 7 + k) === 0) : false;
+        if (before || after) score += 40;
+      }
+    };
+    for (let y = 0; y < n; y += 1) scan((i) => m[y][i]);
+    for (let x = 0; x < n; x += 1) scan((i) => m[i][x]);
+    /* 규칙 4 — 검정 비율 편차 */
+    let dark = 0;
+    for (let y = 0; y < n; y += 1) for (let x = 0; x < n; x += 1) if (m[y][x]) dark += 1;
+    const pct = (dark * 100) / (n * n);
+    score += Math.floor(Math.abs(pct - 50) / 5) * 10;
+    return score;
+  }
+
+  function build(text) {
+    const bytes = utf8(text);
+    const version = fitVersion(bytes.length);
+    if (!version) return null;
+    const size = 17 + version * 4;
+    const spec = EC_M[version];
+
+    /* 1) 데이터 코드워드 */
+    const bb = new BitBuf();
+    bb.put(4, 4);                                   /* 바이트 모드 */
+    bb.put(bytes.length, version < 10 ? 8 : 16);    /* 문자 수 */
+    bytes.forEach((b) => bb.put(b, 8));
+    const cap = capacityBits(version);
+    if (bb.len() > cap) return null;
+    const term = Math.min(4, cap - bb.len());
+    bb.put(0, term);
+    while (bb.len() % 8 !== 0) bb.bits.push(0);
+    const data = bb.bytes();
+    const totalData = cap / 8;
+    let pad = 0;
+    while (data.length < totalData) { data.push(pad % 2 === 0 ? 0xEC : 0x11); pad += 1; }
+
+    /* 2) 블록 분할 · RS */
+    const blocks = [];
+    let off = 0;
+    spec[1].forEach(([count, len]) => {
+      for (let i = 0; i < count; i += 1) {
+        const chunk = data.slice(off, off + len);
+        off += len;
+        blocks.push({ data: chunk, ec: rsEncode(chunk, spec[0]) });
+      }
+    });
+
+    /* 3) 인터리브 */
+    const maxData = Math.max.apply(null, blocks.map((b) => b.data.length));
+    const words = [];
+    for (let i = 0; i < maxData; i += 1) {
+      blocks.forEach((b) => { if (i < b.data.length) words.push(b.data[i]); });
+    }
+    for (let i = 0; i < spec[0]; i += 1) {
+      blocks.forEach((b) => words.push(b.ec[i]));
+    }
+
+    /* 4) 기능 패턴 */
+    const base = blank(size);
+    finder(base, 0, 0);
+    finder(base, size - 7, 0);
+    finder(base, 0, size - 7);
+    for (let i = 8; i < size - 8; i += 1) {
+      if (base[6][i] == null) base[6][i] = i % 2 === 0 ? 1 : 0;
+      if (base[i][6] == null) base[i][6] = i % 2 === 0 ? 1 : 0;
+    }
+    const ap = ALIGN[version];
+    ap.forEach((cy) => {
+      ap.forEach((cx) => {
+        const nearFinder = (cx <= 8 && cy <= 8) || (cx >= size - 9 && cy <= 8) || (cx <= 8 && cy >= size - 9);
+        if (!nearFinder) align(base, cx, cy);
+      });
+    });
+    base[size - 8][8] = 1;                                     /* 다크 모듈 */
+    /* 포맷 정보 자리 예약 */
+    for (let i = 0; i <= 8; i += 1) {
+      if (base[8][i] == null) base[8][i] = 0;
+      if (base[i][8] == null) base[i][8] = 0;
+    }
+    for (let i = 0; i < 8; i += 1) {
+      if (base[8][size - 1 - i] == null) base[8][size - 1 - i] = 0;
+      if (base[size - 1 - i][8] == null) base[size - 1 - i][8] = 0;
+    }
+    /* 버전 정보(v7+) */
+    if (version >= 7) {
+      const vbits = bch18(version);
+      for (let i = 0; i < 18; i += 1) {
+        const bit = (vbits >> i) & 1;
+        const a = size - 11 + (i % 3), b = Math.floor(i / 3);
+        base[b][a] = bit;
+        base[a][b] = bit;
+      }
+    }
+
+    /* 5) 데이터 배치 */
+    const cells = [];
+    let bitIdx = 0;
+    const bits = [];
+    words.forEach((w) => { for (let i = 7; i >= 0; i -= 1) bits.push((w >> i) & 1); });
+    for (let right = size - 1; right >= 1; right -= 2) {
+      if (right === 6) right = 5;
+      const upward = ((right + 1) & 2) === 0;
+      for (let vert = 0; vert < size; vert += 1) {
+        const y = upward ? size - 1 - vert : vert;
+        for (let j = 0; j < 2; j += 1) {
+          const x = right - j;
+          if (base[y][x] !== null) continue;
+          base[y][x] = bits[bitIdx] == null ? 0 : bits[bitIdx];
+          cells.push([y, x]);
+          bitIdx += 1;
+        }
+      }
+    }
+
+    /* 6) 마스크 평가 → 최적 선택 */
+    let best = null;
+    for (let mk = 0; mk < 8; mk += 1) {
+      const m = base.map((row) => row.slice());
+      cells.forEach(([y, x]) => { if (MASKS[mk](y, x)) m[y][x] ^= 1; });
+      const fmt = bch15(mk);                                   /* EC M = 00 + 마스크 */
+      const putBit = (v, y, x) => { m[y][x] = v; };
+      /* 포맷 정보 1벌 — 좌상단 파인더 둘레 (열 8 세로 / 행 8 가로) */
+      for (let i = 0; i <= 5; i += 1) putBit((fmt >> i) & 1, i, 8);
+      putBit((fmt >> 6) & 1, 7, 8);
+      putBit((fmt >> 7) & 1, 8, 8);
+      putBit((fmt >> 8) & 1, 8, 7);
+      for (let i = 9; i <= 14; i += 1) putBit((fmt >> i) & 1, 8, 14 - i);
+      /* 포맷 정보 2벌 — 우상단·좌하단 */
+      for (let i = 0; i <= 7; i += 1) putBit((fmt >> i) & 1, 8, size - 1 - i);
+      for (let i = 8; i <= 14; i += 1) putBit((fmt >> i) & 1, size - 15 + i, 8);
+      m[size - 8][8] = 1;
+      const p = penalty(m);
+      if (!best || p < best.penalty) best = { penalty: p, matrix: m, mask: mk };
+    }
+    return { size, modules: best.matrix, version, mask: best.mask, text: String(text) };
+  }
+
+  /* ---------- 그리기 ---------- */
+  function matrix(text) {
+    try { return build(text); } catch (e) { return null; }
+  }
+
+  function svg(text, o) {
+    o = o || {};
+    const q = matrix(text);
+    if (!q) return '';
+    const quiet = o.quiet == null ? 4 : o.quiet;
+    const px = o.px || 6;
+    const dim = (q.size + quiet * 2) * px;
+    let rects = '';
+    for (let y = 0; y < q.size; y += 1) {
+      for (let x = 0; x < q.size; x += 1) {
+        if (!q.modules[y][x]) continue;
+        rects += `<rect x="${(x + quiet) * px}" y="${(y + quiet) * px}" width="${px}" height="${px}"/>`;
+      }
+    }
+    return `<svg class="qr-svg" viewBox="0 0 ${dim} ${dim}" width="${dim}" height="${dim}" role="img" aria-label="QR 코드 — ${String(text).replace(/[<>&"]/g, '')}" fill="#0a2540"><rect width="100%" height="100%" fill="#fff"/><g shape-rendering="crispEdges">${rects}</g></svg>`;
+  }
+
+  /* PDF(Canvas)용 — quiet zone 포함해 size(pt) 정사각형 안에 그립니다 */
+  function draw(sheet, x, y, size, text, o) {
+    o = o || {};
+    const q = matrix(text);
+    if (!q) return false;
+    const quiet = o.quiet == null ? 2 : o.quiet;
+    const unit = size / (q.size + quiet * 2);
+    sheet.rect(x, y, size, size, { fill: o.bg || '#ffffff', r: o.r || 2, stroke: o.stroke || null });
+    const fill = o.fill || '#0a2540';
+    for (let ry = 0; ry < q.size; ry += 1) {
+      let runStart = -1;
+      for (let rx = 0; rx <= q.size; rx += 1) {
+        const on = rx < q.size && q.modules[ry][rx] === 1;
+        if (on && runStart < 0) runStart = rx;
+        if (!on && runStart >= 0) {
+          sheet.rect(x + (runStart + quiet) * unit, y + (ry + quiet) * unit,
+            (rx - runStart) * unit, unit, { fill });
+          runStart = -1;
+        }
+      }
+    }
+    return true;
+  }
+
+  root.BojangQR = { matrix, svg, draw, utf8, MAX_VERSION, EC_M, fitVersion };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
 /* 보장분석 상담 가이드 — 3종 리포트 레이아웃 (v3)
    1장 요약 · 10장 상세 · 30장 설계사 플랜북.
    모두 PDFKit.Sheet 프리미티브로 그려 캔버스 → PDF로 저장됩니다. */
@@ -7255,11 +7999,17 @@ const PLAN_FRONT = {
   /* 긴 담보명은 잘라서 한 줄에 맞춥니다 (넘침 방지) */
   function cutName(t, n) {
     const v = String(t == null ? '' : t).trim() || '담보명 미입력';
-    return v.length > n ? v.slice(0, n - 1) + '…' : v;
+    if (v.length <= n) return v;
+    let cut = n - 1;
+    /* 괄호·공백 한가운데서 끊기지 않게 — 바로 뒤에 닫는 괄호가 있으면 함께 닫습니다 */
+    const open = v.lastIndexOf('(', cut);
+    const close = v.indexOf(')', cut);
+    if (open >= 0 && close >= 0 && close - cut <= 6) cut = close + 1;
+    return v.slice(0, cut).replace(/[\s(·,]+$/, '') + '…';
   }
   /* 한 줄에 들어가는 길이로 항목을 줄이고 남은 건수를 붙입니다 (넘침 방지) */
   function customFit(s, items, w, size, withArea) {
-    const parts = items.map((x) => `${withArea && x.area ? '[' + x.area + '] ' : ''}${cutName(x.name, 20)} ${won(x.amount)}만원(${CUSTOM_MODE_TXT[x.mode] || '통합형'})`);
+    const parts = items.map((x) => `${withArea && x.area ? '[' + x.area + '] ' : ''}${cutName(x.name, 26)} ${won(x.amount)}만원(${CUSTOM_MODE_TXT[x.mode] || '통합형'})`);
     const tail = (n) => (n > 0 ? `   외 ${n}건` : '');
     for (let n = parts.length; n >= 1; n -= 1) {
       const cand = parts.slice(0, n).join('   ') + tail(parts.length - n);
@@ -7395,9 +8145,14 @@ const PLAN_FRONT = {
     }
     const vy = cy + (b.kakao ? 23 : 12);
     const vh = Math.max(30, y + h - 12 - vy);
-    s.rect(x + 12, vy, w - 24, vh, { fill: C.tint2, r: 5, stroke: C.tintLine });
+    const qs = 40;
+    const hasQR = !!(qrInfo(m) && root.BojangQR);
+    const vw = hasQR ? w - 24 - qs - 16 : w - 24;
+    s.rect(x + 12, vy, vw, vh, { fill: C.tint2, r: 5, stroke: C.tintLine });
     s.text('담당자 총평', x + 20, vy + 5, { size: 5.3, weight: 800, color: C.blue });
-    s.para(o.verdict || ownerVerdict(m), x + 20, vy + 14, w - 40, { size: 5.7, color: C.ink2, lh: 1.38 });
+    s.para(o.verdict || ownerVerdict(m), x + 20, vy + 14, vw - 18, { size: 5.7, color: C.ink2, lh: 1.38 });
+    /* v5.7 — 명함 QR: 카카오톡 상담 링크 또는 전화번호 */
+    if (hasQR) qrBlock(s, x + w - 12 - qs, vy + Math.max(2, (vh - qs) / 2), qs, m, { label: false });
     return y + h;
   }
 
@@ -7420,8 +8175,17 @@ const PLAN_FRONT = {
     else s.text('연락처는 상담 시 안내드립니다', x + 16, y + 78, { size: 5.8, weight: 500, color: C.muted });
     if (b.kakao) s.text(`카카오톡 상담  ${b.kakao}`, x + 150, y + 78, { size: 6.2, weight: 600, color: C.ink2 });
     s.line(x + 260, y + 12, x + 260, y + h - 12, { color: C.tintLine });
+    /* v5.7 — 끝장 명함 QR (카카오톡 상담 링크 / 전화) */
+    const qs = 60;
+    const hasQR = !!(qrInfo(m) && root.BojangQR);
+    const qx = x + w - 14 - qs;
+    const tw = hasQR ? qx - 12 - (x + 274) : w - 290;
     s.text('담당자 총평', x + 274, y + 10, { size: 5.6, weight: 800, color: C.blue });
-    s.para(ownerVerdict(m), x + 274, y + 19, w - 290, { size: 6.2, color: C.ink2, lh: 1.45 });
+    s.para(ownerVerdict(m), x + 274, y + 19, tw, { size: 6.2, color: C.ink2, lh: 1.45 });
+    if (hasQR) {
+      s.line(qx - 12, y + 12, qx - 12, y + h - 12, { color: C.tintLine });
+      qrBlock(s, qx, y + (h - qs) / 2, qs, m, { label: true });
+    }
     return y + h;
   }
 
@@ -7686,6 +8450,151 @@ const PLAN_FRONT = {
 
   function todoStrip(s, y, text) {
     return noteStrip(s, y, text, { fill: C.mintSoft, stroke: C.mintLine, accent: C.mint, size: 7.2, color: C.mintInk });
+  }
+
+  /* =========================================================
+     v5.7 — 불완전판매 방지 경고 스트립 (05·06·07·09p)
+     상담 현장에서 반드시 말로 확인해야 하는 면책·감액·지급 제한만 모아,
+     해당 영역 페이지에 앰버 색 배지 스트립으로 자동 인쇄합니다.
+     ========================================================= */
+  function warnData(key) {
+    const W = (typeof SALE_WARNINGS !== 'undefined') ? SALE_WARNINGS : null;
+    if (!W) return null;
+    if (W[key]) return W[key];
+    if (key === 'neurolog' || key === 'brainheart') return W.brain;
+    return null;
+  }
+  function warnStrip(s, y, key, o) {
+    o = o || {};
+    const W = warnData(key);
+    if (!W) return y;
+    const w = o.w || s.CW, x = o.x || s.ML;
+    const items = W.items || [];
+    const cols = o.cols || items.length;
+    const cw = (w - 24 - (cols - 1) * 8) / cols;
+    const tw = cw - 13;
+    let bodyH = 0;
+    items.forEach((it) => { bodyH = Math.max(bodyH, s.height(it, tw, o.size || 5.6, 1.4)); });
+    const h = 16 + bodyH + 7;
+    s.rect(x, y, w, h, { fill: o.fill || C.orangeSoft, r: 5, stroke: o.stroke || C.orangeLine });
+    s.rect(x, y, 2.8, h, { fill: o.accent || C.orange, r: 1.4 });
+    s.badge(x + 10, y + 5, '⚠ 불완전판매 방지 · ' + W.label, 'need', { size: 5.9, h: 11, padX: 4.5 });
+    s.text(W.title || '가입 전 확인', x + w - 10, y + 5.5, { size: 5.6, weight: 600, color: C.orange, align: 'right' });
+    items.forEach((it, i) => {
+      const ix = x + 10 + i * (cw + 8);
+      s.iconCircle(ix + 2.6, y + 20, 1.6, { fill: C.orange });
+      s.para(it, ix + 8, y + 16, tw, { size: o.size || 5.6, color: o.color || C.ink2, lh: 1.4 });
+    });
+    return y + h;
+  }
+
+  /* =========================================================
+     v5.7 — 갱신형 vs 비갱신형 20년 보험료 추이 차트 (08p)
+     BK.renewTrend()의 시뮬레이션 값을 축·교차점·범례와 함께 그립니다.
+     ========================================================= */
+  function renewChart(s, x, y, w, tr, o) {
+    o = o || {};
+    const h = o.h || 126;
+    const padL = 28, padR = 10, padT = 30, padB = 30;
+    const px = x + padL, py = y + padT, pw = w - padL - padR, ph = h - padT - padB;
+    const maxY = Math.max(1, tr.max * 1.1);
+    const X = (yr) => px + (yr / 20) * pw;
+    const Y = (v) => py + ph - (v / maxY) * ph;
+    s.rect(x, y, w, h, { fill: '#fff', r: 6, stroke: C.line });
+    s.rect(x, y, w, 2.6, { fill: o.accent || C.orange, r: 1.3 });
+    s.text('20년 예상 보험료 추이', x + 10, y + 8, { size: 7.6, weight: 800, color: C.navy });
+    s.text(`현재 월 ${won(tr.base)}만원 기준 · 세로축 만원${tr.assumed ? ' (금액 미입력 — 예시)' : ''}`, x + 10 + s.measure('20년 예상 보험료 추이', 7.6, 800) + 8, y + 10, { size: 5.6, weight: 500, color: C.muted });
+    /* 범례 */
+    const lg = [['갱신형', C.orange], ['비갱신형', C.blue]];
+    const lx = x + w - 10 - 104;
+    lg.forEach(([lab, col], i) => {
+      const bx = lx + i * 52;
+      s.line(bx, y + 13, bx + 12, y + 13, { color: col, w: 1.8 });
+      s.text(lab, bx + 15, y + 9, { size: 5.8, weight: 700, color: C.ink2 });
+    });
+    /* 격자·Y축 눈금 */
+    [0, 0.5, 1].forEach((k) => {
+      const yy = py + ph - k * ph;
+      s.line(px, yy, px + pw, yy, { color: C.line2, dash: k === 0 ? null : [2, 2] });
+      s.text(won(Math.round(maxY * k)), px - 4, yy - 3.2, { size: 5.2, weight: 600, color: C.muted, align: 'right' });
+    });
+    /* X축 눈금 — 현재 · +5 · +10 · +15 · +20년 (나이 병기) */
+    tr.ticks.forEach((t) => {
+      const xx = X(t);
+      s.line(xx, py, xx, py + ph, { color: C.line2, dash: [2, 2] });
+      s.text(t === 0 ? '현재' : `+${t}년`, xx, py + ph + 4, { size: 5.4, weight: 700, color: C.ink2, align: t === 0 ? 'left' : t === 20 ? 'right' : 'center' });
+      s.text(`${tr.startAge + t}세`, xx, py + ph + 11, { size: 4.9, weight: 500, color: C.muted, align: t === 0 ? 'left' : t === 20 ? 'right' : 'center' });
+    });
+    /* 곡선 */
+    const c = s.ctx;
+    c.save();
+    c.beginPath(); c.rect(px, py - 2, pw, ph + 4); c.clip();
+    /* 갱신형 아래 면적 */
+    c.beginPath();
+    tr.years.forEach((yr, i) => { const xx = X(yr), yy = Y(tr.renew[i]); i ? c.lineTo(xx, yy) : c.moveTo(xx, yy); });
+    c.lineTo(X(20), py + ph); c.lineTo(X(0), py + ph); c.closePath();
+    const grd = c.createLinearGradient(0, py, 0, py + ph);
+    grd.addColorStop(0, 'rgba(192,122,44,0.26)');
+    grd.addColorStop(1, 'rgba(192,122,44,0.04)');
+    c.fillStyle = grd; c.fill();
+    const drawLine = (arr, col) => {
+      c.beginPath();
+      arr.forEach((v, i) => { const xx = X(i), yy = Y(v); i ? c.lineTo(xx, yy) : c.moveTo(xx, yy); });
+      c.strokeStyle = col; c.lineWidth = 1.9; c.lineJoin = 'round'; c.stroke();
+    };
+    drawLine(tr.level, C.blue);
+    drawLine(tr.renew, C.orange);
+    c.restore();
+    /* 교차점 */
+    if (tr.crossYear != null) {
+      const cx = X(tr.crossYear), cy = Y(tr.level[Math.min(20, Math.round(tr.crossYear))]);
+      s.line(cx, py, cx, py + ph, { color: C.red, w: 0.9, dash: [2.5, 2] });
+      s.ctx.save();
+      s.ctx.beginPath(); s.ctx.arc(cx, cy, 3.1, 0, Math.PI * 2);
+      s.ctx.fillStyle = '#fff'; s.ctx.fill();
+      s.ctx.strokeStyle = C.red; s.ctx.lineWidth = 1.4; s.ctx.stroke();
+      s.ctx.restore();
+      const lab = tr.crossYear === 0 ? '이미 교차' : `${tr.crossYear}년 뒤 역전`;
+      const lw = s.measure(lab, 5.4, 800) + 10;
+      const boxX = Math.min(px + pw - lw, Math.max(px, cx - lw / 2));
+      s.rect(boxX, py + 2, lw, 11, { fill: C.redSoft, r: 3, stroke: C.redSoft });
+      s.text(lab, boxX + lw / 2, py + 4, { size: 5.4, weight: 800, color: C.red, align: 'center' });
+    }
+    /* 20년 뒤 수치 */
+    s.text(`갱신형 ${won(tr.at20.renew)}`, X(20) - 2, Y(tr.at20.renew) - 7, { size: 5.6, weight: 800, color: C.orange, align: 'right' });
+    s.text(`비갱신 ${won(tr.at20.level)}`, X(20) - 2, Y(tr.at20.level) + 2, { size: 5.6, weight: 800, color: C.blue, align: 'right' });
+    s.text(`예시 시뮬레이션 — 갱신 5년 주기·연 나이 인상을 가정한 값입니다. 실제 갱신 보험료는 증권의 갱신 보험료 표로 확인하세요.`, x + 10, y + h - 8.5, { size: 5.2, weight: 500, color: C.muted });
+    return y + h;
+  }
+
+  /* v5.7 — 카카오톡 상담 링크 / 전화번호 → QR 내용 */
+  function qrInfo(m) {
+    const b = brandInfo(m);
+    const phone = String(b.phone || '').trim();
+    const kakao = String(b.kakao || '').trim();
+    const isUrl = (v) => /^https?:\/\//i.test(v) || /^[a-z0-9.-]+\.(com|net|kr|me|link|io)\/?/i.test(v);
+    if (kakao && isUrl(kakao)) {
+      return { text: /^https?:\/\//i.test(kakao) ? kakao : 'https://' + kakao, label: '카카오톡 상담', kind: 'kakao' };
+    }
+    if (phone) {
+      const digits = phone.replace(/[^0-9+]/g, '');
+      if (digits.length >= 7) return { text: 'tel:' + digits, label: '전화 바로 연결', kind: 'tel' };
+    }
+    if (kakao) return { text: kakao, label: '카카오톡 ID', kind: 'id' };
+    return null;
+  }
+  /* QR 블록 — 명함 안에 스캔 가능한 크기(≥34pt)로 넣습니다 */
+  function qrBlock(s, x, y, size, m, o) {
+    o = o || {};
+    const info = qrInfo(m);
+    if (!info || !root.BojangQR) {
+      s.rect(x, y, size, size, { fill: '#fff', r: 3, stroke: C.line2 });
+      s.para(o.empty || '브랜드 설정에서 연락처를 입력하면 QR이 인쇄됩니다', x + 4, y + size / 2 - 6, size - 8, { size: 4.6, color: C.muted, lh: 1.3, align: 'center' });
+      return false;
+    }
+    const ok = root.BojangQR.draw(s, x, y, size, info.text, { quiet: 2, fill: o.fill || C.navy, stroke: C.line2, r: 3 });
+    if (o.label !== false) s.text(info.label, x + size / 2, y + size + 2.5, { size: 5.0, weight: 700, color: C.muted, align: 'center' });
+    return ok;
   }
 
   function statCard(s, x, y, w, h, st, o) {
@@ -8222,7 +9131,7 @@ const PLAN_FRONT = {
       const cw = (s.CW - 8 * 3) / 4;
       cards.forEach((c, i) => {
         const x = s.ML + i * (cw + 8);
-        s.rect(x, y, cw, 78, { fill: '#fff', r: 5, stroke: C.line });
+        s.rect(x, y, cw, 76, { fill: '#fff', r: 5, stroke: C.line });
         s.text(c.label, x + 8, y + 8, { size: 6.4, weight: 700, color: C.ink2 });
         if (c.rec != null) {
           s.text(`${won(c.p.val)}만원`, x + 8, y + 19, { size: 13, weight: 800, color: C.navy });
@@ -8236,7 +9145,7 @@ const PLAN_FRONT = {
           s.gauge(x + 8, y + 60, cw - 16, c.p.val ? 1 : 0, { color: c.p.val ? C.mint : C.gray, h: 6 });
         }
       });
-      y += 82;
+      y += 80;
       y = s.sectionHead(s.ML, y, s.CW, '01', '왜 이 순서인가 — 공식 통계', '출처를 함께 제시하면 설득이 아니라 확인이 됩니다');
       statCard(s, s.ML, y, (s.CW - 8) / 2, 96, statById('death'));
       statCard(s, s.ML + (s.CW - 8) / 2 + 8, y, (s.CW - 8) / 2, 96, statById('cancer'));
@@ -8261,9 +9170,11 @@ const PLAN_FRONT = {
         { text: r[0], weight: 700, color: C.navy }, r[1], { text: r[2], color: C.ink2 },
         { text: `${Math.round(r[3] * 100)}%`, weight: 700, color: r[3] >= 0.99 ? C.mint : r[3] > 0.4 ? C.orange : C.red, align: 'center' }
       ]), { widths: [140, 130, 150, 95], size: 6.3, rowH: 11.6, headH: 13, align: ['left', 'center', 'center', 'center'] });
-      y = noteStrip(s, y + 6, '유사암에 묶는 범위와 지급 비율은 상품마다 다릅니다. 원발부위 기준 조항의 설명 여부가 다퉈진 판례(대법원 2025.3.13. 선고 2023다250746)도 함께 확인하세요. 비용 범위는 상담 참고용 예시이며 실제 부담은 약제·병원·급여 여부에 따라 달라집니다.', { size: 6.0 });
+      y = noteStrip(s, y + 4, '유사암에 묶는 범위와 지급 비율은 상품마다 다릅니다. 원발부위 기준 조항의 설명 여부가 다퉈진 판례(대법원 2025.3.13. 선고 2023다250746)도 함께 확인하세요.', { size: 5.8 });
+      /* v5.7 — 불완전판매 방지 경고 */
+      y = warnStrip(s, y + 4, 'cancer');
       /* v5.6 — 증권 직접 기재 담보 (실제 특약명·금액 그대로) */
-      y = customBox(s, y + 5, customOf(m, 'cancer'), { accent: C.blue, title: '증권 직접 기재 담보 — 암 (증권 담보명 그대로)' });
+      y = customBox(s, y + 4, customOf(m, 'cancer'), { accent: C.blue, title: '증권 직접 기재 담보 — 암 (증권 담보명 그대로)' });
       s.footer({ left: `${m.client.name}님 · 1순위 암`, right: '05 / 10' });
     });
 
@@ -8279,7 +9190,7 @@ const PLAN_FRONT = {
       [heart, '허혈성심장질환', ['허혈성심장 I20~I25', '급성심근경색 I21~I23'], [mix(C.hero, C.red, 0.35), mix('#FFFFFF', C.red, 0.45)], C.red]].forEach((grp, gi) => {
         const [row, title, labels, colors, accent] = grp;
         const x = s.ML + gi * (half + 8);
-        s.rect(x, y, half, 150, { fill: gi ? C.tint : C.tint2, r: 6, stroke: C.line });
+        s.rect(x, y, half, 146, { fill: gi ? C.tint : C.tint2, r: 6, stroke: C.line });
         s.text(title, x + 12, y + 10, { size: 10, weight: 800, color: accent });
         s.text(`${row.item.rank}순위`, x + half - 12, y + 12, { size: 6, weight: 700, color: C.muted, align: 'right' });
         const cy = y + 78;
@@ -8313,7 +9224,7 @@ const PLAN_FRONT = {
         s.text((dx.scenarios || []).map((sc) => `${BK.dxShort(sc.label.replace(/\(.*/, ''))} ${won(sc.sum)}`).join(' · '), tx, y + 112, { size: 5.9, weight: 600, color: C.navy });
         s.para(gi ? '협심증(I20)은 허혈성심장 담보에서만, 급성심근경색(I21)은 두 담보가 합산됩니다.' : '뇌경색(I63)은 뇌혈관+뇌졸중, 뇌출혈(I61)은 세 담보가 합산됩니다.', tx, y + 122, tw, { size: 5.7, color: C.ink2, lh: 1.32 });
       });
-      y += 154;
+      y += 150;
 
       y = s.sectionHead(s.ML, y, s.CW, '01', '진단비 3단계·2단계 금액', '핵심 범위 / 현재 / 권장 / 해석');
       const rowOfDx = (dxp, i) => {
@@ -8327,26 +9238,28 @@ const PLAN_FRONT = {
         ['주요치료비 3종', `뇌 ${subHave(PK(brain, 'treat'))}/3 · 심장 ${subHave(PK(heart, 'treat'))}/3`, '혈전용해제·수술·중환자실', '혈전용해제와 기계적 혈전제거술은 별도']
       ];
       y = s.table(s.ML, y + 2, s.CW, ['담보 (범위)', '현재', '권장', '코드'], rows, {
-        widths: [150, 90, 90, 185], size: 6.6, rowH: 19, align: ['left', 'center', 'center', 'center']
+        widths: [150, 90, 90, 185], size: 6.6, rowH: 18, align: ['left', 'center', 'center', 'center']
       });
       y = noteStrip(s, y + 6, (bdx.gapWarn ? '⚠ 뇌혈관질환 진단비가 0원입니다 — 뇌경색(I63)은 뇌졸중 금액만, 뇌혈관 후유증(I69)은 지급되지 않습니다. ' : '')
         + (hdx.gapWarn ? '⚠ 허혈성심장질환 진단비가 0원입니다 — 협심증(I20)·스텐트 시술이 지급되지 않습니다. ' : '')
-        + '안쪽 담보는 바깥 담보에 포함되고, 진단 시 금액이 합산됩니다. 실제 지급은 담보명·코드·지급 조건으로 확인합니다.', { size: 6.4 });
+        + '안쪽 담보는 바깥 담보에 포함되고, 진단 시 금액이 합산됩니다. 실제 지급은 담보명·코드·지급 조건으로 확인합니다.', { size: 5.7 });
+      /* v5.7 — 뇌·심장 불완전판매 방지 경고 */
+      y = warnStrip(s, y + 3, 'brain');
       /* v5.6 — 증권 직접 기재 담보(통합형/개별형)를 해당 페이지에 표시 */
       const cusBHbox = [].concat(
         customOf(m, 'brain').map((x) => Object.assign({}, x, { area: '뇌' })),
         customOf(m, 'heart').map((x) => Object.assign({}, x, { area: '심장' }))
       );
       if (cusBHbox.length) y = customBox(s, y + 4, cusBHbox, { accent: C.navy2, title: '증권 직접 기재 담보 — 뇌·심장 (통합형/개별형)', withArea: true, gap: 6 });
-      y = s.sectionHead(s.ML, y + 8, s.CW, '02', '공식 통계로 확인', '출처: 중앙심뇌혈관질환센터·건강보험통계 2023');
-      statCard(s, s.ML, y, s.CW, 96, statById('stroke'));
-      y += 100;
+      y = s.sectionHead(s.ML, y + 6, s.CW, '02', '공식 통계로 확인', '출처: 중앙심뇌혈관질환센터·건강보험통계 2023');
+      statCard(s, s.ML, y, s.CW, 92, statById('stroke'));
+      y += 96;
       y = costStrip(s, s.ML, y + 2, s.CW, '퇴원 뒤에 더 길게 나가는 돈 — 진단비가 쓰이는 구간', [
         ['뇌경색 입원', '평균 62.7일', '1인당 2,562만원'],
         ['수술·중환자실', '1회 수백만 원대', '치료비 3종'],
         ['회복·재활', '수개월', '그동안 소득 공백']
       ], { accent: C.navy2 });
-      y = s.sectionHead(s.ML, y + 10, s.CW, '03', '함께 확인할 것 — 담당자 소견', '진단비 밖의 빈틈');
+      y = s.sectionHead(s.ML, y + 6, s.CW, '03', '함께 확인할 것 — 담당자 소견', '진단비 밖의 빈틈');
       y = ownerNote(s, m, y, brainHeartNote(m), { accent: C.navy2 });
       s.footer({ left: `${m.client.name}님 · 뇌·심장`, right: '06 / 10' });
     });
@@ -8384,7 +9297,7 @@ const PLAN_FRONT = {
       y = s.table(s.ML, y + 2, s.CW, ['영역', '항목', '현재', '메모'], rows.map((r) => [
         { text: r[0], weight: 700, color: C.navy }, r[1], { text: r[2], weight: 700, color: r[2] === '없음' || r[2] === '미확인' ? C.red : C.navy }, { text: r[3], color: C.muted }
       ]), { widths: [48, 170, 92, 205], size: 6.3, rowH: 11.2, headH: 14, align: ['left', 'left', 'center', 'left'] });
-      y = s.sectionHead(s.ML, y + 8, s.CW, '02', '의료비 방어력 4축', '지금 어느 축이 비어 있는지');
+      y = s.sectionHead(s.ML, y + 4, s.CW, '02', '의료비 방어력 4축', '지금 어느 축이 비어 있는지');
       const axes4 = [
         ['수술비', m.rows[3].r.fill], ['간병', m.rows[4].r.fill],
         ['실손', m.state.silson === 'none' ? 0 : 1], ['치료비 5종', (() => { const tp0 = PK(m.rows[0], 'treatment'); return (tp0.subs && tp0.subs.length) ? subHave(tp0) / tp0.subs.length : 0; })()]
@@ -8392,21 +9305,21 @@ const PLAN_FRONT = {
       const aw = (s.CW - 6 * 3) / 4;
       axes4.forEach((a, i) => {
         const x = s.ML + i * (aw + 6);
-        s.rect(x, y, aw, 42, { fill: '#fff', r: 5, stroke: C.line });
+        s.rect(x, y, aw, 39, { fill: '#fff', r: 5, stroke: C.line });
         s.text(a[0], x + 9, y + 6, { size: 6.2, weight: 600, color: C.muted });
         s.text(`${Math.round(a[1] * 100)}%`, x + 9, y + 14, { size: 13, weight: 800, color: a[1] >= 0.9 ? C.mint : a[1] > 0.3 ? C.orange : C.red });
-        s.gauge(x + 9, y + 32, aw - 18, a[1], { color: a[1] >= 0.9 ? C.mint : a[1] > 0.3 ? C.orange : C.gray, h: 4.5 });
+        s.gauge(x + 9, y + 30, aw - 18, a[1], { color: a[1] >= 0.9 ? C.mint : a[1] > 0.3 ? C.orange : C.gray, h: 4.5 });
       });
-      y += 51;
+      y += 47;
       y = s.sectionHead(s.ML, y + 2, s.CW, '03', '장기요양 등급 분포 — 왜 1~2등급만 준비하면 안 되는가', '출처: 건보공단 2025 노인장기요양보험 통계연보');
-      statCard(s, s.ML, y, s.CW, 90, statById('ltc'));
-      y += 94;
+      statCard(s, s.ML, y, s.CW, 86, statById('ltc'));
+      y += 90;
       y = costStrip(s, s.ML, y, s.CW, '간병은 매달 나가는 돈 — 일당이 곱해지는 구조', [
         ['간병인 일당', '12~15만원', '업체·지역별 차이'],
         ['한 달(30일)', '360~450만원', '입원이 길어지면'],
         ['지급 기준', '하루 8시간', '2026.7 전환']
-      ], { accent: C.mint, h: 40 });
-      y = s.sectionHead(s.ML, y + 6, s.CW, '04', '정리 — 담당자 소견', '실손·간병·수술의 순서');
+      ], { accent: C.mint, h: 44 });
+      y = s.sectionHead(s.ML, y + 2, s.CW, '04', '정리 — 담당자 소견', '실손·간병·수술의 순서');
       y = ownerNote(s, m, y, careNote(m), { accent: C.mint });
       /* v5.6 — 증권 직접 기재 담보(수술·간병) */
       const cusSCbox = [].concat(
@@ -8414,7 +9327,9 @@ const PLAN_FRONT = {
         customOf(m, 'care').map((x) => Object.assign({}, x, { area: '간병' }))
       );
       if (cusSCbox.length) y = customBox(s, y + 4, cusSCbox, { accent: C.mint, title: '증권 직접 기재 담보 — 수술·간병 (증권 담보명 그대로)', withArea: true, gap: 2 });
-      y = noteStrip(s, y + (cusSCbox.length ? 2 : 6), '2026년 7월부터 주요 손보사가 간병인 사용일당 지급 기준을 금액(하루 8만원)→시간(하루 8시간)으로 전환했습니다. 가족 간병은 업체 등록·결제·간병일지가 맞아야 인정되며, 요양병원은 별도 담보입니다. 장기요양은 등급 판정이 전제이고 65세 미만도 노인성 질병이면 신청할 수 있습니다.', { size: 5.9 });
+      y = noteStrip(s, y + (cusSCbox.length ? 2 : 4), '장기요양은 등급 판정이 전제이고 65세 미만도 노인성 질병이면 신청할 수 있습니다.', { size: 5.8 });
+      /* v5.7 — 수술·간병 불완전판매 방지 경고 */
+      y = warnStrip(s, y + 2, 'care');
       s.footer({ left: `${m.client.name}님 · 수술·간병`, right: '07 / 10' });
     });
 
@@ -8429,26 +9344,13 @@ const PLAN_FRONT = {
         ['노후 리스크', '갱신 거절·보험료 급증', '만기 후 보장 공백'],
         ['상담 포인트', '갱신 연령·예상 보험료 표를 확인', '만기 이후 대안을 함께 설계']
       ];
-      y = s.table(s.ML, y + 2, s.CW, ['구분', '갱신형', '비갱신형'], rows, { widths: [90, 215, 210], size: 6.8, rowH: 20, align: ['left', 'left', 'left'] });
-      y = noteStrip(s, y + 6, `현재 입력 기준: 갱신형 담보 ${m.state.flags.renew ? '중심' : '없음'} · 적립성 특약 ${m.state.flags.savings ? '있음' : '없음'} · 특약 ${m.state.flags.manyRiders ? '6개 이상' : '6개 미만'}. 갱신 시점의 실제 보험료는 상품·나이에 따라 다르므로 증권의 갱신 보험료 표로 확인해야 합니다.`, { size: 6.4 });
-      y += 12;
-      y = s.sectionHead(s.ML, y, s.CW, '02', '노후 보장 공백 전망', '구조 예시 — 실제 만기·갱신 시점은 증권에서 확인');
-      const bands = [
-        { t: '현재', d: `보험나이 ${m.client.insuranceAge != null ? m.client.insuranceAge + '세' : m.state.age + '대'}`, c: C.blue },
-        { t: '상령일', d: m.client.ageDay ? `${m.client.ageDay.label} (D-${m.client.ageDay.days})` : '생년월일 입력 시 계산', c: C.navy },
-        { t: '갱신 시점', d: '보험료 재산정 · 인수 심사', c: C.orange },
-        { t: '65세', d: '장기요양 신청 가능 구간', c: C.mint },
-        { t: '만기', d: '보장 공백 · 재가입 불가 가능', c: C.red }
-      ];
-      const bw = (s.CW - 8 * 4) / 5;
-      bands.forEach((b, i) => {
-        const x = s.ML + i * (bw + 8);
-        s.rect(x, y, bw, 52, { fill: '#fff', r: 5, stroke: C.line });
-        s.rect(x, y, bw, 2.6, { fill: b.c, r: 1.3 });
-        s.text(b.t, x + 8, y + 9, { size: 7, weight: 800, color: C.navy });
-        s.para(b.d, x + 8, y + 20, bw - 16, { size: 5.9, color: C.ink2, lh: 1.35 });
-      });
-      y += 64;
+      y = s.table(s.ML, y + 2, s.CW, ['구분', '갱신형', '비갱신형'], rows, { widths: [90, 215, 210], size: 6.8, rowH: 18, align: ['left', 'left', 'left'] });
+      /* v5.7 — 20년 보험료 추이 차트 (갱신형 vs 비갱신형) */
+      y = s.sectionHead(s.ML, y + 8, s.CW, '02', '20년 예상 보험료 추이', '갱신형 vs 비갱신형 — 예시 시뮬레이션');
+      const tr = BK.renewTrend(m.state);
+      y = renewChart(s, s.ML, y + 2, s.CW, tr, { h: 126 });
+      y = noteStrip(s, y + 5, `현재 입력 기준: 갱신형 담보 ${m.state.flags.renew ? '중심' : '없음'} · 적립성 특약 ${m.state.flags.savings ? '있음' : '없음'}. 갱신 시점에는 보험료 재산정과 인수 심사가 있고, 65세부터 장기요양 신청이 가능하며, 만기 후에는 보장 공백이 생깁니다.`, { size: 5.9 });
+      y += 6;
       y = s.sectionHead(s.ML, y, s.CW, '03', '노후 체크포인트 — 담당자 소견', null);
       y = ownerNote(s, m, y, renewNote(m), { accent: C.orange });
       y += 4;
@@ -8649,8 +9551,11 @@ const PLAN_FRONT = {
       });
       y += 62;
 
+      /* v5.7 — 해지·신규 가입 불완전판매 방지 경고 */
+      y = warnStrip(s, y, 'remodel', { fill: C.redSoft, stroke: '#F5D5D1', accent: C.red });
+
       /* 담당자 소견 */
-      y = ownerNote(s, m, y + 2, remodelNote(m, c, edited, sim, { beforePrem, afterPrem, beforeScore, afterScore, avgBefore, avgAfter }), { accent: C.blue });
+      y = ownerNote(s, m, y + 6, remodelNote(m, c, edited, sim, { beforePrem, afterPrem, beforeScore, afterScore, avgBefore, avgAfter }), { accent: C.blue });
       s.footer({ left: `${m.client.name}님 · 리모델링 실행안`, right: '09 / 10' });
     });
 
@@ -8778,7 +9683,7 @@ const PLAN_FRONT = {
       const cw = (s.CW - 16) / 3;
       items.forEach((it, i) => {
         const x = s.ML + i * (cw + 8);
-        s.rect(x, y, cw, 78, { fill: '#fff', r: 5, stroke: C.line });
+        s.rect(x, y, cw, 76, { fill: '#fff', r: 5, stroke: C.line });
         s.rect(x, y, cw, 2.6, { fill: [C.blue, C.navy2, C.mint][i], r: 1.3 });
         s.text(it.t, x + 9, y + 9, { size: 7.2, weight: 800, color: C.navy });
         s.para('"' + it.s + '"', x + 9, y + 22, cw - 18, { size: 6.1, color: C.ink2, lh: 1.4 });
@@ -9804,7 +10709,7 @@ const PLAN_FRONT = {
     advisor: { memoMax: Infinity, memoLabels: ['고객이 한 말', '내가 약속한 것', '다음 할 일'] },
     detail: { memoMax: 200, memoLabels: ['궁금한 점', '다음 상담까지 확인할 것'] }
   };
-  root.BojangReport = { build, summaryPage, detailPages, advisorPages, MEMO };
+  root.BojangReport = { build, summaryPage, detailPages, advisorPages, MEMO, qrInfo, qrBlock, warnStrip, renewChart };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
@@ -9837,6 +10742,23 @@ const PLAN_FRONT = {
   ];
 
   let S = null, H = null, slides = [], cur = 0, needOnly = false, built = false, lastSig = '';
+
+  /* v5.7 — 시니어 큰 글씨 모드 (localStorage에 유지) */
+  const SENIOR_KEY = 'bojang.senior.v1';
+  let seniorOn = false;
+  function lsBool(key) { try { return localStorage.getItem(key) === '1'; } catch (e) { return false; } }
+  function lsSave(key, v) { try { localStorage.setItem(key, v ? '1' : '0'); } catch (e) { /* private mode */ } }
+  function applySenior(on) {
+    seniorOn = !!on;
+    const deck = $('#deck');
+    if (deck) deck.classList.toggle('senior', seniorOn);
+    const btn = $('#deck-senior');
+    if (btn) {
+      btn.classList.toggle('is-on', seniorOn);
+      btn.setAttribute('aria-pressed', String(seniorOn));
+    }
+    return seniorOn;
+  }
 
   /* v5.2 — 베타 기간에는 30장 전체가 잠금 없이 열립니다 (unlocked()가 잠금을 판정) */
   function unlocked() { return !!(root.BojangPlan && root.BojangPlan.unlocked && root.BojangPlan.unlocked()); }
@@ -9928,6 +10850,65 @@ const PLAN_FRONT = {
 
   function noteBox(text, tone) {
     return `<div class="sl-note${tone ? ' tone-' + tone : ''}">${text}</div>`;
+  }
+
+  /* =========================================================
+     v5.7 — 불완전판매 방지 경고 배지 (고객 화면)
+     SALE_WARNINGS의 문장을 고객이 읽는 그대로 보여줍니다.
+     ========================================================= */
+  function warnCard(key) {
+    const W = (typeof SALE_WARNINGS !== 'undefined') ? SALE_WARNINGS[key] : null;
+    if (!W) return '';
+    return `<div class="sl-warn" role="note" aria-label="불완전판매 방지 안내 — ${esc(W.label)}">
+      <div class="sw-head"><b>⚠ 불완전판매 방지 · ${esc(W.label)}</b><span>${esc(W.title || '상담 시 구두 설명 필수')}</span></div>
+      <ul>${W.items.map((it) => `<li>${esc(it)}</li>`).join('')}</ul>
+    </div>`;
+  }
+
+  /* =========================================================
+     v5.7 — 갱신형 vs 비갱신형 20년 보험료 추이 차트 (SVG)
+     ========================================================= */
+  function renewChartSVG(tr) {
+    const W = 360, H = 188;
+    const l = 36, r = 10, t = 34, b = 30;
+    const pw = W - l - r, ph = H - t - b;
+    const maxY = Math.max(1, tr.max * 1.12);
+    const X = (yr) => l + (yr / 20) * pw;
+    const Y = (v) => t + ph - (v / maxY) * ph;
+    const pts = (arr) => arr.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+    const grid = [0, 0.5, 1].map((k) => `<line x1="${l}" y1="${(t + ph - k * ph).toFixed(1)}" x2="${l + pw}" y2="${(t + ph - k * ph).toFixed(1)}" class="rc-grid"/>`).join('');
+    const ylab = [0, 0.5, 1].map((k) => `<text x="${l - 5}" y="${(t + ph - k * ph + 3).toFixed(1)}" class="rc-axis" text-anchor="end">${won(Math.round(maxY * k))}</text>`).join('');
+    const xlab = tr.ticks.map((yr) => `<line x1="${X(yr).toFixed(1)}" y1="${t}" x2="${X(yr).toFixed(1)}" y2="${t + ph}" class="rc-grid"/>` +
+      `<text x="${X(yr).toFixed(1)}" y="${t + ph + 13}" class="rc-axis rc-strong" text-anchor="${yr === 0 ? 'start' : yr === 20 ? 'end' : 'middle'}">${yr === 0 ? '현재' : '+' + yr + '년'}</text>` +
+      `<text x="${X(yr).toFixed(1)}" y="${t + ph + 23}" class="rc-axis" text-anchor="${yr === 0 ? 'start' : yr === 20 ? 'end' : 'middle'}">${tr.startAge + yr}세</text>`).join('');
+    const area = `M ${X(0).toFixed(1)},${(t + ph).toFixed(1)} L ` + tr.years.map((yr, i) => `${X(yr).toFixed(1)},${Y(tr.renew[i]).toFixed(1)}`).join(' L ') + ` L ${X(20).toFixed(1)},${(t + ph).toFixed(1)} Z`;
+    const cross = tr.crossYear == null ? '' : (() => {
+      const cx = X(tr.crossYear), cy = Y(tr.level[Math.min(20, Math.round(tr.crossYear))]);
+      const label = tr.crossYear === 0 ? '이미 역전' : `${tr.crossYear}년 뒤 역전`;
+      const bw = 46;
+      const bx = Math.min(l + pw - bw, Math.max(l, cx - bw / 2));
+      return `<line x1="${cx.toFixed(1)}" y1="${t}" x2="${cx.toFixed(1)}" y2="${(t + ph).toFixed(1)}" class="rc-cross"/>` +
+        `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3.4" class="rc-dot"/>` +
+        `<rect x="${bx.toFixed(1)}" y="${(t - 15).toFixed(1)}" width="${bw}" height="13" rx="6.5" class="rc-pill"/>` +
+        `<text x="${(bx + bw / 2).toFixed(1)}" y="${(t - 5.6).toFixed(1)}" class="rc-pill-t" text-anchor="middle">${label}</text>`;
+    })();
+    return `<figure class="sl-chart">
+      <div class="rc-head"><b>20년 예상 보험료 추이</b><span>월 ${won(tr.base)}만원 기준 · 세로축 만원</span></div>
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="갱신형과 비갱신형 20년 보험료 추이 차트">
+        ${grid}${ylab}${xlab}
+        <path d="${area}" class="rc-area"/>
+        <polyline points="${pts(tr.level)}" class="rc-line rc-level"/>
+        <polyline points="${pts(tr.renew)}" class="rc-line rc-renew"/>
+        ${cross}
+        <text x="${(X(20) - 2).toFixed(1)}" y="${(Y(tr.at20.renew) - 6).toFixed(1)}" class="rc-end rc-renew-t" text-anchor="end">${won(tr.at20.renew)}</text>
+        <text x="${(X(20) - 2).toFixed(1)}" y="${(Y(tr.at20.level) + 11).toFixed(1)}" class="rc-end rc-level-t" text-anchor="end">${won(tr.at20.level)}</text>
+        <g class="rc-legend">
+          <line x1="${l}" y1="14" x2="${l + 14}" y2="14" class="rc-line rc-renew"/><text x="${l + 19}" y="17" class="rc-axis rc-strong">갱신형</text>
+          <line x1="${l + 66}" y1="14" x2="${l + 80}" y2="14" class="rc-line rc-level"/><text x="${l + 85}" y="17" class="rc-axis rc-strong">비갱신형</text>
+        </g>
+      </svg>
+      <figcaption>예시 시뮬레이션입니다. 갱신 5년 주기·연 나이 인상을 가정한 값이며, 실제 갱신 보험료는 증권의 갱신 보험료 표로 확인합니다.</figcaption>
+    </figure>`;
   }
 
   function src(text) { return `<p class="sl-src">출처 · ${esc(text)}</p>`; }
@@ -10189,7 +11170,8 @@ const PLAN_FRONT = {
           <div class="side-card"><span>주요치료비 5종</span><b>치료 기간의 비용</b><p>암수술 · 항암약물 · 항암방사선 · 중환자실 · 비급여. 진단비와 별도 축입니다.</p></div>
           <div class="side-card"><span>재진단</span><b>두 번째 진단</b><p>1회한 담보는 한 번 지급되면 끝입니다. 재발·전이는 별도 담보가 필요합니다.</p></div>
         </div>
-      </div>`, { need: needOf('cancer') });
+      </div>
+      ${warnCard('cancer')}`, { need: needOf('cancer') });
 
     /* ---------- 09 국가암등록통계 ---------- */
     add(9, 'cancer', 'cancer', `
@@ -10301,6 +11283,7 @@ const PLAN_FRONT = {
         ].map((r) => `<div class="ct-line"><b>${r.n}</b><code>${r.c}</code><span>${r.d}</span></div>`).join('')}
       </div>
       ${noteBox(`핵심 범위 금액은 <b>뇌혈관질환 ${won(bDxCore.val)}만원</b>입니다. ${bDxCore.val >= 2000 ? '기준선(2,000만원)을 넘었습니다. 유지가 원칙입니다.' : '뇌경색(I63)과 후유증(I69)이 빠지지 않았는지 확인이 필요합니다.'}`, bDxCore.val >= 2000 ? 'ok' : 'warn')}
+      ${warnCard('brain')}
       ${src('KCD 한국표준질병·사인분류 기준 · 상품별 담보명과 지급 조건은 약관 확인')}`, { need: needOf('brain') });
 
     /* ---------- 14 심뇌 통계 ---------- */
@@ -10407,7 +11390,8 @@ const PLAN_FRONT = {
         <li><b>② 수술비</b><p>스텐트·관상동맥우회술이 수술비 지급 대상인지 약관의 수술 분류표로 확인합니다.</p><em>3종 중 ${subN(hT)}종 · ${won(hT.val)}만원 → 권장 ${won(hT.rec)}만원</em></li>
         <li><b>③ 약값·관리</b><p>한 번 막히면 항혈전제를 오래 복용합니다. 진단비·수술비·약값을 함께 봅니다.</p><em>부정맥·판막·심부전 담보도 확인</em></li>
       </ol>
-      ${m.family.indexOf('heart') >= 0 ? noteBox('가족력에 심장 질환이 있습니다. 스텐트 시술 구간이 담보에 들어 있는지가 핵심입니다.', 'warn') : noteBox('지금은 괜찮더라도, 괜찮을 때 넣어야 조건이 좋습니다. 범위만 넓히고 금액은 낮게 시작할 수 있습니다.', 'info')}`, { need: needOf('heart') });
+      ${m.family.indexOf('heart') >= 0 ? noteBox('가족력에 심장 질환이 있습니다. 스텐트 시술 구간이 담보에 들어 있는지가 핵심입니다.', 'warn') : noteBox('지금은 괜찮더라도, 괜찮을 때 넣어야 조건이 좋습니다. 범위만 넓히고 금액은 낮게 시작할 수 있습니다.', 'info')}
+      ${warnCard('heart')}`, { need: needOf('heart') });
 
     /* ---------- 19 3대질병 종합 비교 ---------- */
     add(19, 'heart', 'heart', `
@@ -10496,7 +11480,8 @@ const PLAN_FRONT = {
         <p><span>시간 기준</span> 하루 8시간 이상 간병인을 써야 전액 지급 · 신규 상품 다수</p>
         <p><span>금액 기준</span> 하루 7~8만원 이상 사용 시 지급 · 8만원 미만은 50% 감액</p>
         <p><span>체증형</span> 입원일수가 길어질수록 일당이 올라가는 구조 · 장기 입원 위험에 대비</p>
-      </div>`, { need: needOf('care') });
+      </div>
+      ${warnCard('care')}`, { need: needOf('care') });
 
     /* ---------- 24 건보공단 통계 ---------- */
     add(24, 'care', 'care', `
@@ -10565,6 +11550,7 @@ const PLAN_FRONT = {
         <span>갱신형 비중 <b>${cs.renewShare}%</b></span>${bar(cs.renewShare / 100, cs.renewShare >= 60 ? 'need' : 'ok')}
         <span>만기 분포 ${Object.keys(cs.maturity).map((k) => `${k} ${cs.maturity[k]}건`).join(' · ')}</span>
       </div>` : ''}
+      ${renewChartSVG(BojangModel.renewTrend(m.state))}
       <div class="timeline">
         ${[
           { t: '현재', d: m.client.insuranceAge != null ? `보험나이 ${m.client.insuranceAge}세` : `${m.state.age}대` },
@@ -10628,6 +11614,7 @@ const PLAN_FRONT = {
           <b>10장 상세 PDF</b><span>세부 담보·갱신 구조까지 · 저장/공유</span>
         </button>
       </div>
+      ${warnCard('remodel')}
       <div class="last-note">
         <b>${esc(m.client.name)}님 · ${m.letter} ${m.score}점</b>
         <p>${m.first ? `가장 먼저 채울 곳은 ${m.first.item.rank}순위 ${esc(m.first.item.name)}입니다.` : '5대 담보가 기준선을 넘었습니다. 금액 조정과 갱신 대비가 남은 과제입니다.'}</p>
@@ -10854,6 +11841,16 @@ const PLAN_FRONT = {
     const dHome = $('#deck-home');
     if (dHome) dHome.addEventListener('click', () => { if (H && H.onHome) H.onHome(); });
     $('#deck-filter').addEventListener('click', () => applyFilter(!needOnly));
+    /* v5.7 — 큰 글씨 모드 토글 */
+    seniorOn = lsBool(SENIOR_KEY);
+    const seniorBtn = $('#deck-senior');
+    if (seniorBtn) {
+      seniorBtn.addEventListener('click', () => {
+        const on = applySenior(!seniorOn);
+        lsSave(SENIOR_KEY, on);
+        if (H && H.toast) H.toast(on ? '큰 글씨 모드 — 고객 화면 글씨를 키웠습니다' : '큰 글씨 모드를 껐습니다');
+      });
+    }
 
     const adv = $('#deck-advisor');
     let timer = null, longFired = false;
@@ -10906,6 +11903,7 @@ const PLAN_FRONT = {
     deck.hidden = false;
     deck.setAttribute('aria-hidden', 'false');
     document.body.classList.add('is-client');
+    applySenior(seniorOn);
     const sig = signature(state);
     if (!built || sig !== lastSig) {
       lastSig = sig;
@@ -10943,7 +11941,7 @@ const PLAN_FRONT = {
     }
   }
 
-  root.BojangDeck = { init, show, hide, refresh, goTo, next, prev, simulate, total: 30 };
+  root.BojangDeck = { init, show, hide, refresh, goTo, next, prev, simulate, total: 30, senior: applySenior, isSenior: () => seniorOn, warnCard, renewChartSVG };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
@@ -11691,7 +12689,7 @@ const PLAN_FRONT = {
 
 </script>
 <script>
-/* 보장분석 라이프 리포트 v5.6 — 증권 담보 직접 기재 · 베타 테스트 공개판
+/* 보장분석 라이프 리포트 v5.7 — 시니어·차트·QR·온보딩 · 베타 테스트 공개판
    · 베타 기간에는 Pro 전 기능(30장 전체 · 1/10/30장 PDF · 고객 30명 · 리모델링 · 화이트라벨)을 잠금 없이 무료 제공
    · v5.4: 계정/구독(backend.js) 연동 — 실서버 구독 상태를 hydrate() 로 반영
    · 정식 출시 예정 요금: 월 5,000원 / 연 50,000원 · 베타 피드백 Google Form + 추첨 사은품 안내
@@ -11934,7 +12932,7 @@ const PLAN_FRONT = {
     if (mark) mark.setAttribute('content', b.name);
     const title = $('#brand-title');
     if (title) title.textContent = b.name;
-    document.title = `${b.name} v5.6 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
+    document.title = `${b.name} v5.7 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
     loadPdfLogo(b.logo);
     /* 상담자 화면의 고객 표지도 새 브랜드로 다시 그립니다 */
     if (root.BojangDeck && root.__bojangState) root.BojangDeck.refresh(root.__bojangState, { reset: true });
@@ -12654,26 +13652,29 @@ const PLAN_FRONT = {
       });
       y += 60;
 
-      /* 04 확인할 것 */
-      y = s.sectionHead(s.ML, y, s.CW, '04', '진행 전 확인할 것', '상담 자리에서 함께 봅니다');
-      s.rect(s.ML, y, s.CW, 54, { fill: '#fff', r: 5, stroke: C.line });
+      /* 04 확인할 것 — v5.7: 해지·신규 불완전판매 방지 경고 포함 */
+      y = s.sectionHead(s.ML, y, s.CW, '04', '진행 전 확인할 것', '⚠ 불완전판매 방지 — 해지·신규 가입');
+      s.rect(s.ML, y, s.CW, 72, { fill: C.orangeSoft, r: 5, stroke: C.orangeLine });
+      s.rect(s.ML, y, 2.8, 72, { fill: C.orange, r: 1.4 });
       [[
         '증권 원본으로 담보명·갱신 구조 확인',
-        '감액·해지 시 해지환급금과 재가입 조건 확인'
+        '감액·해지 시 해지환급금과 재가입 조건 확인',
+        '상령일(보험나이)이 지나면 보험료가 올라갑니다 — 가입 시점 판단'
       ], [
-        '새로 넣는 담보의 1년 미만 감액·1회한 조항 확인',
-        '고지의무(3·1·5 / 간편 3·2·5) 함께 작성'
+        '새로 넣는 담보의 1년 미만 감액·90일 면책 확인',
+        '고지의무(3·1·5 / 간편 3·2·5) 함께 작성',
+        '리모델링 후 1년 안에 담보 공백이 생기지 않는지 재점검'
       ]].forEach((col, ci) => {
         col.forEach((t, i) => {
           const x = s.ML + 10 + ci * (s.CW / 2);
-          const cy = y + 9 + i * 20;
+          const cy = y + 9 + i * 19;
           s.rect(x, cy + 1, 5.2, 5.2, { fill: '#fff', stroke: accent, r: 1.1, lw: 0.9 });
           s.line(x + 1.2, cy + 4, x + 2.2, cy + 5, { color: accent, w: 0.9 });
           s.line(x + 2.2, cy + 5, x + 4, cy + 2.4, { color: accent, w: 0.9 });
           s.text(t, x + 10, cy - 0.6, { size: 6.4, weight: 500, color: C.ink2 });
         });
       });
-      y += 62;
+      y += 80;
 
       /* 05 담당자 명함 */
       const cardH = 74;
@@ -12687,9 +13688,19 @@ const PLAN_FRONT = {
       s.text(`${who}${b.title ? ' · ' + b.title : ''}`, s.ML + 16, y + 57, { size: 8.6, weight: 800, color: C.navy });
       s.line(s.ML + 272, y + 10, s.ML + 272, y + cardH - 10, { color: C.tintLine });
       s.text('연락', s.ML + 286, y + 12, { size: 5.4, weight: 700, color: C.muted });
-      if (b.phone) s.text(`T. ${b.phone}`, s.ML + 286, y + 22, { size: 6.8, weight: 700, color: C.ink2 });
-      if (b.kakao) s.text(`카카오톡 ${b.kakao}`, s.ML + 286, y + 33, { size: 6.4, weight: 600, color: C.ink2 });
-      s.text('상담 보조용 시뮬레이션입니다. 실제 보험료·인수·해지환급금은 상품과 나이에 따라 달라집니다.', s.ML + 286, y + cardH - 16, { size: 5.2, weight: 500, color: C.muted });
+      if (b.phone) s.text(`T. ${b.phone}`, s.ML + 286, y + 22, { size: 6.6, weight: 700, color: C.ink2 });
+      if (b.kakao) s.text(`카카오톡 ${b.kakao}`, s.ML + 286, y + 33, { size: 6.0, weight: 600, color: C.ink2 });
+      s.para('상담 보조용 시뮬레이션입니다. 실제 보험료·인수·해지환급금은 상품과 나이에 따라 달라집니다.', s.ML + 286, y + 46, Math.max(90, s.CW - 300 - 70), { size: 5.0, color: C.muted, lh: 1.35 });
+      /* v5.7 — 명함 QR (카카오톡 상담 링크 / 전화번호) */
+      if (root.BojangQR && root.BojangReport && root.BojangReport.qrInfo) {
+        const info = root.BojangReport.qrInfo({ client: c.before.client, state: null });
+        if (info) {
+          const qs = 52;
+          const qx = s.ML + s.CW - qs - 12;
+          root.BojangQR.draw(s, qx, y + 8, qs, info.text, { quiet: 2, fill: C.navy, stroke: C.line2, r: 3 });
+          s.text(info.label, qx + qs / 2, y + 8 + qs + 2.5, { size: 4.8, weight: 700, color: C.muted, align: 'center' });
+        }
+      }
       y += cardH;
 
       s.footer({ left: `${c.before.client.name}님 리모델링 비교 · ${c.before.dateLabel || ''}`, right: 'REMODELING' });
@@ -15663,7 +16674,7 @@ const PLAN_FRONT = {
           <div class="part-label"><strong>증권 담보 직접 기재</strong><span>보험사별 담보명 그대로 · 통합형/개별형</span></div>
           <div class="part-side"><span class="mini-badge custom-count tone-${items.length ? 'need' : 'gap'}">${items.length}건</span></div>
         </div>
-        ${items.length ? `<div class="custom-list">${rows}</div>` : '<p class="custom-empty">고정 칸에 없는 특약(예: 순환계 주요치료비 통합형)을 증권에 적힌 그대로 적습니다.</p>'}
+        ${items.length ? `<div class="custom-list">${rows}</div>` : '<p class="custom-empty">고정 칸에 없는 특약(예: 특정순환계질환(3~5종) 주요치료비)을 증권에 적힌 그대로 적습니다.</p>'}
         ${presets.length ? `<div class="custom-presets">${presets.map((p) => `<button type="button" class="chip-custom" data-custom-preset="${esc(p.name)}" data-preset-mode="${p.mode}">+ ${esc(p.name)}</button>`).join('')}</div>` : ''}
         <button type="button" class="custom-add" data-custom-add="${key}">+ 증권 담보 직접 추가</button>
         <div class="custom-total"${total ? '' : ' hidden'}>직접 기재 합계 <b>${won(total)}</b>만원</div>
@@ -16558,6 +17569,8 @@ const PLAN_FRONT = {
   /* ================= 탭 전환 ================= */
   function switchView(name) {
     name = name || 'home';
+    const inv = $('#tour-invite');
+    if (inv) inv.hidden = true;
     state.tab = name;
     const viewId = 'view-' + name;
     $$('.view').forEach((v) => v.classList.toggle('is-active', v.id === viewId));
@@ -17213,7 +18226,7 @@ const PLAN_FRONT = {
 
   function exportPayload() {
     return {
-      app: 'bojang-guide', version: '5.6', exportedAt: new Date().toISOString(),
+      app: 'bojang-guide', version: '5.7', exportedAt: new Date().toISOString(),
       summary: { name: state.client.name, age: state.age, gender: state.gender, score: state.lastResult ? state.lastResult.m.score : null },
       state: snapshotState()
     };
@@ -17296,6 +18309,151 @@ const PLAN_FRONT = {
     lsSet(VKEY, 'client');
     applyView();
   }
+
+  /* =========================================================
+     v5.7 — 첫 방문 4단계 퀵 가이드 투어
+     ① 입력 허브 → ② 5대 담보·직접 기재 → ③ 리모델링 비교기 → ④ PDF 저장
+     · 완료/닫힘은 localStorage(bojang.tour.v1)에 기록해 다시 띄우지 않습니다.
+     · 첫 방문에는 화면을 가로채지 않는 초대 카드를 띄우고, 누르면 투어가 시작됩니다.
+     ========================================================= */
+  const TOUR_KEY = 'bojang.tour.v1';
+  const TOUR_STEPS = [
+    {
+      go: 'home',
+      target: '#btn-start-consult',
+      title: '① 입력 허브 — 사진 · PDF · 수기',
+      body: '고객의 보장분석표를 사진으로 찍거나 PDF·텍스트로 붙여넣으면 담보표가 자동으로 정리됩니다. 직접 입력하려면 수기 입력을 고르세요. 모든 처리는 이 기기 안에서만 이뤄집니다.'
+    },
+    {
+      go: 'analysis',
+      prep: () => setStep(2, true),
+      target: '#card-cancer [data-custom-add]',
+      title: '② 5대 담보 확인 · 증권 담보 직접 기재',
+      body: '암·뇌·심장·수술·간병 다섯 영역의 금액과 범위를 확인합니다. 증권에만 적힌 특약(예: 특정순환계질환(3~5종) 주요치료비)은 ‘증권 담보 직접 추가’로 담보명 그대로 적으면 치료비 축에 합산됩니다.'
+    },
+    {
+      go: 'remodel',
+      target: '#remodel-body .rm-hero-grid',
+      title: '③ 리모델링 비교기 — Before / After',
+      body: '계약은 유지·감액·정리, 담보는 보강 금액을 넣으면 월 보험료와 종합 점수가 어떻게 달라지는지 실시간으로 비교합니다. 해지 전 확인할 경고도 함께 나옵니다.'
+    },
+    {
+      go: 'analysis',
+      prep: () => { if (!state.analyzed) analyze(); },
+      target: '#pdf-panel',
+      title: '④ PDF 저장 · 공유',
+      body: '1장 요약 · 10장 상세 · 30장 상담 플랜을 이 기기에서 바로 PDF로 만들어 저장하거나 카카오톡으로 보냅니다. 10장 상세에는 20년 보험료 추이 차트와 명함 QR이 함께 인쇄됩니다.'
+    }
+  ];
+  let tourIdx = 0;
+  let tourTimer = null;
+
+  function tourDone() {
+    try { return localStorage.getItem(TOUR_KEY) === '1'; } catch (e) { return false; }
+  }
+  function tourMark() { try { localStorage.setItem(TOUR_KEY, '1'); } catch (e) { /* private mode */ } }
+
+  function tourPlace() {
+    const step = TOUR_STEPS[tourIdx];
+    const overlay = $('#tour');
+    if (!overlay || overlay.hidden) return;
+    const spot = $('#tour-spot'), card = $('#tour-card');
+    const el = step.target ? $(step.target) : null;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const pad = 8;
+    let box = { top: vh * 0.3, left: pad, width: vw - pad * 2, height: 120 };
+    if (el) {
+      const r = el.getBoundingClientRect();
+      const top = Math.max(pad, Math.round(r.top - 6));
+      const left = Math.max(pad, Math.round(r.left - 6));
+      box = {
+        top,
+        left,
+        width: Math.max(120, Math.min(vw - left - pad, Math.round(r.width + 12))),
+        height: Math.max(40, Math.min(r.height + 12, Math.round(vh * 0.56), vh - top - 100))
+      };
+    }
+    spot.style.top = box.top + 'px';
+    spot.style.left = box.left + 'px';
+    spot.style.width = box.width + 'px';
+    spot.style.height = box.height + 'px';
+    card.style.top = '';
+    card.style.left = '';
+    card.style.bottom = '';
+    const cardH = card.offsetHeight || 190;
+    const below = box.top + box.height + 14;
+    if (below + cardH + 14 < vh) {
+      card.style.top = below + 'px';
+    } else if (box.top - cardH - 14 > 8) {
+      card.style.top = (box.top - cardH - 14) + 'px';
+    } else {
+      card.style.bottom = '12px';
+    }
+    card.style.left = pad + 'px';
+    card.style.right = pad + 'px';
+  }
+
+  function tourShow() {
+    const step = TOUR_STEPS[tourIdx];
+    $('#tour-step').textContent = `${tourIdx + 1} / ${TOUR_STEPS.length}`;
+    $('#tour-title').textContent = step.title;
+    $('#tour-body').textContent = step.body;
+    $('#tour-dots').innerHTML = TOUR_STEPS.map((_, i) => `<i class="${i === tourIdx ? 'is-on' : ''}${i < tourIdx ? ' is-done' : ''}"></i>`).join('');
+    $('#tour-prev').disabled = tourIdx === 0;
+    $('#tour-next').textContent = tourIdx === TOUR_STEPS.length - 1 ? '완료' : '다음';
+    const overlay = $('#tour');
+    overlay.hidden = false;
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('tour-open');
+    const el = step.target ? $(step.target) : null;
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'auto' });
+    clearTimeout(tourTimer);
+    tourTimer = setTimeout(tourPlace, 60);
+    const btn = $('#tour-next');
+    if (btn) btn.focus({ preventScroll: true });
+  }
+
+  function tourGo(i) {
+    if (i < 0) return;
+    if (i >= TOUR_STEPS.length) { tourEnd(true); return; }
+    tourIdx = i;
+    const step = TOUR_STEPS[i];
+    if (step.go) switchView(step.go);
+    if (step.prep) step.prep();
+    $('#tour-invite').hidden = true;
+    /* 화면 전환·렌더가 끝난 뒤 위치를 계산합니다 */
+    setTimeout(tourShow, 90);
+  }
+
+  function tourStart() {
+    tourIdx = 0;
+    $('#tour-invite').hidden = true;
+    tourGo(0);
+  }
+
+  function tourEnd(done) {
+    clearTimeout(tourTimer);
+    const overlay = $('#tour');
+    if (overlay) { overlay.hidden = true; overlay.setAttribute('aria-hidden', 'true'); }
+    document.body.classList.remove('tour-open');
+    if (done) tourMark();
+    else if (!tourDone()) {
+      /* 그냥 닫으면 첫 방문 초대 카드를 다시 띄웁니다 */
+      setTimeout(() => { if (!tourDone()) $('#tour-invite').hidden = false; }, 700);
+    }
+  }
+
+  function openInvite() {
+    if (tourDone()) return;
+    /* 입력·상담을 이미 시작했으면 방해하지 않습니다 (메인 화면에서만 초대) */
+    if (state.tab && state.tab !== 'home') return;
+    const active = $('.view.is-active');
+    if (active && active.id !== 'view-home') return;
+    const inv = $('#tour-invite');
+    if (inv) inv.hidden = false;
+  }
+
+  window.BojangTour = { start: tourStart, end: tourEnd, next: () => tourGo(tourIdx + 1), prev: () => tourGo(tourIdx - 1), step: () => tourIdx, total: TOUR_STEPS.length, done: tourDone, mark: tourMark };
 
   /* ================= 초기화 ================= */
   function init() {
@@ -17465,6 +18623,29 @@ const PLAN_FRONT = {
       renderGuideBody();
       switchView('guide');
     });
+
+    /* v5.7 — 퀵 가이드 투어 */
+    const tourBtn = $('#btn-tour');
+    if (tourBtn) tourBtn.addEventListener('click', tourStart);
+    const tourHome = $('#btn-tour-home');
+    if (tourHome) tourHome.addEventListener('click', tourStart);
+    const tPrev = $('#tour-prev'), tNext = $('#tour-next'), tClose = $('#tour-close'), tSkip = $('#tour-skip');
+    if (tPrev) tPrev.addEventListener('click', () => tourGo(tourIdx - 1));
+    if (tNext) tNext.addEventListener('click', () => tourGo(tourIdx + 1));
+    if (tClose) tClose.addEventListener('click', () => tourEnd(false));
+    if (tSkip) tSkip.addEventListener('click', () => tourEnd(true));
+    const invStart = $('#tour-invite-start'), invLater = $('#tour-invite-later');
+    if (invStart) invStart.addEventListener('click', tourStart);
+    if (invLater) invLater.addEventListener('click', () => { $('#tour-invite').hidden = true; tourMark(); });
+    window.addEventListener('resize', () => { if ($('#tour') && !$('#tour').hidden) tourPlace(); });
+    document.addEventListener('keydown', (e) => {
+      const open = $('#tour') && !$('#tour').hidden;
+      if (!open) return;
+      if (e.key === 'Escape') tourEnd(false);
+      else if (e.key === 'ArrowRight') tourGo(tourIdx + 1);
+      else if (e.key === 'ArrowLeft') tourGo(tourIdx - 1);
+    });
+    if (!tourDone()) setTimeout(openInvite, 1100);
 
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
       window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });

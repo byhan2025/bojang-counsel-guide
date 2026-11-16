@@ -499,7 +499,7 @@
           <div class="part-label"><strong>증권 담보 직접 기재</strong><span>보험사별 담보명 그대로 · 통합형/개별형</span></div>
           <div class="part-side"><span class="mini-badge custom-count tone-${items.length ? 'need' : 'gap'}">${items.length}건</span></div>
         </div>
-        ${items.length ? `<div class="custom-list">${rows}</div>` : '<p class="custom-empty">고정 칸에 없는 특약(예: 순환계 주요치료비 통합형)을 증권에 적힌 그대로 적습니다.</p>'}
+        ${items.length ? `<div class="custom-list">${rows}</div>` : '<p class="custom-empty">고정 칸에 없는 특약(예: 특정순환계질환(3~5종) 주요치료비)을 증권에 적힌 그대로 적습니다.</p>'}
         ${presets.length ? `<div class="custom-presets">${presets.map((p) => `<button type="button" class="chip-custom" data-custom-preset="${esc(p.name)}" data-preset-mode="${p.mode}">+ ${esc(p.name)}</button>`).join('')}</div>` : ''}
         <button type="button" class="custom-add" data-custom-add="${key}">+ 증권 담보 직접 추가</button>
         <div class="custom-total"${total ? '' : ' hidden'}>직접 기재 합계 <b>${won(total)}</b>만원</div>
@@ -1394,6 +1394,8 @@
   /* ================= 탭 전환 ================= */
   function switchView(name) {
     name = name || 'home';
+    const inv = $('#tour-invite');
+    if (inv) inv.hidden = true;
     state.tab = name;
     const viewId = 'view-' + name;
     $$('.view').forEach((v) => v.classList.toggle('is-active', v.id === viewId));
@@ -2049,7 +2051,7 @@
 
   function exportPayload() {
     return {
-      app: 'bojang-guide', version: '5.6', exportedAt: new Date().toISOString(),
+      app: 'bojang-guide', version: '5.7', exportedAt: new Date().toISOString(),
       summary: { name: state.client.name, age: state.age, gender: state.gender, score: state.lastResult ? state.lastResult.m.score : null },
       state: snapshotState()
     };
@@ -2132,6 +2134,151 @@
     lsSet(VKEY, 'client');
     applyView();
   }
+
+  /* =========================================================
+     v5.7 — 첫 방문 4단계 퀵 가이드 투어
+     ① 입력 허브 → ② 5대 담보·직접 기재 → ③ 리모델링 비교기 → ④ PDF 저장
+     · 완료/닫힘은 localStorage(bojang.tour.v1)에 기록해 다시 띄우지 않습니다.
+     · 첫 방문에는 화면을 가로채지 않는 초대 카드를 띄우고, 누르면 투어가 시작됩니다.
+     ========================================================= */
+  const TOUR_KEY = 'bojang.tour.v1';
+  const TOUR_STEPS = [
+    {
+      go: 'home',
+      target: '#btn-start-consult',
+      title: '① 입력 허브 — 사진 · PDF · 수기',
+      body: '고객의 보장분석표를 사진으로 찍거나 PDF·텍스트로 붙여넣으면 담보표가 자동으로 정리됩니다. 직접 입력하려면 수기 입력을 고르세요. 모든 처리는 이 기기 안에서만 이뤄집니다.'
+    },
+    {
+      go: 'analysis',
+      prep: () => setStep(2, true),
+      target: '#card-cancer [data-custom-add]',
+      title: '② 5대 담보 확인 · 증권 담보 직접 기재',
+      body: '암·뇌·심장·수술·간병 다섯 영역의 금액과 범위를 확인합니다. 증권에만 적힌 특약(예: 특정순환계질환(3~5종) 주요치료비)은 ‘증권 담보 직접 추가’로 담보명 그대로 적으면 치료비 축에 합산됩니다.'
+    },
+    {
+      go: 'remodel',
+      target: '#remodel-body .rm-hero-grid',
+      title: '③ 리모델링 비교기 — Before / After',
+      body: '계약은 유지·감액·정리, 담보는 보강 금액을 넣으면 월 보험료와 종합 점수가 어떻게 달라지는지 실시간으로 비교합니다. 해지 전 확인할 경고도 함께 나옵니다.'
+    },
+    {
+      go: 'analysis',
+      prep: () => { if (!state.analyzed) analyze(); },
+      target: '#pdf-panel',
+      title: '④ PDF 저장 · 공유',
+      body: '1장 요약 · 10장 상세 · 30장 상담 플랜을 이 기기에서 바로 PDF로 만들어 저장하거나 카카오톡으로 보냅니다. 10장 상세에는 20년 보험료 추이 차트와 명함 QR이 함께 인쇄됩니다.'
+    }
+  ];
+  let tourIdx = 0;
+  let tourTimer = null;
+
+  function tourDone() {
+    try { return localStorage.getItem(TOUR_KEY) === '1'; } catch (e) { return false; }
+  }
+  function tourMark() { try { localStorage.setItem(TOUR_KEY, '1'); } catch (e) { /* private mode */ } }
+
+  function tourPlace() {
+    const step = TOUR_STEPS[tourIdx];
+    const overlay = $('#tour');
+    if (!overlay || overlay.hidden) return;
+    const spot = $('#tour-spot'), card = $('#tour-card');
+    const el = step.target ? $(step.target) : null;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const pad = 8;
+    let box = { top: vh * 0.3, left: pad, width: vw - pad * 2, height: 120 };
+    if (el) {
+      const r = el.getBoundingClientRect();
+      const top = Math.max(pad, Math.round(r.top - 6));
+      const left = Math.max(pad, Math.round(r.left - 6));
+      box = {
+        top,
+        left,
+        width: Math.max(120, Math.min(vw - left - pad, Math.round(r.width + 12))),
+        height: Math.max(40, Math.min(r.height + 12, Math.round(vh * 0.56), vh - top - 100))
+      };
+    }
+    spot.style.top = box.top + 'px';
+    spot.style.left = box.left + 'px';
+    spot.style.width = box.width + 'px';
+    spot.style.height = box.height + 'px';
+    card.style.top = '';
+    card.style.left = '';
+    card.style.bottom = '';
+    const cardH = card.offsetHeight || 190;
+    const below = box.top + box.height + 14;
+    if (below + cardH + 14 < vh) {
+      card.style.top = below + 'px';
+    } else if (box.top - cardH - 14 > 8) {
+      card.style.top = (box.top - cardH - 14) + 'px';
+    } else {
+      card.style.bottom = '12px';
+    }
+    card.style.left = pad + 'px';
+    card.style.right = pad + 'px';
+  }
+
+  function tourShow() {
+    const step = TOUR_STEPS[tourIdx];
+    $('#tour-step').textContent = `${tourIdx + 1} / ${TOUR_STEPS.length}`;
+    $('#tour-title').textContent = step.title;
+    $('#tour-body').textContent = step.body;
+    $('#tour-dots').innerHTML = TOUR_STEPS.map((_, i) => `<i class="${i === tourIdx ? 'is-on' : ''}${i < tourIdx ? ' is-done' : ''}"></i>`).join('');
+    $('#tour-prev').disabled = tourIdx === 0;
+    $('#tour-next').textContent = tourIdx === TOUR_STEPS.length - 1 ? '완료' : '다음';
+    const overlay = $('#tour');
+    overlay.hidden = false;
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('tour-open');
+    const el = step.target ? $(step.target) : null;
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'auto' });
+    clearTimeout(tourTimer);
+    tourTimer = setTimeout(tourPlace, 60);
+    const btn = $('#tour-next');
+    if (btn) btn.focus({ preventScroll: true });
+  }
+
+  function tourGo(i) {
+    if (i < 0) return;
+    if (i >= TOUR_STEPS.length) { tourEnd(true); return; }
+    tourIdx = i;
+    const step = TOUR_STEPS[i];
+    if (step.go) switchView(step.go);
+    if (step.prep) step.prep();
+    $('#tour-invite').hidden = true;
+    /* 화면 전환·렌더가 끝난 뒤 위치를 계산합니다 */
+    setTimeout(tourShow, 90);
+  }
+
+  function tourStart() {
+    tourIdx = 0;
+    $('#tour-invite').hidden = true;
+    tourGo(0);
+  }
+
+  function tourEnd(done) {
+    clearTimeout(tourTimer);
+    const overlay = $('#tour');
+    if (overlay) { overlay.hidden = true; overlay.setAttribute('aria-hidden', 'true'); }
+    document.body.classList.remove('tour-open');
+    if (done) tourMark();
+    else if (!tourDone()) {
+      /* 그냥 닫으면 첫 방문 초대 카드를 다시 띄웁니다 */
+      setTimeout(() => { if (!tourDone()) $('#tour-invite').hidden = false; }, 700);
+    }
+  }
+
+  function openInvite() {
+    if (tourDone()) return;
+    /* 입력·상담을 이미 시작했으면 방해하지 않습니다 (메인 화면에서만 초대) */
+    if (state.tab && state.tab !== 'home') return;
+    const active = $('.view.is-active');
+    if (active && active.id !== 'view-home') return;
+    const inv = $('#tour-invite');
+    if (inv) inv.hidden = false;
+  }
+
+  window.BojangTour = { start: tourStart, end: tourEnd, next: () => tourGo(tourIdx + 1), prev: () => tourGo(tourIdx - 1), step: () => tourIdx, total: TOUR_STEPS.length, done: tourDone, mark: tourMark };
 
   /* ================= 초기화 ================= */
   function init() {
@@ -2301,6 +2448,29 @@
       renderGuideBody();
       switchView('guide');
     });
+
+    /* v5.7 — 퀵 가이드 투어 */
+    const tourBtn = $('#btn-tour');
+    if (tourBtn) tourBtn.addEventListener('click', tourStart);
+    const tourHome = $('#btn-tour-home');
+    if (tourHome) tourHome.addEventListener('click', tourStart);
+    const tPrev = $('#tour-prev'), tNext = $('#tour-next'), tClose = $('#tour-close'), tSkip = $('#tour-skip');
+    if (tPrev) tPrev.addEventListener('click', () => tourGo(tourIdx - 1));
+    if (tNext) tNext.addEventListener('click', () => tourGo(tourIdx + 1));
+    if (tClose) tClose.addEventListener('click', () => tourEnd(false));
+    if (tSkip) tSkip.addEventListener('click', () => tourEnd(true));
+    const invStart = $('#tour-invite-start'), invLater = $('#tour-invite-later');
+    if (invStart) invStart.addEventListener('click', tourStart);
+    if (invLater) invLater.addEventListener('click', () => { $('#tour-invite').hidden = true; tourMark(); });
+    window.addEventListener('resize', () => { if ($('#tour') && !$('#tour').hidden) tourPlace(); });
+    document.addEventListener('keydown', (e) => {
+      const open = $('#tour') && !$('#tour').hidden;
+      if (!open) return;
+      if (e.key === 'Escape') tourEnd(false);
+      else if (e.key === 'ArrowRight') tourGo(tourIdx + 1);
+      else if (e.key === 'ArrowLeft') tourGo(tourIdx - 1);
+    });
+    if (!tourDone()) setTimeout(openInvite, 1100);
 
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
       window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });

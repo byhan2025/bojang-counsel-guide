@@ -106,12 +106,16 @@
     brain: [
       ['lysis', /혈전|용해|tpa|트롬|제거술/i],
       ['icu', /중환자실|집중치료/],
-      ['surgery', /수술|스텐트|색전|성형|개두|관혈|우회/]
+      ['surgery', /수술|스텐트|색전|성형|개두|관혈|우회/],
+      /* v5.7 — 특정순환계질환(3~5종) 주요치료비: 혈전용해·수술을 한 담보로 묶은 통합형.
+         중환자실 일당이 아니라 치료비 축(혈전용해·수술)에만 배분합니다. */
+      ['main', /특정순환계|3\s*[~\-–]\s*5\s*종|순환계\s*주요치료비|주요치료비/]
     ],
     heart: [
       ['lysis', /혈전|용해|tpa|트롬/i],
       ['icu', /중환자실|집중치료/],
-      ['surgery', /수술|스텐트|성형|우회|개흉|관혈/]
+      ['surgery', /수술|스텐트|성형|우회|개흉|관혈/],
+      ['main', /특정순환계|3\s*[~\-–]\s*5\s*종|순환계\s*주요치료비|주요치료비/]
     ]
   };
   const CUSTOM_DX_RE = /진단비|진단/;
@@ -166,10 +170,16 @@
       let skip = CUSTOM_DX_RE.test(x.name);
       if (!skip && map.length) {
         const hit = map.find((m) => m[1].test(x.name));
-        if (hit && byKey[hit[0]] != null) target = hit[0];
+        if (hit && (hit[0] === 'main' || byKey[hit[0]] != null)) target = hit[0];
       }
       if (!skip && x.amount > 0) {
-        if (target) byKey[target] += x.amount;
+        if (target === 'main') {
+          /* 통합형 주요치료비 — 혈전용해·수술 두 칸에 권장 비율로 나눕니다(중환자실 제외) */
+          const mains = list.filter((s) => s.key === 'lysis' || s.key === 'surgery');
+          const msum = mains.reduce((a, s) => a + (Number(s.rec) || 0), 0);
+          if (msum > 0) mains.forEach((s) => { byKey[s.key] += (x.amount * (Number(s.rec) || 0)) / msum; });
+          else if (recSum > 0) list.forEach((s) => { byKey[s.key] += (x.amount * (Number(s.rec) || 0)) / recSum; });
+        } else if (target) byKey[target] += x.amount;
         else if (recSum > 0) list.forEach((s) => { byKey[s.key] += (x.amount * (Number(s.rec) || 0)) / recSum; });
       }
       rows.push({ id: x.id, name: x.name, amount: x.amount, mode: x.mode, sub: target, skip });
@@ -980,6 +990,50 @@
   }
 
 
+  /* =========================================================
+     v5.7 — 갱신형 vs 비갱신형 20년 보험료 추이 (예시 시뮬레이션)
+     고객이 지금 내는 월 보험료(P)를 기준으로 두 구조의 20년 곡선을 그립니다.
+       · 비갱신형: 가입 시 비싸지만 만기까지 일정 — P × 1.22 고정
+       · 갱신형  : 가입 시 저렴(P × 0.55)하고, 매년 나이 인상(연 6%) +
+                   5년 주기 갱신 인상(×1.20)이 겹칩니다.
+     실제 갱신 보험료는 상품·나이·인수 결과에 따라 다르므로, 화면·PDF에는
+     항상 '예시 시뮬레이션 · 증권 갱신 보험료 표로 확인' 각주를 함께 표시합니다.
+     ========================================================= */
+  const RENEW_TREND = { years: 20, start: 0.55, annual: 1.06, step: 1.20, stepYears: 5, level: 1.22 };
+  function renewTrend(state) {
+    const st = state || {};
+    const input = Number(st.premium || 0) || 0;
+    const base = input > 0 ? input : 25;
+    const startAge = insuranceAge(st.client && st.client.birth) || (Number(st.age) || 40);
+    const years = [], renew = [], level = [];
+    for (let t = 0; t <= RENEW_TREND.years; t += 1) {
+      const steps = Math.floor(t / RENEW_TREND.stepYears);
+      const r = base * RENEW_TREND.start * Math.pow(RENEW_TREND.annual, t) * Math.pow(RENEW_TREND.step, steps);
+      years.push(t);
+      renew.push(Math.round(r * 10) / 10);
+      level.push(Math.round(base * RENEW_TREND.level * 10) / 10);
+    }
+    /* 두 곡선이 교차하는 해 — 선형 보간 */
+    let crossYear = null;
+    for (let t = 1; t < renew.length; t += 1) {
+      const d0 = renew[t - 1] - level[t - 1], d1 = renew[t] - level[t];
+      if (d0 <= 0 && d1 >= 0) {
+        crossYear = Math.round((t - 1 + (Math.abs(d0) / (Math.abs(d0) + Math.abs(d1) || 1))) * 10) / 10;
+        break;
+      }
+      if (d0 >= 0) { crossYear = 0; break; }
+    }
+    const last = renew[renew.length - 1], lv = level[level.length - 1];
+    return {
+      base, assumed: input <= 0, startAge, endAge: startAge + RENEW_TREND.years,
+      years, renew, level, crossYear,
+      crossAge: crossYear == null ? null : Math.round(startAge + crossYear),
+      at20: { renew: last, level: lv, diff: Math.round((last - lv) * 10) / 10, pct: lv > 0 ? Math.round(((last - lv) / lv) * 100) : 0 },
+      ticks: [0, 5, 10, 15, 20],
+      max: Math.max.apply(null, renew.concat(level))
+    };
+  }
+
   function oneLine(state, m) {
     if (!m.needList.length) return '5대 담보가 기준선을 넘었습니다. 금액 조정과 갱신 대비가 남은 과제입니다.';
     const x = m.needList[0];
@@ -996,6 +1050,7 @@
     neuroSum, neuroCount, neuroMissing, groupObj, groupSum, normalizeState, normalizeCov, stageOf, partLevel,
     dxObj, dxTotal, dxCoreVal, dxScenarios, dxShort, DX_SUBS, DX_MAX, simulate,
     CUSTOM_KEYS, CUSTOM_AREA_LABEL, CUSTOM_MODE_LABEL, CUSTOM_MAP,
-    customList, customTotal, customAll, customCredits, sanitizeCustom
+    customList, customTotal, customAll, customCredits, sanitizeCustom,
+    renewTrend, RENEW_TREND
   };
 })(typeof window !== 'undefined' ? window : globalThis);

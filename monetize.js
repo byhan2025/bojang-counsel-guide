@@ -1,4 +1,4 @@
-/* 보장분석 라이프 리포트 v5.6 — 증권 담보 직접 기재 · 베타 테스트 공개판
+/* 보장분석 라이프 리포트 v5.7 — 시니어·차트·QR·온보딩 · 베타 테스트 공개판
    · 베타 기간에는 Pro 전 기능(30장 전체 · 1/10/30장 PDF · 고객 30명 · 리모델링 · 화이트라벨)을 잠금 없이 무료 제공
    · v5.4: 계정/구독(backend.js) 연동 — 실서버 구독 상태를 hydrate() 로 반영
    · 정식 출시 예정 요금: 월 5,000원 / 연 50,000원 · 베타 피드백 Google Form + 추첨 사은품 안내
@@ -241,7 +241,7 @@
     if (mark) mark.setAttribute('content', b.name);
     const title = $('#brand-title');
     if (title) title.textContent = b.name;
-    document.title = `${b.name} v5.6 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
+    document.title = `${b.name} v5.7 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
     loadPdfLogo(b.logo);
     /* 상담자 화면의 고객 표지도 새 브랜드로 다시 그립니다 */
     if (root.BojangDeck && root.__bojangState) root.BojangDeck.refresh(root.__bojangState, { reset: true });
@@ -961,26 +961,29 @@
       });
       y += 60;
 
-      /* 04 확인할 것 */
-      y = s.sectionHead(s.ML, y, s.CW, '04', '진행 전 확인할 것', '상담 자리에서 함께 봅니다');
-      s.rect(s.ML, y, s.CW, 54, { fill: '#fff', r: 5, stroke: C.line });
+      /* 04 확인할 것 — v5.7: 해지·신규 불완전판매 방지 경고 포함 */
+      y = s.sectionHead(s.ML, y, s.CW, '04', '진행 전 확인할 것', '⚠ 불완전판매 방지 — 해지·신규 가입');
+      s.rect(s.ML, y, s.CW, 72, { fill: C.orangeSoft, r: 5, stroke: C.orangeLine });
+      s.rect(s.ML, y, 2.8, 72, { fill: C.orange, r: 1.4 });
       [[
         '증권 원본으로 담보명·갱신 구조 확인',
-        '감액·해지 시 해지환급금과 재가입 조건 확인'
+        '감액·해지 시 해지환급금과 재가입 조건 확인',
+        '상령일(보험나이)이 지나면 보험료가 올라갑니다 — 가입 시점 판단'
       ], [
-        '새로 넣는 담보의 1년 미만 감액·1회한 조항 확인',
-        '고지의무(3·1·5 / 간편 3·2·5) 함께 작성'
+        '새로 넣는 담보의 1년 미만 감액·90일 면책 확인',
+        '고지의무(3·1·5 / 간편 3·2·5) 함께 작성',
+        '리모델링 후 1년 안에 담보 공백이 생기지 않는지 재점검'
       ]].forEach((col, ci) => {
         col.forEach((t, i) => {
           const x = s.ML + 10 + ci * (s.CW / 2);
-          const cy = y + 9 + i * 20;
+          const cy = y + 9 + i * 19;
           s.rect(x, cy + 1, 5.2, 5.2, { fill: '#fff', stroke: accent, r: 1.1, lw: 0.9 });
           s.line(x + 1.2, cy + 4, x + 2.2, cy + 5, { color: accent, w: 0.9 });
           s.line(x + 2.2, cy + 5, x + 4, cy + 2.4, { color: accent, w: 0.9 });
           s.text(t, x + 10, cy - 0.6, { size: 6.4, weight: 500, color: C.ink2 });
         });
       });
-      y += 62;
+      y += 80;
 
       /* 05 담당자 명함 */
       const cardH = 74;
@@ -994,9 +997,19 @@
       s.text(`${who}${b.title ? ' · ' + b.title : ''}`, s.ML + 16, y + 57, { size: 8.6, weight: 800, color: C.navy });
       s.line(s.ML + 272, y + 10, s.ML + 272, y + cardH - 10, { color: C.tintLine });
       s.text('연락', s.ML + 286, y + 12, { size: 5.4, weight: 700, color: C.muted });
-      if (b.phone) s.text(`T. ${b.phone}`, s.ML + 286, y + 22, { size: 6.8, weight: 700, color: C.ink2 });
-      if (b.kakao) s.text(`카카오톡 ${b.kakao}`, s.ML + 286, y + 33, { size: 6.4, weight: 600, color: C.ink2 });
-      s.text('상담 보조용 시뮬레이션입니다. 실제 보험료·인수·해지환급금은 상품과 나이에 따라 달라집니다.', s.ML + 286, y + cardH - 16, { size: 5.2, weight: 500, color: C.muted });
+      if (b.phone) s.text(`T. ${b.phone}`, s.ML + 286, y + 22, { size: 6.6, weight: 700, color: C.ink2 });
+      if (b.kakao) s.text(`카카오톡 ${b.kakao}`, s.ML + 286, y + 33, { size: 6.0, weight: 600, color: C.ink2 });
+      s.para('상담 보조용 시뮬레이션입니다. 실제 보험료·인수·해지환급금은 상품과 나이에 따라 달라집니다.', s.ML + 286, y + 46, Math.max(90, s.CW - 300 - 70), { size: 5.0, color: C.muted, lh: 1.35 });
+      /* v5.7 — 명함 QR (카카오톡 상담 링크 / 전화번호) */
+      if (root.BojangQR && root.BojangReport && root.BojangReport.qrInfo) {
+        const info = root.BojangReport.qrInfo({ client: c.before.client, state: null });
+        if (info) {
+          const qs = 52;
+          const qx = s.ML + s.CW - qs - 12;
+          root.BojangQR.draw(s, qx, y + 8, qs, info.text, { quiet: 2, fill: C.navy, stroke: C.line2, r: 3 });
+          s.text(info.label, qx + qs / 2, y + 8 + qs + 2.5, { size: 4.8, weight: 700, color: C.muted, align: 'center' });
+        }
+      }
       y += cardH;
 
       s.footer({ left: `${c.before.client.name}님 리모델링 비교 · ${c.before.dateLabel || ''}`, right: 'REMODELING' });

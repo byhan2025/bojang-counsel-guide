@@ -24,6 +24,7 @@ def build():
     playbook = read("playbook.js")
     model = read("model.js")
     pdfkit = read("pdfkit.js")
+    qr = read("qr.js")
     report = read("report.js")
     client = read("client.js")
     live = read("live.js")
@@ -55,6 +56,7 @@ def build():
         "<script>\n" + playbook + "\n</script>",
         "<script>\n" + model + "\n</script>",
         "<script>\n" + pdfkit + "\n</script>",
+        "<script>\n" + qr + "\n</script>",
         "<script>\n" + report + "\n</script>",
         "<script>\n" + client + "\n</script>",
         "<script>\n" + live + "\n</script>",
@@ -67,7 +69,7 @@ def build():
     ])
     old = ('<script src="./content.js"></script>\n<script src="./playbook.js"></script>\n'
            '<script src="./model.js"></script>\n<script src="./pdfkit.js"></script>\n'
-           '<script src="./report.js"></script>\n<script src="./client.js"></script>\n<script src="./live.js"></script>\n<script src="./tools.js"></script>\n'
+           '<script src="./qr.js"></script>\n<script src="./report.js"></script>\n<script src="./client.js"></script>\n<script src="./live.js"></script>\n<script src="./tools.js"></script>\n'
            '<script src="./monetize.js"></script>\n<script src="./backend.js"></script>\n<script src="./import-parser.js"></script>\n<script src="./inputhub.js"></script>\n<script src="./app.js"></script>')
     assert old in html, "script tag block not found"
     html = html.replace(old, bundle)

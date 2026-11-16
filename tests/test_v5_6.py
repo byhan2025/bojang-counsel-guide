@@ -192,20 +192,20 @@ def main():
             # 1. v5.6 버전 표기 · 정적 구조
             # =========================================================
             title = page.title()
-            check("타이틀 v5.6", "v5.6" in title and "보장분석 라이프 리포트" in title, title)
-            check("헤더 버전 표기 v5.6", "v5.6" in page.inner_text(".hh-ver"), page.inner_text(".hh-ver"))
-            check("헤더 eyebrow V5.6", "V5.6" in page.inner_text(".hh-eyebrow"), page.inner_text(".hh-eyebrow"))
+            check("타이틀 v5.6 이상", any(v in title for v in ("v5.6", "v5.7")) and "보장분석 라이프 리포트" in title, title)
+            check("헤더 버전 표기 v5.6 이상", any(v in page.inner_text(".hh-ver") for v in ("v5.6", "v5.7")), page.inner_text(".hh-ver"))
+            check("헤더 eyebrow V5.6 이상", any(v in page.inner_text(".hh-eyebrow") for v in ("V5.6", "V5.7")), page.inner_text(".hh-eyebrow"))
             sw = read(os.path.join(ROOT, "sw.js"))
-            check("서비스워커 캐시 v5.6", "bojang-guide-v5.6" in sw, sw.splitlines()[2])
+            check("서비스워커 캐시 v5.6 이상", any(v in sw for v in ("bojang-guide-v5.6", "bojang-guide-v5.7")), sw.splitlines()[2])
             man = json.loads(read(os.path.join(ROOT, "manifest.json")))
-            check("manifest v5.6", "v5.6" in man.get("name", ""), man.get("name"))
+            check("manifest v5.6 이상", any(v in man.get("name", "") for v in ("v5.6", "v5.7")), man.get("name"))
 
             model_src = read(os.path.join(ROOT, "model.js"))
             content_src = read(os.path.join(ROOT, "content.js"))
             report_src = read(os.path.join(ROOT, "report.js"))
             app_src = read(os.path.join(ROOT, "app.js"))
             check("모델 — CUSTOM_KEYS·customCredits·normalize", all(k in model_src for k in ["CUSTOM_KEYS", "customCredits", "customList", "CUSTOM_MAP"]), "model.js")
-            check("프리셋 — 통합형/개별형 담보명 정의", all(k in content_src for k in ["CUSTOM_PRESETS", "순환계 주요치료비(통합)", "혈전용해치료비", "뇌혈관수술비", "관상동맥성형술(스텐트)", "표적항암약물허가치료비", "다빈치로봇수술비", "질병 1~5종(특정)", "관절/척추 수술비", "중증치매간병비", "상해간병일당"]), "content.js")
+            check("프리셋 — 통합형/개별형 담보명 정의", all(k in content_src for k in ["CUSTOM_PRESETS", "특정순환계질환(3~5종) 주요치료비", "혈전용해치료비", "뇌혈관수술비", "관상동맥성형술(스텐트)", "표적항암약물허가치료비", "다빈치로봇수술비", "질병 1~5종(특정)", "관절/척추 수술비", "중증치매간병비", "상해간병일당"]), "content.js")
             check("리포트 — customBox·03p 섹션", "function customBox" in report_src and "증권 직접 기재 추가 담보" in report_src, "report.js")
             check("앱 — 직접 추가 버튼·모드 토글·삭제", all(k in app_src for k in ["data-custom-add", "data-custom-mode", "data-custom-del", "data-custom-preset"]), "app.js")
 
@@ -251,14 +251,14 @@ def main():
             btn_txt = page.inner_text("#card-brain [data-custom-add]")
             check("추가 버튼 문구", "증권 담보 직접 추가" in btn_txt, btn_txt)
             presets = page.evaluate("() => Array.from(document.querySelectorAll('#card-brain [data-custom-preset]')).map((b) => b.dataset.customPreset)")
-            check("뇌 프리셋 칩 — 통합형·혈전용해·수술·중환자실", all(any(k in p for p in presets) for k in ["순환계 주요치료비", "혈전용해치료비", "뇌혈관수술비", "중환자실"]), presets)
+            check("뇌 프리셋 칩 — 통합형·혈전용해·수술·중환자실", all(any(k in p for p in presets) for k in ["순환계", "혈전용해치료비", "뇌혈관수술비", "중환자실"]), presets)
 
             page.click("#card-brain [data-custom-preset][data-preset-mode='bundle']")
             page.wait_for_timeout(400)
             row_count = page.evaluate("() => document.querySelectorAll('#card-brain .custom-row').length")
             check("프리셋 클릭 → 행 1개 추가", row_count == 1, row_count)
             st_row = page.evaluate("() => BojangApp.state.cov.custom.brain.map((x) => [x.name, x.amount, x.mode])")
-            check("프리셋이 통합형으로 추가", st_row and st_row[0][0].startswith("순환계 주요치료비") and st_row[0][2] == "bundle", st_row)
+            check("프리셋이 통합형으로 추가", st_row and ("순환계" in st_row[0][0] and "주요치료비" in st_row[0][0]) and st_row[0][2] == "bundle", st_row)
             mode_ui = page.evaluate("() => Array.from(document.querySelectorAll('#card-brain .custom-row [data-custom-mode]')).map((b) => [b.dataset.customMode, b.getAttribute('aria-pressed'), b.className])")
             check("통합형 토글 활성 표시", any(m[0] == "bundle" and m[1] == "true" and "is-on" in m[2] for m in mode_ui), mode_ui)
 
@@ -298,7 +298,7 @@ def main():
             page.reload(wait_until="load")
             page.wait_for_timeout(900)
             persisted = page.evaluate("() => JSON.stringify(BojangApp.state.cov.custom.brain)")
-            check("새로고침 후 유지(localStorage)", '"순환계 주요치료비(통합)"' in persisted and '"amount":2000' in persisted, persisted)
+            check("새로고침 후 유지(localStorage)", ('"순환계 주요치료비(통합)"' in persisted or '"특정순환계질환(3~5종) 주요치료비"' in persisted) and '"amount":2000' in persisted, persisted)
 
             # JSON 내보내기(파일) → 가져오기 모달 복원
             page.evaluate("""(cs) => { BojangApp.state.cov.custom = JSON.parse(JSON.stringify(cs)); BojangApp.analyze(); }""", CUSTOM)
@@ -373,7 +373,7 @@ def main():
             check("통합형 2,000만원 → 뇌 치료비 축 인정(충족도 상승)",
                   calc["bundle"]["treatFill"] > 0 and calc["bundle"]["pct"] > 0 and calc["bundle"]["customVal"] > 0,
                   calc["bundle"])
-            check("통합형은 세 칸에 권장 비율로 분배", len([s for s in calc["bundle"]["sub"] if s[1] > 0]) == 3, calc["bundle"]["sub"])
+            check("통합형은 치료비 칸에 권장 비율로 분배 (v5.7: 중환자실 제외 2칸)", len([s for s in calc["bundle"]["sub"] if s[1] > 0]) == 2 and all(s[1] == 0 for s in calc["bundle"]["sub"] if s[0] == "icu"), calc["bundle"]["sub"])
             check("개별형 혈전용해치료비 → 혈전용해 칸 합산",
                   any(s[0] == "lysis" and s[1] == 1000 for s in calc["individual"]["sub"]), calc["individual"]["sub"])
             check("진단비 이름 담보는 치료비 축 제외(표시만)", all(s[1] == 0 for s in calc["dxname"]["sub"]) and calc["dxname"]["customCount"] == 1, calc["dxname"])
@@ -483,7 +483,7 @@ def main():
             # 8. 단일 HTML · 콘솔
             # =========================================================
             single = read(os.path.join(ROOT, "dist", "bojang-guide.single.html"))
-            check("단일 HTML — v5.6·직접 기재 반영", "v5.6" in single and "증권 담보 직접 기재" in single and "CUSTOM_PRESETS" in single, "v5.6" in single)
+            check("단일 HTML — v5.6·직접 기재 반영", any(v in single for v in ("v5.6", "v5.7")) and "증권 담보 직접 기재" in single and "CUSTOM_PRESETS" in single, "v5.7" in single)
             check("단일 HTML — 외부 참조 0", single.count('src="./') == 0 and single.count('href="./') == 0, (single.count('src="./'), single.count('href="./')))
             console_errors = [e for e in errors if "favicon" not in e.lower()]
             check("콘솔 오류 0", len(console_errors) == 0, console_errors[:3])

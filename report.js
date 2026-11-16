@@ -70,11 +70,17 @@
   /* 긴 담보명은 잘라서 한 줄에 맞춥니다 (넘침 방지) */
   function cutName(t, n) {
     const v = String(t == null ? '' : t).trim() || '담보명 미입력';
-    return v.length > n ? v.slice(0, n - 1) + '…' : v;
+    if (v.length <= n) return v;
+    let cut = n - 1;
+    /* 괄호·공백 한가운데서 끊기지 않게 — 바로 뒤에 닫는 괄호가 있으면 함께 닫습니다 */
+    const open = v.lastIndexOf('(', cut);
+    const close = v.indexOf(')', cut);
+    if (open >= 0 && close >= 0 && close - cut <= 6) cut = close + 1;
+    return v.slice(0, cut).replace(/[\s(·,]+$/, '') + '…';
   }
   /* 한 줄에 들어가는 길이로 항목을 줄이고 남은 건수를 붙입니다 (넘침 방지) */
   function customFit(s, items, w, size, withArea) {
-    const parts = items.map((x) => `${withArea && x.area ? '[' + x.area + '] ' : ''}${cutName(x.name, 20)} ${won(x.amount)}만원(${CUSTOM_MODE_TXT[x.mode] || '통합형'})`);
+    const parts = items.map((x) => `${withArea && x.area ? '[' + x.area + '] ' : ''}${cutName(x.name, 26)} ${won(x.amount)}만원(${CUSTOM_MODE_TXT[x.mode] || '통합형'})`);
     const tail = (n) => (n > 0 ? `   외 ${n}건` : '');
     for (let n = parts.length; n >= 1; n -= 1) {
       const cand = parts.slice(0, n).join('   ') + tail(parts.length - n);
@@ -210,9 +216,14 @@
     }
     const vy = cy + (b.kakao ? 23 : 12);
     const vh = Math.max(30, y + h - 12 - vy);
-    s.rect(x + 12, vy, w - 24, vh, { fill: C.tint2, r: 5, stroke: C.tintLine });
+    const qs = 40;
+    const hasQR = !!(qrInfo(m) && root.BojangQR);
+    const vw = hasQR ? w - 24 - qs - 16 : w - 24;
+    s.rect(x + 12, vy, vw, vh, { fill: C.tint2, r: 5, stroke: C.tintLine });
     s.text('담당자 총평', x + 20, vy + 5, { size: 5.3, weight: 800, color: C.blue });
-    s.para(o.verdict || ownerVerdict(m), x + 20, vy + 14, w - 40, { size: 5.7, color: C.ink2, lh: 1.38 });
+    s.para(o.verdict || ownerVerdict(m), x + 20, vy + 14, vw - 18, { size: 5.7, color: C.ink2, lh: 1.38 });
+    /* v5.7 — 명함 QR: 카카오톡 상담 링크 또는 전화번호 */
+    if (hasQR) qrBlock(s, x + w - 12 - qs, vy + Math.max(2, (vh - qs) / 2), qs, m, { label: false });
     return y + h;
   }
 
@@ -235,8 +246,17 @@
     else s.text('연락처는 상담 시 안내드립니다', x + 16, y + 78, { size: 5.8, weight: 500, color: C.muted });
     if (b.kakao) s.text(`카카오톡 상담  ${b.kakao}`, x + 150, y + 78, { size: 6.2, weight: 600, color: C.ink2 });
     s.line(x + 260, y + 12, x + 260, y + h - 12, { color: C.tintLine });
+    /* v5.7 — 끝장 명함 QR (카카오톡 상담 링크 / 전화) */
+    const qs = 60;
+    const hasQR = !!(qrInfo(m) && root.BojangQR);
+    const qx = x + w - 14 - qs;
+    const tw = hasQR ? qx - 12 - (x + 274) : w - 290;
     s.text('담당자 총평', x + 274, y + 10, { size: 5.6, weight: 800, color: C.blue });
-    s.para(ownerVerdict(m), x + 274, y + 19, w - 290, { size: 6.2, color: C.ink2, lh: 1.45 });
+    s.para(ownerVerdict(m), x + 274, y + 19, tw, { size: 6.2, color: C.ink2, lh: 1.45 });
+    if (hasQR) {
+      s.line(qx - 12, y + 12, qx - 12, y + h - 12, { color: C.tintLine });
+      qrBlock(s, qx, y + (h - qs) / 2, qs, m, { label: true });
+    }
     return y + h;
   }
 
@@ -501,6 +521,151 @@
 
   function todoStrip(s, y, text) {
     return noteStrip(s, y, text, { fill: C.mintSoft, stroke: C.mintLine, accent: C.mint, size: 7.2, color: C.mintInk });
+  }
+
+  /* =========================================================
+     v5.7 — 불완전판매 방지 경고 스트립 (05·06·07·09p)
+     상담 현장에서 반드시 말로 확인해야 하는 면책·감액·지급 제한만 모아,
+     해당 영역 페이지에 앰버 색 배지 스트립으로 자동 인쇄합니다.
+     ========================================================= */
+  function warnData(key) {
+    const W = (typeof SALE_WARNINGS !== 'undefined') ? SALE_WARNINGS : null;
+    if (!W) return null;
+    if (W[key]) return W[key];
+    if (key === 'neurolog' || key === 'brainheart') return W.brain;
+    return null;
+  }
+  function warnStrip(s, y, key, o) {
+    o = o || {};
+    const W = warnData(key);
+    if (!W) return y;
+    const w = o.w || s.CW, x = o.x || s.ML;
+    const items = W.items || [];
+    const cols = o.cols || items.length;
+    const cw = (w - 24 - (cols - 1) * 8) / cols;
+    const tw = cw - 13;
+    let bodyH = 0;
+    items.forEach((it) => { bodyH = Math.max(bodyH, s.height(it, tw, o.size || 5.6, 1.4)); });
+    const h = 16 + bodyH + 7;
+    s.rect(x, y, w, h, { fill: o.fill || C.orangeSoft, r: 5, stroke: o.stroke || C.orangeLine });
+    s.rect(x, y, 2.8, h, { fill: o.accent || C.orange, r: 1.4 });
+    s.badge(x + 10, y + 5, '⚠ 불완전판매 방지 · ' + W.label, 'need', { size: 5.9, h: 11, padX: 4.5 });
+    s.text(W.title || '가입 전 확인', x + w - 10, y + 5.5, { size: 5.6, weight: 600, color: C.orange, align: 'right' });
+    items.forEach((it, i) => {
+      const ix = x + 10 + i * (cw + 8);
+      s.iconCircle(ix + 2.6, y + 20, 1.6, { fill: C.orange });
+      s.para(it, ix + 8, y + 16, tw, { size: o.size || 5.6, color: o.color || C.ink2, lh: 1.4 });
+    });
+    return y + h;
+  }
+
+  /* =========================================================
+     v5.7 — 갱신형 vs 비갱신형 20년 보험료 추이 차트 (08p)
+     BK.renewTrend()의 시뮬레이션 값을 축·교차점·범례와 함께 그립니다.
+     ========================================================= */
+  function renewChart(s, x, y, w, tr, o) {
+    o = o || {};
+    const h = o.h || 126;
+    const padL = 28, padR = 10, padT = 30, padB = 30;
+    const px = x + padL, py = y + padT, pw = w - padL - padR, ph = h - padT - padB;
+    const maxY = Math.max(1, tr.max * 1.1);
+    const X = (yr) => px + (yr / 20) * pw;
+    const Y = (v) => py + ph - (v / maxY) * ph;
+    s.rect(x, y, w, h, { fill: '#fff', r: 6, stroke: C.line });
+    s.rect(x, y, w, 2.6, { fill: o.accent || C.orange, r: 1.3 });
+    s.text('20년 예상 보험료 추이', x + 10, y + 8, { size: 7.6, weight: 800, color: C.navy });
+    s.text(`현재 월 ${won(tr.base)}만원 기준 · 세로축 만원${tr.assumed ? ' (금액 미입력 — 예시)' : ''}`, x + 10 + s.measure('20년 예상 보험료 추이', 7.6, 800) + 8, y + 10, { size: 5.6, weight: 500, color: C.muted });
+    /* 범례 */
+    const lg = [['갱신형', C.orange], ['비갱신형', C.blue]];
+    const lx = x + w - 10 - 104;
+    lg.forEach(([lab, col], i) => {
+      const bx = lx + i * 52;
+      s.line(bx, y + 13, bx + 12, y + 13, { color: col, w: 1.8 });
+      s.text(lab, bx + 15, y + 9, { size: 5.8, weight: 700, color: C.ink2 });
+    });
+    /* 격자·Y축 눈금 */
+    [0, 0.5, 1].forEach((k) => {
+      const yy = py + ph - k * ph;
+      s.line(px, yy, px + pw, yy, { color: C.line2, dash: k === 0 ? null : [2, 2] });
+      s.text(won(Math.round(maxY * k)), px - 4, yy - 3.2, { size: 5.2, weight: 600, color: C.muted, align: 'right' });
+    });
+    /* X축 눈금 — 현재 · +5 · +10 · +15 · +20년 (나이 병기) */
+    tr.ticks.forEach((t) => {
+      const xx = X(t);
+      s.line(xx, py, xx, py + ph, { color: C.line2, dash: [2, 2] });
+      s.text(t === 0 ? '현재' : `+${t}년`, xx, py + ph + 4, { size: 5.4, weight: 700, color: C.ink2, align: t === 0 ? 'left' : t === 20 ? 'right' : 'center' });
+      s.text(`${tr.startAge + t}세`, xx, py + ph + 11, { size: 4.9, weight: 500, color: C.muted, align: t === 0 ? 'left' : t === 20 ? 'right' : 'center' });
+    });
+    /* 곡선 */
+    const c = s.ctx;
+    c.save();
+    c.beginPath(); c.rect(px, py - 2, pw, ph + 4); c.clip();
+    /* 갱신형 아래 면적 */
+    c.beginPath();
+    tr.years.forEach((yr, i) => { const xx = X(yr), yy = Y(tr.renew[i]); i ? c.lineTo(xx, yy) : c.moveTo(xx, yy); });
+    c.lineTo(X(20), py + ph); c.lineTo(X(0), py + ph); c.closePath();
+    const grd = c.createLinearGradient(0, py, 0, py + ph);
+    grd.addColorStop(0, 'rgba(192,122,44,0.26)');
+    grd.addColorStop(1, 'rgba(192,122,44,0.04)');
+    c.fillStyle = grd; c.fill();
+    const drawLine = (arr, col) => {
+      c.beginPath();
+      arr.forEach((v, i) => { const xx = X(i), yy = Y(v); i ? c.lineTo(xx, yy) : c.moveTo(xx, yy); });
+      c.strokeStyle = col; c.lineWidth = 1.9; c.lineJoin = 'round'; c.stroke();
+    };
+    drawLine(tr.level, C.blue);
+    drawLine(tr.renew, C.orange);
+    c.restore();
+    /* 교차점 */
+    if (tr.crossYear != null) {
+      const cx = X(tr.crossYear), cy = Y(tr.level[Math.min(20, Math.round(tr.crossYear))]);
+      s.line(cx, py, cx, py + ph, { color: C.red, w: 0.9, dash: [2.5, 2] });
+      s.ctx.save();
+      s.ctx.beginPath(); s.ctx.arc(cx, cy, 3.1, 0, Math.PI * 2);
+      s.ctx.fillStyle = '#fff'; s.ctx.fill();
+      s.ctx.strokeStyle = C.red; s.ctx.lineWidth = 1.4; s.ctx.stroke();
+      s.ctx.restore();
+      const lab = tr.crossYear === 0 ? '이미 교차' : `${tr.crossYear}년 뒤 역전`;
+      const lw = s.measure(lab, 5.4, 800) + 10;
+      const boxX = Math.min(px + pw - lw, Math.max(px, cx - lw / 2));
+      s.rect(boxX, py + 2, lw, 11, { fill: C.redSoft, r: 3, stroke: C.redSoft });
+      s.text(lab, boxX + lw / 2, py + 4, { size: 5.4, weight: 800, color: C.red, align: 'center' });
+    }
+    /* 20년 뒤 수치 */
+    s.text(`갱신형 ${won(tr.at20.renew)}`, X(20) - 2, Y(tr.at20.renew) - 7, { size: 5.6, weight: 800, color: C.orange, align: 'right' });
+    s.text(`비갱신 ${won(tr.at20.level)}`, X(20) - 2, Y(tr.at20.level) + 2, { size: 5.6, weight: 800, color: C.blue, align: 'right' });
+    s.text(`예시 시뮬레이션 — 갱신 5년 주기·연 나이 인상을 가정한 값입니다. 실제 갱신 보험료는 증권의 갱신 보험료 표로 확인하세요.`, x + 10, y + h - 8.5, { size: 5.2, weight: 500, color: C.muted });
+    return y + h;
+  }
+
+  /* v5.7 — 카카오톡 상담 링크 / 전화번호 → QR 내용 */
+  function qrInfo(m) {
+    const b = brandInfo(m);
+    const phone = String(b.phone || '').trim();
+    const kakao = String(b.kakao || '').trim();
+    const isUrl = (v) => /^https?:\/\//i.test(v) || /^[a-z0-9.-]+\.(com|net|kr|me|link|io)\/?/i.test(v);
+    if (kakao && isUrl(kakao)) {
+      return { text: /^https?:\/\//i.test(kakao) ? kakao : 'https://' + kakao, label: '카카오톡 상담', kind: 'kakao' };
+    }
+    if (phone) {
+      const digits = phone.replace(/[^0-9+]/g, '');
+      if (digits.length >= 7) return { text: 'tel:' + digits, label: '전화 바로 연결', kind: 'tel' };
+    }
+    if (kakao) return { text: kakao, label: '카카오톡 ID', kind: 'id' };
+    return null;
+  }
+  /* QR 블록 — 명함 안에 스캔 가능한 크기(≥34pt)로 넣습니다 */
+  function qrBlock(s, x, y, size, m, o) {
+    o = o || {};
+    const info = qrInfo(m);
+    if (!info || !root.BojangQR) {
+      s.rect(x, y, size, size, { fill: '#fff', r: 3, stroke: C.line2 });
+      s.para(o.empty || '브랜드 설정에서 연락처를 입력하면 QR이 인쇄됩니다', x + 4, y + size / 2 - 6, size - 8, { size: 4.6, color: C.muted, lh: 1.3, align: 'center' });
+      return false;
+    }
+    const ok = root.BojangQR.draw(s, x, y, size, info.text, { quiet: 2, fill: o.fill || C.navy, stroke: C.line2, r: 3 });
+    if (o.label !== false) s.text(info.label, x + size / 2, y + size + 2.5, { size: 5.0, weight: 700, color: C.muted, align: 'center' });
+    return ok;
   }
 
   function statCard(s, x, y, w, h, st, o) {
@@ -1037,7 +1202,7 @@
       const cw = (s.CW - 8 * 3) / 4;
       cards.forEach((c, i) => {
         const x = s.ML + i * (cw + 8);
-        s.rect(x, y, cw, 78, { fill: '#fff', r: 5, stroke: C.line });
+        s.rect(x, y, cw, 76, { fill: '#fff', r: 5, stroke: C.line });
         s.text(c.label, x + 8, y + 8, { size: 6.4, weight: 700, color: C.ink2 });
         if (c.rec != null) {
           s.text(`${won(c.p.val)}만원`, x + 8, y + 19, { size: 13, weight: 800, color: C.navy });
@@ -1051,7 +1216,7 @@
           s.gauge(x + 8, y + 60, cw - 16, c.p.val ? 1 : 0, { color: c.p.val ? C.mint : C.gray, h: 6 });
         }
       });
-      y += 82;
+      y += 80;
       y = s.sectionHead(s.ML, y, s.CW, '01', '왜 이 순서인가 — 공식 통계', '출처를 함께 제시하면 설득이 아니라 확인이 됩니다');
       statCard(s, s.ML, y, (s.CW - 8) / 2, 96, statById('death'));
       statCard(s, s.ML + (s.CW - 8) / 2 + 8, y, (s.CW - 8) / 2, 96, statById('cancer'));
@@ -1076,9 +1241,11 @@
         { text: r[0], weight: 700, color: C.navy }, r[1], { text: r[2], color: C.ink2 },
         { text: `${Math.round(r[3] * 100)}%`, weight: 700, color: r[3] >= 0.99 ? C.mint : r[3] > 0.4 ? C.orange : C.red, align: 'center' }
       ]), { widths: [140, 130, 150, 95], size: 6.3, rowH: 11.6, headH: 13, align: ['left', 'center', 'center', 'center'] });
-      y = noteStrip(s, y + 6, '유사암에 묶는 범위와 지급 비율은 상품마다 다릅니다. 원발부위 기준 조항의 설명 여부가 다퉈진 판례(대법원 2025.3.13. 선고 2023다250746)도 함께 확인하세요. 비용 범위는 상담 참고용 예시이며 실제 부담은 약제·병원·급여 여부에 따라 달라집니다.', { size: 6.0 });
+      y = noteStrip(s, y + 4, '유사암에 묶는 범위와 지급 비율은 상품마다 다릅니다. 원발부위 기준 조항의 설명 여부가 다퉈진 판례(대법원 2025.3.13. 선고 2023다250746)도 함께 확인하세요.', { size: 5.8 });
+      /* v5.7 — 불완전판매 방지 경고 */
+      y = warnStrip(s, y + 4, 'cancer');
       /* v5.6 — 증권 직접 기재 담보 (실제 특약명·금액 그대로) */
-      y = customBox(s, y + 5, customOf(m, 'cancer'), { accent: C.blue, title: '증권 직접 기재 담보 — 암 (증권 담보명 그대로)' });
+      y = customBox(s, y + 4, customOf(m, 'cancer'), { accent: C.blue, title: '증권 직접 기재 담보 — 암 (증권 담보명 그대로)' });
       s.footer({ left: `${m.client.name}님 · 1순위 암`, right: '05 / 10' });
     });
 
@@ -1094,7 +1261,7 @@
       [heart, '허혈성심장질환', ['허혈성심장 I20~I25', '급성심근경색 I21~I23'], [mix(C.hero, C.red, 0.35), mix('#FFFFFF', C.red, 0.45)], C.red]].forEach((grp, gi) => {
         const [row, title, labels, colors, accent] = grp;
         const x = s.ML + gi * (half + 8);
-        s.rect(x, y, half, 150, { fill: gi ? C.tint : C.tint2, r: 6, stroke: C.line });
+        s.rect(x, y, half, 146, { fill: gi ? C.tint : C.tint2, r: 6, stroke: C.line });
         s.text(title, x + 12, y + 10, { size: 10, weight: 800, color: accent });
         s.text(`${row.item.rank}순위`, x + half - 12, y + 12, { size: 6, weight: 700, color: C.muted, align: 'right' });
         const cy = y + 78;
@@ -1128,7 +1295,7 @@
         s.text((dx.scenarios || []).map((sc) => `${BK.dxShort(sc.label.replace(/\(.*/, ''))} ${won(sc.sum)}`).join(' · '), tx, y + 112, { size: 5.9, weight: 600, color: C.navy });
         s.para(gi ? '협심증(I20)은 허혈성심장 담보에서만, 급성심근경색(I21)은 두 담보가 합산됩니다.' : '뇌경색(I63)은 뇌혈관+뇌졸중, 뇌출혈(I61)은 세 담보가 합산됩니다.', tx, y + 122, tw, { size: 5.7, color: C.ink2, lh: 1.32 });
       });
-      y += 154;
+      y += 150;
 
       y = s.sectionHead(s.ML, y, s.CW, '01', '진단비 3단계·2단계 금액', '핵심 범위 / 현재 / 권장 / 해석');
       const rowOfDx = (dxp, i) => {
@@ -1142,26 +1309,28 @@
         ['주요치료비 3종', `뇌 ${subHave(PK(brain, 'treat'))}/3 · 심장 ${subHave(PK(heart, 'treat'))}/3`, '혈전용해제·수술·중환자실', '혈전용해제와 기계적 혈전제거술은 별도']
       ];
       y = s.table(s.ML, y + 2, s.CW, ['담보 (범위)', '현재', '권장', '코드'], rows, {
-        widths: [150, 90, 90, 185], size: 6.6, rowH: 19, align: ['left', 'center', 'center', 'center']
+        widths: [150, 90, 90, 185], size: 6.6, rowH: 18, align: ['left', 'center', 'center', 'center']
       });
       y = noteStrip(s, y + 6, (bdx.gapWarn ? '⚠ 뇌혈관질환 진단비가 0원입니다 — 뇌경색(I63)은 뇌졸중 금액만, 뇌혈관 후유증(I69)은 지급되지 않습니다. ' : '')
         + (hdx.gapWarn ? '⚠ 허혈성심장질환 진단비가 0원입니다 — 협심증(I20)·스텐트 시술이 지급되지 않습니다. ' : '')
-        + '안쪽 담보는 바깥 담보에 포함되고, 진단 시 금액이 합산됩니다. 실제 지급은 담보명·코드·지급 조건으로 확인합니다.', { size: 6.4 });
+        + '안쪽 담보는 바깥 담보에 포함되고, 진단 시 금액이 합산됩니다. 실제 지급은 담보명·코드·지급 조건으로 확인합니다.', { size: 5.7 });
+      /* v5.7 — 뇌·심장 불완전판매 방지 경고 */
+      y = warnStrip(s, y + 3, 'brain');
       /* v5.6 — 증권 직접 기재 담보(통합형/개별형)를 해당 페이지에 표시 */
       const cusBHbox = [].concat(
         customOf(m, 'brain').map((x) => Object.assign({}, x, { area: '뇌' })),
         customOf(m, 'heart').map((x) => Object.assign({}, x, { area: '심장' }))
       );
       if (cusBHbox.length) y = customBox(s, y + 4, cusBHbox, { accent: C.navy2, title: '증권 직접 기재 담보 — 뇌·심장 (통합형/개별형)', withArea: true, gap: 6 });
-      y = s.sectionHead(s.ML, y + 8, s.CW, '02', '공식 통계로 확인', '출처: 중앙심뇌혈관질환센터·건강보험통계 2023');
-      statCard(s, s.ML, y, s.CW, 96, statById('stroke'));
-      y += 100;
+      y = s.sectionHead(s.ML, y + 6, s.CW, '02', '공식 통계로 확인', '출처: 중앙심뇌혈관질환센터·건강보험통계 2023');
+      statCard(s, s.ML, y, s.CW, 92, statById('stroke'));
+      y += 96;
       y = costStrip(s, s.ML, y + 2, s.CW, '퇴원 뒤에 더 길게 나가는 돈 — 진단비가 쓰이는 구간', [
         ['뇌경색 입원', '평균 62.7일', '1인당 2,562만원'],
         ['수술·중환자실', '1회 수백만 원대', '치료비 3종'],
         ['회복·재활', '수개월', '그동안 소득 공백']
       ], { accent: C.navy2 });
-      y = s.sectionHead(s.ML, y + 10, s.CW, '03', '함께 확인할 것 — 담당자 소견', '진단비 밖의 빈틈');
+      y = s.sectionHead(s.ML, y + 6, s.CW, '03', '함께 확인할 것 — 담당자 소견', '진단비 밖의 빈틈');
       y = ownerNote(s, m, y, brainHeartNote(m), { accent: C.navy2 });
       s.footer({ left: `${m.client.name}님 · 뇌·심장`, right: '06 / 10' });
     });
@@ -1199,7 +1368,7 @@
       y = s.table(s.ML, y + 2, s.CW, ['영역', '항목', '현재', '메모'], rows.map((r) => [
         { text: r[0], weight: 700, color: C.navy }, r[1], { text: r[2], weight: 700, color: r[2] === '없음' || r[2] === '미확인' ? C.red : C.navy }, { text: r[3], color: C.muted }
       ]), { widths: [48, 170, 92, 205], size: 6.3, rowH: 11.2, headH: 14, align: ['left', 'left', 'center', 'left'] });
-      y = s.sectionHead(s.ML, y + 8, s.CW, '02', '의료비 방어력 4축', '지금 어느 축이 비어 있는지');
+      y = s.sectionHead(s.ML, y + 4, s.CW, '02', '의료비 방어력 4축', '지금 어느 축이 비어 있는지');
       const axes4 = [
         ['수술비', m.rows[3].r.fill], ['간병', m.rows[4].r.fill],
         ['실손', m.state.silson === 'none' ? 0 : 1], ['치료비 5종', (() => { const tp0 = PK(m.rows[0], 'treatment'); return (tp0.subs && tp0.subs.length) ? subHave(tp0) / tp0.subs.length : 0; })()]
@@ -1207,21 +1376,21 @@
       const aw = (s.CW - 6 * 3) / 4;
       axes4.forEach((a, i) => {
         const x = s.ML + i * (aw + 6);
-        s.rect(x, y, aw, 42, { fill: '#fff', r: 5, stroke: C.line });
+        s.rect(x, y, aw, 39, { fill: '#fff', r: 5, stroke: C.line });
         s.text(a[0], x + 9, y + 6, { size: 6.2, weight: 600, color: C.muted });
         s.text(`${Math.round(a[1] * 100)}%`, x + 9, y + 14, { size: 13, weight: 800, color: a[1] >= 0.9 ? C.mint : a[1] > 0.3 ? C.orange : C.red });
-        s.gauge(x + 9, y + 32, aw - 18, a[1], { color: a[1] >= 0.9 ? C.mint : a[1] > 0.3 ? C.orange : C.gray, h: 4.5 });
+        s.gauge(x + 9, y + 30, aw - 18, a[1], { color: a[1] >= 0.9 ? C.mint : a[1] > 0.3 ? C.orange : C.gray, h: 4.5 });
       });
-      y += 51;
+      y += 47;
       y = s.sectionHead(s.ML, y + 2, s.CW, '03', '장기요양 등급 분포 — 왜 1~2등급만 준비하면 안 되는가', '출처: 건보공단 2025 노인장기요양보험 통계연보');
-      statCard(s, s.ML, y, s.CW, 90, statById('ltc'));
-      y += 94;
+      statCard(s, s.ML, y, s.CW, 86, statById('ltc'));
+      y += 90;
       y = costStrip(s, s.ML, y, s.CW, '간병은 매달 나가는 돈 — 일당이 곱해지는 구조', [
         ['간병인 일당', '12~15만원', '업체·지역별 차이'],
         ['한 달(30일)', '360~450만원', '입원이 길어지면'],
         ['지급 기준', '하루 8시간', '2026.7 전환']
-      ], { accent: C.mint, h: 40 });
-      y = s.sectionHead(s.ML, y + 6, s.CW, '04', '정리 — 담당자 소견', '실손·간병·수술의 순서');
+      ], { accent: C.mint, h: 44 });
+      y = s.sectionHead(s.ML, y + 2, s.CW, '04', '정리 — 담당자 소견', '실손·간병·수술의 순서');
       y = ownerNote(s, m, y, careNote(m), { accent: C.mint });
       /* v5.6 — 증권 직접 기재 담보(수술·간병) */
       const cusSCbox = [].concat(
@@ -1229,7 +1398,9 @@
         customOf(m, 'care').map((x) => Object.assign({}, x, { area: '간병' }))
       );
       if (cusSCbox.length) y = customBox(s, y + 4, cusSCbox, { accent: C.mint, title: '증권 직접 기재 담보 — 수술·간병 (증권 담보명 그대로)', withArea: true, gap: 2 });
-      y = noteStrip(s, y + (cusSCbox.length ? 2 : 6), '2026년 7월부터 주요 손보사가 간병인 사용일당 지급 기준을 금액(하루 8만원)→시간(하루 8시간)으로 전환했습니다. 가족 간병은 업체 등록·결제·간병일지가 맞아야 인정되며, 요양병원은 별도 담보입니다. 장기요양은 등급 판정이 전제이고 65세 미만도 노인성 질병이면 신청할 수 있습니다.', { size: 5.9 });
+      y = noteStrip(s, y + (cusSCbox.length ? 2 : 4), '장기요양은 등급 판정이 전제이고 65세 미만도 노인성 질병이면 신청할 수 있습니다.', { size: 5.8 });
+      /* v5.7 — 수술·간병 불완전판매 방지 경고 */
+      y = warnStrip(s, y + 2, 'care');
       s.footer({ left: `${m.client.name}님 · 수술·간병`, right: '07 / 10' });
     });
 
@@ -1244,26 +1415,13 @@
         ['노후 리스크', '갱신 거절·보험료 급증', '만기 후 보장 공백'],
         ['상담 포인트', '갱신 연령·예상 보험료 표를 확인', '만기 이후 대안을 함께 설계']
       ];
-      y = s.table(s.ML, y + 2, s.CW, ['구분', '갱신형', '비갱신형'], rows, { widths: [90, 215, 210], size: 6.8, rowH: 20, align: ['left', 'left', 'left'] });
-      y = noteStrip(s, y + 6, `현재 입력 기준: 갱신형 담보 ${m.state.flags.renew ? '중심' : '없음'} · 적립성 특약 ${m.state.flags.savings ? '있음' : '없음'} · 특약 ${m.state.flags.manyRiders ? '6개 이상' : '6개 미만'}. 갱신 시점의 실제 보험료는 상품·나이에 따라 다르므로 증권의 갱신 보험료 표로 확인해야 합니다.`, { size: 6.4 });
-      y += 12;
-      y = s.sectionHead(s.ML, y, s.CW, '02', '노후 보장 공백 전망', '구조 예시 — 실제 만기·갱신 시점은 증권에서 확인');
-      const bands = [
-        { t: '현재', d: `보험나이 ${m.client.insuranceAge != null ? m.client.insuranceAge + '세' : m.state.age + '대'}`, c: C.blue },
-        { t: '상령일', d: m.client.ageDay ? `${m.client.ageDay.label} (D-${m.client.ageDay.days})` : '생년월일 입력 시 계산', c: C.navy },
-        { t: '갱신 시점', d: '보험료 재산정 · 인수 심사', c: C.orange },
-        { t: '65세', d: '장기요양 신청 가능 구간', c: C.mint },
-        { t: '만기', d: '보장 공백 · 재가입 불가 가능', c: C.red }
-      ];
-      const bw = (s.CW - 8 * 4) / 5;
-      bands.forEach((b, i) => {
-        const x = s.ML + i * (bw + 8);
-        s.rect(x, y, bw, 52, { fill: '#fff', r: 5, stroke: C.line });
-        s.rect(x, y, bw, 2.6, { fill: b.c, r: 1.3 });
-        s.text(b.t, x + 8, y + 9, { size: 7, weight: 800, color: C.navy });
-        s.para(b.d, x + 8, y + 20, bw - 16, { size: 5.9, color: C.ink2, lh: 1.35 });
-      });
-      y += 64;
+      y = s.table(s.ML, y + 2, s.CW, ['구분', '갱신형', '비갱신형'], rows, { widths: [90, 215, 210], size: 6.8, rowH: 18, align: ['left', 'left', 'left'] });
+      /* v5.7 — 20년 보험료 추이 차트 (갱신형 vs 비갱신형) */
+      y = s.sectionHead(s.ML, y + 8, s.CW, '02', '20년 예상 보험료 추이', '갱신형 vs 비갱신형 — 예시 시뮬레이션');
+      const tr = BK.renewTrend(m.state);
+      y = renewChart(s, s.ML, y + 2, s.CW, tr, { h: 126 });
+      y = noteStrip(s, y + 5, `현재 입력 기준: 갱신형 담보 ${m.state.flags.renew ? '중심' : '없음'} · 적립성 특약 ${m.state.flags.savings ? '있음' : '없음'}. 갱신 시점에는 보험료 재산정과 인수 심사가 있고, 65세부터 장기요양 신청이 가능하며, 만기 후에는 보장 공백이 생깁니다.`, { size: 5.9 });
+      y += 6;
       y = s.sectionHead(s.ML, y, s.CW, '03', '노후 체크포인트 — 담당자 소견', null);
       y = ownerNote(s, m, y, renewNote(m), { accent: C.orange });
       y += 4;
@@ -1464,8 +1622,11 @@
       });
       y += 62;
 
+      /* v5.7 — 해지·신규 가입 불완전판매 방지 경고 */
+      y = warnStrip(s, y, 'remodel', { fill: C.redSoft, stroke: '#F5D5D1', accent: C.red });
+
       /* 담당자 소견 */
-      y = ownerNote(s, m, y + 2, remodelNote(m, c, edited, sim, { beforePrem, afterPrem, beforeScore, afterScore, avgBefore, avgAfter }), { accent: C.blue });
+      y = ownerNote(s, m, y + 6, remodelNote(m, c, edited, sim, { beforePrem, afterPrem, beforeScore, afterScore, avgBefore, avgAfter }), { accent: C.blue });
       s.footer({ left: `${m.client.name}님 · 리모델링 실행안`, right: '09 / 10' });
     });
 
@@ -1593,7 +1754,7 @@
       const cw = (s.CW - 16) / 3;
       items.forEach((it, i) => {
         const x = s.ML + i * (cw + 8);
-        s.rect(x, y, cw, 78, { fill: '#fff', r: 5, stroke: C.line });
+        s.rect(x, y, cw, 76, { fill: '#fff', r: 5, stroke: C.line });
         s.rect(x, y, cw, 2.6, { fill: [C.blue, C.navy2, C.mint][i], r: 1.3 });
         s.text(it.t, x + 9, y + 9, { size: 7.2, weight: 800, color: C.navy });
         s.para('"' + it.s + '"', x + 9, y + 22, cw - 18, { size: 6.1, color: C.ink2, lh: 1.4 });
@@ -2619,5 +2780,5 @@
     advisor: { memoMax: Infinity, memoLabels: ['고객이 한 말', '내가 약속한 것', '다음 할 일'] },
     detail: { memoMax: 200, memoLabels: ['궁금한 점', '다음 상담까지 확인할 것'] }
   };
-  root.BojangReport = { build, summaryPage, detailPages, advisorPages, MEMO };
+  root.BojangReport = { build, summaryPage, detailPages, advisorPages, MEMO, qrInfo, qrBlock, warnStrip, renewChart };
 })(typeof window !== 'undefined' ? window : globalThis);

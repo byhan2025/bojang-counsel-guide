@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v5.6 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<title>보장분석 라이프 리포트 v5.7 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
 <link rel="manifest" href="./manifest.json">
@@ -31,6 +31,9 @@
         <p>고객 맞춤형 보장 점검 · 리모델링 상담 가이드</p>
       </div>
     </div>
+    <button type="button" class="tour-btn" id="btn-tour" aria-label="4단계 사용 가이드 열기">
+      <span aria-hidden="true">?</span> 가이드
+    </button>
     <button type="button" class="home-btn" id="btn-home" aria-label="메인 화면으로">
       <span aria-hidden="true">🏠</span> 메인
     </button>
@@ -94,8 +97,8 @@
         <span class="hv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0112 8a3.9 3.9 0 017 2.6C19 15.6 12 20 12 20z"/></svg>든든한미래</span>
       </div>
       <div class="hh-top">
-        <span class="hh-eyebrow">LIFE REPORT · BETA V5.6</span>
-        <span class="hh-ver">v5.6 · 2026.11</span>
+        <span class="hh-eyebrow">LIFE REPORT · BETA V5.7</span>
+        <span class="hh-ver">v5.7 · 2026.11</span>
       </div>
       <h2>무엇을 하시겠어요?</h2>
       <p>상담 전 과정을 한 화면에서 시작합니다. 입력은 이 기기 안에서만 계산되고, PDF도 기기에서 직접 만듭니다.</p>
@@ -113,6 +116,9 @@
         </button>
         <button type="button" class="hh-btn" id="btn-json-import">
           <span class="hb-ico">⬆</span><b>JSON 가져오기</b><span>파일 또는 붙여넣기</span>
+        </button>
+        <button type="button" class="hh-btn" id="btn-tour-home">
+          <span class="hb-ico">?</span><b>4단계 사용 가이드</b><span>입력 → 5대 담보 → 리모델링 → PDF 저장</span>
         </button>
         <button type="button" class="hh-btn acct-hub-btn" id="btn-account-home" data-account="1">
           <span class="hb-ico">👤</span><b>계정 / 구독</b><span id="acct-hub-sub">로그인 · 구독 상태 · 서버 연결</span>
@@ -234,10 +240,10 @@
       <div id="history-list" class="history"></div>
     </div>
 
-    <p class="app-foot">기준일 2026-11-16 · v5.6 베타 기준점(암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 치료비 3종 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리 · 증권 담보 직접 기재 통합형/개별형) 반영 · 상품별 약관 우선</p>
+    <p class="app-foot">기준일 2026-11-16 · v5.7 베타 기준점(암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 특정순환계질환(3~5종) 주요치료비 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리 · 증권 담보 직접 기재 통합형/개별형 · 시니어 큰 글씨 모드 · 불완전판매 방지 경고 · 20년 갱신 보험료 차트 · 명함 QR · 4단계 가이드) 반영 · 상품별 약관 우선</p>
   </section>
 
-  <!-- ================= v5.3 사진 즉시 촬영 (휘발·미저장) · v5.4 서버 AI 인식 · v5.5 PDF 프리미엄 리포트 · v5.6 증권 담보 직접 기재 ================= -->
+  <!-- ================= v5.3 사진 즉시 촬영 (휘발·미저장) · v5.4 서버 AI 인식 · v5.5 PDF 프리미엄 리포트 · v5.6 증권 담보 직접 기재 · v5.7 시니어·차트·QR·온보딩 ================= -->
   <section id="view-capture" class="view" aria-label="사진 즉시 촬영">
     <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>사진 즉시 촬영 · 휘발</span><button type="button" class="home-back hub-jump" data-inputhub="1">✎ 입력 방식</button></div>
 
@@ -816,6 +822,36 @@
 
 <div class="toast no-print" id="toast" role="status" aria-live="polite"></div>
 
+<!-- ================= v5.7 첫 방문 4단계 퀵 가이드 투어 ================= -->
+<div class="tour" id="tour" hidden aria-hidden="true">
+  <div class="tour-spot" id="tour-spot" aria-hidden="true"></div>
+  <div class="tour-card" id="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title" aria-describedby="tour-body">
+    <div class="tc-top">
+      <span class="tc-eyebrow">QUICK GUIDE</span>
+      <span class="tc-step" id="tour-step">1 / 4</span>
+      <button type="button" class="tc-close" id="tour-close" aria-label="가이드 닫기">✕</button>
+    </div>
+    <b class="tc-title" id="tour-title">입력 허브</b>
+    <p class="tc-body" id="tour-body"></p>
+    <div class="tc-dots" id="tour-dots" aria-hidden="true"></div>
+    <div class="tc-actions">
+      <button type="button" class="tc-skip" id="tour-skip">건너뛰기</button>
+      <button type="button" class="tc-prev" id="tour-prev">이전</button>
+      <button type="button" class="tc-next" id="tour-next">다음</button>
+    </div>
+  </div>
+</div>
+<div class="tour-invite" id="tour-invite" hidden>
+  <div class="ti-body">
+    <b>처음이신가요?</b>
+    <p>4단계로 <b>입력 → 5대 담보 → 리모델링 → PDF 저장</b>을 안내합니다.</p>
+  </div>
+  <div class="ti-actions">
+    <button type="button" class="ti-start" id="tour-invite-start">가이드 보기</button>
+    <button type="button" class="ti-later" id="tour-invite-later">나중에</button>
+  </div>
+</div>
+
 <!-- ================= 고객 화면 : 30장 프레젠테이션 ================= -->
 <div class="deck" id="deck" hidden aria-hidden="true">
   <div class="deck-top">
@@ -824,6 +860,9 @@
       <button type="button" class="deck-home" id="deck-home" aria-label="메인 화면으로">🏠 메인</button>
       <button type="button" class="deck-filter" id="deck-filter" aria-pressed="false">
         <span class="df-dot"></span>부족 항목만 보기
+      </button>
+      <button type="button" class="deck-senior" id="deck-senior" aria-pressed="false" aria-label="큰 글씨 모드 — 고객 화면의 글씨와 숫자를 크게">
+        <span aria-hidden="true">🔍</span>큰 글씨
       </button>
       <button type="button" class="deck-advisor" id="deck-advisor" aria-label="상담자 화면으로 (길게 누르기)">
         <span class="da-ring" aria-hidden="true"></span>상담자
@@ -929,6 +968,7 @@
 <script src="./playbook.js"></script>
 <script src="./model.js"></script>
 <script src="./pdfkit.js"></script>
+<script src="./qr.js"></script>
 <script src="./report.js"></script>
 <script src="./client.js"></script>
 <script src="./live.js"></script>

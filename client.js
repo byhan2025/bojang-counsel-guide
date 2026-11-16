@@ -27,6 +27,23 @@
 
   let S = null, H = null, slides = [], cur = 0, needOnly = false, built = false, lastSig = '';
 
+  /* v5.7 — 시니어 큰 글씨 모드 (localStorage에 유지) */
+  const SENIOR_KEY = 'bojang.senior.v1';
+  let seniorOn = false;
+  function lsBool(key) { try { return localStorage.getItem(key) === '1'; } catch (e) { return false; } }
+  function lsSave(key, v) { try { localStorage.setItem(key, v ? '1' : '0'); } catch (e) { /* private mode */ } }
+  function applySenior(on) {
+    seniorOn = !!on;
+    const deck = $('#deck');
+    if (deck) deck.classList.toggle('senior', seniorOn);
+    const btn = $('#deck-senior');
+    if (btn) {
+      btn.classList.toggle('is-on', seniorOn);
+      btn.setAttribute('aria-pressed', String(seniorOn));
+    }
+    return seniorOn;
+  }
+
   /* v5.2 — 베타 기간에는 30장 전체가 잠금 없이 열립니다 (unlocked()가 잠금을 판정) */
   function unlocked() { return !!(root.BojangPlan && root.BojangPlan.unlocked && root.BojangPlan.unlocked()); }
   function isPro() { return unlocked(); }
@@ -117,6 +134,65 @@
 
   function noteBox(text, tone) {
     return `<div class="sl-note${tone ? ' tone-' + tone : ''}">${text}</div>`;
+  }
+
+  /* =========================================================
+     v5.7 — 불완전판매 방지 경고 배지 (고객 화면)
+     SALE_WARNINGS의 문장을 고객이 읽는 그대로 보여줍니다.
+     ========================================================= */
+  function warnCard(key) {
+    const W = (typeof SALE_WARNINGS !== 'undefined') ? SALE_WARNINGS[key] : null;
+    if (!W) return '';
+    return `<div class="sl-warn" role="note" aria-label="불완전판매 방지 안내 — ${esc(W.label)}">
+      <div class="sw-head"><b>⚠ 불완전판매 방지 · ${esc(W.label)}</b><span>${esc(W.title || '상담 시 구두 설명 필수')}</span></div>
+      <ul>${W.items.map((it) => `<li>${esc(it)}</li>`).join('')}</ul>
+    </div>`;
+  }
+
+  /* =========================================================
+     v5.7 — 갱신형 vs 비갱신형 20년 보험료 추이 차트 (SVG)
+     ========================================================= */
+  function renewChartSVG(tr) {
+    const W = 360, H = 188;
+    const l = 36, r = 10, t = 34, b = 30;
+    const pw = W - l - r, ph = H - t - b;
+    const maxY = Math.max(1, tr.max * 1.12);
+    const X = (yr) => l + (yr / 20) * pw;
+    const Y = (v) => t + ph - (v / maxY) * ph;
+    const pts = (arr) => arr.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+    const grid = [0, 0.5, 1].map((k) => `<line x1="${l}" y1="${(t + ph - k * ph).toFixed(1)}" x2="${l + pw}" y2="${(t + ph - k * ph).toFixed(1)}" class="rc-grid"/>`).join('');
+    const ylab = [0, 0.5, 1].map((k) => `<text x="${l - 5}" y="${(t + ph - k * ph + 3).toFixed(1)}" class="rc-axis" text-anchor="end">${won(Math.round(maxY * k))}</text>`).join('');
+    const xlab = tr.ticks.map((yr) => `<line x1="${X(yr).toFixed(1)}" y1="${t}" x2="${X(yr).toFixed(1)}" y2="${t + ph}" class="rc-grid"/>` +
+      `<text x="${X(yr).toFixed(1)}" y="${t + ph + 13}" class="rc-axis rc-strong" text-anchor="${yr === 0 ? 'start' : yr === 20 ? 'end' : 'middle'}">${yr === 0 ? '현재' : '+' + yr + '년'}</text>` +
+      `<text x="${X(yr).toFixed(1)}" y="${t + ph + 23}" class="rc-axis" text-anchor="${yr === 0 ? 'start' : yr === 20 ? 'end' : 'middle'}">${tr.startAge + yr}세</text>`).join('');
+    const area = `M ${X(0).toFixed(1)},${(t + ph).toFixed(1)} L ` + tr.years.map((yr, i) => `${X(yr).toFixed(1)},${Y(tr.renew[i]).toFixed(1)}`).join(' L ') + ` L ${X(20).toFixed(1)},${(t + ph).toFixed(1)} Z`;
+    const cross = tr.crossYear == null ? '' : (() => {
+      const cx = X(tr.crossYear), cy = Y(tr.level[Math.min(20, Math.round(tr.crossYear))]);
+      const label = tr.crossYear === 0 ? '이미 역전' : `${tr.crossYear}년 뒤 역전`;
+      const bw = 46;
+      const bx = Math.min(l + pw - bw, Math.max(l, cx - bw / 2));
+      return `<line x1="${cx.toFixed(1)}" y1="${t}" x2="${cx.toFixed(1)}" y2="${(t + ph).toFixed(1)}" class="rc-cross"/>` +
+        `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3.4" class="rc-dot"/>` +
+        `<rect x="${bx.toFixed(1)}" y="${(t - 15).toFixed(1)}" width="${bw}" height="13" rx="6.5" class="rc-pill"/>` +
+        `<text x="${(bx + bw / 2).toFixed(1)}" y="${(t - 5.6).toFixed(1)}" class="rc-pill-t" text-anchor="middle">${label}</text>`;
+    })();
+    return `<figure class="sl-chart">
+      <div class="rc-head"><b>20년 예상 보험료 추이</b><span>월 ${won(tr.base)}만원 기준 · 세로축 만원</span></div>
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="갱신형과 비갱신형 20년 보험료 추이 차트">
+        ${grid}${ylab}${xlab}
+        <path d="${area}" class="rc-area"/>
+        <polyline points="${pts(tr.level)}" class="rc-line rc-level"/>
+        <polyline points="${pts(tr.renew)}" class="rc-line rc-renew"/>
+        ${cross}
+        <text x="${(X(20) - 2).toFixed(1)}" y="${(Y(tr.at20.renew) - 6).toFixed(1)}" class="rc-end rc-renew-t" text-anchor="end">${won(tr.at20.renew)}</text>
+        <text x="${(X(20) - 2).toFixed(1)}" y="${(Y(tr.at20.level) + 11).toFixed(1)}" class="rc-end rc-level-t" text-anchor="end">${won(tr.at20.level)}</text>
+        <g class="rc-legend">
+          <line x1="${l}" y1="14" x2="${l + 14}" y2="14" class="rc-line rc-renew"/><text x="${l + 19}" y="17" class="rc-axis rc-strong">갱신형</text>
+          <line x1="${l + 66}" y1="14" x2="${l + 80}" y2="14" class="rc-line rc-level"/><text x="${l + 85}" y="17" class="rc-axis rc-strong">비갱신형</text>
+        </g>
+      </svg>
+      <figcaption>예시 시뮬레이션입니다. 갱신 5년 주기·연 나이 인상을 가정한 값이며, 실제 갱신 보험료는 증권의 갱신 보험료 표로 확인합니다.</figcaption>
+    </figure>`;
   }
 
   function src(text) { return `<p class="sl-src">출처 · ${esc(text)}</p>`; }
@@ -378,7 +454,8 @@
           <div class="side-card"><span>주요치료비 5종</span><b>치료 기간의 비용</b><p>암수술 · 항암약물 · 항암방사선 · 중환자실 · 비급여. 진단비와 별도 축입니다.</p></div>
           <div class="side-card"><span>재진단</span><b>두 번째 진단</b><p>1회한 담보는 한 번 지급되면 끝입니다. 재발·전이는 별도 담보가 필요합니다.</p></div>
         </div>
-      </div>`, { need: needOf('cancer') });
+      </div>
+      ${warnCard('cancer')}`, { need: needOf('cancer') });
 
     /* ---------- 09 국가암등록통계 ---------- */
     add(9, 'cancer', 'cancer', `
@@ -490,6 +567,7 @@
         ].map((r) => `<div class="ct-line"><b>${r.n}</b><code>${r.c}</code><span>${r.d}</span></div>`).join('')}
       </div>
       ${noteBox(`핵심 범위 금액은 <b>뇌혈관질환 ${won(bDxCore.val)}만원</b>입니다. ${bDxCore.val >= 2000 ? '기준선(2,000만원)을 넘었습니다. 유지가 원칙입니다.' : '뇌경색(I63)과 후유증(I69)이 빠지지 않았는지 확인이 필요합니다.'}`, bDxCore.val >= 2000 ? 'ok' : 'warn')}
+      ${warnCard('brain')}
       ${src('KCD 한국표준질병·사인분류 기준 · 상품별 담보명과 지급 조건은 약관 확인')}`, { need: needOf('brain') });
 
     /* ---------- 14 심뇌 통계 ---------- */
@@ -596,7 +674,8 @@
         <li><b>② 수술비</b><p>스텐트·관상동맥우회술이 수술비 지급 대상인지 약관의 수술 분류표로 확인합니다.</p><em>3종 중 ${subN(hT)}종 · ${won(hT.val)}만원 → 권장 ${won(hT.rec)}만원</em></li>
         <li><b>③ 약값·관리</b><p>한 번 막히면 항혈전제를 오래 복용합니다. 진단비·수술비·약값을 함께 봅니다.</p><em>부정맥·판막·심부전 담보도 확인</em></li>
       </ol>
-      ${m.family.indexOf('heart') >= 0 ? noteBox('가족력에 심장 질환이 있습니다. 스텐트 시술 구간이 담보에 들어 있는지가 핵심입니다.', 'warn') : noteBox('지금은 괜찮더라도, 괜찮을 때 넣어야 조건이 좋습니다. 범위만 넓히고 금액은 낮게 시작할 수 있습니다.', 'info')}`, { need: needOf('heart') });
+      ${m.family.indexOf('heart') >= 0 ? noteBox('가족력에 심장 질환이 있습니다. 스텐트 시술 구간이 담보에 들어 있는지가 핵심입니다.', 'warn') : noteBox('지금은 괜찮더라도, 괜찮을 때 넣어야 조건이 좋습니다. 범위만 넓히고 금액은 낮게 시작할 수 있습니다.', 'info')}
+      ${warnCard('heart')}`, { need: needOf('heart') });
 
     /* ---------- 19 3대질병 종합 비교 ---------- */
     add(19, 'heart', 'heart', `
@@ -685,7 +764,8 @@
         <p><span>시간 기준</span> 하루 8시간 이상 간병인을 써야 전액 지급 · 신규 상품 다수</p>
         <p><span>금액 기준</span> 하루 7~8만원 이상 사용 시 지급 · 8만원 미만은 50% 감액</p>
         <p><span>체증형</span> 입원일수가 길어질수록 일당이 올라가는 구조 · 장기 입원 위험에 대비</p>
-      </div>`, { need: needOf('care') });
+      </div>
+      ${warnCard('care')}`, { need: needOf('care') });
 
     /* ---------- 24 건보공단 통계 ---------- */
     add(24, 'care', 'care', `
@@ -754,6 +834,7 @@
         <span>갱신형 비중 <b>${cs.renewShare}%</b></span>${bar(cs.renewShare / 100, cs.renewShare >= 60 ? 'need' : 'ok')}
         <span>만기 분포 ${Object.keys(cs.maturity).map((k) => `${k} ${cs.maturity[k]}건`).join(' · ')}</span>
       </div>` : ''}
+      ${renewChartSVG(BojangModel.renewTrend(m.state))}
       <div class="timeline">
         ${[
           { t: '현재', d: m.client.insuranceAge != null ? `보험나이 ${m.client.insuranceAge}세` : `${m.state.age}대` },
@@ -817,6 +898,7 @@
           <b>10장 상세 PDF</b><span>세부 담보·갱신 구조까지 · 저장/공유</span>
         </button>
       </div>
+      ${warnCard('remodel')}
       <div class="last-note">
         <b>${esc(m.client.name)}님 · ${m.letter} ${m.score}점</b>
         <p>${m.first ? `가장 먼저 채울 곳은 ${m.first.item.rank}순위 ${esc(m.first.item.name)}입니다.` : '5대 담보가 기준선을 넘었습니다. 금액 조정과 갱신 대비가 남은 과제입니다.'}</p>
@@ -1043,6 +1125,16 @@
     const dHome = $('#deck-home');
     if (dHome) dHome.addEventListener('click', () => { if (H && H.onHome) H.onHome(); });
     $('#deck-filter').addEventListener('click', () => applyFilter(!needOnly));
+    /* v5.7 — 큰 글씨 모드 토글 */
+    seniorOn = lsBool(SENIOR_KEY);
+    const seniorBtn = $('#deck-senior');
+    if (seniorBtn) {
+      seniorBtn.addEventListener('click', () => {
+        const on = applySenior(!seniorOn);
+        lsSave(SENIOR_KEY, on);
+        if (H && H.toast) H.toast(on ? '큰 글씨 모드 — 고객 화면 글씨를 키웠습니다' : '큰 글씨 모드를 껐습니다');
+      });
+    }
 
     const adv = $('#deck-advisor');
     let timer = null, longFired = false;
@@ -1095,6 +1187,7 @@
     deck.hidden = false;
     deck.setAttribute('aria-hidden', 'false');
     document.body.classList.add('is-client');
+    applySenior(seniorOn);
     const sig = signature(state);
     if (!built || sig !== lastSig) {
       lastSig = sig;
@@ -1132,5 +1225,5 @@
     }
   }
 
-  root.BojangDeck = { init, show, hide, refresh, goTo, next, prev, simulate, total: 30 };
+  root.BojangDeck = { init, show, hide, refresh, goTo, next, prev, simulate, total: 30, senior: applySenior, isSenior: () => seniorOn, warnCard, renewChartSVG };
 })(typeof window !== 'undefined' ? window : globalThis);
