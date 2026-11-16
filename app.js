@@ -26,7 +26,9 @@
       brain: { dx: { vascular: 2000, stroke: 2000, bleed: 1000 }, treat: { lysis: 1000, surgery: 1500, icu: 0 } },
       heart: { dx: { ischemic: 2000, ami: 1000 }, treat: { lysis: 0, surgery: 1500, icu: 500 } },
       surgery: { disease: 50, disease15: 300, diseaseNdae: 500, diseaseNonPay: 0, injury: 50, injury15: 300 },
-      care: { daily: 10, nDaily: 0, basis: 'time', family: 'conditional', nursing: true, ltc: false, mode: 'normal' }
+      care: { daily: 10, nDaily: 0, basis: 'time', family: 'conditional', nursing: true, ltc: false, mode: 'normal' },
+      /* v5.6 — 증권 담보 직접 기재 (영역별) */
+      custom: { cancer: [], brain: [], heart: [], surgery: [], care: [] }
     },
     flags: { savings: false, renew: true, manyRiders: false }
   };
@@ -455,6 +457,147 @@
       </label>`;
   }
 
+  /* ================= v5.6 증권 담보 직접 기재 =================
+     보험사마다 뇌·심장 주요치료비를 통합형으로 파는 곳과 개별형으로 파는 곳이 달라,
+     고정 칸에 없는 특약을 증권 담보명 그대로 적습니다. */
+  const CUSTOM_LABELS = (typeof CUSTOM_AREA_LABEL !== 'undefined') ? CUSTOM_AREA_LABEL : { cancer: '암', brain: '뇌', heart: '심장', surgery: '수술', care: '간병' };
+
+  function customInto(key) {
+    if (!state.cov.custom || typeof state.cov.custom !== 'object' || Array.isArray(state.cov.custom)) state.cov.custom = { cancer: [], brain: [], heart: [], surgery: [], care: [] };
+    if (!Array.isArray(state.cov.custom[key])) state.cov.custom[key] = [];
+    return state.cov.custom[key];
+  }
+  function customNewId(key) {
+    return `cu_${key}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+  }
+  /* 화면에는 빈 행(입력 중)도 그대로 보여야 하므로 필터 없이 읽습니다 */
+  function customRowsOf(key) {
+    return customInto(key).map((it, i) => BojangModel.sanitizeCustom(it, key, i));
+  }
+
+  function customBlockHTML(key) {
+    const items = customRowsOf(key);
+    const total = items.reduce((a, x) => a + Number(x.amount || 0), 0);
+    const presets = (typeof CUSTOM_PRESETS !== 'undefined' && CUSTOM_PRESETS[key]) || [];
+    const scored = key === 'cancer' || key === 'brain' || key === 'heart';
+    const rows = items.map((it) => `
+      <div class="custom-row" data-cid="${esc(it.id)}">
+        <input type="text" class="cr-name" value="${esc(it.name)}" placeholder="담보명 (증권 표기 그대로)" aria-label="${CUSTOM_LABELS[key]} 직접 기재 담보명" data-custom-name>
+        <span class="cr-amt-box">
+          <input type="number" inputmode="numeric" min="0" max="100000" step="100" class="cr-amt" value="${it.amount ? it.amount : ''}" placeholder="0" aria-label="직접 기재 담보 금액 (만원)" data-custom-amount>
+          <span class="unit">만원</span>
+        </span>
+        <span class="cr-seg" role="group" aria-label="담보 구분">
+          <button type="button" class="cr-seg-btn${it.mode === 'bundle' ? ' is-on' : ''}" data-custom-mode="bundle" aria-pressed="${it.mode === 'bundle'}">통합형</button>
+          <button type="button" class="cr-seg-btn${it.mode === 'individual' ? ' is-on' : ''}" data-custom-mode="individual" aria-pressed="${it.mode === 'individual'}">개별형</button>
+        </span>
+        <button type="button" class="cr-del" data-custom-del aria-label="담보 삭제">×</button>
+      </div>`).join('');
+    return `
+      <div class="part custom-block" data-custom-block="${key}">
+        <div class="part-head">
+          <div class="part-label"><strong>증권 담보 직접 기재</strong><span>보험사별 담보명 그대로 · 통합형/개별형</span></div>
+          <div class="part-side"><span class="mini-badge custom-count tone-${items.length ? 'need' : 'gap'}">${items.length}건</span></div>
+        </div>
+        ${items.length ? `<div class="custom-list">${rows}</div>` : '<p class="custom-empty">고정 칸에 없는 특약(예: 순환계 주요치료비 통합형)을 증권에 적힌 그대로 적습니다.</p>'}
+        ${presets.length ? `<div class="custom-presets">${presets.map((p) => `<button type="button" class="chip-custom" data-custom-preset="${esc(p.name)}" data-preset-mode="${p.mode}">+ ${esc(p.name)}</button>`).join('')}</div>` : ''}
+        <button type="button" class="custom-add" data-custom-add="${key}">+ 증권 담보 직접 추가</button>
+        <div class="custom-total"${total ? '' : ' hidden'}>직접 기재 합계 <b>${won(total)}</b>만원</div>
+        <p class="custom-note">${scored
+          ? '진단비 이름의 담보는 치료비 축에서 제외하고 표시만 합니다. 통합형은 하나의 담보가 여러 치료를 함께 지급하는 상품으로 보고 세부 권장 비율로 나눠 반영합니다.'
+          : '이 영역은 고정 6축 판정을 그대로 두고, 직접 기재 담보는 증권 기재용으로 리포트에 표시합니다.'}</p>
+      </div>`;
+  }
+
+  function updateCustomMeta(key) {
+    const host = $(`[data-custom-block="${key}"]`);
+    if (!host) return;
+    const items = customRowsOf(key);
+    const total = items.reduce((a, x) => a + Number(x.amount || 0), 0);
+    const badge = $('.custom-count', host);
+    if (badge) {
+      badge.className = 'mini-badge custom-count tone-' + (items.length ? 'need' : 'gap');
+      badge.textContent = items.length + '건';
+    }
+    const box = $('.custom-total', host);
+    if (box) {
+      box.hidden = !total;
+      const b = $('b', box);
+      if (b) b.textContent = won(total);
+    }
+  }
+
+  function renderCustomBlock(key) {
+    const host = $(`[data-custom-block="${key}"]`);
+    if (!host) return;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = customBlockHTML(key);
+    const fresh = wrap.firstElementChild;
+    if (!fresh) return;
+    host.replaceWith(fresh);
+    bindCustomBlock(fresh);
+  }
+
+  function addCustomRider(key, name, mode) {
+    const box = customInto(key);
+    const nm = String(name || '').trim();
+    if (nm && box.some((x) => String(x.name || '').trim() === nm)) { toast('이미 추가한 담보입니다'); return; }
+    const id = customNewId(key);
+    box.push({ id, name: nm.slice(0, 40), amount: 0, mode: mode === 'bundle' ? 'bundle' : 'individual', note: '' });
+    renderCustomBlock(key);
+    refreshBadges(); saveSession();
+    const target = nm
+      ? $(`[data-cid="${id}"] [data-custom-amount]`)
+      : $(`[data-cid="${id}"] [data-custom-name]`);
+    if (target) { try { target.focus(); if (target.select) target.select(); } catch (e) { /* noop */ } }
+  }
+
+  function bindCustomBlock(host) {
+    if (!host) return;
+    const key = host.dataset.customBlock;
+    const box = customInto(key);
+    $$('.custom-row', host).forEach((row) => {
+      const id = row.dataset.cid;
+      const find = () => box.find((x) => x.id === id);
+      const nameIn = $('[data-custom-name]', row);
+      const amtIn = $('[data-custom-amount]', row);
+      if (nameIn) nameIn.addEventListener('input', () => {
+        const it = find();
+        if (!it) return;
+        it.name = nameIn.value.slice(0, 40);
+        refreshBadges(); saveSession();
+      });
+      if (amtIn) amtIn.addEventListener('input', () => {
+        const it = find();
+        if (!it) return;
+        it.amount = clamp(Number(amtIn.value || 0), 0, 100000);
+        updateCustomMeta(key);
+        refreshBadges(); saveSession();
+      });
+      $$('[data-custom-mode]', row).forEach((b) => b.addEventListener('click', () => {
+        const it = find();
+        if (!it) return;
+        it.mode = b.dataset.customMode === 'bundle' ? 'bundle' : 'individual';
+        $$('[data-custom-mode]', row).forEach((x) => {
+          const on = x === b;
+          x.classList.toggle('is-on', on);
+          x.setAttribute('aria-pressed', String(on));
+        });
+        refreshBadges(); saveSession();
+      }));
+      const del = $('[data-custom-del]', row);
+      if (del) del.addEventListener('click', () => {
+        const i = box.findIndex((x) => x.id === id);
+        if (i >= 0) box.splice(i, 1);
+        renderCustomBlock(key);
+        refreshBadges(); saveSession();
+      });
+    });
+    const addBtn = $('[data-custom-add]', host);
+    if (addBtn) addBtn.addEventListener('click', () => addCustomRider(key));
+    $$('[data-custom-preset]', host).forEach((b) => b.addEventListener('click', () => addCustomRider(key, b.dataset.customPreset, b.dataset.presetMode)));
+  }
+
   function cardHTML(item, extra) {
     const r = BojangModel.evalItem(state, item);
     const rowOf = (p) => p.type === 'amount' ? amountRowHTML(item, p)
@@ -470,6 +613,7 @@
         </div>
         ${item.parts.map(rowOf).join('')}
         ${extra || ''}
+        ${customBlockHTML(item.key)}
       </div>`;
   }
 
@@ -551,6 +695,7 @@
         refreshBadges(); saveSession();
       });
     });
+    $$('[data-custom-block]').forEach((host) => bindCustomBlock(host));
     syncQuickStates();
   }
 
@@ -1904,7 +2049,7 @@
 
   function exportPayload() {
     return {
-      app: 'bojang-guide', version: '4.2', exportedAt: new Date().toISOString(),
+      app: 'bojang-guide', version: '5.6', exportedAt: new Date().toISOString(),
       summary: { name: state.client.name, age: state.age, gender: state.gender, score: state.lastResult ? state.lastResult.m.score : null },
       state: snapshotState()
     };

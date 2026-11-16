@@ -1,4 +1,4 @@
-/* 보장분석 라이프 리포트 v5.5 — 베타 테스트 공개판
+/* 보장분석 라이프 리포트 v5.6 — 증권 담보 직접 기재 · 베타 테스트 공개판
    · 베타 기간에는 Pro 전 기능(30장 전체 · 1/10/30장 PDF · 고객 30명 · 리모델링 · 화이트라벨)을 잠금 없이 무료 제공
    · v5.4: 계정/구독(backend.js) 연동 — 실서버 구독 상태를 hydrate() 로 반영
    · 정식 출시 예정 요금: 월 5,000원 / 연 50,000원 · 베타 피드백 Google Form + 추첨 사은품 안내
@@ -241,7 +241,7 @@
     if (mark) mark.setAttribute('content', b.name);
     const title = $('#brand-title');
     if (title) title.textContent = b.name;
-    document.title = `${b.name} v5.5 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
+    document.title = `${b.name} v5.6 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
     loadPdfLogo(b.logo);
     /* 상담자 화면의 고객 표지도 새 브랜드로 다시 그립니다 */
     if (root.BojangDeck && root.__bojangState) root.BojangDeck.refresh(root.__bojangState, { reset: true });

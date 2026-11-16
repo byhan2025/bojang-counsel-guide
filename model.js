@@ -79,6 +79,105 @@
       sum: sc.parts.reduce((a, k) => a + (Number(d[k] || 0) || 0), 0)
     }));
   }
+  /* =========================================================
+     v5.6 — 증권 담보 직접 기재 (통합형 · 개별형)
+     보험사마다 뇌·심장 주요치료비를 하나로 묶어 파는 곳(통합형)과 개별로 나눠 파는 곳(개별형)이
+     달라, 고정 칸에 담기지 않는 특약을 증권 담보명 그대로 적습니다.
+       state.cov.custom = { cancer: [], brain: [], heart: [], surgery: [], care: [] }
+       항목 = { id, name, amount(만원), mode: 'bundle'(통합형) | 'individual'(개별형), note }
+     · custom 이 비어 있으면 v5.5와 점수·판정·문장이 100% 같습니다(회귀 없음).
+     · 세부 칸이 있는 영역(암 주요치료비 5종 · 뇌·심장 주요치료비 3종)은 담보명 키워드로 칸을 찾아
+       금액을 합산하고, 통합형이거나 칸을 찾지 못한 담보는 세부 권장액 비율로 나눠 넣습니다.
+     · 진단비 이름의 담보는 치료비 축에 더하지 않습니다(진단비와 치료비는 다른 축). 표시만 합니다.
+     · 각 칸은 권장액까지만 점수에 반영되고, 금액 합계 표시에는 실제 금액이 그대로 나옵니다.
+     ========================================================= */
+  const CUSTOM_KEYS = ['cancer', 'brain', 'heart', 'surgery', 'care'];
+  const CUSTOM_AREA_LABEL = { cancer: '암', brain: '뇌', heart: '심장', surgery: '수술', care: '간병' };
+  const CUSTOM_MODE_LABEL = { bundle: '통합형', individual: '개별형' };
+  /* 담보명 키워드 → 세부 칸 (위에서부터 먼저 맞는 것) */
+  const CUSTOM_MAP = {
+    cancer: [
+      ['radio', /방사선|방사/],
+      ['drug', /항암|약물|표적|면역|호르몬/],
+      ['icu', /중환자실|집중치료/],
+      ['extra', /비급여|주사|검사|추가/],
+      ['surgery', /수술|로봇|다빈치|절제/]
+    ],
+    brain: [
+      ['lysis', /혈전|용해|tpa|트롬|제거술/i],
+      ['icu', /중환자실|집중치료/],
+      ['surgery', /수술|스텐트|색전|성형|개두|관혈|우회/]
+    ],
+    heart: [
+      ['lysis', /혈전|용해|tpa|트롬/i],
+      ['icu', /중환자실|집중치료/],
+      ['surgery', /수술|스텐트|성형|우회|개흉|관혈/]
+    ]
+  };
+  const CUSTOM_DX_RE = /진단비|진단/;
+
+  function sanitizeCustom(it, key, i) {
+    const src = (it && typeof it === 'object') ? it : {};
+    const name = String(src.name == null ? '' : src.name).replace(/\s+/g, ' ').trim().slice(0, 40);
+    const amount = clamp(Math.round(Number(src.amount || 0) || 0), 0, 100000);
+    const mode = src.mode === 'individual' ? 'individual' : 'bundle';
+    return {
+      id: String(src.id || `cu_${key}_${i}`),
+      name, amount, mode,
+      note: String(src.note == null ? '' : src.note).replace(/\s+/g, ' ').trim().slice(0, 60)
+    };
+  }
+
+  /* 영역별 직접 기재 담보 — 이름이나 금액이 있는 항목만 돌려줍니다 */
+  function customList(state, key) {
+    const box = state && state.cov && state.cov.custom;
+    const arr = box && box[key];
+    if (!Array.isArray(arr)) return [];
+    return arr.map((it, i) => sanitizeCustom(it, key, i)).filter((x) => x.name || x.amount > 0);
+  }
+  function customTotal(state, key) {
+    return customList(state, key).reduce((a, x) => a + x.amount, 0);
+  }
+  /* 5개 영역 전부 — 리포트용 평탄 목록 */
+  function customAll(state) {
+    const out = [];
+    CUSTOM_KEYS.forEach((k) => {
+      customList(state, k).forEach((x, i) => {
+        out.push({
+          key: k, areaKey: k, area: CUSTOM_AREA_LABEL[k], order: i,
+          id: x.id, name: x.name, amount: x.amount, mode: x.mode, modeLabel: CUSTOM_MODE_LABEL[x.mode], note: x.note
+        });
+      });
+    });
+    return out;
+  }
+  /* 세부 칸 배분 — subs: [{ key, rec }] → { byKey, rows, sum, count }
+     통합형/칸 미매칭은 권장액 비율로 나눕니다. 진단비 이름은 치료비 축에서 제외하고 표시만 합니다. */
+  function customCredits(state, key, subs) {
+    const items = customList(state, key);
+    const map = CUSTOM_MAP[key] || [];
+    const list = subs || [];
+    const byKey = {};
+    list.forEach((s) => { byKey[s.key] = 0; });
+    const recSum = list.reduce((a, s) => a + (Number(s.rec) || 0), 0);
+    const rows = [];
+    items.forEach((x) => {
+      let target = null;
+      let skip = CUSTOM_DX_RE.test(x.name);
+      if (!skip && map.length) {
+        const hit = map.find((m) => m[1].test(x.name));
+        if (hit && byKey[hit[0]] != null) target = hit[0];
+      }
+      if (!skip && x.amount > 0) {
+        if (target) byKey[target] += x.amount;
+        else if (recSum > 0) list.forEach((s) => { byKey[s.key] += (x.amount * (Number(s.rec) || 0)) / recSum; });
+      }
+      rows.push({ id: x.id, name: x.name, amount: x.amount, mode: x.mode, sub: target, skip });
+    });
+    Object.keys(byKey).forEach((k) => { byKey[k] = Math.round(byKey[k]); });
+    return { byKey, rows, sum: items.reduce((a, x) => a + x.amount, 0), count: items.length };
+  }
+
   const TREAT_MIN = 500, TREAT_MAX = 3000;
   const NEURO_MIN = 500, NEURO_MAX = 3000;
   const CANCER_ITEM = () => PRIORITY[0];
@@ -240,6 +339,13 @@
       if (!c.mode) c.mode = 'normal';
     }
 
+    /* 5) v5.6 — 증권 담보 직접 기재 배열을 항상 5개 영역으로 맞춥니다 (없으면 빈 배열) */
+    if (!cov.custom || typeof cov.custom !== 'object' || Array.isArray(cov.custom)) cov.custom = {};
+    CUSTOM_KEYS.forEach((k) => {
+      const arr = cov.custom[k];
+      cov.custom[k] = Array.isArray(arr) ? arr.map((it, i) => sanitizeCustom(it, k, i)) : [];
+    });
+
     if (typeof state.premium !== 'number') state.premium = Number(state.premium || 0) || 0;
     if (!state.flags) state.flags = {};
     if (!Array.isArray(state.contracts)) state.contracts = [];
@@ -282,6 +388,7 @@
     const parts = item.parts.map((p) => {
       const tiers = p.tiers || (p.key === firstKey ? item.tiers : null) || null;
       let fill = 0, rec = 0, val = 0, option = null, subs = null, stage = null, dx = null;
+      let customInfo = null;
       if (p.type === 'amount') {
         rec = Math.round(baseRec * p.factor);
         val = Number(getVal(state, item, p) || 0);
@@ -292,19 +399,24 @@
         const raw = getVal(state, item, p);
         const src = (raw && typeof raw === 'object') ? raw : {};
         const list = (p.subs || TREAT_SUBS);
+        /* v5.6 — 증권 직접 기재 담보를 세부 칸에 합산 (비어 있으면 종전과 동일) */
+        const cred = customCredits(state, item.key, list.map((sp) => ({ key: sp.key, rec: subRec(baseRec, sp, p) })));
+        customInfo = cred;
         subs = list.map((sp) => {
           const srec = subRec(baseRec, sp, p);
           const sval = Number(src[sp.key] || 0) || 0;
-          const sfill = srec > 0 ? clamp(sval / srec, 0, 1) : 0;
+          const scred = Number(cred.byKey[sp.key] || 0) || 0;
+          const eff = sval + scred;
+          const sfill = srec > 0 ? clamp(eff / srec, 0, 1) : 0;
           return {
-            key: sp.key, label: sp.label, hint: sp.hint, rec: srec, val: sval, fill: sfill,
-            pct: Math.round(sfill * 100), level: partLevel(sfill, sval), part: sp,
+            key: sp.key, label: sp.label, hint: sp.hint, rec: srec, val: sval, custom: scred, eff, fill: sfill,
+            pct: Math.round(sfill * 100), level: partLevel(sfill, eff), part: sp,
             min: p.min || 500, max: p.max || 3000
           };
         });
         rec = subs.reduce((a, s) => a + s.rec, 0);
         val = subs.reduce((a, s) => a + s.val, 0);
-        fill = rec > 0 ? subs.reduce((a, s) => a + Math.min(s.val, s.rec), 0) / rec : 0;
+        fill = rec > 0 ? subs.reduce((a, s) => a + Math.min(s.eff, s.rec), 0) / rec : 0;
       } else if (p.type === 'dxset') {
         /* v5.0 — 범위별 진단비 금액. 평가 주축 = 가장 넓은 범위(뇌혈관·허혈성심장) */
         const raw = getVal(state, item, p);
@@ -347,7 +459,11 @@
         val = !!getVal(state, item, p);
         fill = val ? 1 : 0;
       }
-      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p, subs, stage, tiers, dx };
+      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p, subs, stage, tiers, dx,
+        customVal: customInfo ? subs.reduce((a, s) => a + Number(s.custom || 0), 0) : 0,
+        customSum: customInfo ? customInfo.sum : 0,
+        customCount: customInfo ? customInfo.count : 0,
+        customRows: customInfo ? customInfo.rows : null };
     });
     const fill = parts.reduce((a, p) => a + p.weight * p.fill, 0);
     const primary = parts[0].fill;
@@ -365,22 +481,29 @@
     if (item.key === 'cancer') {
       const bits = [`일반암 ${won(c.general)}만원`];
       bits.push(c.similar > 0 ? `유사암 ${won(c.similar)}만원` : '유사암 없음');
-      const ts = treatSum(state), tc = treatCount(state);
-      bits.push(ts > 0 ? `치료비 5종 ${won(ts)}만원 ${tc}/5` : '치료비 5종 없음');
+      /* v5.6 — 직접 기재 담보가 있으면 치료비 축 합계에 포함해 말합니다 */
+      const tp = r.parts.find((p) => p.key === 'treatment');
+      const tEff = tp ? (tp.subs || []).reduce((a, s) => a + Number(s.eff || 0), 0) : treatSum(state);
+      const tCnt = tp ? (tp.subs || []).filter((s) => Number(s.eff || 0) > 0).length : treatCount(state);
+      const tAdd = tp && tp.customVal > 0 ? ` (직접 기재 ${won(tp.customVal)} 포함)` : '';
+      bits.push(tEff > 0 ? `치료비 5종 ${won(tEff)}만원 ${tCnt}/5${tAdd}` : '치료비 5종 없음');
       if (c.recur) bits.push('재진단 보장');
       return bits.join(' · ');
     }
     if (item.key === 'brain' || item.key === 'heart') {
       const p = P('dx');
       const g = P('treat');
-      const n = (g.subs || []).filter((s) => s.val > 0).length;
+      const gSubs = g.subs || [];
+      const n = gSubs.filter((s) => Number(s.eff != null ? s.eff : s.val) > 0).length;
+      const gEff = gSubs.length ? gSubs.reduce((a, s) => a + Number(s.eff != null ? s.eff : s.val), 0) : (g.val || 0);
+      const gAdd = g.customVal > 0 ? ` (직접 기재 ${won(g.customVal)} 포함)` : '';
       const d = p.dx || {};
       const core = d.core;
       const narrow = (p.subs || []).filter((s) => !s.isCore && s.val > 0).map((s) => `${dxShort(s.label)} ${won(s.val)}`);
       const coreTxt = core && core.val > 0
         ? `${dxShort(core.label)} ${won(core.val)}만원`
         : (d.gapWarn ? `범위 공백(${dxShort(core ? core.label : '')} 0원)` : '진단비 없음');
-      return `${coreTxt}${narrow.length ? ' + ' + narrow.join(' + ') + '만원' : ''} · 치료비 3종 ${n}/3 ${won(g.val)}만원`;
+      return `${coreTxt}${narrow.length ? ' + ' + narrow.join(' + ') + '만원' : ''} · 치료비 3종 ${n}/3 ${won(gEff)}만원${gAdd}`;
     }
     if (item.key === 'surgery') {
       const dz = ['disease', 'disease15', 'diseaseNdae', 'diseaseNonPay'].filter((k) => Number(P(k).val) > 0).length;
@@ -496,7 +619,7 @@
           subs: p.subs ? p.subs.map((s) => ({ label: s.label, key: s.key, val: s.val, rec: s.rec, fill: s.fill, pct: s.pct, level: s.level, codes: s.codes })) : null,
           level: partLevel(p.fill, p.val),
           text: p.type === 'amount' ? `${won(p.val)}만원 / ${won(p.rec)}만원${p.stage ? ` (${p.stage.label})` : ''}`
-            : p.type === 'group' ? `${p.subs.filter((s) => s.val > 0).length}/${p.subs.length}종 · ${won(p.val)}만원 / ${won(p.rec)}만원`
+            : p.type === 'group' ? `${p.subs.filter((s) => Number(s.eff != null ? s.eff : s.val) > 0).length}/${p.subs.length}종 · ${won(p.subs.reduce((a, s) => a + Number(s.eff != null ? s.eff : s.val), 0))}만원 / ${won(p.rec)}만원`
               : p.type === 'dxset' ? `${(p.subs || []).filter((s) => s.val > 0).length}/${(p.subs || []).length}단계 · 핵심 ${p.dx && p.dx.core ? (p.dx.core.val ? won(p.dx.core.val) : '0') : '0'}만원 / 권장 ${won(p.rec)}만원`
                 : p.type === 'scale' ? (p.option ? p.option.label : '미보유')
                 : (p.val ? '보유' : '없음')
@@ -596,6 +719,21 @@
   function checkpoints(state, rows, totalSum, annual) {
     const cps = [];
     const cov = state.cov;
+    /* v5.6 — 증권 직접 기재 담보를 반영한 실효 세부값 (비어 있으면 v5.5와 같은 값) */
+    const treatGroup = (key) => {
+      const partKey = key === 'cancer' ? 'treatment' : 'treat';
+      const row = (rows || []).find((x) => x.item && x.item.key === key);
+      const part = row && row.r.parts.find((pp) => pp.key === partKey);
+      if (part && part.subs && part.subs.length) {
+        return part.subs.map((s) => ({ key: s.key, label: s.label, eff: Number(s.eff != null ? s.eff : s.val) || 0 }));
+      }
+      const raw = groupObj(state, key, partKey) || {};
+      const subs = key === 'cancer' ? TREAT_SUBS : NEURO_SUBS;
+      return subs.map((s) => ({ key: s.key, label: s.label, eff: Number(raw[s.key] || 0) || 0 }));
+    };
+    const effOf = (list, k) => Number((list.find((s) => s.key === k) || {}).eff || 0);
+    const effSum = (list) => list.reduce((a, s) => a + s.eff, 0);
+    const effMissing = (list) => list.filter((s) => !(s.eff > 0)).map((s) => s.label);
     if (state.silson === 'none') {
       cps.push({ level: 'danger', title: '실손 공백', body: '입원·통원 기본부터 막혀 있습니다. 진단비보다 실손이 먼저입니다.' });
     } else if (state.silson === '1' || state.silson === '2') {
@@ -613,10 +751,11 @@
     else if (cg < cTier.min) cps.push({ level: 'warn', title: `일반암 ${won(cg)}만원 — 최소선 미달`, body: `초기 치료비 부담 최소선이 ${won(cTier.min)}만원입니다. ${won(cTier.min - cg)}만원이 비어 있습니다.` });
     else if (cg < cTier.rec) cps.push({ level: 'info', title: `일반암 ${won(cg)}만원 — 권장선 미달`, body: `권장 ${won(cTier.rec)}만원(초기 생활비+치료비 여유) 대비 ${won(cTier.rec - cg)}만원 부족합니다. 충분선은 ${won(cTier.enough)}만원입니다.` });
     if (Number(cov.cancer.similar || 0) <= 0) cps.push({ level: 'warn', title: '유사암 담보 없음', body: '갑상선암(C73)·기타피부암(C44)·제자리암(D00~D09)·경계성종양(D37~D48)은 일반암에서 빠져 별도 담보로 지급됩니다. 이 담보가 없으면 지급액이 0이거나 아주 작습니다.' });
-    if (treatSum(state) <= 0) cps.push({ level: 'warn', title: '암 주요치료비 5종 없음', body: '표적·면역항암·방사선·비급여 치료는 진단비와 별도 축입니다. 진단비만 있으면 장기 치료에서 공백이 생깁니다. 5종(암수술·항암약물·항암방사선·중환자실·비급여)을 각각 확인하세요.' });
+    if (treatSum(state) <= 0 && effSum(treatGroup('cancer')) <= 0) cps.push({ level: 'warn', title: '암 주요치료비 5종 없음', body: '표적·면역항암·방사선·비급여 치료는 진단비와 별도 축입니다. 진단비만 있으면 장기 치료에서 공백이 생깁니다. 5종(암수술·항암약물·항암방사선·중환자실·비급여)을 각각 확인하세요.' });
     else {
-      if (!(Number((treatObj(state) || {}).drug) > 0)) cps.push({ level: 'info', title: '항암약물치료비 없음', body: '표적·면역항암제는 1년에 수천만원이 나가는 구간입니다. 5종 중에서 가장 먼저 채워야 하는 칸입니다.' });
-      const missing = treatMissing(state);
+      const ct5 = treatGroup('cancer');
+      if (!(effOf(ct5, 'drug') > 0)) cps.push({ level: 'info', title: '항암약물치료비 없음', body: '표적·면역항암제는 1년에 수천만원이 나가는 구간입니다. 5종 중에서 가장 먼저 채워야 하는 칸입니다.' });
+      const missing = effMissing(ct5);
       if (missing.length) cps.push({ level: 'info', title: `암 주요치료비 5종 중 ${missing.length}종 비어 있음`, body: `없는 항목: ${missing.join(' · ')}. 한 번에 다 채우지 말고 항암약물 → 비급여 → 수술 순으로 채웁니다.` });
     }
     if (!cov.cancer.recur) cps.push({ level: 'info', title: '재진단·전이암 보장 없음', body: '1회한 진단비는 한 번 지급되면 끝입니다. 재발·전이는 별도 담보가 있어야 다시 지급됩니다.' });
@@ -643,12 +782,12 @@
     }
 
     [['brain', '뇌'], ['heart', '심장']].forEach(([key, name]) => {
-      const tg = groupObj(state, key, 'treat') || {};
-      const n = Number(tg.lysis || 0), s = Number(tg.surgery || 0), icu = Number(tg.icu || 0);
+      const tg = treatGroup(key);
+      const n = effOf(tg, 'lysis'), s = effOf(tg, 'surgery'), icu = effOf(tg, 'icu');
       if (n <= 0) cps.push({ level: 'warn', title: `${name} 혈전용해제 치료비 없음`, body: `진단비는 1회성입니다. ${name === '뇌' ? '뇌경색(I63)' : '급성심근경색(I21)'} 치료의 첫 단계인 혈전용해제(tPA) 투여는 별도 담보입니다. 기계적 혈전제거술(카테터법)은 혈전용해치료에서 제외되므로 그 담보가 있는지도 함께 확인하세요.` });
       if (s <= 0) cps.push({ level: 'warn', title: `${name} 주요치료 수술비 없음`, body: `${name === '뇌' ? '개두술(관혈)·스텐트·색전술(비관혈)' : '관상동맥우회술(관혈)·스텐트(비관혈)'}은 약관상 "수술" 분류에 따라 지급이 갈립니다. 수술비 담보를 따로 확인하세요.` });
       if (icu <= 0) cps.push({ level: 'info', title: `${name} 중환자실 입원비 없음`, body: '중환자실은 하루 비용이 일반 병실의 몇 배입니다. 입원일당과 별도로 중환자실 담보가 있는지 확인합니다.' });
-      const missingN = neuroMissing(state, key);
+      const missingN = effMissing(tg);
       if (missingN.length && missingN.length < 3) cps.push({ level: 'info', title: `${name} 주요치료비 3종 중 ${missingN.length}종 비어 있음`, body: `없는 항목: ${missingN.join(' · ')}. 대부분 최초 1회한 또는 연 1회한이고, 계약일부터 1년 미만은 50%만 지급됩니다.` });
       if (n > 0 || s > 0) cps.push({ level: 'info', title: `${name} 치료비 — 지급 조건 확인`, body: '혈전용해제 치료비는 뇌경색(I63)·급성심근경색(I21) 진단이 전제이고, 기계적 혈전제거술은 별도 담보입니다. 연 1회한인지, 진단 후 10년 한도인지, 만기까지인지 증권 문구로 확인하세요.' });
     });
@@ -743,6 +882,9 @@
     const cstats = contractStats(state.contracts);
     const family = familyList(state);
     const disc = disclosureJudge(state);
+    const custom = customAll(state);
+    const customByArea = {};
+    CUSTOM_KEYS.forEach((k) => { customByArea[k] = customList(state, k); });
     const birth = (state.client && state.client.birth) || '';
     const ageDay = nextAgeDay(birth);
     const cancerRow = rows.find((x) => x.item.key === 'cancer');
@@ -784,6 +926,11 @@
         insuranceAge: insuranceAge(birth),
         ageDay
       },
+      /* v5.6 — 증권 담보 직접 기재 (통합형 · 개별형) */
+      custom, customByArea,
+      customTotal: custom.reduce((a, x) => a + Number(x.amount || 0), 0),
+      customCount: custom.length,
+      customKeys: CUSTOM_KEYS,
       dateLabel: (state.client && state.client.dateLabel) || ''
     };
   }
@@ -847,6 +994,8 @@
     TREAT_SUBS, NEURO_SUBS, TREAT_MIN, TREAT_MAX, NEURO_MIN, NEURO_MAX,
     treatRec, treatRecs, subRec, emptyTreat, emptyNeuro, treatObj, treatSum, treatCount, treatMissing,
     neuroSum, neuroCount, neuroMissing, groupObj, groupSum, normalizeState, normalizeCov, stageOf, partLevel,
-    dxObj, dxTotal, dxCoreVal, dxScenarios, dxShort, DX_SUBS, DX_MAX, simulate
+    dxObj, dxTotal, dxCoreVal, dxScenarios, dxShort, DX_SUBS, DX_MAX, simulate,
+    CUSTOM_KEYS, CUSTOM_AREA_LABEL, CUSTOM_MODE_LABEL, CUSTOM_MAP,
+    customList, customTotal, customAll, customCredits, sanitizeCustom
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v5.5 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<title>보장분석 라이프 리포트 v5.6 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
 
@@ -3103,6 +3103,71 @@ body{
 .acct-msg.tone-info{background:#FDF3DE;color:#8a5a06;}
 .acct-msg.tone-work{background:#EEF3F9;color:#41597a;}
 
+/* =========================================================
+   v5.6 — 증권 담보 직접 기재 (통합형 · 개별형)
+   암·뇌·심장·수술·간병 각 카드 하단의 컴팩트 행 목록.
+   360px 폭에서도 이름/금액/구분/삭제가 한 줄에 들어가고,
+   좁으면 자연스럽게 두 줄로 접힙니다.
+   ========================================================= */
+.custom-block{margin-top:10px;padding-top:11px;border-top:1px dashed var(--line);}
+.custom-block .part-head{margin-bottom:7px;}
+.custom-block .part-label strong{font-size:12px;color:var(--point);}
+.custom-list{display:grid;gap:6px;}
+.custom-row{
+  display:flex;flex-wrap:wrap;align-items:center;gap:5px;
+  background:#F8FBFE;border:1px solid var(--line);border-radius:10px;padding:6px;
+}
+.custom-row:focus-within{border-color:var(--point);background:#fff;box-shadow:0 0 0 3px rgba(58,110,165,.09);}
+.cr-name{
+  flex:1 1 130px;min-width:0;width:100%;
+  border:1px solid var(--line);background:#fff;border-radius:8px;
+  padding:7px 9px;font-size:12px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;
+  font-family:inherit;
+}
+.cr-amt-box{flex:0 0 auto;display:flex;align-items:center;gap:3px;}
+.cr-amt{
+  width:64px;border:1px solid var(--line);background:#fff;border-radius:8px;
+  padding:7px 6px;font-size:12px;font-weight:800;color:var(--ink);text-align:right;
+  letter-spacing:-0.02em;font-variant-numeric:tabular-nums;font-family:inherit;
+}
+.cr-amt-box .unit{font-size:10px;font-weight:700;color:var(--muted);}
+.cr-name:focus,.cr-amt:focus{outline:none;border-color:var(--point);box-shadow:0 0 0 2px rgba(58,110,165,.12);}
+.cr-seg{flex:0 0 auto;display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;}
+.cr-seg-btn{
+  border:0;background:#fff;color:var(--muted);
+  padding:6px 7px;font-size:10px;font-weight:800;letter-spacing:-0.02em;line-height:1.1;
+  font-family:inherit;
+}
+.cr-seg-btn + .cr-seg-btn{border-left:1px solid var(--line);}
+.cr-seg-btn.is-on{background:var(--navy-800);color:#fff;}
+.cr-del{
+  flex:0 0 auto;width:22px;height:26px;border:0;border-radius:7px;background:#fff;
+  color:var(--muted);font-size:15px;font-weight:700;line-height:1;
+}
+.cr-del:active{background:var(--danger-soft);color:var(--danger);}
+.custom-empty{margin:0;font-size:9.5px;line-height:1.5;color:var(--muted);}
+.custom-presets{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.chip-custom{
+  border:1px dashed var(--line);background:#fff;color:var(--ink-2);
+  border-radius:999px;padding:5px 9px;font-size:10px;font-weight:700;letter-spacing:-0.02em;
+  font-family:inherit;
+}
+.chip-custom:active{background:var(--blush);border-color:var(--point);color:var(--point);}
+.custom-add{
+  width:100%;margin-top:8px;border:1px dashed var(--point);background:var(--blush);
+  color:var(--point);border-radius:10px;padding:9px 10px;
+  font-size:11.5px;font-weight:800;letter-spacing:-0.02em;font-family:inherit;
+}
+.custom-add:active{background:var(--point);color:#fff;}
+.custom-total{margin-top:7px;font-size:10.5px;font-weight:700;color:var(--ink-2);}
+.custom-total b{font-size:12.5px;font-weight:800;color:var(--navy-800);letter-spacing:-0.02em;}
+.custom-note{margin:6px 0 0;font-size:9.2px;line-height:1.5;color:var(--muted);}
+@media (max-width:360px){
+  .cr-name{flex:1 1 100%;}
+  .cr-amt{width:58px;}
+  .chip-custom{font-size:9.5px;padding:5px 8px;}
+}
+
 </style>
 </head>
 <body>
@@ -3184,8 +3249,8 @@ body{
         <span class="hv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0112 8a3.9 3.9 0 017 2.6C19 15.6 12 20 12 20z"/></svg>든든한미래</span>
       </div>
       <div class="hh-top">
-        <span class="hh-eyebrow">LIFE REPORT · BETA V5.5</span>
-        <span class="hh-ver">v5.5 · 2026.11</span>
+        <span class="hh-eyebrow">LIFE REPORT · BETA V5.6</span>
+        <span class="hh-ver">v5.6 · 2026.11</span>
       </div>
       <h2>무엇을 하시겠어요?</h2>
       <p>상담 전 과정을 한 화면에서 시작합니다. 입력은 이 기기 안에서만 계산되고, PDF도 기기에서 직접 만듭니다.</p>
@@ -3324,10 +3389,10 @@ body{
       <div id="history-list" class="history"></div>
     </div>
 
-    <p class="app-foot">기준일 2026-11-16 · v5.5 베타 기준점(암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 치료비 3종 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리) 반영 · 상품별 약관 우선</p>
+    <p class="app-foot">기준일 2026-11-16 · v5.6 베타 기준점(암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 치료비 3종 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리 · 증권 담보 직접 기재 통합형/개별형) 반영 · 상품별 약관 우선</p>
   </section>
 
-  <!-- ================= v5.3 사진 즉시 촬영 (휘발·미저장) · v5.4 서버 AI 인식 · v5.5 PDF 프리미엄 리포트 ================= -->
+  <!-- ================= v5.3 사진 즉시 촬영 (휘발·미저장) · v5.4 서버 AI 인식 · v5.5 PDF 프리미엄 리포트 · v5.6 증권 담보 직접 기재 ================= -->
   <section id="view-capture" class="view" aria-label="사진 즉시 촬영">
     <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>사진 즉시 촬영 · 휘발</span><button type="button" class="home-back hub-jump" data-inputhub="1">✎ 입력 방식</button></div>
 
@@ -4162,6 +4227,42 @@ const PRIORITY = [
     ]
   }
 ];
+
+/* v5.6 — 영역별 '증권 담보 직접 기재' 프리셋
+   보험사마다 뇌·심장 주요치료비를 하나로 묶어 파는 곳(통합형)과 개별로 나눠 파는 곳(개별형)이 달라,
+   고정 칸에 담기지 않는 특약을 증권 담보명 그대로 적기 위한 실무 단골 담보명입니다. */
+const CUSTOM_AREA_LABEL = { cancer: '암', brain: '뇌', heart: '심장', surgery: '수술', care: '간병' };
+const CUSTOM_MODE_LABEL = { bundle: '통합형', individual: '개별형' };
+const CUSTOM_PRESETS = {
+  cancer: [
+    { name: '표적항암약물허가치료비', mode: 'individual' },
+    { name: '다빈치로봇수술비', mode: 'individual' },
+    { name: '항암방사선치료비', mode: 'individual' },
+    { name: '암 주요치료비(통합)', mode: 'bundle' }
+  ],
+  brain: [
+    { name: '순환계 주요치료비(통합)', mode: 'bundle' },
+    { name: '혈전용해치료비', mode: 'individual' },
+    { name: '뇌혈관수술비', mode: 'individual' },
+    { name: '뇌 중환자실입원일당', mode: 'individual' }
+  ],
+  heart: [
+    { name: '순환계 주요치료비(통합)', mode: 'bundle' },
+    { name: '관상동맥성형술(스텐트)', mode: 'individual' },
+    { name: '관상동맥우회술', mode: 'individual' },
+    { name: '심장 중환자실입원일당', mode: 'individual' }
+  ],
+  surgery: [
+    { name: '질병 1~5종(특정)', mode: 'individual' },
+    { name: '관절/척추 수술비', mode: 'individual' },
+    { name: '비급여 수술비', mode: 'individual' }
+  ],
+  care: [
+    { name: '중증치매간병비', mode: 'individual' },
+    { name: '상해간병일당', mode: 'individual' },
+    { name: '장기요양간병비', mode: 'individual' }
+  ]
+};
 
 /* 연령대별 추천 프리셋 — 원터치로 표준 분석 샘플을 채웁니다 (v4.2)
    값은 상담 연습·시연용 표준 예시이며, 실제 증권 값이 아닙니다. */
@@ -5321,6 +5422,105 @@ const PLAN_FRONT = {
       sum: sc.parts.reduce((a, k) => a + (Number(d[k] || 0) || 0), 0)
     }));
   }
+  /* =========================================================
+     v5.6 — 증권 담보 직접 기재 (통합형 · 개별형)
+     보험사마다 뇌·심장 주요치료비를 하나로 묶어 파는 곳(통합형)과 개별로 나눠 파는 곳(개별형)이
+     달라, 고정 칸에 담기지 않는 특약을 증권 담보명 그대로 적습니다.
+       state.cov.custom = { cancer: [], brain: [], heart: [], surgery: [], care: [] }
+       항목 = { id, name, amount(만원), mode: 'bundle'(통합형) | 'individual'(개별형), note }
+     · custom 이 비어 있으면 v5.5와 점수·판정·문장이 100% 같습니다(회귀 없음).
+     · 세부 칸이 있는 영역(암 주요치료비 5종 · 뇌·심장 주요치료비 3종)은 담보명 키워드로 칸을 찾아
+       금액을 합산하고, 통합형이거나 칸을 찾지 못한 담보는 세부 권장액 비율로 나눠 넣습니다.
+     · 진단비 이름의 담보는 치료비 축에 더하지 않습니다(진단비와 치료비는 다른 축). 표시만 합니다.
+     · 각 칸은 권장액까지만 점수에 반영되고, 금액 합계 표시에는 실제 금액이 그대로 나옵니다.
+     ========================================================= */
+  const CUSTOM_KEYS = ['cancer', 'brain', 'heart', 'surgery', 'care'];
+  const CUSTOM_AREA_LABEL = { cancer: '암', brain: '뇌', heart: '심장', surgery: '수술', care: '간병' };
+  const CUSTOM_MODE_LABEL = { bundle: '통합형', individual: '개별형' };
+  /* 담보명 키워드 → 세부 칸 (위에서부터 먼저 맞는 것) */
+  const CUSTOM_MAP = {
+    cancer: [
+      ['radio', /방사선|방사/],
+      ['drug', /항암|약물|표적|면역|호르몬/],
+      ['icu', /중환자실|집중치료/],
+      ['extra', /비급여|주사|검사|추가/],
+      ['surgery', /수술|로봇|다빈치|절제/]
+    ],
+    brain: [
+      ['lysis', /혈전|용해|tpa|트롬|제거술/i],
+      ['icu', /중환자실|집중치료/],
+      ['surgery', /수술|스텐트|색전|성형|개두|관혈|우회/]
+    ],
+    heart: [
+      ['lysis', /혈전|용해|tpa|트롬/i],
+      ['icu', /중환자실|집중치료/],
+      ['surgery', /수술|스텐트|성형|우회|개흉|관혈/]
+    ]
+  };
+  const CUSTOM_DX_RE = /진단비|진단/;
+
+  function sanitizeCustom(it, key, i) {
+    const src = (it && typeof it === 'object') ? it : {};
+    const name = String(src.name == null ? '' : src.name).replace(/\s+/g, ' ').trim().slice(0, 40);
+    const amount = clamp(Math.round(Number(src.amount || 0) || 0), 0, 100000);
+    const mode = src.mode === 'individual' ? 'individual' : 'bundle';
+    return {
+      id: String(src.id || `cu_${key}_${i}`),
+      name, amount, mode,
+      note: String(src.note == null ? '' : src.note).replace(/\s+/g, ' ').trim().slice(0, 60)
+    };
+  }
+
+  /* 영역별 직접 기재 담보 — 이름이나 금액이 있는 항목만 돌려줍니다 */
+  function customList(state, key) {
+    const box = state && state.cov && state.cov.custom;
+    const arr = box && box[key];
+    if (!Array.isArray(arr)) return [];
+    return arr.map((it, i) => sanitizeCustom(it, key, i)).filter((x) => x.name || x.amount > 0);
+  }
+  function customTotal(state, key) {
+    return customList(state, key).reduce((a, x) => a + x.amount, 0);
+  }
+  /* 5개 영역 전부 — 리포트용 평탄 목록 */
+  function customAll(state) {
+    const out = [];
+    CUSTOM_KEYS.forEach((k) => {
+      customList(state, k).forEach((x, i) => {
+        out.push({
+          key: k, areaKey: k, area: CUSTOM_AREA_LABEL[k], order: i,
+          id: x.id, name: x.name, amount: x.amount, mode: x.mode, modeLabel: CUSTOM_MODE_LABEL[x.mode], note: x.note
+        });
+      });
+    });
+    return out;
+  }
+  /* 세부 칸 배분 — subs: [{ key, rec }] → { byKey, rows, sum, count }
+     통합형/칸 미매칭은 권장액 비율로 나눕니다. 진단비 이름은 치료비 축에서 제외하고 표시만 합니다. */
+  function customCredits(state, key, subs) {
+    const items = customList(state, key);
+    const map = CUSTOM_MAP[key] || [];
+    const list = subs || [];
+    const byKey = {};
+    list.forEach((s) => { byKey[s.key] = 0; });
+    const recSum = list.reduce((a, s) => a + (Number(s.rec) || 0), 0);
+    const rows = [];
+    items.forEach((x) => {
+      let target = null;
+      let skip = CUSTOM_DX_RE.test(x.name);
+      if (!skip && map.length) {
+        const hit = map.find((m) => m[1].test(x.name));
+        if (hit && byKey[hit[0]] != null) target = hit[0];
+      }
+      if (!skip && x.amount > 0) {
+        if (target) byKey[target] += x.amount;
+        else if (recSum > 0) list.forEach((s) => { byKey[s.key] += (x.amount * (Number(s.rec) || 0)) / recSum; });
+      }
+      rows.push({ id: x.id, name: x.name, amount: x.amount, mode: x.mode, sub: target, skip });
+    });
+    Object.keys(byKey).forEach((k) => { byKey[k] = Math.round(byKey[k]); });
+    return { byKey, rows, sum: items.reduce((a, x) => a + x.amount, 0), count: items.length };
+  }
+
   const TREAT_MIN = 500, TREAT_MAX = 3000;
   const NEURO_MIN = 500, NEURO_MAX = 3000;
   const CANCER_ITEM = () => PRIORITY[0];
@@ -5482,6 +5682,13 @@ const PLAN_FRONT = {
       if (!c.mode) c.mode = 'normal';
     }
 
+    /* 5) v5.6 — 증권 담보 직접 기재 배열을 항상 5개 영역으로 맞춥니다 (없으면 빈 배열) */
+    if (!cov.custom || typeof cov.custom !== 'object' || Array.isArray(cov.custom)) cov.custom = {};
+    CUSTOM_KEYS.forEach((k) => {
+      const arr = cov.custom[k];
+      cov.custom[k] = Array.isArray(arr) ? arr.map((it, i) => sanitizeCustom(it, k, i)) : [];
+    });
+
     if (typeof state.premium !== 'number') state.premium = Number(state.premium || 0) || 0;
     if (!state.flags) state.flags = {};
     if (!Array.isArray(state.contracts)) state.contracts = [];
@@ -5524,6 +5731,7 @@ const PLAN_FRONT = {
     const parts = item.parts.map((p) => {
       const tiers = p.tiers || (p.key === firstKey ? item.tiers : null) || null;
       let fill = 0, rec = 0, val = 0, option = null, subs = null, stage = null, dx = null;
+      let customInfo = null;
       if (p.type === 'amount') {
         rec = Math.round(baseRec * p.factor);
         val = Number(getVal(state, item, p) || 0);
@@ -5534,19 +5742,24 @@ const PLAN_FRONT = {
         const raw = getVal(state, item, p);
         const src = (raw && typeof raw === 'object') ? raw : {};
         const list = (p.subs || TREAT_SUBS);
+        /* v5.6 — 증권 직접 기재 담보를 세부 칸에 합산 (비어 있으면 종전과 동일) */
+        const cred = customCredits(state, item.key, list.map((sp) => ({ key: sp.key, rec: subRec(baseRec, sp, p) })));
+        customInfo = cred;
         subs = list.map((sp) => {
           const srec = subRec(baseRec, sp, p);
           const sval = Number(src[sp.key] || 0) || 0;
-          const sfill = srec > 0 ? clamp(sval / srec, 0, 1) : 0;
+          const scred = Number(cred.byKey[sp.key] || 0) || 0;
+          const eff = sval + scred;
+          const sfill = srec > 0 ? clamp(eff / srec, 0, 1) : 0;
           return {
-            key: sp.key, label: sp.label, hint: sp.hint, rec: srec, val: sval, fill: sfill,
-            pct: Math.round(sfill * 100), level: partLevel(sfill, sval), part: sp,
+            key: sp.key, label: sp.label, hint: sp.hint, rec: srec, val: sval, custom: scred, eff, fill: sfill,
+            pct: Math.round(sfill * 100), level: partLevel(sfill, eff), part: sp,
             min: p.min || 500, max: p.max || 3000
           };
         });
         rec = subs.reduce((a, s) => a + s.rec, 0);
         val = subs.reduce((a, s) => a + s.val, 0);
-        fill = rec > 0 ? subs.reduce((a, s) => a + Math.min(s.val, s.rec), 0) / rec : 0;
+        fill = rec > 0 ? subs.reduce((a, s) => a + Math.min(s.eff, s.rec), 0) / rec : 0;
       } else if (p.type === 'dxset') {
         /* v5.0 — 범위별 진단비 금액. 평가 주축 = 가장 넓은 범위(뇌혈관·허혈성심장) */
         const raw = getVal(state, item, p);
@@ -5589,7 +5802,11 @@ const PLAN_FRONT = {
         val = !!getVal(state, item, p);
         fill = val ? 1 : 0;
       }
-      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p, subs, stage, tiers, dx };
+      return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p, subs, stage, tiers, dx,
+        customVal: customInfo ? subs.reduce((a, s) => a + Number(s.custom || 0), 0) : 0,
+        customSum: customInfo ? customInfo.sum : 0,
+        customCount: customInfo ? customInfo.count : 0,
+        customRows: customInfo ? customInfo.rows : null };
     });
     const fill = parts.reduce((a, p) => a + p.weight * p.fill, 0);
     const primary = parts[0].fill;
@@ -5607,22 +5824,29 @@ const PLAN_FRONT = {
     if (item.key === 'cancer') {
       const bits = [`일반암 ${won(c.general)}만원`];
       bits.push(c.similar > 0 ? `유사암 ${won(c.similar)}만원` : '유사암 없음');
-      const ts = treatSum(state), tc = treatCount(state);
-      bits.push(ts > 0 ? `치료비 5종 ${won(ts)}만원 ${tc}/5` : '치료비 5종 없음');
+      /* v5.6 — 직접 기재 담보가 있으면 치료비 축 합계에 포함해 말합니다 */
+      const tp = r.parts.find((p) => p.key === 'treatment');
+      const tEff = tp ? (tp.subs || []).reduce((a, s) => a + Number(s.eff || 0), 0) : treatSum(state);
+      const tCnt = tp ? (tp.subs || []).filter((s) => Number(s.eff || 0) > 0).length : treatCount(state);
+      const tAdd = tp && tp.customVal > 0 ? ` (직접 기재 ${won(tp.customVal)} 포함)` : '';
+      bits.push(tEff > 0 ? `치료비 5종 ${won(tEff)}만원 ${tCnt}/5${tAdd}` : '치료비 5종 없음');
       if (c.recur) bits.push('재진단 보장');
       return bits.join(' · ');
     }
     if (item.key === 'brain' || item.key === 'heart') {
       const p = P('dx');
       const g = P('treat');
-      const n = (g.subs || []).filter((s) => s.val > 0).length;
+      const gSubs = g.subs || [];
+      const n = gSubs.filter((s) => Number(s.eff != null ? s.eff : s.val) > 0).length;
+      const gEff = gSubs.length ? gSubs.reduce((a, s) => a + Number(s.eff != null ? s.eff : s.val), 0) : (g.val || 0);
+      const gAdd = g.customVal > 0 ? ` (직접 기재 ${won(g.customVal)} 포함)` : '';
       const d = p.dx || {};
       const core = d.core;
       const narrow = (p.subs || []).filter((s) => !s.isCore && s.val > 0).map((s) => `${dxShort(s.label)} ${won(s.val)}`);
       const coreTxt = core && core.val > 0
         ? `${dxShort(core.label)} ${won(core.val)}만원`
         : (d.gapWarn ? `범위 공백(${dxShort(core ? core.label : '')} 0원)` : '진단비 없음');
-      return `${coreTxt}${narrow.length ? ' + ' + narrow.join(' + ') + '만원' : ''} · 치료비 3종 ${n}/3 ${won(g.val)}만원`;
+      return `${coreTxt}${narrow.length ? ' + ' + narrow.join(' + ') + '만원' : ''} · 치료비 3종 ${n}/3 ${won(gEff)}만원${gAdd}`;
     }
     if (item.key === 'surgery') {
       const dz = ['disease', 'disease15', 'diseaseNdae', 'diseaseNonPay'].filter((k) => Number(P(k).val) > 0).length;
@@ -5738,7 +5962,7 @@ const PLAN_FRONT = {
           subs: p.subs ? p.subs.map((s) => ({ label: s.label, key: s.key, val: s.val, rec: s.rec, fill: s.fill, pct: s.pct, level: s.level, codes: s.codes })) : null,
           level: partLevel(p.fill, p.val),
           text: p.type === 'amount' ? `${won(p.val)}만원 / ${won(p.rec)}만원${p.stage ? ` (${p.stage.label})` : ''}`
-            : p.type === 'group' ? `${p.subs.filter((s) => s.val > 0).length}/${p.subs.length}종 · ${won(p.val)}만원 / ${won(p.rec)}만원`
+            : p.type === 'group' ? `${p.subs.filter((s) => Number(s.eff != null ? s.eff : s.val) > 0).length}/${p.subs.length}종 · ${won(p.subs.reduce((a, s) => a + Number(s.eff != null ? s.eff : s.val), 0))}만원 / ${won(p.rec)}만원`
               : p.type === 'dxset' ? `${(p.subs || []).filter((s) => s.val > 0).length}/${(p.subs || []).length}단계 · 핵심 ${p.dx && p.dx.core ? (p.dx.core.val ? won(p.dx.core.val) : '0') : '0'}만원 / 권장 ${won(p.rec)}만원`
                 : p.type === 'scale' ? (p.option ? p.option.label : '미보유')
                 : (p.val ? '보유' : '없음')
@@ -5838,6 +6062,21 @@ const PLAN_FRONT = {
   function checkpoints(state, rows, totalSum, annual) {
     const cps = [];
     const cov = state.cov;
+    /* v5.6 — 증권 직접 기재 담보를 반영한 실효 세부값 (비어 있으면 v5.5와 같은 값) */
+    const treatGroup = (key) => {
+      const partKey = key === 'cancer' ? 'treatment' : 'treat';
+      const row = (rows || []).find((x) => x.item && x.item.key === key);
+      const part = row && row.r.parts.find((pp) => pp.key === partKey);
+      if (part && part.subs && part.subs.length) {
+        return part.subs.map((s) => ({ key: s.key, label: s.label, eff: Number(s.eff != null ? s.eff : s.val) || 0 }));
+      }
+      const raw = groupObj(state, key, partKey) || {};
+      const subs = key === 'cancer' ? TREAT_SUBS : NEURO_SUBS;
+      return subs.map((s) => ({ key: s.key, label: s.label, eff: Number(raw[s.key] || 0) || 0 }));
+    };
+    const effOf = (list, k) => Number((list.find((s) => s.key === k) || {}).eff || 0);
+    const effSum = (list) => list.reduce((a, s) => a + s.eff, 0);
+    const effMissing = (list) => list.filter((s) => !(s.eff > 0)).map((s) => s.label);
     if (state.silson === 'none') {
       cps.push({ level: 'danger', title: '실손 공백', body: '입원·통원 기본부터 막혀 있습니다. 진단비보다 실손이 먼저입니다.' });
     } else if (state.silson === '1' || state.silson === '2') {
@@ -5855,10 +6094,11 @@ const PLAN_FRONT = {
     else if (cg < cTier.min) cps.push({ level: 'warn', title: `일반암 ${won(cg)}만원 — 최소선 미달`, body: `초기 치료비 부담 최소선이 ${won(cTier.min)}만원입니다. ${won(cTier.min - cg)}만원이 비어 있습니다.` });
     else if (cg < cTier.rec) cps.push({ level: 'info', title: `일반암 ${won(cg)}만원 — 권장선 미달`, body: `권장 ${won(cTier.rec)}만원(초기 생활비+치료비 여유) 대비 ${won(cTier.rec - cg)}만원 부족합니다. 충분선은 ${won(cTier.enough)}만원입니다.` });
     if (Number(cov.cancer.similar || 0) <= 0) cps.push({ level: 'warn', title: '유사암 담보 없음', body: '갑상선암(C73)·기타피부암(C44)·제자리암(D00~D09)·경계성종양(D37~D48)은 일반암에서 빠져 별도 담보로 지급됩니다. 이 담보가 없으면 지급액이 0이거나 아주 작습니다.' });
-    if (treatSum(state) <= 0) cps.push({ level: 'warn', title: '암 주요치료비 5종 없음', body: '표적·면역항암·방사선·비급여 치료는 진단비와 별도 축입니다. 진단비만 있으면 장기 치료에서 공백이 생깁니다. 5종(암수술·항암약물·항암방사선·중환자실·비급여)을 각각 확인하세요.' });
+    if (treatSum(state) <= 0 && effSum(treatGroup('cancer')) <= 0) cps.push({ level: 'warn', title: '암 주요치료비 5종 없음', body: '표적·면역항암·방사선·비급여 치료는 진단비와 별도 축입니다. 진단비만 있으면 장기 치료에서 공백이 생깁니다. 5종(암수술·항암약물·항암방사선·중환자실·비급여)을 각각 확인하세요.' });
     else {
-      if (!(Number((treatObj(state) || {}).drug) > 0)) cps.push({ level: 'info', title: '항암약물치료비 없음', body: '표적·면역항암제는 1년에 수천만원이 나가는 구간입니다. 5종 중에서 가장 먼저 채워야 하는 칸입니다.' });
-      const missing = treatMissing(state);
+      const ct5 = treatGroup('cancer');
+      if (!(effOf(ct5, 'drug') > 0)) cps.push({ level: 'info', title: '항암약물치료비 없음', body: '표적·면역항암제는 1년에 수천만원이 나가는 구간입니다. 5종 중에서 가장 먼저 채워야 하는 칸입니다.' });
+      const missing = effMissing(ct5);
       if (missing.length) cps.push({ level: 'info', title: `암 주요치료비 5종 중 ${missing.length}종 비어 있음`, body: `없는 항목: ${missing.join(' · ')}. 한 번에 다 채우지 말고 항암약물 → 비급여 → 수술 순으로 채웁니다.` });
     }
     if (!cov.cancer.recur) cps.push({ level: 'info', title: '재진단·전이암 보장 없음', body: '1회한 진단비는 한 번 지급되면 끝입니다. 재발·전이는 별도 담보가 있어야 다시 지급됩니다.' });
@@ -5885,12 +6125,12 @@ const PLAN_FRONT = {
     }
 
     [['brain', '뇌'], ['heart', '심장']].forEach(([key, name]) => {
-      const tg = groupObj(state, key, 'treat') || {};
-      const n = Number(tg.lysis || 0), s = Number(tg.surgery || 0), icu = Number(tg.icu || 0);
+      const tg = treatGroup(key);
+      const n = effOf(tg, 'lysis'), s = effOf(tg, 'surgery'), icu = effOf(tg, 'icu');
       if (n <= 0) cps.push({ level: 'warn', title: `${name} 혈전용해제 치료비 없음`, body: `진단비는 1회성입니다. ${name === '뇌' ? '뇌경색(I63)' : '급성심근경색(I21)'} 치료의 첫 단계인 혈전용해제(tPA) 투여는 별도 담보입니다. 기계적 혈전제거술(카테터법)은 혈전용해치료에서 제외되므로 그 담보가 있는지도 함께 확인하세요.` });
       if (s <= 0) cps.push({ level: 'warn', title: `${name} 주요치료 수술비 없음`, body: `${name === '뇌' ? '개두술(관혈)·스텐트·색전술(비관혈)' : '관상동맥우회술(관혈)·스텐트(비관혈)'}은 약관상 "수술" 분류에 따라 지급이 갈립니다. 수술비 담보를 따로 확인하세요.` });
       if (icu <= 0) cps.push({ level: 'info', title: `${name} 중환자실 입원비 없음`, body: '중환자실은 하루 비용이 일반 병실의 몇 배입니다. 입원일당과 별도로 중환자실 담보가 있는지 확인합니다.' });
-      const missingN = neuroMissing(state, key);
+      const missingN = effMissing(tg);
       if (missingN.length && missingN.length < 3) cps.push({ level: 'info', title: `${name} 주요치료비 3종 중 ${missingN.length}종 비어 있음`, body: `없는 항목: ${missingN.join(' · ')}. 대부분 최초 1회한 또는 연 1회한이고, 계약일부터 1년 미만은 50%만 지급됩니다.` });
       if (n > 0 || s > 0) cps.push({ level: 'info', title: `${name} 치료비 — 지급 조건 확인`, body: '혈전용해제 치료비는 뇌경색(I63)·급성심근경색(I21) 진단이 전제이고, 기계적 혈전제거술은 별도 담보입니다. 연 1회한인지, 진단 후 10년 한도인지, 만기까지인지 증권 문구로 확인하세요.' });
     });
@@ -5985,6 +6225,9 @@ const PLAN_FRONT = {
     const cstats = contractStats(state.contracts);
     const family = familyList(state);
     const disc = disclosureJudge(state);
+    const custom = customAll(state);
+    const customByArea = {};
+    CUSTOM_KEYS.forEach((k) => { customByArea[k] = customList(state, k); });
     const birth = (state.client && state.client.birth) || '';
     const ageDay = nextAgeDay(birth);
     const cancerRow = rows.find((x) => x.item.key === 'cancer');
@@ -6026,6 +6269,11 @@ const PLAN_FRONT = {
         insuranceAge: insuranceAge(birth),
         ageDay
       },
+      /* v5.6 — 증권 담보 직접 기재 (통합형 · 개별형) */
+      custom, customByArea,
+      customTotal: custom.reduce((a, x) => a + Number(x.amount || 0), 0),
+      customCount: custom.length,
+      customKeys: CUSTOM_KEYS,
       dateLabel: (state.client && state.client.dateLabel) || ''
     };
   }
@@ -6089,7 +6337,9 @@ const PLAN_FRONT = {
     TREAT_SUBS, NEURO_SUBS, TREAT_MIN, TREAT_MAX, NEURO_MIN, NEURO_MAX,
     treatRec, treatRecs, subRec, emptyTreat, emptyNeuro, treatObj, treatSum, treatCount, treatMissing,
     neuroSum, neuroCount, neuroMissing, groupObj, groupSum, normalizeState, normalizeCov, stageOf, partLevel,
-    dxObj, dxTotal, dxCoreVal, dxScenarios, dxShort, DX_SUBS, DX_MAX, simulate
+    dxObj, dxTotal, dxCoreVal, dxScenarios, dxShort, DX_SUBS, DX_MAX, simulate,
+    CUSTOM_KEYS, CUSTOM_AREA_LABEL, CUSTOM_MODE_LABEL, CUSTOM_MAP,
+    customList, customTotal, customAll, customCredits, sanitizeCustom
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -6959,7 +7209,10 @@ const PLAN_FRONT = {
 
   /* v4.2: 세부 항목을 위치가 아니라 키로 찾습니다 (수술 6축·간병 6칸으로 늘어남) */
   const PK = (row, key) => (row && row.r.parts.find((p) => p.key === key)) || { val: 0, rec: 0, fill: 0, subs: [], pct: 0, option: null };
-  const subHave = (p) => (p.subs || []).filter((s) => s.val > 0).length;
+  /* v5.6 — 세부 칸의 '실효' 값(직접 기재 담보 포함). 직접 기재가 없으면 val과 같습니다. */
+  const subEff = (s) => Number(s && (s.eff != null ? s.eff : s.val)) || 0;
+  const effVal = (p) => ((p && p.subs && p.subs.length) ? p.subs.reduce((a, s) => a + subEff(s), 0) : Number((p && p.val) || 0));
+  const subHave = (p) => (p.subs || []).filter((s) => subEff(s) > 0).length;
 
   /* 1장 요약·표처럼 좁은 칸에 들어가는 짧은 현재 보장 문장 (v4.2) */
   const REC_SCOPE = { brain: '뇌혈관질환 I60~I69', heart: '허혈성심장 I20~I25' };
@@ -6984,6 +7237,50 @@ const PLAN_FRONT = {
     const basis = (PK(row, 'basis').option || {}).label || '';
     return `일반 ${won(daily)} · 요양 ${nd ? won(nd) : '없음'} · ${basis}`;
   }
+
+  /* =========================================================
+     v5.6 — 증권 담보 직접 기재 (통합형 · 개별형)
+     고객 증권에 적힌 담보명·금액을 그대로 인쇄합니다.
+     ========================================================= */
+  const CUSTOM_MODE_TXT = { bundle: '통합형', individual: '개별형' };
+  function customOf(m, key) {
+    if (BK.customList) return BK.customList(m.state, key);
+    const box = m.state && m.state.cov && m.state.cov.custom;
+    return (box && Array.isArray(box[key])) ? box[key] : [];
+  }
+  function customAllOf(m) {
+    if (BK.customAll) return BK.customAll(m.state);
+    return [];
+  }
+  /* 긴 담보명은 잘라서 한 줄에 맞춥니다 (넘침 방지) */
+  function cutName(t, n) {
+    const v = String(t == null ? '' : t).trim() || '담보명 미입력';
+    return v.length > n ? v.slice(0, n - 1) + '…' : v;
+  }
+  /* 한 줄에 들어가는 길이로 항목을 줄이고 남은 건수를 붙입니다 (넘침 방지) */
+  function customFit(s, items, w, size, withArea) {
+    const parts = items.map((x) => `${withArea && x.area ? '[' + x.area + '] ' : ''}${cutName(x.name, 20)} ${won(x.amount)}만원(${CUSTOM_MODE_TXT[x.mode] || '통합형'})`);
+    const tail = (n) => (n > 0 ? `   외 ${n}건` : '');
+    for (let n = parts.length; n >= 1; n -= 1) {
+      const cand = parts.slice(0, n).join('   ') + tail(parts.length - n);
+      if (n === 1 || s.measure(cand, size, 500) <= w) return cand;
+    }
+    return parts[0] || '';
+  }
+  /* 컴팩트 참고 박스 — 해당 영역 페이지용 (항목이 없으면 아무것도 그리지 않습니다) */
+  function customBox(s, y, items, o) {
+    o = o || {};
+    if (!items || !items.length) return y;
+    const h = o.h || 28;
+    const total = items.reduce((a, x) => a + Number(x.amount || 0), 0);
+    s.rect(s.ML, y, s.CW, h, { fill: o.fill || C.tint2, r: 4, stroke: C.tintLine });
+    s.rect(s.ML, y, 2.4, h, { fill: o.accent || C.blue, r: 1.2 });
+    s.text(o.title || '증권 직접 기재 담보', s.ML + 10, y + 5, { size: 6.2, weight: 800, color: o.accent || C.blue });
+    s.text(`${items.length}건 · 합계 ${won(total)}만원`, s.ML + s.CW - 10, y + 5, { size: 5.8, weight: 600, color: C.muted, align: 'right' });
+    s.text(customFit(s, items, s.CW - 22, 6.0, !!o.withArea), s.ML + 10, y + 15.5, { size: 6.0, weight: 500, color: C.ink2 });
+    return y + h + (o.gap || 0);
+  }
+
 
   /* =========================================================
      v5.5 — 브랜드·담당자 · 진단비 분해 · 리모델링 연동
@@ -7142,9 +7439,15 @@ const PLAN_FRONT = {
     if (sim.val <= 0) out.push('유사암 담보가 없어 갑상선암·기타피부암처럼 유사암으로 분류되는 진단은 지급되지 않습니다.');
     if (t.val < t.rec) {
       const miss = (t.subs || []).filter((x) => x.val <= 0).map((x) => x.label);
-      out.push(`암 주요치료비 5종은 ${subHave(t)}종·${won(t.val)}만원이고, ${miss.slice(0, 2).join('·') || '일부 항목'}이 비어 있습니다.`);
+      out.push(`암 주요치료비 5종은 ${subHave(t)}종·${won(effVal(t))}만원이고, ${miss.slice(0, 2).join('·') || '일부 항목'}이 비어 있습니다.`);
     }
     if (!m.state.cov.cancer.recur) out.push('재진단·전이 담보가 없어 완치 후 재발했을 때 다시 받을 금액이 없습니다.');
+    /* v5.6 — 증권 직접 기재 담보를 소견에 반영 */
+    const cus = customOf(m, 'cancer');
+    if (cus.length) {
+      const cusSum = cus.reduce((a, x) => a + Number(x.amount || 0), 0);
+      out.push(`증권에 직접 기재한 ${cus.map((x) => `${cutName(x.name, 16)} ${won(x.amount)}만원(${CUSTOM_MODE_TXT[x.mode] || '통합형'})`).slice(0, 3).join('·')}${cus.length > 3 ? ` 외 ${cus.length - 3}건` : ''}은 합계 ${won(cusSum)}만원으로 치료비 축에 합산해 위 금액에 반영했습니다.`);
+    }
     const gap = cr.gaps[0];
     out.push(gap
       ? `그래서 이번 설계는 ${gap.label} ${won(gap.need)}만원을 먼저 채우고, 나머지는 지금 보험료 안에서 순서를 정하는 쪽으로 잡았습니다.`
@@ -7159,6 +7462,14 @@ const PLAN_FRONT = {
     const out = [`뇌혈관질환 진단비 ${won(bcore.val)}만원, 허혈성심장질환 진단비 ${won(hcore.val)}만원입니다.`];
     if (!bcore.val) out.push('뇌혈관질환 범위가 비어 있어 가장 흔한 뇌경색(I63)은 뇌졸중 담보 금액만 지급됩니다.');
     if (!hcore.val) out.push('허혈성심장 범위가 비어 있어 협심증(I20)과 스텐트 시술은 지급되지 않습니다.');
+    /* v5.6 — 증권 직접 기재 담보(통합형/개별형)를 소견에 반영 */
+    const cusBH = [].concat(
+      customOf(m, 'brain').map((x) => Object.assign({}, x, { area: '뇌' })),
+      customOf(m, 'heart').map((x) => Object.assign({}, x, { area: '심장' }))
+    );
+    if (cusBH.length) {
+      out.push(`증권에 직접 기재한 ${cusBH.map((x) => `${x.area} ${cutName(x.name, 14)} ${won(x.amount)}만원(${CUSTOM_MODE_TXT[x.mode] || '통합형'})`).slice(0, 3).join('·')}${cusBH.length > 3 ? ` 외 ${cusBH.length - 3}건` : ''}은 주요치료비 3종 합계에 합산해 위 판단에 넣었습니다.`);
+    }
     const gap = (b.gaps[0] || h.gaps[0]);
     out.push(gap
       ? `두 축을 함께 보면 ${gap.label} ${won(gap.need)}만원이 가장 먼저 채울 금액입니다.`
@@ -7173,6 +7484,14 @@ const PLAN_FRONT = {
     if (m.state.silson === 'none') out.push('실손이 없어 입원·통원 의료비를 받을 축이 비어 있습니다. 진단비보다 실손을 먼저 세우는 것이 순서입니다.');
     else out.push(`실손은 ${m.state.silson}세대입니다. 09p에서 선택형 할인 특약과 5세대 전환을 같은 표에 놓고 비교했습니다.`);
     if (ca.gaps.length) out.push(`보완이 필요하다면 ${ca.gaps[0].label} ${won(ca.gaps[0].need)}만원부터입니다.`);
+    /* v5.6 — 증권 직접 기재 담보 */
+    const cusSC = [].concat(
+      customOf(m, 'surgery').map((x) => Object.assign({}, x, { area: '수술' })),
+      customOf(m, 'care').map((x) => Object.assign({}, x, { area: '간병' }))
+    );
+    if (cusSC.length) {
+      out.push(`증권에 직접 기재한 ${cusSC.map((x) => `${x.area} ${cutName(x.name, 14)} ${won(x.amount)}만원`).slice(0, 3).join('·')}${cusSC.length > 3 ? ` 외 ${cusSC.length - 3}건` : ''}은 고정 6축 밖의 특약이라 축 판정에는 더하지 않고 증권 확인표에 그대로 적었습니다.`);
+    }
     return out.join(' ');
   }
 
@@ -7836,9 +8155,23 @@ const PLAN_FRONT = {
         { text: LEVEL_LABEL[p.level], badge: p.level === 'enough' ? 'ok' : p.level === 'check' ? 'need' : p.level === 'short' ? 'gap' : 'info', align: 'center' }
       ]);
       y = s.table(s.ML, y + 2, s.CW, ['우선순위', '세부 담보', '현재 / 권장', '상태'], rows, {
-        widths: [92, 168, 190, 65], size: 6.5, rowH: 14.2, align: ['left', 'left', 'left', 'center']
+        widths: [92, 168, 190, 65], size: 6.5, rowH: 13.0, align: ['left', 'left', 'left', 'center']
       });
       y = noteStrip(s, y + 8, '「없음」은 담보 자체가 없는 상태, 「부족」은 금액이 권장 기준에 못 미치는 상태, 「점검」은 코드 범위·지급 횟수 확인이 필요한 상태입니다. 권장 기준은 상담 보조용 예시이며 실제 판단은 증권의 담보명·코드·지급 조건으로 확인합니다.', { size: 6.4 });
+
+      /* v5.6 — 증권 직접 기재 추가 담보 (많으면 상위 건 + 남은 건수) */
+      const cusAll = customAllOf(m);
+      if (cusAll.length) {
+        const shown = cusAll.slice(0, 4);
+        y = s.sectionHead(s.ML, y + 8, s.CW, '04', '증권 직접 기재 추가 담보', `${cusAll.length}건 · 담보명 그대로 · 치료비 합계 포함`);
+        y = s.table(s.ML, y + 2, s.CW, ['담보명', '영역', '구분', '금액'], shown.map((c) => [
+          { text: c.name || '담보명 미입력', weight: 700, color: C.navy },
+          { text: c.area || '', color: C.ink2, align: 'center' },
+          { text: CUSTOM_MODE_TXT[c.mode] || '통합형', badge: c.mode === 'bundle' ? 'info' : 'none', align: 'center' },
+          { text: `${won(c.amount)}만원`, weight: 700, color: C.navy, align: 'right' }
+        ]), { widths: [250, 62, 88, 115], size: 6.5, rowH: 13, headH: 15, align: ['left', 'center', 'center', 'right'] });
+        if (cusAll.length > shown.length) s.text(`그 외 ${cusAll.length - shown.length}건은 각 영역 페이지(05·06·07p)와 앱 입력 화면에서 확인합니다.`, s.ML, y + 3, { size: 5.8, weight: 500, color: C.muted });
+      }
       s.footer({ left: `${m.client.name}님 · 포트폴리오`, right: '03 / 10' });
     });
 
@@ -7879,11 +8212,11 @@ const PLAN_FRONT = {
       const cr = m.rows[0];
       const tparts = PK(cr, 'treatment');
       const tsubs = tparts.subs || [];
-      const tHave = tsubs.filter((s) => s.val > 0).length;
+      const tHave = tsubs.filter((s) => subEff(s) > 0).length;
       const cards = [
         { label: '일반암 진단비', p: PK(cr, 'general'), rec: PK(cr, 'general').rec },
         { label: '유사암 진단비', p: PK(cr, 'similar'), rec: PK(cr, 'similar').rec },
-        { label: '암 주요치료비 5종', p: tparts, rec: tparts.rec, note: `5종 중 ${tHave}종` },
+        { label: '암 주요치료비 5종', p: Object.assign({}, tparts, { val: effVal(tparts) }), rec: tparts.rec, note: `5종 중 ${tHave}종` },
         { label: '재진단·전이', p: PK(cr, 'recur'), rec: null }
       ];
       const cw = (s.CW - 8 * 3) / 4;
@@ -7903,32 +8236,34 @@ const PLAN_FRONT = {
           s.gauge(x + 8, y + 60, cw - 16, c.p.val ? 1 : 0, { color: c.p.val ? C.mint : C.gray, h: 6 });
         }
       });
-      y += 88;
+      y += 82;
       y = s.sectionHead(s.ML, y, s.CW, '01', '왜 이 순서인가 — 공식 통계', '출처를 함께 제시하면 설득이 아니라 확인이 됩니다');
       statCard(s, s.ML, y, (s.CW - 8) / 2, 96, statById('death'));
       statCard(s, s.ML + (s.CW - 8) / 2 + 8, y, (s.CW - 8) / 2, 96, statById('cancer'));
-      y += 102;
+      y += 95;
       y = costStrip(s, s.ML, y, s.CW, '치료비 체감 근거 — 진단비가 아니라 치료비가 길게 나가는 구간', [
         ['표적항암제', '연 수천만 원대', '비급여 구간'],
         ['면역항암제', '연 수천만~1억 원대', '약제·용량별 차이'],
         ['항암 치료 기간', '6개월~수년', '그동안 소득 공백']
       ], { accent: C.blue });
-      y = s.sectionHead(s.ML, y + 10, s.CW, '02', '암 담보 코드 · 지급 구조', null);
-      y = codeTable(s, s.ML, y + 2, s.CW, PLAYBOOK_CODES('cancer'), { rowH: 14 });
-      y = s.sectionHead(s.ML, y + 10, s.CW, '03', '지금 채울 것 — 담당자 소견', cr.gaps.length ? `${won(cr.gaps[0].need)}만원 부족` : '기준선 이상');
+      y = s.sectionHead(s.ML, y + 6, s.CW, '02', '암 담보 코드 · 지급 구조', null);
+      y = codeTable(s, s.ML, y + 2, s.CW, PLAYBOOK_CODES('cancer'), { rowH: 12.4 });
+      y = s.sectionHead(s.ML, y + 6, s.CW, '03', '지금 채울 것 — 담당자 소견', cr.gaps.length ? `${won(cr.gaps[0].need)}만원 부족` : '기준선 이상');
       y = ownerNote(s, m, y, cancerNote(m), { accent: C.blue });
-      y = s.sectionHead(s.ML, y + 10, s.CW, '04', '설계 권장안 — 암 주요치료비 5종 세부', '권장 기준 — 예산에 맞춰 조정합니다');
+      y = s.sectionHead(s.ML, y + 6, s.CW, '04', '설계 권장안 — 암 주요치료비 5종 세부', '권장 기준 — 예산에 맞춰 조정합니다');
       const recs = [
         ['일반암 진단비', `${won(m.state.cov.cancer.general)}만원`, `${won(PK(cr, 'general').rec)}만원`, PK(cr, 'general').fill],
         ['유사암 진단비', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `${won(PK(cr, 'similar').rec)}만원`, PK(cr, 'similar').fill],
-        ['암 주요치료비 5종 합계', `${won(tparts.val)}만원`, `${won(tparts.rec)}만원`, tparts.fill]
+        ['암 주요치료비 5종 합계', `${won(effVal(tparts))}만원`, `${won(tparts.rec)}만원`, tparts.fill]
       ].concat(tsubs.map((sp) => [`　· ${sp.label}`, sp.val ? `${won(sp.val)}만원` : '없음', `${won(sp.rec)}만원`, sp.fill]))
         .concat([['재진단·전이', m.state.cov.cancer.recur ? '보유' : '없음', '보유 권장', m.state.cov.cancer.recur ? 1 : 0]]);
       y = s.table(s.ML, y + 2, s.CW, ['항목', '현재', '권장 기준', '충족도'], recs.map((r) => [
         { text: r[0], weight: 700, color: C.navy }, r[1], { text: r[2], color: C.ink2 },
         { text: `${Math.round(r[3] * 100)}%`, weight: 700, color: r[3] >= 0.99 ? C.mint : r[3] > 0.4 ? C.orange : C.red, align: 'center' }
-      ]), { widths: [140, 130, 150, 95], size: 6.3, rowH: 12.6, headH: 15, align: ['left', 'center', 'center', 'center'] });
-      y = noteStrip(s, y + 6, '유사암에 묶는 범위와 지급 비율은 상품마다 다릅니다. 원발부위 기준 조항의 설명 여부가 다퉈진 판례(대법원 2025.3.13. 선고 2023다250746)도 함께 확인하세요. 비용 범위는 상담 참고용 예시이며 실제 부담은 약제·병원·급여 여부에 따라 달라집니다.', { size: 6.1 });
+      ]), { widths: [140, 130, 150, 95], size: 6.3, rowH: 11.6, headH: 13, align: ['left', 'center', 'center', 'center'] });
+      y = noteStrip(s, y + 6, '유사암에 묶는 범위와 지급 비율은 상품마다 다릅니다. 원발부위 기준 조항의 설명 여부가 다퉈진 판례(대법원 2025.3.13. 선고 2023다250746)도 함께 확인하세요. 비용 범위는 상담 참고용 예시이며 실제 부담은 약제·병원·급여 여부에 따라 달라집니다.', { size: 6.0 });
+      /* v5.6 — 증권 직접 기재 담보 (실제 특약명·금액 그대로) */
+      y = customBox(s, y + 5, customOf(m, 'cancer'), { accent: C.blue, title: '증권 직접 기재 담보 — 암 (증권 담보명 그대로)' });
       s.footer({ left: `${m.client.name}님 · 1순위 암`, right: '05 / 10' });
     });
 
@@ -7974,11 +8309,11 @@ const PLAN_FRONT = {
         s.text(gi ? '허혈성심장질환 I20~I25' : '뇌혈관질환 I60~I69', tx, y + 65, { size: 6.8, weight: 700, color: C.navy });
         s.gauge(tx, y + 80, tw, dxp.fill, { color: dxp.fill >= 0.99 ? C.mint : C.orange, h: 6 });
         s.text(`충족 ${Math.round(dxp.fill * 100)}%`, tx, y + 89, { size: 6.2, weight: 600, color: C.ink2 });
-        s.text(`주요치료비 3종 ${subHave(PK(row, 'treat'))}/3 · ${won(PK(row, 'treat').val)}만원`, tx, y + 100, { size: 6.2, weight: 600, color: PK(row, 'treat').val > 0 ? C.mint : C.red });
+        s.text(`주요치료비 3종 ${subHave(PK(row, 'treat'))}/3 · ${won(effVal(PK(row, 'treat')))}만원`, tx, y + 100, { size: 6.2, weight: 600, color: effVal(PK(row, 'treat')) > 0 ? C.mint : C.red });
         s.text((dx.scenarios || []).map((sc) => `${BK.dxShort(sc.label.replace(/\(.*/, ''))} ${won(sc.sum)}`).join(' · '), tx, y + 112, { size: 5.9, weight: 600, color: C.navy });
         s.para(gi ? '협심증(I20)은 허혈성심장 담보에서만, 급성심근경색(I21)은 두 담보가 합산됩니다.' : '뇌경색(I63)은 뇌혈관+뇌졸중, 뇌출혈(I61)은 세 담보가 합산됩니다.', tx, y + 122, tw, { size: 5.7, color: C.ink2, lh: 1.32 });
       });
-      y += 160;
+      y += 154;
 
       y = s.sectionHead(s.ML, y, s.CW, '01', '진단비 3단계·2단계 금액', '핵심 범위 / 현재 / 권장 / 해석');
       const rowOfDx = (dxp, i) => {
@@ -7992,11 +8327,17 @@ const PLAN_FRONT = {
         ['주요치료비 3종', `뇌 ${subHave(PK(brain, 'treat'))}/3 · 심장 ${subHave(PK(heart, 'treat'))}/3`, '혈전용해제·수술·중환자실', '혈전용해제와 기계적 혈전제거술은 별도']
       ];
       y = s.table(s.ML, y + 2, s.CW, ['담보 (범위)', '현재', '권장', '코드'], rows, {
-        widths: [150, 90, 90, 185], size: 6.6, rowH: 20, align: ['left', 'center', 'center', 'center']
+        widths: [150, 90, 90, 185], size: 6.6, rowH: 19, align: ['left', 'center', 'center', 'center']
       });
       y = noteStrip(s, y + 6, (bdx.gapWarn ? '⚠ 뇌혈관질환 진단비가 0원입니다 — 뇌경색(I63)은 뇌졸중 금액만, 뇌혈관 후유증(I69)은 지급되지 않습니다. ' : '')
         + (hdx.gapWarn ? '⚠ 허혈성심장질환 진단비가 0원입니다 — 협심증(I20)·스텐트 시술이 지급되지 않습니다. ' : '')
         + '안쪽 담보는 바깥 담보에 포함되고, 진단 시 금액이 합산됩니다. 실제 지급은 담보명·코드·지급 조건으로 확인합니다.', { size: 6.4 });
+      /* v5.6 — 증권 직접 기재 담보(통합형/개별형)를 해당 페이지에 표시 */
+      const cusBHbox = [].concat(
+        customOf(m, 'brain').map((x) => Object.assign({}, x, { area: '뇌' })),
+        customOf(m, 'heart').map((x) => Object.assign({}, x, { area: '심장' }))
+      );
+      if (cusBHbox.length) y = customBox(s, y + 4, cusBHbox, { accent: C.navy2, title: '증권 직접 기재 담보 — 뇌·심장 (통합형/개별형)', withArea: true, gap: 6 });
       y = s.sectionHead(s.ML, y + 8, s.CW, '02', '공식 통계로 확인', '출처: 중앙심뇌혈관질환센터·건강보험통계 2023');
       statCard(s, s.ML, y, s.CW, 96, statById('stroke'));
       y += 100;
@@ -8014,14 +8355,14 @@ const PLAN_FRONT = {
     P.push(function (s) {
       let y = H(s, 7, '수술 · 입원 · 간병 · 실손', '매일 나가는 돈과 한 번 나가는 돈을 함께 봅니다. 의료비 방어력은 이 네 축의 합입니다.');
       const surgery = m.rows[3], care = m.rows[4];
-      const defence = Math.round(((surgery.r.fill + care.r.fill + (m.state.silson === 'none' ? 0 : 1) + (BK.treatSum(m.state) > 0 ? 1 : 0)) / 4) * 100);
-      s.rect(s.ML, y, s.CW, 54, { fill: C.hero, r: 6 });
-      s.text('의료비 방어력', s.ML + 14, y + 10, { size: 6.4, weight: 700, color: C.heroInk });
+      const defence = Math.round(((surgery.r.fill + care.r.fill + (m.state.silson === 'none' ? 0 : 1) + (effVal(PK(m.rows[0], 'treatment')) > 0 ? 1 : 0)) / 4) * 100);
+      s.rect(s.ML, y, s.CW, 50, { fill: C.hero, r: 6 });
+      s.text('의료비 방어력', s.ML + 14, y + 8, { size: 6.4, weight: 700, color: C.heroInk });
       s.text(`${defence}%`, s.ML + 14, y + 19, { size: 22, weight: 800, color: '#fff' });
       s.gauge(s.ML + 92, y + 30, s.CW - 116, defence / 100, { color: C.heroOk, h: 8, track: C.heroTrack });
       s.text(defence >= 80 ? '기본 방어선이 서 있습니다' : defence >= 50 ? '한두 축이 비어 있습니다' : '의료비 기본축부터 세워야 합니다', s.ML + 92, y + 12, { size: 6.8, weight: 600, color: C.heroInk2 });
-      s.text('수술 · 간병 · 실손 · 치료비 4축 평균', s.W - s.MR - 14, y + 12, { size: 5.8, weight: 500, color: C.heroInk, align: 'right' });
-      y += 64;
+      s.text('수술 · 간병 · 실손 · 치료비 4축 평균', s.W - s.MR - 14, y + 10, { size: 5.8, weight: 500, color: C.heroInk, align: 'right' });
+      y += 58;
 
       y = s.sectionHead(s.ML, y, s.CW, '01', '수술비 6축 · 간병 6칸', null);
       const sgr = m.rows[3], carR = m.rows[4];
@@ -8042,32 +8383,38 @@ const PLAN_FRONT = {
       ];
       y = s.table(s.ML, y + 2, s.CW, ['영역', '항목', '현재', '메모'], rows.map((r) => [
         { text: r[0], weight: 700, color: C.navy }, r[1], { text: r[2], weight: 700, color: r[2] === '없음' || r[2] === '미확인' ? C.red : C.navy }, { text: r[3], color: C.muted }
-      ]), { widths: [48, 170, 92, 205], size: 6.3, rowH: 12.6, headH: 15, align: ['left', 'left', 'center', 'left'] });
+      ]), { widths: [48, 170, 92, 205], size: 6.3, rowH: 11.2, headH: 14, align: ['left', 'left', 'center', 'left'] });
       y = s.sectionHead(s.ML, y + 8, s.CW, '02', '의료비 방어력 4축', '지금 어느 축이 비어 있는지');
       const axes4 = [
         ['수술비', m.rows[3].r.fill], ['간병', m.rows[4].r.fill],
-        ['실손', m.state.silson === 'none' ? 0 : 1], ['치료비 5종', BK.treatCount(m.state) / 5]
+        ['실손', m.state.silson === 'none' ? 0 : 1], ['치료비 5종', (() => { const tp0 = PK(m.rows[0], 'treatment'); return (tp0.subs && tp0.subs.length) ? subHave(tp0) / tp0.subs.length : 0; })()]
       ];
       const aw = (s.CW - 6 * 3) / 4;
       axes4.forEach((a, i) => {
         const x = s.ML + i * (aw + 6);
-        s.rect(x, y, aw, 46, { fill: '#fff', r: 5, stroke: C.line });
-        s.text(a[0], x + 9, y + 8, { size: 6.2, weight: 600, color: C.muted });
-        s.text(`${Math.round(a[1] * 100)}%`, x + 9, y + 17, { size: 13, weight: 800, color: a[1] >= 0.9 ? C.mint : a[1] > 0.3 ? C.orange : C.red });
-        s.gauge(x + 9, y + 36, aw - 18, a[1], { color: a[1] >= 0.9 ? C.mint : a[1] > 0.3 ? C.orange : C.gray, h: 4.5 });
+        s.rect(x, y, aw, 42, { fill: '#fff', r: 5, stroke: C.line });
+        s.text(a[0], x + 9, y + 6, { size: 6.2, weight: 600, color: C.muted });
+        s.text(`${Math.round(a[1] * 100)}%`, x + 9, y + 14, { size: 13, weight: 800, color: a[1] >= 0.9 ? C.mint : a[1] > 0.3 ? C.orange : C.red });
+        s.gauge(x + 9, y + 32, aw - 18, a[1], { color: a[1] >= 0.9 ? C.mint : a[1] > 0.3 ? C.orange : C.gray, h: 4.5 });
       });
-      y += 58;
+      y += 51;
       y = s.sectionHead(s.ML, y + 2, s.CW, '03', '장기요양 등급 분포 — 왜 1~2등급만 준비하면 안 되는가', '출처: 건보공단 2025 노인장기요양보험 통계연보');
-      statCard(s, s.ML, y, s.CW, 98, statById('ltc'));
-      y += 104;
+      statCard(s, s.ML, y, s.CW, 90, statById('ltc'));
+      y += 94;
       y = costStrip(s, s.ML, y, s.CW, '간병은 매달 나가는 돈 — 일당이 곱해지는 구조', [
         ['간병인 일당', '12~15만원', '업체·지역별 차이'],
         ['한 달(30일)', '360~450만원', '입원이 길어지면'],
         ['지급 기준', '하루 8시간', '2026.7 전환']
-      ], { accent: C.mint });
-      y = s.sectionHead(s.ML, y + 10, s.CW, '04', '정리 — 담당자 소견', '실손·간병·수술의 순서');
+      ], { accent: C.mint, h: 40 });
+      y = s.sectionHead(s.ML, y + 6, s.CW, '04', '정리 — 담당자 소견', '실손·간병·수술의 순서');
       y = ownerNote(s, m, y, careNote(m), { accent: C.mint });
-      y = noteStrip(s, y + 6, '2026년 7월부터 주요 손보사가 간병인 사용일당 지급 기준을 금액(하루 8만원)→시간(하루 8시간)으로 전환했습니다. 가족 간병은 업체 등록·결제·간병일지가 맞아야 인정되며, 요양병원은 별도 담보입니다. 장기요양은 등급 판정이 전제이고 65세 미만도 노인성 질병이면 신청할 수 있습니다.', { size: 6 });
+      /* v5.6 — 증권 직접 기재 담보(수술·간병) */
+      const cusSCbox = [].concat(
+        customOf(m, 'surgery').map((x) => Object.assign({}, x, { area: '수술' })),
+        customOf(m, 'care').map((x) => Object.assign({}, x, { area: '간병' }))
+      );
+      if (cusSCbox.length) y = customBox(s, y + 4, cusSCbox, { accent: C.mint, title: '증권 직접 기재 담보 — 수술·간병 (증권 담보명 그대로)', withArea: true, gap: 2 });
+      y = noteStrip(s, y + (cusSCbox.length ? 2 : 6), '2026년 7월부터 주요 손보사가 간병인 사용일당 지급 기준을 금액(하루 8만원)→시간(하루 8시간)으로 전환했습니다. 가족 간병은 업체 등록·결제·간병일지가 맞아야 인정되며, 요양병원은 별도 담보입니다. 장기요양은 등급 판정이 전제이고 65세 미만도 노인성 질병이면 신청할 수 있습니다.', { size: 5.9 });
       s.footer({ left: `${m.client.name}님 · 수술·간병`, right: '07 / 10' });
     });
 
@@ -8731,11 +9078,11 @@ const PLAN_FRONT = {
       const cw = (s.CW - 8 * 3) / 4;
       const tP = PK(cr, 'treatment');
       const tS = tP.subs || [];
-      const tN = tS.filter((x) => x.val > 0).length;
+      const tN = tS.filter((x) => subEff(x) > 0).length;
       [
         ['일반암', `${won(m.state.cov.cancer.general)}만원`, `권장 ${won(PK(cr, 'general').rec)}만원`, PK(cr, 'general').fill],
         ['유사암', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `권장 ${won(PK(cr, 'similar').rec)}만원`, PK(cr, 'similar').fill],
-        ['치료비 5종', `${won(tP.val)}만원 (${tN}/5)`, `권장 ${won(tP.rec)}만원`, tP.fill],
+        ['치료비 5종', `${won(effVal(tP))}만원 (${tN}/5)`, `권장 ${won(tP.rec)}만원`, tP.fill],
         ['재진단', m.state.cov.cancer.recur ? '보유' : '없음', '권장 보유', m.state.cov.cancer.recur ? 1 : 0]
       ].forEach((c, i) => {
         const x = s.ML + i * (cw + 8);
@@ -8747,7 +9094,7 @@ const PLAN_FRONT = {
       });
       y += 66;
       y = secLabel(s, y, '60초 판독 멘트 (그대로 읽어도 됩니다)');
-      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반암 진단비가 ${won(m.state.cov.cancer.general)}만원입니다. 기준으로 보면 ${Math.round(PK(cr, 'general').fill * 100)}% 수준이고, ${m.state.cov.cancer.similar ? `유사암은 ${won(m.state.cov.cancer.similar)}만원으로` : '유사암 담보는 없어서 갑상선암 같은 경우 0원이 될 수 있고,'} ${tN >= 5 ? `치료비는 5종이 모두 채워져 합계 ${won(tP.val)}만원입니다` : `치료비는 5종 중 ${tN}종만 채워져 합계 ${won(tP.val)}만원입니다`}. 제가 보기엔 ${cr.gaps.length ? `${cr.gaps[0].label}가 가장 먼저 손댈 곳입니다` : '금액은 충분하니 재진단 조건을 확인할 차례입니다'}."` });
+      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반암 진단비가 ${won(m.state.cov.cancer.general)}만원입니다. 기준으로 보면 ${Math.round(PK(cr, 'general').fill * 100)}% 수준이고, ${m.state.cov.cancer.similar ? `유사암은 ${won(m.state.cov.cancer.similar)}만원으로` : '유사암 담보는 없어서 갑상선암 같은 경우 0원이 될 수 있고,'} ${tN >= 5 ? `치료비는 5종이 모두 채워져 합계 ${won(effVal(tP))}만원입니다` : `치료비는 5종 중 ${tN}종만 채워져 합계 ${won(effVal(tP))}만원입니다`}. 제가 보기엔 ${cr.gaps.length ? `${cr.gaps[0].label}가 가장 먼저 손댈 곳입니다` : '금액은 충분하니 재진단 조건을 확인할 차례입니다'}."` });
       y += 6;
       y = s.bullets(s.ML, y, s.CW, [`치료비 5종 세부 — ${tS.map((x) => `${x.label} ${x.val ? won(x.val) + '만원' : '없음'}`).join(' · ')} (권장 ${won(tP.rec)}만원)`], { size: 6.6 });
       y += 8;
@@ -8760,6 +9107,8 @@ const PLAN_FRONT = {
       y = noteStrip(s, y + 6, `오늘의 결정 목표: ${cr.gaps.length ? `${cr.gaps[0].label} ${won(cr.gaps[0].need)}만원 부족분을 채울지 결정` : '재진단·유사암 조건 확인 후 유지 결정'}`, { size: 6.8, fill: C.orangeSoft, stroke: C.orangeLine, accent: C.orange });
       y = typeCards(s, y + 10, PLAN_EXTRA.cancer.types);
       y = questionCard(s, y, PLAYBOOK.cancer.questions[0], '이 페이지에서 쓸 질문 하나');
+      /* v5.6 — 증권 직접 기재 담보 참고 */
+      y = customBox(s, y + 6, customOf(m, 'cancer'), { accent: C.blue, title: '증권 직접 기재 담보 — 암 (고객 증권 그대로)' });
       foot(s, 7, '1순위 암 · 판독');
     });
 
@@ -8884,8 +9233,8 @@ const PLAN_FRONT = {
       s.text(`${won(bCore.val)}만원`, s.ML + 12, y + 18, { size: 15, weight: 800, color: bCore.val >= 2000 ? C.mint : C.red });
       s.text(`뇌졸중 ${won((bdxA.subs[1] || {}).val || 0)} · 뇌출혈 ${won((bdxA.subs[2] || {}).val || 0)}만원`, s.ML + 12, y + 38, { size: 6.4, weight: 600, color: C.ink2 });
       s.text('주요치료비 3종', s.ML + 150, y + 9, { size: 6.2, weight: 600, color: C.muted });
-      s.text(`${subHave(PK(br, 'treat'))}/3종`, s.ML + 150, y + 18, { size: 13, weight: 800, color: PK(br, 'treat').val > 0 ? C.mint : C.red });
-      s.text(`혈전용해제·수술·중환자실 ${won(PK(br, 'treat').val)}만원`, s.ML + 150, y + 38, { size: 6.2, weight: 600, color: C.ink2 });
+      s.text(`${subHave(PK(br, 'treat'))}/3종`, s.ML + 150, y + 18, { size: 13, weight: 800, color: effVal(PK(br, 'treat')) > 0 ? C.mint : C.red });
+      s.text(`혈전용해제·수술·중환자실 ${won(effVal(PK(br, 'treat')))}만원`, s.ML + 150, y + 38, { size: 6.2, weight: 600, color: C.ink2 });
       s.text('진단 시 합산', s.W - s.MR - 150, y + 9, { size: 6.2, weight: 600, color: C.muted });
       s.text('뇌경색(I63) ' + won((bdxA.scenarios && bdxA.scenarios[0] ? bdxA.scenarios[0].sum : 0)) + '만원', s.W - s.MR - 150, y + 19, { size: 7.4, weight: 800, color: C.navy });
       s.text('뇌출혈(I61) ' + won((bdxA.scenarios && bdxA.scenarios[1] ? bdxA.scenarios[1].sum : 0)) + '만원', s.W - s.MR - 150, y + 30, { size: 7.4, weight: 800, color: C.navy });
@@ -8905,6 +9254,8 @@ const PLAN_FRONT = {
       ], { size: 7, rowH: 14.5 });
       y = typeCards(s, y + 10, PLAN_EXTRA.brain.types);
       y = questionCard(s, y, PLAYBOOK.brain.questions[1], '이 페이지에서 쓸 질문 하나');
+      /* v5.6 — 증권 직접 기재 담보 참고 */
+      y = customBox(s, y + 6, customOf(m, 'brain'), { accent: C.blue, title: '증권 직접 기재 담보 — 뇌 (통합형/개별형 포함)' });
       foot(s, 12, '2순위 뇌 · 판독');
     });
 
@@ -8989,8 +9340,8 @@ const PLAN_FRONT = {
       s.text(`${won(hCore.val)}만원`, s.ML + 12, y + 18, { size: 15, weight: 800, color: hCore.val >= 2000 ? C.mint : C.red });
       s.text(`급성심근경색 ${won((hdxA.subs && hdxA.subs[1] ? hdxA.subs[1].val : 0))}만원`, s.ML + 12, y + 38, { size: 6.4, weight: 600, color: C.ink2 });
       s.text('주요치료비 3종', s.ML + 150, y + 9, { size: 6.2, weight: 600, color: C.muted });
-      s.text(`${subHave(PK(hr, 'treat'))}/3종`, s.ML + 150, y + 18, { size: 13, weight: 800, color: PK(hr, 'treat').val > 0 ? C.mint : C.red });
-      s.text(`혈전용해제·수술·중환자실 ${won(PK(hr, 'treat').val)}만원`, s.ML + 150, y + 38, { size: 6.2, color: C.ink2 });
+      s.text(`${subHave(PK(hr, 'treat'))}/3종`, s.ML + 150, y + 18, { size: 13, weight: 800, color: effVal(PK(hr, 'treat')) > 0 ? C.mint : C.red });
+      s.text(`혈전용해제·수술·중환자실 ${won(effVal(PK(hr, 'treat')))}만원`, s.ML + 150, y + 38, { size: 6.2, color: C.ink2 });
       s.text('권장', s.W - s.MR - 160, y + 9, { size: 6.2, weight: 600, color: C.muted });
       s.text('허혈성심장질환 I20~I25', s.W - s.MR - 160, y + 20, { size: 9, weight: 800, color: C.navy });
       s.text('급성심근경색 I21~I22 → 협심증 I20 포함', s.W - s.MR - 160, y + 34, { size: 5.8, color: C.muted });
@@ -9004,6 +9355,8 @@ const PLAN_FRONT = {
       y = noteStrip(s, y, '심장질환은 사망원인 2위입니다. 하지만 고객이 실제로 겪는 건 "수술과 약값"입니다. 그래서 진단비만이 아니라 수술비·치료비를 함께 봅니다.', { size: 6.6 });
       y = typeCards(s, y + 10, PLAN_EXTRA.heart.types);
       y = questionCard(s, y, PLAYBOOK.heart.questions[2], '이 페이지에서 쓸 질문 하나');
+      /* v5.6 — 증권 직접 기재 담보 참고 */
+      y = customBox(s, y + 6, customOf(m, 'heart'), { accent: C.red, title: '증권 직접 기재 담보 — 심장 (통합형/개별형 포함)' });
       foot(s, 16, '3순위 심장 · 판독');
     });
 
@@ -9118,6 +9471,8 @@ const PLAN_FRONT = {
       y = noteStrip(s, y + 8, '수술비는 "보조"입니다. 큰 그림은 진단비·치료비로 잡고, 수술비는 빈틈을 막는 용도로만 제안합니다. 이 순서를 지키면 고객이 "수술비를 또 들라고 한다"고 느끼지 않습니다.', { size: 6.6 });
       y = typeCards(s, y + 10, PLAN_EXTRA.surgery.types);
       y = questionCard(s, y, PLAYBOOK.surgery.questions[1], '이 페이지에서 쓸 질문 하나');
+      /* v5.6 — 증권 직접 기재 담보 참고 */
+      y = customBox(s, y + 6, customOf(m, 'surgery'), { accent: C.navy2, title: '증권 직접 기재 담보 — 수술 (고정 6축 밖 특약)' });
       foot(s, 20, '4순위 수술 · 구조');
     });
 
@@ -9212,6 +9567,8 @@ const PLAN_FRONT = {
       ], { size: 7, rowH: 14.5 });
       y = typeCards(s, y + 10, PLAN_EXTRA.care.types);
       y = questionCard(s, y, PLAYBOOK.care.questions[0], '이 페이지에서 쓸 질문 하나');
+      /* v5.6 — 증권 직접 기재 담보 참고 */
+      y = customBox(s, y + 6, customOf(m, 'care'), { accent: C.mint, title: '증권 직접 기재 담보 — 간병 (고정 6칸 밖 특약)' });
       foot(s, 23, '5순위 간병 · 판독');
     });
 
@@ -11334,7 +11691,7 @@ const PLAN_FRONT = {
 
 </script>
 <script>
-/* 보장분석 라이프 리포트 v5.5 — 베타 테스트 공개판
+/* 보장분석 라이프 리포트 v5.6 — 증권 담보 직접 기재 · 베타 테스트 공개판
    · 베타 기간에는 Pro 전 기능(30장 전체 · 1/10/30장 PDF · 고객 30명 · 리모델링 · 화이트라벨)을 잠금 없이 무료 제공
    · v5.4: 계정/구독(backend.js) 연동 — 실서버 구독 상태를 hydrate() 로 반영
    · 정식 출시 예정 요금: 월 5,000원 / 연 50,000원 · 베타 피드백 Google Form + 추첨 사은품 안내
@@ -11577,7 +11934,7 @@ const PLAN_FRONT = {
     if (mark) mark.setAttribute('content', b.name);
     const title = $('#brand-title');
     if (title) title.textContent = b.name;
-    document.title = `${b.name} v5.5 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
+    document.title = `${b.name} v5.6 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
     loadPdfLogo(b.logo);
     /* 상담자 화면의 고객 표지도 새 브랜드로 다시 그립니다 */
     if (root.BojangDeck && root.__bojangState) root.BojangDeck.refresh(root.__bojangState, { reset: true });
@@ -14833,7 +15190,9 @@ const PLAN_FRONT = {
       brain: { dx: { vascular: 2000, stroke: 2000, bleed: 1000 }, treat: { lysis: 1000, surgery: 1500, icu: 0 } },
       heart: { dx: { ischemic: 2000, ami: 1000 }, treat: { lysis: 0, surgery: 1500, icu: 500 } },
       surgery: { disease: 50, disease15: 300, diseaseNdae: 500, diseaseNonPay: 0, injury: 50, injury15: 300 },
-      care: { daily: 10, nDaily: 0, basis: 'time', family: 'conditional', nursing: true, ltc: false, mode: 'normal' }
+      care: { daily: 10, nDaily: 0, basis: 'time', family: 'conditional', nursing: true, ltc: false, mode: 'normal' },
+      /* v5.6 — 증권 담보 직접 기재 (영역별) */
+      custom: { cancer: [], brain: [], heart: [], surgery: [], care: [] }
     },
     flags: { savings: false, renew: true, manyRiders: false }
   };
@@ -15262,6 +15621,147 @@ const PLAN_FRONT = {
       </label>`;
   }
 
+  /* ================= v5.6 증권 담보 직접 기재 =================
+     보험사마다 뇌·심장 주요치료비를 통합형으로 파는 곳과 개별형으로 파는 곳이 달라,
+     고정 칸에 없는 특약을 증권 담보명 그대로 적습니다. */
+  const CUSTOM_LABELS = (typeof CUSTOM_AREA_LABEL !== 'undefined') ? CUSTOM_AREA_LABEL : { cancer: '암', brain: '뇌', heart: '심장', surgery: '수술', care: '간병' };
+
+  function customInto(key) {
+    if (!state.cov.custom || typeof state.cov.custom !== 'object' || Array.isArray(state.cov.custom)) state.cov.custom = { cancer: [], brain: [], heart: [], surgery: [], care: [] };
+    if (!Array.isArray(state.cov.custom[key])) state.cov.custom[key] = [];
+    return state.cov.custom[key];
+  }
+  function customNewId(key) {
+    return `cu_${key}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+  }
+  /* 화면에는 빈 행(입력 중)도 그대로 보여야 하므로 필터 없이 읽습니다 */
+  function customRowsOf(key) {
+    return customInto(key).map((it, i) => BojangModel.sanitizeCustom(it, key, i));
+  }
+
+  function customBlockHTML(key) {
+    const items = customRowsOf(key);
+    const total = items.reduce((a, x) => a + Number(x.amount || 0), 0);
+    const presets = (typeof CUSTOM_PRESETS !== 'undefined' && CUSTOM_PRESETS[key]) || [];
+    const scored = key === 'cancer' || key === 'brain' || key === 'heart';
+    const rows = items.map((it) => `
+      <div class="custom-row" data-cid="${esc(it.id)}">
+        <input type="text" class="cr-name" value="${esc(it.name)}" placeholder="담보명 (증권 표기 그대로)" aria-label="${CUSTOM_LABELS[key]} 직접 기재 담보명" data-custom-name>
+        <span class="cr-amt-box">
+          <input type="number" inputmode="numeric" min="0" max="100000" step="100" class="cr-amt" value="${it.amount ? it.amount : ''}" placeholder="0" aria-label="직접 기재 담보 금액 (만원)" data-custom-amount>
+          <span class="unit">만원</span>
+        </span>
+        <span class="cr-seg" role="group" aria-label="담보 구분">
+          <button type="button" class="cr-seg-btn${it.mode === 'bundle' ? ' is-on' : ''}" data-custom-mode="bundle" aria-pressed="${it.mode === 'bundle'}">통합형</button>
+          <button type="button" class="cr-seg-btn${it.mode === 'individual' ? ' is-on' : ''}" data-custom-mode="individual" aria-pressed="${it.mode === 'individual'}">개별형</button>
+        </span>
+        <button type="button" class="cr-del" data-custom-del aria-label="담보 삭제">×</button>
+      </div>`).join('');
+    return `
+      <div class="part custom-block" data-custom-block="${key}">
+        <div class="part-head">
+          <div class="part-label"><strong>증권 담보 직접 기재</strong><span>보험사별 담보명 그대로 · 통합형/개별형</span></div>
+          <div class="part-side"><span class="mini-badge custom-count tone-${items.length ? 'need' : 'gap'}">${items.length}건</span></div>
+        </div>
+        ${items.length ? `<div class="custom-list">${rows}</div>` : '<p class="custom-empty">고정 칸에 없는 특약(예: 순환계 주요치료비 통합형)을 증권에 적힌 그대로 적습니다.</p>'}
+        ${presets.length ? `<div class="custom-presets">${presets.map((p) => `<button type="button" class="chip-custom" data-custom-preset="${esc(p.name)}" data-preset-mode="${p.mode}">+ ${esc(p.name)}</button>`).join('')}</div>` : ''}
+        <button type="button" class="custom-add" data-custom-add="${key}">+ 증권 담보 직접 추가</button>
+        <div class="custom-total"${total ? '' : ' hidden'}>직접 기재 합계 <b>${won(total)}</b>만원</div>
+        <p class="custom-note">${scored
+          ? '진단비 이름의 담보는 치료비 축에서 제외하고 표시만 합니다. 통합형은 하나의 담보가 여러 치료를 함께 지급하는 상품으로 보고 세부 권장 비율로 나눠 반영합니다.'
+          : '이 영역은 고정 6축 판정을 그대로 두고, 직접 기재 담보는 증권 기재용으로 리포트에 표시합니다.'}</p>
+      </div>`;
+  }
+
+  function updateCustomMeta(key) {
+    const host = $(`[data-custom-block="${key}"]`);
+    if (!host) return;
+    const items = customRowsOf(key);
+    const total = items.reduce((a, x) => a + Number(x.amount || 0), 0);
+    const badge = $('.custom-count', host);
+    if (badge) {
+      badge.className = 'mini-badge custom-count tone-' + (items.length ? 'need' : 'gap');
+      badge.textContent = items.length + '건';
+    }
+    const box = $('.custom-total', host);
+    if (box) {
+      box.hidden = !total;
+      const b = $('b', box);
+      if (b) b.textContent = won(total);
+    }
+  }
+
+  function renderCustomBlock(key) {
+    const host = $(`[data-custom-block="${key}"]`);
+    if (!host) return;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = customBlockHTML(key);
+    const fresh = wrap.firstElementChild;
+    if (!fresh) return;
+    host.replaceWith(fresh);
+    bindCustomBlock(fresh);
+  }
+
+  function addCustomRider(key, name, mode) {
+    const box = customInto(key);
+    const nm = String(name || '').trim();
+    if (nm && box.some((x) => String(x.name || '').trim() === nm)) { toast('이미 추가한 담보입니다'); return; }
+    const id = customNewId(key);
+    box.push({ id, name: nm.slice(0, 40), amount: 0, mode: mode === 'bundle' ? 'bundle' : 'individual', note: '' });
+    renderCustomBlock(key);
+    refreshBadges(); saveSession();
+    const target = nm
+      ? $(`[data-cid="${id}"] [data-custom-amount]`)
+      : $(`[data-cid="${id}"] [data-custom-name]`);
+    if (target) { try { target.focus(); if (target.select) target.select(); } catch (e) { /* noop */ } }
+  }
+
+  function bindCustomBlock(host) {
+    if (!host) return;
+    const key = host.dataset.customBlock;
+    const box = customInto(key);
+    $$('.custom-row', host).forEach((row) => {
+      const id = row.dataset.cid;
+      const find = () => box.find((x) => x.id === id);
+      const nameIn = $('[data-custom-name]', row);
+      const amtIn = $('[data-custom-amount]', row);
+      if (nameIn) nameIn.addEventListener('input', () => {
+        const it = find();
+        if (!it) return;
+        it.name = nameIn.value.slice(0, 40);
+        refreshBadges(); saveSession();
+      });
+      if (amtIn) amtIn.addEventListener('input', () => {
+        const it = find();
+        if (!it) return;
+        it.amount = clamp(Number(amtIn.value || 0), 0, 100000);
+        updateCustomMeta(key);
+        refreshBadges(); saveSession();
+      });
+      $$('[data-custom-mode]', row).forEach((b) => b.addEventListener('click', () => {
+        const it = find();
+        if (!it) return;
+        it.mode = b.dataset.customMode === 'bundle' ? 'bundle' : 'individual';
+        $$('[data-custom-mode]', row).forEach((x) => {
+          const on = x === b;
+          x.classList.toggle('is-on', on);
+          x.setAttribute('aria-pressed', String(on));
+        });
+        refreshBadges(); saveSession();
+      }));
+      const del = $('[data-custom-del]', row);
+      if (del) del.addEventListener('click', () => {
+        const i = box.findIndex((x) => x.id === id);
+        if (i >= 0) box.splice(i, 1);
+        renderCustomBlock(key);
+        refreshBadges(); saveSession();
+      });
+    });
+    const addBtn = $('[data-custom-add]', host);
+    if (addBtn) addBtn.addEventListener('click', () => addCustomRider(key));
+    $$('[data-custom-preset]', host).forEach((b) => b.addEventListener('click', () => addCustomRider(key, b.dataset.customPreset, b.dataset.presetMode)));
+  }
+
   function cardHTML(item, extra) {
     const r = BojangModel.evalItem(state, item);
     const rowOf = (p) => p.type === 'amount' ? amountRowHTML(item, p)
@@ -15277,6 +15777,7 @@ const PLAN_FRONT = {
         </div>
         ${item.parts.map(rowOf).join('')}
         ${extra || ''}
+        ${customBlockHTML(item.key)}
       </div>`;
   }
 
@@ -15358,6 +15859,7 @@ const PLAN_FRONT = {
         refreshBadges(); saveSession();
       });
     });
+    $$('[data-custom-block]').forEach((host) => bindCustomBlock(host));
     syncQuickStates();
   }
 
@@ -16711,7 +17213,7 @@ const PLAN_FRONT = {
 
   function exportPayload() {
     return {
-      app: 'bojang-guide', version: '4.2', exportedAt: new Date().toISOString(),
+      app: 'bojang-guide', version: '5.6', exportedAt: new Date().toISOString(),
       summary: { name: state.client.name, age: state.age, gender: state.gender, score: state.lastResult ? state.lastResult.m.score : null },
       state: snapshotState()
     };

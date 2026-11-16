@@ -145,6 +145,42 @@ const PRIORITY = [
   }
 ];
 
+/* v5.6 — 영역별 '증권 담보 직접 기재' 프리셋
+   보험사마다 뇌·심장 주요치료비를 하나로 묶어 파는 곳(통합형)과 개별로 나눠 파는 곳(개별형)이 달라,
+   고정 칸에 담기지 않는 특약을 증권 담보명 그대로 적기 위한 실무 단골 담보명입니다. */
+const CUSTOM_AREA_LABEL = { cancer: '암', brain: '뇌', heart: '심장', surgery: '수술', care: '간병' };
+const CUSTOM_MODE_LABEL = { bundle: '통합형', individual: '개별형' };
+const CUSTOM_PRESETS = {
+  cancer: [
+    { name: '표적항암약물허가치료비', mode: 'individual' },
+    { name: '다빈치로봇수술비', mode: 'individual' },
+    { name: '항암방사선치료비', mode: 'individual' },
+    { name: '암 주요치료비(통합)', mode: 'bundle' }
+  ],
+  brain: [
+    { name: '순환계 주요치료비(통합)', mode: 'bundle' },
+    { name: '혈전용해치료비', mode: 'individual' },
+    { name: '뇌혈관수술비', mode: 'individual' },
+    { name: '뇌 중환자실입원일당', mode: 'individual' }
+  ],
+  heart: [
+    { name: '순환계 주요치료비(통합)', mode: 'bundle' },
+    { name: '관상동맥성형술(스텐트)', mode: 'individual' },
+    { name: '관상동맥우회술', mode: 'individual' },
+    { name: '심장 중환자실입원일당', mode: 'individual' }
+  ],
+  surgery: [
+    { name: '질병 1~5종(특정)', mode: 'individual' },
+    { name: '관절/척추 수술비', mode: 'individual' },
+    { name: '비급여 수술비', mode: 'individual' }
+  ],
+  care: [
+    { name: '중증치매간병비', mode: 'individual' },
+    { name: '상해간병일당', mode: 'individual' },
+    { name: '장기요양간병비', mode: 'individual' }
+  ]
+};
+
 /* 연령대별 추천 프리셋 — 원터치로 표준 분석 샘플을 채웁니다 (v4.2)
    값은 상담 연습·시연용 표준 예시이며, 실제 증권 값이 아닙니다. */
 const PRESETS = {
