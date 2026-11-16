@@ -558,3 +558,52 @@ Supabase 리전은 **ap-northeast-2(서울)** 를 선택한다. 부득이 싱가
 | `sw.js` 정적 캐시 | `/functions/*`·`/rest/*` 캐시 제외 |
 
 이 문서의 스키마·정책·함수 표면을 그대로 마이그레이션 파일(`supabase/migrations/0001_init.sql`)로 옮기면 M1을 바로 시작할 수 있다.
+
+---
+
+## 15. v5.3 자동입력 — AI 비전 프록시 (3단계 백엔드 설계)
+
+정적 베타(v5.3)는 **수기 / 사진 즉시 촬영(휘발) / PDF·텍스트 로컬 추출** 세 갈래 입력을 이미 제공합니다.
+사진의 숫자 자동 인식만 서버가 필요하며, 클라이언트에는 어댑터 `BojangImport.parseWithVisionBackend(blob, endpoint)` 가 준비되어 있습니다.
+`import-parser.js`의 `VISION_ENDPOINT` 값을 비워 두면 비전 호출이 일어나지 않습니다(정적 베타 기본값).
+
+### 15-1. 엔드포인트
+
+```
+POST /functions/v1/vision-parse        (Edge Function, JWT 필요)
+Content-Type: multipart/form-data
+  image:  image/jpeg  (클라이언트 전처리본 · 최대 1600px, 품질 0.85)
+  hint?:  string      (예: "암/뇌/심장 담보표")
+Authorization: Bearer <user JWT>
+
+200 → { "text": "...", "items": [{ "field": "cancer.general", "value": 5000, "snippet": "..." }], "premium": 24, "silson": "4", "model": "gpt-4o-vision", "ms": 1840 }
+4xx → { "error": "too_large" | "not_coverage_table" | "rate_limited" }
+```
+
+- `text` 를 돌려주면 클라이언트가 `parseCoverageText()` 로 다시 파싱해 **인식 근거(snippet)를 그대로 검수 화면**에 보여줍니다. `items` 를 직접 돌려주는 경로도 지원합니다.
+- 목표: 3단계 연동 시 담보 숫자 자동 인식률 **95% 이상**, p95 응답 4초 이내.
+
+### 15-2. 휘발성 보장 (서버 쪽)
+
+| 항목 | 규칙 |
+| --- | --- |
+| 이미지 저장 | **저장하지 않음.** Edge Function 메모리에서만 처리하고 응답 후 폐기 |
+| 로깅 | 이미지 바이트·base64 를 로그에 남기지 않음(요청 크기·소요시간·모델명만) |
+| 캐시 | CDN·프록시 캐시 금지(`Cache-Control: no-store`) |
+| 보관 | 인식 결과 텍스트도 서버에 저장하지 않고 응답으로만 반환 |
+| 감사 | 호출 사용량(사용자·일시·토큰)만 집계, 내용 미포함 |
+| 권한 | `is_pro()` 또는 베타 화이트리스트, 레이트 리밋(사용자당 분당 6회) |
+
+### 15-3. 개인정보 최소화
+
+- 클라이언트가 촬영 전 **민감정보 가림 안내**를 띄우고, 필요하면 상단/하단 크롭(담보표 영역)을 먼저 적용합니다.
+- 프록시는 이름·주민번호 패턴(`\d{6}-\d{7}`)을 감지하면 **해당 줄을 마스킹한 뒤** 모델에 전달하고, 응답에도 남기지 않습니다.
+- 3단계에서도 **원본 사진 미저장 원칙**을 유지하므로, 사고 시 유출 대상이 존재하지 않습니다.
+
+### 15-4. 교체 지점
+
+| 현재(v5.3 정적) | 3단계 |
+| --- | --- |
+| `VISION_ENDPOINT = ''` | Supabase Functions URL |
+| `preprocessImage()` → 통계만 표시 | 같은 전처리본을 `parseWithVisionBackend()` 로 전송 |
+| PDF/텍스트 로컬 추출 | 그대로 유지(오프라인·비용 0) — 서버는 사진만 보조 |

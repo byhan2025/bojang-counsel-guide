@@ -116,7 +116,7 @@ def main():
             # 1. 중립 기본값 — 서비스명·부제·네이비·특정 브랜드 미노출
             # =========================================================
             title = page.title()
-            check("타이틀 v5.2 · 중립 서비스명", "보장분석 라이프 리포트" in title and "v5.2" in title, title)
+            check("타이틀 v5.2 이상 · 중립 서비스명", "보장분석 라이프 리포트" in title and ("v5.2" in title or "v5.3" in title), title)
             h1 = page.inner_text(".brand-text h1").replace("\n", "")
             check("헤더 기본 브랜드 = 보장분석 라이프 리포트", h1 == "보장분석 라이프 리포트", h1)
             sub = page.inner_text(".brand-text p")
@@ -419,13 +419,13 @@ def main():
             # 10. 산출물 · 서비스워커 · 단일 HTML
             # =========================================================
             sw = open(os.path.join(ROOT, "sw.js"), encoding="utf-8").read()
-            check("서비스워커 캐시 v5.2", "bojang-guide-v5.2" in sw, "bojang-guide-v5.2" in sw)
+            check("서비스워커 캐시 v5.2 이상", "bojang-guide-v5.2" in sw or "bojang-guide-v5.3" in sw, sw.strip().splitlines()[2] if sw else sw)
             doc = open(os.path.join(ROOT, "docs", "backend-architecture.md"), encoding="utf-8").read()
             check("백엔드 설계서 요금제 5,000/50,000", "5,000원/월" in doc and "50,000원/년" in doc and "29,000원" not in doc, [k for k in ("5,000원/월", "50,000원/년") if k in doc])
             single = os.path.join(ROOT, "dist", "bojang-guide.single.html")
             if os.path.exists(single):
                 html = open(single, encoding="utf-8").read()
-                check("단일 HTML: 중립·베타 반영", "보장분석 라이프 리포트" in html and "BETA 무료" in html and "29,000" not in html and "bojang-guide-v5.2" not in html, f"{len(html)//1024}KB")
+                check("단일 HTML: 중립·베타 반영", "보장분석 라이프 리포트" in html and "BETA 무료" in html and "29,000" not in html and "bojang-guide-v5.2" not in html and "bojang-guide-v5.3" not in html, f"{len(html)//1024}KB")
                 check("단일 HTML: 외부 참조 0", 'src="./' not in html and 'href="./' not in html, 'src="./' in html)
             else:
                 check("단일 HTML 존재", False, single)

@@ -1,4 +1,4 @@
-/* 보장분석 라이프 리포트 v5.2 — 베타 테스트 공개판
+/* 보장분석 라이프 리포트 v5.3 — 베타 테스트 공개판
    · 베타 기간에는 Pro 전 기능(30장 전체 · 1/10/30장 PDF · 고객 30명 · 리모델링 · 화이트라벨)을 잠금 없이 무료 제공
    · 정식 출시 예정 요금: 월 5,000원 / 연 50,000원 · 베타 피드백 Google Form + 추첨 사은품 안내
    · 중립 기본 브랜드(Classic Navy) + 화이트라벨(상호·슬로건·설계사 정보·로고 이미지·테마 4종)
@@ -240,7 +240,7 @@
     if (mark) mark.setAttribute('content', b.name);
     const title = $('#brand-title');
     if (title) title.textContent = b.name;
-    document.title = `${b.name} v5.2 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
+    document.title = `${b.name} v5.3 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
     loadPdfLogo(b.logo);
     /* 상담자 화면의 고객 표지도 새 브랜드로 다시 그립니다 */
     if (root.BojangDeck && root.__bojangState) root.BojangDeck.refresh(root.__bojangState, { reset: true });
@@ -404,7 +404,7 @@
     wrap.innerHTML = `
       <div class="modal-card bm-card" role="dialog" aria-modal="true" aria-labelledby="bm-title">
         <button type="button" class="pw-x" id="bm-x" aria-label="닫기">×</button>
-        <span class="bm-eyebrow">BETA TEST · V5.2</span>
+        <span class="bm-eyebrow">BETA TEST · V5.3</span>
         <strong id="bm-title">베타 기간 · Pro 전 기능 무료</strong>
         <p class="bm-lead">${BETA_NOTE}. 리모델링 비교기 · 10장·30장 PDF · 화이트라벨(로고) 설정까지 지금 바로 사용할 수 있습니다.</p>
         <div class="bm-feature" id="bm-feature"></div>
@@ -475,7 +475,7 @@
     if (host) {
       host.innerHTML = beta
         ? `<div class="plan-banner is-beta" id="beta-banner-card">
-            <div class="pb-main"><span class="pb-eyebrow">BETA TEST · V5.2</span><b>베타 기간 · Pro 전 기능 무료 <i>FREE</i></b>
+            <div class="pb-main"><span class="pb-eyebrow">BETA TEST · V5.3</span><b>베타 기간 · Pro 전 기능 무료 <i>FREE</i></b>
               <p>${BETA_NOTE}. 리모델링 · 10/30장 PDF · 화이트라벨을 지금 그대로 쓰세요.</p></div>
             <button type="button" class="pb-btn primary" data-beta-open>베타 안내</button>
           </div>`
@@ -944,7 +944,7 @@
             <span class="bp-plan">${BETA ? 'BETA' : (open ? 'PRO' : 'FREE')}</span>
           </div>
           <div class="bp-hero">
-            <span class="bp-eyebrow">LIFE REPORT V5.2</span>
+            <span class="bp-eyebrow">LIFE REPORT V5.3</span>
             <h4 id="bp-hero-name">${brandNameHTML(draft.name)}</h4>
             <p id="bp-hero-slogan">${esc(draft.slogan)}</p>
             <div class="bp-cover">

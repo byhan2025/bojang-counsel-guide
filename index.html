@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v5.2 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<title>보장분석 라이프 리포트 v5.3 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
 <link rel="manifest" href="./manifest.json">
@@ -91,16 +91,16 @@
         <span class="hv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0112 8a3.9 3.9 0 017 2.6C19 15.6 12 20 12 20z"/></svg>든든한미래</span>
       </div>
       <div class="hh-top">
-        <span class="hh-eyebrow">LIFE REPORT · BETA V5.2</span>
-        <span class="hh-ver">v5.2 · 2026.11</span>
+        <span class="hh-eyebrow">LIFE REPORT · BETA V5.3</span>
+        <span class="hh-ver">v5.3 · 2026.11</span>
       </div>
       <h2>무엇을 하시겠어요?</h2>
       <p>상담 전 과정을 한 화면에서 시작합니다. 입력은 이 기기 안에서만 계산되고, PDF도 기기에서 직접 만듭니다.</p>
       <div class="hh-client" id="home-client"></div>
       <div class="hh-plan" id="home-plan-banner"></div>
       <div class="hh-actions">
-        <button type="button" class="hh-btn primary" data-home-go="analysis">
-          <span class="hb-ico">✎</span><b>새 상담 시작</b><span>기본 정보부터 6단계 입력</span>
+        <button type="button" class="hh-btn primary" id="btn-start-consult" data-inputhub="1">
+          <span class="hb-ico">✎</span><b>새 상담 시작</b><span>수기 입력 · 사진 촬영 · PDF 중 선택</span>
         </button>
         <button type="button" class="hh-btn" id="btn-home-load">
           <span class="hb-ico">📂</span><b>저장된 고객 불러오기</b><span id="home-load-sub">베타 · 고객 30명 저장</span>
@@ -228,12 +228,102 @@
       <div id="history-list" class="history"></div>
     </div>
 
-    <p class="app-foot">기준일 2026-11-16 · v5.2 베타 기준점(암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 치료비 3종 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리) 반영 · 상품별 약관 우선</p>
+    <p class="app-foot">기준일 2026-11-16 · v5.3 베타 기준점(암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 치료비 3종 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리) 반영 · 상품별 약관 우선</p>
+  </section>
+
+  <!-- ================= v5.3 사진 즉시 촬영 (휘발·미저장) ================= -->
+  <section id="view-capture" class="view" aria-label="사진 즉시 촬영">
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>사진 즉시 촬영 · 휘발</span><button type="button" class="home-back hub-jump" data-inputhub="1">✎ 입력 방식</button></div>
+
+    <div class="intro-card cap-intro no-print">
+      <div class="intro-eyebrow">CAPTURE · VOLATILE</div>
+      <h2>찍고, 읽고,<br>바로 지웁니다</h2>
+      <p>앨범에서 고르는 방식이 아니라 카메라가 바로 열립니다. 사진은 기기에 저장되지 않고 서버로도 가지 않습니다.</p>
+    </div>
+
+    <div class="sec-notice" id="cap-notice" role="note">
+      <span class="sn-tag">촬영 전 확인</span>
+      <p>이름·주민등록번호 등 민감정보는 가리고 담보표만 촬영해 주세요. 촬영된 사진은 기기·서버 어디에도 저장되지 않고 분석 직후 메모리에서 즉시 파기됩니다.</p>
+    </div>
+
+    <div class="cap-actions">
+      <label class="cap-btn primary" for="cap-file">
+        <span aria-hidden="true">📷</span> 카메라로 바로 촬영
+        <input type="file" id="cap-file" accept="image/*" capture="environment">
+      </label>
+      <button type="button" class="cap-btn" id="cap-live"><span aria-hidden="true">🎥</span> 앱 내 카메라 켜기</button>
+      <button type="button" class="cap-btn ghost" id="cap-to-import">📄 PDF · 텍스트로 입력하기</button>
+    </div>
+    <p class="field-note cap-file-note">촬영 버튼을 누르면 카메라가 바로 열립니다(앨범 선택 단계 없음). 앨범 사진은 사용하지 않습니다.</p>
+
+    <div class="cap-live-box" id="cap-live-box" hidden>
+      <video id="cap-video" playsinline muted autoplay></video>
+      <div class="cap-live-bar">
+        <button type="button" class="cap-shot" id="cap-shot">◉ 촬영</button>
+        <button type="button" class="cap-stop" id="cap-live-stop">끄기</button>
+      </div>
+      <p class="field-note" id="cap-live-note">화면을 맞춘 뒤 촬영을 누르세요. 촬영본은 메모리에서만 처리되고 저장되지 않습니다.</p>
+    </div>
+
+    <div class="cap-result" id="cap-result" hidden>
+      <div class="vol-badge" id="cap-badge">원본 사진 메모리 파기 완료 ✓ (저장 기록 0건)</div>
+      <div class="cap-meta" id="cap-meta"></div>
+      <ul class="cap-warn" id="cap-warn" hidden></ul>
+      <div class="cap-beta" id="cap-beta"></div>
+      <div class="cap-next">
+        <button type="button" class="cap-btn" id="cap-to-import2">📄 PDF · 텍스트로 이어서</button>
+        <button type="button" class="cap-btn ghost" id="cap-to-manual">✎ 수기로 보완</button>
+      </div>
+      <p class="field-note">이번 상담에서 촬영한 사진 <b id="cap-shot-count">1</b>장 · 모두 파기됨(미저장)</p>
+    </div>
+
+    <p class="cap-status" id="cap-status" role="status" aria-live="polite"></p>
+  </section>
+
+  <!-- ================= v5.3 보장분석 PDF · 텍스트 로컬 추출 ================= -->
+  <section id="view-import" class="view" aria-label="보장분석 PDF 텍스트 불러오기">
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>보장분석 PDF · 텍스트 추출</span><button type="button" class="home-back hub-jump" data-inputhub="1">✎ 입력 방식</button></div>
+
+    <div class="intro-card imp-intro no-print">
+      <div class="intro-eyebrow">LOCAL EXTRACT · 100%</div>
+      <h2>PDF도 텍스트도<br>이 기기에서만 읽습니다</h2>
+      <p>외부 라이브러리·서버 없이 기기 안에서 글자를 뽑아 담보표로 정리합니다. 스캔 이미지 PDF는 글자가 없어 읽지 못하니 텍스트 복사·붙여넣기를 써 주세요.</p>
+    </div>
+
+    <div class="card imp-card">
+      <div class="card-title"><span class="eyebrow">PDF</span> 보장분석표 PDF 올리기 <span class="card-sub">.pdf · 로컬 추출</span></div>
+      <div class="imp-file-row">
+        <label class="imp-file-btn" for="imp-file">📄 PDF 파일 선택<input type="file" id="imp-file" accept=".pdf,application/pdf"></label>
+        <span class="imp-file-hint">파일은 업로드되지 않고 이 화면에서만 읽힙니다</span>
+      </div>
+    </div>
+
+    <div class="card imp-card">
+      <div class="card-title"><span class="eyebrow">TEXT</span> 텍스트 붙여넣기 <span class="card-sub">PDF에서 복사한 표도 그대로 붙여넣기</span></div>
+      <textarea id="imp-text" class="imp-text" rows="8" placeholder="예) 일반암 진단비 5,000만원&#10;유사암 1,000만원&#10;뇌혈관질환 2,000만원&#10;월 보험료 24만원"></textarea>
+      <div class="imp-btn-row">
+        <button type="button" class="imp-btn primary" id="imp-parse">담보 추출하기</button>
+        <button type="button" class="imp-btn" id="imp-sample">샘플 보장분석표 불러오기</button>
+        <button type="button" class="imp-btn ghost" id="imp-clear">비우기</button>
+      </div>
+      <p class="imp-status" id="imp-status" role="status" aria-live="polite"></p>
+    </div>
+
+    <div class="card imp-review" id="imp-review" hidden>
+      <div class="card-title"><span class="eyebrow">REVIEW</span> 추출 결과 검수 <span class="card-sub" id="imp-summary"></span></div>
+      <p class="card-lead">담보명 · 인식 금액 · 매칭 근거를 확인하고, 반영할 항목만 체크하세요. 금액은 직접 고칠 수 있습니다.</p>
+      <div class="rv-table" id="imp-rows"></div>
+      <div class="imp-apply-row">
+        <button type="button" class="imp-btn primary" id="imp-apply">선택 항목 입력칸에 반영</button>
+        <button type="button" class="imp-btn ghost" id="imp-to-manual">6단계 입력실로</button>
+      </div>
+      <p class="field-note">반영하면 현재 고객의 입력칸(담보·보험료·실손 세대)이 바뀌고 점수가 다시 계산됩니다. 원본 PDF·텍스트는 저장하지 않습니다.</p>
+    </div>
   </section>
 
   <!-- ================= TAB 1 : 보장분석 ================= -->
   <section id="view-analysis" class="view" aria-labelledby="tab-analysis">
-    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>상담자 상세 입력 (6단계)</span><button type="button" class="home-back rm-jump" data-home-go="remodel">🏠 리모델링 비교기</button></div>
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>상담자 상세 입력 (6단계)</span><button type="button" class="home-back hub-jump" data-inputhub="1">✎ 입력 방식</button><button type="button" class="home-back rm-jump" data-home-go="remodel">🏠 리모델링 비교기</button></div>
 
     <div class="intro-card no-print">
       <div class="intro-eyebrow">LIFE REPORT · BETA V5.2</div>
@@ -248,6 +338,7 @@
         <div class="wiz-meta">
           <span class="wiz-count" id="wiz-count">1/6</span>
           <span class="wiz-title" id="wiz-title">기본 정보</span>
+          <button type="button" class="wiz-expand hub-jump" data-inputhub="1">입력 방식</button>
           <button type="button" class="wiz-expand" id="btn-expand">한눈에 보기</button>
         </div>
       </div>
@@ -502,7 +593,7 @@
 
   <!-- ================= 한 화면 빠른 입력 (표 모드) ================= -->
   <section id="view-quick" class="view" aria-label="한 화면 빠른 입력">
-    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>한 화면 빠른 입력 · 표 모드</span></div>
+    <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>한 화면 빠른 입력 · 표 모드</span><button type="button" class="home-back hub-jump" data-inputhub="1">✎ 입력 방식</button></div>
 
     <div class="intro-card quick-intro no-print">
       <div class="intro-eyebrow">QUICK INPUT · TABLE MODE</div>
@@ -773,6 +864,40 @@
   </div>
 </div>
 
+<div class="modal" id="input-hub" hidden>
+  <div class="modal-card hub-card" role="dialog" aria-modal="true" aria-labelledby="ih-title">
+    <span class="hub-eyebrow">START · INPUT MODE</span>
+    <strong id="ih-title">어떻게 입력할까요?</strong>
+    <p>고객의 보장분석표를 어떤 방법으로 가져올지 먼저 고르세요. 세 가지 모두 이 기기 안에서만 처리되고 서버로 보내지 않습니다.</p>
+    <div class="hub-list">
+      <button type="button" class="hub-opt" data-mode="manual">
+        <span class="ho-ico" aria-hidden="true">✎</span>
+        <span class="ho-body"><b>수기 입력</b><span>6단계 입력실 · 한 화면 빠른 입력 표 모드</span></span>
+        <em>직접 입력</em>
+      </button>
+      <button type="button" class="hub-opt" data-mode="camera">
+        <span class="ho-ico" aria-hidden="true">📷</span>
+        <span class="ho-body"><b>사진 즉시 촬영 <i class="ho-vol">휘발</i></b><span>앨범 없이 카메라 바로 · 촬영 후 즉시 파기</span></span>
+        <em>미저장</em>
+      </button>
+      <button type="button" class="hub-opt" data-mode="pdf">
+        <span class="ho-ico" aria-hidden="true">📄</span>
+        <span class="ho-body"><b>보장분석 PDF · 텍스트</b><span>PDF 파일 또는 붙여넣기 · 100% 로컬 추출</span></span>
+        <em>로컬</em>
+      </button>
+    </div>
+    <div class="hub-manual" id="ih-manual" hidden>
+      <span>수기 입력 방식</span>
+      <button type="button" data-manual="analysis">6단계 입력실</button>
+      <button type="button" data-manual="quick">한 화면 빠른 입력</button>
+    </div>
+    <div class="hub-foot">
+      <button type="button" class="hub-close" id="ih-close">닫기</button>
+      <span>사진·PDF는 저장하지도, 보내지도 않습니다</span>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="reset-modal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="rm-title">
     <strong id="rm-title">새 상담을 시작할까요?</strong>
@@ -803,6 +928,8 @@
 <script src="./live.js"></script>
 <script src="./tools.js"></script>
 <script src="./monetize.js"></script>
+<script src="./import-parser.js"></script>
+<script src="./inputhub.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>

@@ -944,7 +944,7 @@
     window.__lastPdf = { kind, watermark: !!watermark, pages: build.pages.length, filename };
     return { blob, filename, pages: build.pages.length, overflow, ms: Math.round(performance.now() - started), model: build.m, watermark };
   }
-  window.BojangApp = { buildPdfBlob, doPdf, state, analyze, cursorModel: model };
+  window.BojangApp = { buildPdfBlob, doPdf, state, analyze, cursorModel: model, applyImport, switchView, renderAllInputs };
 
   function isoDate(label) {
     const m = /(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/.exec(label || '');
@@ -1245,7 +1245,7 @@
     state.tab = name;
     const viewId = 'view-' + name;
     $$('.view').forEach((v) => v.classList.toggle('is-active', v.id === viewId));
-    const tabOf = { home: 'home', analysis: 'analysis', quick: 'analysis', guide: 'guide', live: 'live', toolkit: 'toolkit', codes: 'home', silson: 'home', disclose: 'home', premium: 'home', remodel: 'home', brand: 'home' };
+    const tabOf = { home: 'home', analysis: 'analysis', quick: 'analysis', capture: 'analysis', import: 'analysis', guide: 'guide', live: 'live', toolkit: 'toolkit', codes: 'home', silson: 'home', disclose: 'home', premium: 'home', remodel: 'home', brand: 'home' };
     const active = tabOf[name] || name;
     $$('.tab').forEach((t) => {
       const on = t.dataset.view === active;
@@ -1266,6 +1266,50 @@
       else if (name === 'disclose') { window.BojangTools.renderDisclosureTool(); window.BojangTools.renderClaimDocs(); }
       else if (name === 'premium') window.BojangTools.renderPremiumTool();
     }
+  }
+
+  /* ================= v5.3 자동입력 반영 =================
+     검수 화면에서 체크된 항목만 현재 고객 상태에 넣고 점수를 다시 계산합니다.
+     field 는 'cancer.treatment.surgery' 같은 경로이며, monthlyPremium·silsonGen은 전용 필드입니다. */
+  function applyImport(items, meta) {
+    meta = meta || {};
+    let applied = 0;
+    (items || []).forEach((it) => {
+      if (!it || it.apply === false) return;
+      if (it.field === 'monthlyPremium') {
+        state.premium = clamp(Math.round(Number(it.value) || 0), 0, 300);
+        applied++;
+        return;
+      }
+      if (it.field === 'silsonGen') {
+        const g = String(it.value);
+        if (['none', '1', '2', '3', '4', '5'].indexOf(g) >= 0) { state.silson = g; applied++; }
+        return;
+      }
+      if (it.kind === 'bool' || it.value === true) {
+        BojangImport.setByPath(state.cov, it.field, true);
+        applied++;
+        return;
+      }
+      const n = Number(it.value);
+      if (!isFinite(n) || n < 0) return;
+      BojangImport.setByPath(state.cov, it.field, n);
+      applied++;
+    });
+    if (meta.premium != null && !(items || []).some((i) => i && i.field === 'monthlyPremium')) {
+      state.premium = clamp(Math.round(Number(meta.premium) || 0), 0, 300);
+    }
+    if (meta.silson && !(items || []).some((i) => i && i.field === 'silsonGen')) state.silson = String(meta.silson);
+
+    state.migration = BojangModel.normalizeState(state);
+    renderAllInputs();
+    refreshBadges();
+    saveSession();
+    analyze();
+    switchView('analysis');
+    setStep(state.step, true);
+    $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toast(`${applied}건을 입력칸에 반영하고 점수를 다시 계산했습니다`);
   }
 
   function syncWizardInputs() {
@@ -1957,6 +2001,14 @@
     if (window.BojangPlan) window.BojangPlan.init();
     renderHome();
     if (window.BojangTools) window.BojangTools.init();
+    if (window.BojangInputHub) {
+      window.BojangInputHub.init({
+        state: state,
+        toast: toast,
+        applyImport: applyImport,
+        openView: (name) => switchView(name)
+      });
+    }
     switchView('home');
     applyView();
     setStep(1, true);
