@@ -710,7 +710,7 @@
 
     $('#acct-pay').addEventListener('click', async () => {
       const res = await subscribe(state.plan);
-      setMessage(res.message, res.ok ? 'ok' : 'warn');
+      setMessage(res.message, res.ok ? 'ok' : (res.reason === 'beta-local' ? 'info' : 'warn'));
     });
   }
 

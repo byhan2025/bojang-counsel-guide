@@ -371,6 +371,7 @@ def main():
                   and page.get_attribute('[data-acctplan="year"]', "aria-pressed") == "true", page.inner_text("#acct-pay"))
             page.click('[data-acctplan="month"]')
             page.wait_for_timeout(150)
+            page.screenshot(path=os.path.join(SHOTS, "v54-01-account-modal.png"))
 
             # 잘못된 이메일 → 형식 검증
             page.fill("#acct-email", "not-an-email")
@@ -388,7 +389,6 @@ def main():
             page.click("#acct-pay")
             page.wait_for_timeout(300)
             check("베타 모드 구독 안내", "서버 연결 후" in page.inner_text("#acct-msg"), page.inner_text("#acct-msg")[:80])
-            page.screenshot(path=os.path.join(SHOTS, "v54-01-account-modal.png"))
             page.click("#acct-x")
             page.wait_for_timeout(250)
             check("모달 닫기", not page.is_visible("#account-modal"), page.is_visible("#account-modal"))
