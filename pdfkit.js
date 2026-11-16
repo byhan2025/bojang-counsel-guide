@@ -12,13 +12,34 @@
   const PXH = Math.round(H * DENS);       // 1754
   const FONT = '"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Noto Sans CJK KR","Malgun Gothic","Segoe UI",sans-serif';
 
-  /* v5.2 중립 기본 — Classic Navy. 화이트라벨 테마에 맞춰 syncPalette()가 다시 맞춥니다. */
+  /* 색 계산 — 테마 파생 팔레트(v5.5)를 만들 때 씁니다 */
+  function hex2rgb(h) {
+    const s = String(h == null ? '' : h).replace('#', '').trim();
+    const n = s.length === 3 ? s.split('').map((c) => c + c).join('') : s;
+    const v = parseInt(n, 16);
+    if (!isFinite(v)) return [0, 0, 0];
+    return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+  }
+  function rgb2hex(r, g, b) {
+    return '#' + [r, g, b].map((x) => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0')).join('').toUpperCase();
+  }
+  function mix(a, b, t) {
+    const A = hex2rgb(a), B = hex2rgb(b), k = Math.max(0, Math.min(1, t == null ? 0.5 : t));
+    return rgb2hex(A[0] + (B[0] - A[0]) * k, A[1] + (B[1] - A[1]) * k, A[2] + (B[2] - A[2]) * k);
+  }
+
+  /* v5.2 중립 기본 — Classic Navy. 화이트라벨 테마에 맞춰 syncPalette()가 다시 맞춥니다.
+     v5.5: 히어로(진한 블록)·틴트(옅은 배경)까지 테마 파생 토큰으로 통일했습니다. */
   const C = {
     navy: '#16293E', navy2: '#24476B', blue: '#3A6EA5', blue2: '#3A6EA5', sky: '#EAF1F8', sky2: '#F5F8FB',
     ink: '#15263C', ink2: '#3C536F', muted: '#74879F', line: '#E2E8F1', line2: '#EEF2F8',
     red: '#B3261E', redSoft: '#FDECEA', mint: '#0E9C86', mintSoft: '#E6F6F2',
     orange: '#C07A2C', orangeSoft: '#FDF2E3', gray: '#8B93A1', graySoft: '#F1F4F8',
-    gold: '#B8912F', white: '#FFFFFF', rose: '#3A6EA5', roseDeep: '#2B5580', wine: '#16293E', blush: '#EAF1F8', cream: '#F5F8FB'
+    gold: '#B8912F', white: '#FFFFFF', rose: '#3A6EA5', roseDeep: '#2B5580', wine: '#16293E', blush: '#EAF1F8', cream: '#F5F8FB',
+    hero: '#16293E', heroInk: '#9CC3E6', heroInk2: '#C4D8EA', heroTrack: '#24476B',
+    heroOk: '#8FF0DC', heroGold: '#E8CE93', heroWarn: '#FFB4AC',
+    tint: '#EAF1F8', tint2: '#F5F8FB', tintLine: '#D5E2EF',
+    short: '#E05B52', mintInk: '#0B6B5D', mintLine: '#CFEBE3', orangeLine: '#F3E4C6'
   };
 
   /* 선택된 브랜드 테마의 색을 PDF 팔레트에 반영 — 기본은 네이비 */
@@ -29,6 +50,28 @@
     C.navy = T.wine; C.navy2 = T.deep; C.blue = T.accent; C.blue2 = T.accent;
     C.rose = T.accent; C.roseDeep = T.deep; C.wine = T.wine; C.blush = T.blush;
     C.sky = T.blush; C.sky2 = T.bg; C.cream = T.bg;
+    /* 진한 블록·옅은 배경·경계선까지 테마에서 파생 — PDF 전체 색감 통일 */
+    C.hero = T.wine;
+    C.heroInk = T.titleAccent || mix('#FFFFFF', T.accent, 0.45);
+    C.heroInk2 = T.mark || mix('#FFFFFF', T.accent, 0.3);
+    C.heroTrack = mix(T.wine, T.accent, 0.42);
+    C.tint = T.blush;
+    C.tint2 = T.bg;
+    C.tintLine = mix(T.blush, T.accent, 0.26);
+    C.heroOk = mix('#FFFFFF', C.mint, 0.52);
+    C.heroGold = mix('#FFF6DE', C.gold, 0.52);
+    C.mintLine = mix(C.mintSoft, C.mint, 0.3);
+    C.mintInk = mix(C.mint, '#000000', 0.3);
+    C.orangeLine = mix(C.orangeSoft, C.orange, 0.32);
+    refreshTone();
+  }
+
+  /* 상태 배지 색 — 안내(info) 톤은 테마 포인트 색을 따릅니다 */
+  function refreshTone() {
+    TONE.info.fg = C.navy2;
+    TONE.info.bg = C.tint;
+    TONE.short.solid = C.short;
+    TONE.none.solid = C.gray;
   }
 
   const TONE = {
@@ -39,7 +82,7 @@
     ok: { fg: '#0E7C69', bg: '#E6F6F2', label: '적정', solid: C.mint },
     need: { fg: '#B0690F', bg: '#FDF2E3', label: '보강 필요', solid: C.orange },
     gap: { fg: '#B3261E', bg: '#FDECEA', label: '공백 위험', solid: C.red },
-    info: { fg: '#A8494F', bg: '#FDF0F0', label: '안내', solid: C.blue },
+    info: { fg: '#24476B', bg: '#EAF1F8', label: '안내', solid: C.blue },
     warn: { fg: '#B0690F', bg: '#FDF2E3', label: '주의', solid: C.orange },
     danger: { fg: '#B3261E', bg: '#FDECEA', label: '위험', solid: C.red }
   };
@@ -313,10 +356,10 @@
       const c = this.ctx;
       c.save();
       c.globalAlpha = 0.9;
-      c.fillStyle = '#FDF0F0';
+      c.fillStyle = C.tint;
       c.fillRect(0, y, W, 16);
       c.restore();
-      this.text(text, W / 2, y + 4.4, { size: 7, weight: 800, color: '#A8494F', align: 'center' });
+      this.text(text, W / 2, y + 4.4, { size: 7, weight: 800, color: C.navy2, align: 'center' });
     }
     memoBand(labels, maxH) {
       const top = (this.contentBottom || 0) + 16;
@@ -326,18 +369,18 @@
       if (avail < 70) return top;
       const rows = labels && labels.length ? labels : ['고객이 한 말', '내가 약속한 것', '다음 할 일'];
       const h = avail;
-      this.rect(this.ML, top, this.CW, h, { fill: '#FBFCFE', r: 5, stroke: '#E3EAF4' });
-      this.text('MEMO', this.ML + 10, top + 8, { size: 6, weight: 800, color: '#9AAABD' });
-      this.text('상담 메모', this.ML + 36, top + 8, { size: 6.2, weight: 700, color: '#8B9CB0' });
+      this.rect(this.ML, top, this.CW, h, { fill: C.tint2, r: 5, stroke: C.line });
+      this.text('MEMO', this.ML + 10, top + 8, { size: 6, weight: 800, color: C.muted });
+      this.text('상담 메모', this.ML + 36, top + 8, { size: 6.2, weight: 700, color: C.muted });
       const groupH = (h - 26) / rows.length;
       rows.forEach((r, i) => {
         const gy = top + 24 + i * groupH;
-        this.text(r, this.ML + 10, gy, { size: 6, weight: 700, color: '#B0BFD0' });
+        this.text(r, this.ML + 10, gy, { size: 6, weight: 700, color: C.muted });
         const lx = this.ML + 10 + Math.max(66, this.measure(r, 6, 700) + 8);
         for (let ly = gy + 11; ly < gy + groupH - 2; ly += 17) {
-          this.line(lx, ly, this.ML + this.CW - 10, ly, { color: '#E9EFF7', dash: [1.5, 2.5] });
+          this.line(lx, ly, this.ML + this.CW - 10, ly, { color: C.line2, dash: [1.5, 2.5] });
         }
-        if (i) this.line(this.ML + 10, gy - 5, this.ML + this.CW - 10, gy - 5, { color: '#EEF3FA' });
+        if (i) this.line(this.ML + 10, gy - 5, this.ML + this.CW - 10, gy - 5, { color: C.line2 });
       });
       return top + h;
     }
@@ -396,7 +439,7 @@
       [0.25, 0.5, 0.75, 1].forEach((k) => {
         c.beginPath();
         axes.forEach((_, i) => { const p = pt(i, k); i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); });
-        c.closePath(); c.strokeStyle = k === 1 ? '#CFDBEA' : C.line2; c.lineWidth = 0.8; c.stroke();
+        c.closePath(); c.strokeStyle = k === 1 ? C.tintLine : C.line2; c.lineWidth = 0.8; c.stroke();
       });
       axes.forEach((_, i) => {
         const p = pt(i, 1);
@@ -559,7 +602,7 @@
       const quoteW = w - padX * 2 - (o.tagW || 0);
       const lines = this.wrap(o.text, quoteW, size);
       const h = padY * 2 + (o.title ? 13 : 0) + lines.length * size * lh + (o.note ? this.height(o.note, quoteW, 6.8, 1.4) + 5 : 0);
-      this.rect(x, y, w, h, { fill: o.fill || '#F7FAFE', r: 5, stroke: o.stroke || C.line });
+      this.rect(x, y, w, h, { fill: o.fill || C.tint2, r: 5, stroke: o.stroke || C.line });
       this.rect(x, y, 2.6, h, { fill: o.accent || C.blue, r: 1.3 });
       let cy = y + padY;
       if (o.title) {
@@ -596,28 +639,32 @@
       this.ctx.restore();
       if (o.num) this.text(String(o.num), cx, cy - (o.size || 9) * 0.6, { size: o.size || 9, weight: 800, color: o.color || C.blue, align: 'center' });
     }
+    /* 표지 밴드 — v5.5: 테마 팔레트에서 그립니다(예전 로즈 고정 색 제거) */
     photoBand(y, h, o) {
       o = o || {};
       const c = this.ctx;
+      const deep = o.to || mix(C.tint, C.blue, 0.18);
       c.save();
       c.beginPath(); c.rect(0, y, W, h); c.clip();
       const g = c.createLinearGradient(0, y, W, y + h);
-      g.addColorStop(0, o.from || '#FDF3F2'); g.addColorStop(0.55, o.mid || '#FFFBFA'); g.addColorStop(1, o.to || '#F7E6E5');
+      g.addColorStop(0, o.from || mix('#FFFFFF', C.tint, 0.55));
+      g.addColorStop(0.55, o.mid || mix('#FFFFFF', C.tint, 0.22));
+      g.addColorStop(1, deep);
       c.fillStyle = g; c.fillRect(0, y, W, h);
       // 장식 도형
-      c.globalAlpha = 0.5;
-      c.fillStyle = '#F3D7D5';
+      c.globalAlpha = 0.38;
+      c.fillStyle = mix(C.tint, C.blue, 0.3);
       c.beginPath(); c.moveTo(W * 0.62, y); c.lineTo(W, y); c.lineTo(W, y + h); c.lineTo(W * 0.78, y + h); c.closePath(); c.fill();
-      c.globalAlpha = 0.3; c.fillStyle = '#EBC4C1';
+      c.globalAlpha = 0.22; c.fillStyle = mix(C.tint, C.blue, 0.5);
       c.beginPath(); c.moveTo(W * 0.74, y); c.lineTo(W * 0.9, y); c.lineTo(W * 0.72, y + h); c.lineTo(W * 0.6, y + h); c.closePath(); c.fill();
       c.globalAlpha = 1;
       // 미니 차트 모티프
-      const bx = W * 0.66, by = y + h * 0.52, bw = W * 0.24, bh = h * 0.3;
-      c.fillStyle = 'rgba(255,255,255,0.72)';
+      const bx = W * 0.64, by = y + h * 0.48, bw = W * 0.26, bh = h * 0.34;
+      c.fillStyle = 'rgba(255,255,255,0.66)';
       c.fillRect(bx, by, bw, bh);
       const vals = [0.42, 0.66, 0.52, 0.78, 0.6];
       vals.forEach((v, i) => {
-        c.fillStyle = i === 3 ? '#C85A60' : '#E3A9A6';
+        c.fillStyle = i === 3 ? C.blue : mix('#FFFFFF', C.blue, 0.38);
         c.fillRect(bx + 8 + i * (bw - 16) / 5, by + bh - 6 - (bh - 14) * v, (bw - 16) / 5 - 4, (bh - 14) * v);
       });
       c.restore();
@@ -711,7 +758,7 @@
       s.suppressBrandSlogan = !!opts.watermark;
       try { drawers[i](s, i); } catch (e) { console.error('page ' + (i + 1) + ' draw error', e); throw e; }
       if (opts.collect) opts.collect.push({ page: i + 1, contentBottom: Math.round(s.contentBottom || 0), limit: Math.round(s.limit) });
-      if (opts.memo !== false && s.contentBottom && s.contentBottom < s.H - 130) {
+      if (opts.memo !== false && i > 0 && s.contentBottom && s.contentBottom < s.H - 130) {
         try { s.memoBand(opts.memoLabels, opts.memoMax); } catch (e) { console.warn('memo', e); }
       }
       if (opts.watermark) {
@@ -782,5 +829,7 @@
     return 'download';
   }
 
-  root.PDFKit = { Sheet, renderPages, saveBlob, fileName, C, TONE, W, H, PXW, PXH, FONT, won, syncPalette };
+  refreshTone();
+
+  root.PDFKit = { Sheet, renderPages, saveBlob, fileName, C, TONE, W, H, PXW, PXH, FONT, won, syncPalette, mix, hex2rgb, refreshTone };
 })(typeof window !== 'undefined' ? window : globalThis);

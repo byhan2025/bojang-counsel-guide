@@ -247,9 +247,9 @@ def main():
             # 1. 버전 · 입력 방식 허브
             # =========================================================
             title = page.title()
-            check("타이틀 v5.3 이상", ("v5.3" in title or "v5.4" in title) and "보장분석 라이프 리포트" in title, title)
-            check("메인 eyebrow V5.3 이상", ("V5.3" in page.inner_text(".hh-eyebrow") or "V5.4" in page.inner_text(".hh-eyebrow")), page.inner_text(".hh-eyebrow"))
-            check("메인 버전 표기", ("v5.3" in page.inner_text(".hh-ver") or "v5.4" in page.inner_text(".hh-ver")), page.inner_text(".hh-ver"))
+            check("타이틀 v5.3 이상", ("v5.3" in title or "v5.4" in title or "v5.5" in title) and "보장분석 라이프 리포트" in title, title)
+            check("메인 eyebrow V5.3 이상", ("V5.3" in page.inner_text(".hh-eyebrow") or "V5.4" in page.inner_text(".hh-eyebrow") or "V5.5" in page.inner_text(".hh-eyebrow")), page.inner_text(".hh-eyebrow"))
+            check("메인 버전 표기", ("v5.3" in page.inner_text(".hh-ver") or "v5.4" in page.inner_text(".hh-ver") or "v5.5" in page.inner_text(".hh-ver")), page.inner_text(".hh-ver"))
             check("새 상담 시작 = 입력 방식 허브", "새 상담 시작" in page.inner_text("#btn-start-consult")
                   and page.get_attribute("#btn-start-consult", "data-inputhub") == "1", page.inner_text("#btn-start-consult"))
 

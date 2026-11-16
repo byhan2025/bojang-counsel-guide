@@ -1,4 +1,4 @@
-/* 보장분석 라이프 리포트 v5.4 — 베타 테스트 공개판
+/* 보장분석 라이프 리포트 v5.5 — 베타 테스트 공개판
    · 베타 기간에는 Pro 전 기능(30장 전체 · 1/10/30장 PDF · 고객 30명 · 리모델링 · 화이트라벨)을 잠금 없이 무료 제공
    · v5.4: 계정/구독(backend.js) 연동 — 실서버 구독 상태를 hydrate() 로 반영
    · 정식 출시 예정 요금: 월 5,000원 / 연 50,000원 · 베타 피드백 Google Form + 추첨 사은품 안내
@@ -241,7 +241,7 @@
     if (mark) mark.setAttribute('content', b.name);
     const title = $('#brand-title');
     if (title) title.textContent = b.name;
-    document.title = `${b.name} v5.4 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
+    document.title = `${b.name} v5.5 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드`;
     loadPdfLogo(b.logo);
     /* 상담자 화면의 고객 표지도 새 브랜드로 다시 그립니다 */
     if (root.BojangDeck && root.__bojangState) root.BojangDeck.refresh(root.__bojangState, { reset: true });
@@ -409,7 +409,7 @@
     wrap.innerHTML = `
       <div class="modal-card bm-card" role="dialog" aria-modal="true" aria-labelledby="bm-title">
         <button type="button" class="pw-x" id="bm-x" aria-label="닫기">×</button>
-        <span class="bm-eyebrow">BETA TEST · V5.4</span>
+        <span class="bm-eyebrow">BETA TEST · V5.5</span>
         <strong id="bm-title">베타 기간 · Pro 전 기능 무료</strong>
         <p class="bm-lead">${BETA_NOTE}. 리모델링 비교기 · 10장·30장 PDF · 화이트라벨(로고) 설정까지 지금 바로 사용할 수 있습니다.</p>
         <div class="bm-feature" id="bm-feature"></div>
@@ -512,7 +512,7 @@
     if (host) {
       host.innerHTML = beta
         ? `<div class="plan-banner is-beta" id="beta-banner-card">
-            <div class="pb-main"><span class="pb-eyebrow">BETA TEST · V5.4</span><b>베타 기간 · Pro 전 기능 무료 <i>FREE</i></b>
+            <div class="pb-main"><span class="pb-eyebrow">BETA TEST · V5.5</span><b>베타 기간 · Pro 전 기능 무료 <i>FREE</i></b>
               <p>${BETA_NOTE}. 리모델링 · 10/30장 PDF · 화이트라벨을 지금 그대로 쓰세요.</p></div>
             <button type="button" class="pb-btn primary" data-beta-open>베타 안내</button>
           </div>`
@@ -855,53 +855,150 @@
     const b = savedBrand;
     const t = themeOf(b);
     const C = root.PDFKit.C;
+    const mix = root.PDFKit.mix || ((a) => a);
     const accent = t.accent;
+    const who = b.consultant || c.before.client.consultant;
     const drawer = function (s) {
+      /* v5.5 프리미엄 1장 — 테마 팔레트·명함·근거를 갖춘 리모델링 제안서 */
+      s.photoBand(0, 132, {});
       s.header({ kicker: 'REMODELING PROPOSAL', no: '1', total: '1' });
-      s.brandWordmark(s.ML, 56, { size: 8.6, slogan: b.slogan });
-      s.text('리모델링 Before / After 비교', s.ML, 86, { size: 21, weight: 800, color: C.navy });
-      s.para(`${c.before.client.name}님 · ${c.before.dateLabel || ''} · ${b.consultant || c.before.client.consultant}`, s.ML, 114, s.CW, { size: 7.6, color: C.ink2 });
+      s.brandWordmark(s.ML, 54, { size: 8.4, contact: false });
+      s.text('리모델링 Before / After', s.ML, 74, { size: 19, weight: 800, color: C.navy });
+      s.text(`${c.before.client.name}님 · 상담일 ${c.before.dateLabel || '-'} · 담당 ${who}`, s.ML, 100, { size: 7.2, weight: 600, color: C.ink2 });
 
-      let y = 136;
+      let y = 146;
       const kw = (s.CW - 10) / 2;
-      [['월 보험료 (만원)', `${won(c.beforePrem)} → ${won(c.afterPrem)}`, c.premDelta === 0 ? '변동 없음' : `${c.premDelta > 0 ? '+' : '-'}${won(Math.abs(c.premDelta))}만원 ${c.premDelta > 0 ? '보강' : '절감'}`],
-       ['종합 보장 점수', `${c.before.score} → ${c.after.score}`, c.scoreDelta === 0 ? '변동 없음' : `${c.scoreDelta > 0 ? '+' : ''}${c.scoreDelta}점 ${c.scoreDelta > 0 ? '상승' : '하락'}`]].forEach((k, i) => {
+      [['월 보험료', `${won(c.beforePrem)} → ${won(c.afterPrem)}`, '만원', c.premDelta === 0 ? '변동 없음' : `${c.premDelta > 0 ? '+' : '−'}${won(Math.abs(c.premDelta))}만원 ${c.premDelta > 0 ? '보강' : '절감'}`, c.premDelta > 0 ? 'need' : 'ok'],
+       ['종합 보장 점수', `${c.before.score} → ${c.after.score}`, '점', c.scoreDelta === 0 ? '변동 없음' : `${c.scoreDelta > 0 ? '+' : '−'}${Math.abs(c.scoreDelta)}점 ${c.scoreDelta > 0 ? '상승' : '하락'}`, c.scoreDelta >= 0 ? 'ok' : 'warn']].forEach((k, i) => {
         const x = s.ML + i * (kw + 10);
-        s.rect(x, y, kw, 54, { fill: i ? '#FDF9F8' : '#FDF0F0', r: 6, stroke: C.line });
-        s.text(k[0], x + 12, y + 9, { size: 7, weight: 700, color: C.muted });
-        s.text(k[1], x + 12, y + 21, { size: 16, weight: 800, color: C.navy });
-        s.badge(x + 12, y + 40, k[2], c.premDelta > 0 ? 'need' : 'ok', { size: 5.8 });      });
-      y += 66;
-      y = s.sectionHead(s.ML, y, s.CW, null, '5대 담보 비교', '권장선 100% 기준');
-      const rows = c.rows.map((r) => {
-        const d = r.afterPct - r.beforePct;
-        return [r.item.name, `${r.beforePct}%`, `${r.afterPct}%`, { text: d > 0 ? `+${d}%p` : d < 0 ? `${d}%p` : '—', color: d > 0 ? C.mint : d < 0 ? C.red : C.muted, weight: 700 }];
+        s.rect(x, y, kw, 60, { fill: i ? '#fff' : C.tint2, r: 6, stroke: C.line });
+        s.text(k[0], x + 12, y + 9, { size: 6.4, weight: 700, color: C.muted });
+        s.text(k[1], x + 12, y + 20, { size: 17, weight: 800, color: C.navy });
+        s.text(k[2], x + 12 + s.measure(k[1], 17, 800) + 3, y + 27, { size: 6.4, weight: 600, color: C.muted });
+        s.badge(x + 12, y + 43, k[3], k[4], { size: 5.8, h: 12 });
       });
-      y = s.table(s.ML, y + 2, s.CW, ['담보', 'Before', 'After', '변화'], rows, { widths: [150, 100, 100, 100], size: 7.6, rowH: 17, align: ['left', 'center', 'center', 'center'] });
+      y += 70;
 
-      if (c.contractRows.some((r) => r.act !== 'keep')) {
-        y = s.sectionHead(s.ML, y + 12, s.CW, null, '계약 정리안', '유지 · 감액 · 정리');
-        const crows = c.contractRows.map((r) => [
-          `${r.contract.insurer || '보험사'} ${r.contract.product || ''}`.slice(0, 28),
-          `${won(r.now)}`,
-          r.act === 'close' ? '정리' : r.act === 'reduce' ? `감액 ${won(r.next)}` : '유지'
-        ]);
-        y = s.table(s.ML, y + 2, s.CW, ['계약', '현재 월', '정리안'], crows, { widths: [250, 90, 110], size: 7.2, rowH: 16 });
+      y = s.sectionHead(s.ML, y, s.CW, '01', '5대 담보 비교', '권장선 100% 기준');
+      const headH = 16, rowH = 19;
+      s.rect(s.ML, y, s.CW, headH, { fill: C.navy });
+      s.text('담보', s.ML + 7, y + 5, { size: 6.2, weight: 700, color: '#fff' });
+      s.text('Before', s.ML + 170, y + 5, { size: 6.2, weight: 700, color: '#fff', align: 'center' });
+      s.text('After', s.ML + 244, y + 5, { size: 6.2, weight: 700, color: '#fff', align: 'center' });
+      s.text('변화', s.ML + 320, y + 5, { size: 6.2, weight: 700, color: '#fff', align: 'center' });
+      s.text('After 충족도', s.W - s.MR - 7, y + 5, { size: 6.2, weight: 700, color: '#fff', align: 'right' });
+      c.rows.forEach((r, i) => {
+        const ry = y + headH + i * rowH;
+        const d = r.afterPct - r.beforePct;
+        s.rect(s.ML, ry, s.CW, rowH, { fill: i % 2 ? C.sky2 : '#fff' });
+        s.line(s.ML, ry + rowH, s.ML + s.CW, ry + rowH, { color: C.line2 });
+        s.text(`${i + 1}. ${r.item.name}`, s.ML + 7, ry + 4.6, { size: 7.4, weight: 800, color: C.navy });
+        s.text(`${r.beforePct}%`, s.ML + 170, ry + 4.6, { size: 6.8, weight: 600, color: C.ink2, align: 'center' });
+        s.text(`${r.afterPct}%`, s.ML + 244, ry + 4.6, { size: 6.8, weight: 800, color: r.afterPct > r.beforePct ? C.mint : C.navy, align: 'center' });
+        s.text(d > 0 ? `+${d}%p` : d < 0 ? `${d}%p` : '—', s.ML + 320, ry + 4.6, { size: 6.4, weight: 700, color: d > 0 ? C.mint : d < 0 ? C.red : C.muted, align: 'center' });
+        s.gauge(s.W - s.MR - 92, ry + 7, 66, r.afterPct / 100, { color: r.afterPct >= 99 ? C.mint : r.afterPct >= 50 ? C.orange : C.red, h: 5 });
+        s.text(`${r.afterPct}%`, s.W - s.MR - 7, ry + 4.6, { size: 6.2, weight: 700, color: C.ink2, align: 'right' });
+      });
+      y += headH + c.rows.length * rowH + 10;
+
+      const half = (s.CW - 10) / 2;
+      const conRows = c.contractRows.filter((r) => r.act !== 'keep');
+      const boxTop = y;
+      const boxH = Math.max(54, 30 + Math.max(conRows.length || 1, c.axes.filter((a) => a.changed).length || 1) * 17 + 8);
+      s.rect(s.ML, boxTop, half, boxH, { fill: '#fff', r: 5, stroke: C.line });
+      s.text('계약 정리안', s.ML + 10, boxTop + 7, { size: 6.6, weight: 800, color: C.navy });
+      if (conRows.length) {
+        conRows.slice(0, 4).forEach((r, i) => {
+          const ry = boxTop + 21 + i * 17;
+          s.text(`${(r.contract.insurer || '보험사')} ${(r.contract.product || '')}`.slice(0, 26), s.ML + 10, ry, { size: 5.8, weight: 600, color: C.ink2 });
+          s.text(`${won(r.now)}→${won(r.next)}만원`, s.ML + half - 70, ry, { size: 5.8, weight: 700, color: C.navy, align: 'right' });
+          s.badge(s.ML + half - 60, ry - 1.4, r.act === 'close' ? '정리' : '감액', r.act === 'close' ? 'gap' : 'need', { size: 5.2, h: 10, padX: 3.5 });
+        });
+      } else {
+        s.para('유지할 계약만 있습니다. 정리·감액 대상이 없으면 보강 설계만 진행합니다.', s.ML + 10, boxTop + 22, half - 20, { size: 5.8, color: C.muted, lh: 1.4 });
       }
-      if (c.axes.some((a) => a.changed)) {
-        y = s.sectionHead(s.ML, y + 12, s.CW, null, '보강 설계', '보강 후 금액 · 추가 보험료');
-        const arows = c.axes.filter((a) => a.changed).map((a) => [`${a.axis.name} ${a.axis.unit}`, `${won(a.beforeVal)} → ${won(a.target)}만원`, a.extra ? `+${won(a.extra)}만원` : '—']);
-        y = s.table(s.ML, y + 2, s.CW, ['담보', '보강 후', '추가 보험료'], arows, { widths: [210, 150, 90], size: 7.2, rowH: 16 });
+      const rx = s.ML + half + 10;
+      s.rect(rx, boxTop, half, boxH, { fill: '#fff', r: 5, stroke: C.line });
+      s.text('보강 설계', rx + 10, boxTop + 7, { size: 6.6, weight: 800, color: C.navy });
+      s.text('추가 보험료', rx + half - 10, boxTop + 7, { size: 5.4, weight: 600, color: C.muted, align: 'right' });
+      const axes = c.axes.filter((a) => a.changed);
+      if (axes.length) {
+        axes.slice(0, 4).forEach((a, i) => {
+          const ry = boxTop + 21 + i * 17;
+          s.text(`${a.axis.name} ${a.axis.unit}`, rx + 10, ry, { size: 5.8, weight: 600, color: C.ink2 });
+          s.text(`${won(a.beforeVal)}→${won(a.target)}만원`, rx + half - 66, ry, { size: 5.8, weight: 700, color: C.navy, align: 'right' });
+          s.text(a.extra ? `+${won(a.extra)}만원` : '—', rx + half - 10, ry, { size: 5.8, weight: 700, color: C.orange, align: 'right' });
+        });
+      } else {
+        s.para('보강 항목이 없습니다. 지금 구조를 유지하고 갱신·만기 점검으로 넘어갑니다.', rx + 10, boxTop + 22, half - 20, { size: 5.8, color: C.muted, lh: 1.4 });
       }
-      y += 14;
+      y = boxTop + boxH + 10;
+
+      y = s.sectionHead(s.ML, y, s.CW, '02', '담당자 제안', '이 안을 고르실 때의 기준');
       const comment = remodel.comment || autoComment(c);
-      const ch = Math.max(46, s.height(comment, s.CW - 24, 8.2, 1.5) + 26);
-      s.rect(s.ML, y, s.CW, ch, { fill: '#FDF9F8', r: 6, stroke: C.line });
+      const ch = s.height(comment, s.CW - 26, 8, 1.5) + 24;
+      s.rect(s.ML, y, s.CW, ch, { fill: C.tint2, r: 6, stroke: C.tintLine });
       s.rect(s.ML, y, 3, ch, { fill: accent, r: 1.5 });
-      s.text('설계사 제안', s.ML + 12, y + 8, { size: 6.4, weight: 800, color: accent });
-      s.para(comment, s.ML + 12, y + 20, s.CW - 24, { size: 8.2, color: C.ink, lh: 1.5 });
+      s.text('담당자 소견', s.ML + 12, y + 7, { size: 6.4, weight: 800, color: accent });
+      s.text(`${who} · ${c.before.dateLabel || ''}`, s.W - s.MR - 12, y + 7, { size: 6, weight: 600, color: C.muted, align: 'right' });
+      s.para(comment, s.ML + 12, y + 20, s.CW - 26, { size: 8, color: C.ink, lh: 1.5 });
       y += ch + 10;
-      s.text(`문의 · ${b.consultant || c.before.client.consultant}${b.phone ? ' · ' + b.phone : ''}${b.kakao ? ' · ' + b.kakao : ''}`, s.ML, y, { size: 6.8, weight: 700, color: C.ink2 });
+
+      /* 03 리모델링 원칙 */
+      y = s.sectionHead(s.ML, y, s.CW, '03', '리모델링 3원칙', '이 순서를 지키면 손해 보는 해지가 줄어듭니다');
+      const rules = [
+        { t: '해지가 아니라 재배치', d: '적립·중복·미사용 특약을 정리해 빈 칸으로 옮깁니다.' },
+        { t: '한 번에 한 칸', d: '1순위 한 칸을 같은 보험료 안에서 채우는 것이 첫 단계입니다.' },
+        { t: '금액은 고객이 선택', d: '추가 지출이 필요할 때는 고객님이 결정합니다.' }
+      ];
+      const rw = (s.CW - 16) / 3;
+      rules.forEach((r, i) => {
+        const x = s.ML + i * (rw + 8);
+        s.rect(x, y, rw, 52, { fill: '#fff', r: 5, stroke: C.line });
+        s.iconCircle(x + 16, y + 15, 7, { fill: C.tint, num: i + 1, size: 6.4, color: accent });
+        s.text(r.t, x + 30, y + 9, { size: 7, weight: 800, color: C.navy });
+        s.para(r.d, x + 10, y + 27, rw - 20, { size: 5.7, color: C.ink2, lh: 1.35 });
+      });
+      y += 60;
+
+      /* 04 확인할 것 */
+      y = s.sectionHead(s.ML, y, s.CW, '04', '진행 전 확인할 것', '상담 자리에서 함께 봅니다');
+      s.rect(s.ML, y, s.CW, 54, { fill: '#fff', r: 5, stroke: C.line });
+      [[
+        '증권 원본으로 담보명·갱신 구조 확인',
+        '감액·해지 시 해지환급금과 재가입 조건 확인'
+      ], [
+        '새로 넣는 담보의 1년 미만 감액·1회한 조항 확인',
+        '고지의무(3·1·5 / 간편 3·2·5) 함께 작성'
+      ]].forEach((col, ci) => {
+        col.forEach((t, i) => {
+          const x = s.ML + 10 + ci * (s.CW / 2);
+          const cy = y + 9 + i * 20;
+          s.rect(x, cy + 1, 5.2, 5.2, { fill: '#fff', stroke: accent, r: 1.1, lw: 0.9 });
+          s.line(x + 1.2, cy + 4, x + 2.2, cy + 5, { color: accent, w: 0.9 });
+          s.line(x + 2.2, cy + 5, x + 4, cy + 2.4, { color: accent, w: 0.9 });
+          s.text(t, x + 10, cy - 0.6, { size: 6.4, weight: 500, color: C.ink2 });
+        });
+      });
+      y += 62;
+
+      /* 05 담당자 명함 */
+      const cardH = 74;
+      s.rect(s.ML, y, s.CW, cardH, { fill: '#fff', r: 6, stroke: C.tintLine });
+      s.rect(s.ML, y, 3.4, cardH, { fill: accent, r: 1.7 });
+      const mx = s.brandMark(s.ML + 16, y + 13, 15, { lw: 1.1, color: accent });
+      s.text(b.name || '보장분석 라이프 리포트', mx + 5, y + 12, { size: 9.4, weight: 800, color: C.navy });
+      if (b.slogan) s.para(b.slogan, s.ML + 16, y + 27, 250, { size: 5.8, color: C.muted, lh: 1.3 });
+      s.line(s.ML + 16, y + 43, s.ML + 262, y + 43, { color: C.tintLine });
+      s.text('담당 설계사', s.ML + 16, y + 48, { size: 5.4, weight: 700, color: C.muted });
+      s.text(`${who}${b.title ? ' · ' + b.title : ''}`, s.ML + 16, y + 57, { size: 8.6, weight: 800, color: C.navy });
+      s.line(s.ML + 272, y + 10, s.ML + 272, y + cardH - 10, { color: C.tintLine });
+      s.text('연락', s.ML + 286, y + 12, { size: 5.4, weight: 700, color: C.muted });
+      if (b.phone) s.text(`T. ${b.phone}`, s.ML + 286, y + 22, { size: 6.8, weight: 700, color: C.ink2 });
+      if (b.kakao) s.text(`카카오톡 ${b.kakao}`, s.ML + 286, y + 33, { size: 6.4, weight: 600, color: C.ink2 });
+      s.text('상담 보조용 시뮬레이션입니다. 실제 보험료·인수·해지환급금은 상품과 나이에 따라 달라집니다.', s.ML + 286, y + cardH - 16, { size: 5.2, weight: 500, color: C.muted });
+      y += cardH;
+
       s.footer({ left: `${c.before.client.name}님 리모델링 비교 · ${c.before.dateLabel || ''}`, right: 'REMODELING' });
     };
     const overflow = [];
@@ -912,8 +1009,8 @@
     if (overflow.length) console.warn('[PDF] 리모델링 넘침', overflow);
     const d = new Date();
     const date = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
-    const who = (c.before.client.name || '고객').replace(/[\\/:*?"<>|\s]/g, '');
-    await root.PDFKit.saveBlob(blob, `${who}_리모델링비교_${date}.pdf`, { picker: false, title: '리모델링 비교' });
+    const safe = (c.before.client.name || '고객').replace(/[\\/:*?\"<>|\s]/g, '');
+    await root.PDFKit.saveBlob(blob, `${safe}_리모델링비교_${date}.pdf`, { picker: false, title: '리모델링 비교' });
     toast('리모델링 비교 PDF를 저장했습니다');
   }
 
@@ -981,7 +1078,7 @@
             <span class="bp-plan">${BETA ? 'BETA' : (open ? 'PRO' : 'FREE')}</span>
           </div>
           <div class="bp-hero">
-            <span class="bp-eyebrow">LIFE REPORT V5.4</span>
+            <span class="bp-eyebrow">LIFE REPORT V5.5</span>
             <h4 id="bp-hero-name">${brandNameHTML(draft.name)}</h4>
             <p id="bp-hero-slogan">${esc(draft.slogan)}</p>
             <div class="bp-cover">

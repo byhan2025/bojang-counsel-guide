@@ -116,7 +116,7 @@ def main():
             # 1. 중립 기본값 — 서비스명·부제·네이비·특정 브랜드 미노출
             # =========================================================
             title = page.title()
-            check("타이틀 v5.2 이상 · 중립 서비스명", "보장분석 라이프 리포트" in title and ("v5.2" in title or "v5.3" in title or "v5.4" in title), title)
+            check("타이틀 v5.2 이상 · 중립 서비스명", "보장분석 라이프 리포트" in title and ("v5.2" in title or "v5.3" in title or "v5.4" in title or "v5.5" in title), title)
             h1 = page.inner_text(".brand-text h1").replace("\n", "")
             check("헤더 기본 브랜드 = 보장분석 라이프 리포트", h1 == "보장분석 라이프 리포트", h1)
             sub = page.inner_text(".brand-text p")
@@ -160,8 +160,13 @@ def main():
             # =========================================================
             # 3. 베타 안내 모달 — 문구 · 요금제 · 피드백 · 사은품
             # =========================================================
+            # v5.4부터 플랜 배지는 계정/구독 모달을 엽니다 - 베타 안내 모달은 BojangPlan.openBetaModal 로 직접 확인
             page.click("#plan-badge")
             page.wait_for_timeout(500)
+            check("플랜 배지 → 계정/구독 모달", page.is_visible("#account-modal") or page.is_visible("#beta-modal"), (page.is_visible("#account-modal"), page.is_visible("#beta-modal")))
+            page.evaluate("() => { if (window.BojangPlan && BojangPlan.closePlanModal) BojangPlan.closePlanModal(); const el = document.getElementById('account-modal'); if (el) el.hidden = true; }")
+            page.evaluate("() => BojangPlan.openBetaModal('plan')")
+            page.wait_for_timeout(300)
             check("베타 모달 열림", page.is_visible("#beta-modal"), page.is_visible("#beta-modal"))
             modal = page.inner_text("#beta-modal")
             check("베타 모달 무료 문구", "정식 출시 전 베타 테스트 기간으로 Pro 전 기능을 무료로 제공하고 있습니다" in modal, modal[:120].replace("\n", " | "))
@@ -419,7 +424,7 @@ def main():
             # 10. 산출물 · 서비스워커 · 단일 HTML
             # =========================================================
             sw = open(os.path.join(ROOT, "sw.js"), encoding="utf-8").read()
-            check("서비스워커 캐시 v5.2 이상", "bojang-guide-v5.2" in sw or "bojang-guide-v5.3" in sw or "bojang-guide-v5.4" in sw, sw.strip().splitlines()[2] if sw else sw)
+            check("서비스워커 캐시 v5.2 이상", "bojang-guide-v5.2" in sw or "bojang-guide-v5.3" in sw or "bojang-guide-v5.4" in sw or "bojang-guide-v5.5" in sw, sw.strip().splitlines()[2] if sw else sw)
             doc = open(os.path.join(ROOT, "docs", "backend-architecture.md"), encoding="utf-8").read()
             check("백엔드 설계서 요금제 5,000/50,000", "5,000원/월" in doc and "50,000원/년" in doc and "29,000원" not in doc, [k for k in ("5,000원/월", "50,000원/년") if k in doc])
             single = os.path.join(ROOT, "dist", "bojang-guide.single.html")
