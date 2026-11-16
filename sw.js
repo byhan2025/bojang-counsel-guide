@@ -9,6 +9,7 @@ const ASSETS = [
   './playbook.js',
   './model.js',
   './pdfkit.js',
+  './qr.js',
   './report.js',
   './client.js',
   './live.js',
