@@ -856,6 +856,8 @@ def main():
             check("qr-auth-challenge — 180초 TTL", "TTL_SECONDS = 180" in fn_ch, "")
             check("qr-auth-challenge — PC 서명 검증", "verifyPcSignature" in fn_ch and "bad-pc-signature" in fn_ch, "")
             check("qr-auth-challenge — 요청 제한", "RATE_LIMIT_PER_MIN" in fn_ch and "rate-limit" in fn_ch, "")
+            check("qr-auth-challenge — 이전 코드 무효화(서명 필요)", '"cancel"' in fn_ch and '"SMK1", "cancel"' in fn_ch, "")
+            check("smartkey — 새 코드 시 cancel 서명 전송", "cancel_sig" in read(os.path.join(ROOT, "smartkey.js")), "")
             check("qr-auth-approve — JWT 필수", "requireUser" in fn_ap, "")
             check("qr-auth-approve — 마스터 기기 검증", '"not-master"' in fn_ap and "master" in fn_ap, "")
             check("qr-auth-approve — 단회 원자적 소비", ".eq(\"status\", \"pending\")" in fn_ap and "consumed_at" in fn_ap and ".is(\"consumed_at\", null)" in fn_ap, "")

@@ -3727,7 +3727,7 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 .app-foot-details .app-foot{margin-top:6px;}
 
 </style>
-<!-- build 7d6f972a8a64 · protected=true -->
+<!-- build 0f4d396dd98d · protected=true -->
 </head>
 <body>
 
@@ -16529,7 +16529,8 @@ const PLAN_FRONT = {
       this.write(st);
       return { ok: true, session_token: token, pc_name: c.pc_name };
     },
-    cancel(id) {
+    cancel(payload) {
+      const id = typeof payload === 'string' ? payload : payload && payload.id;
       const st = this.read();
       const c = st.challenges[id];
       if (!c) return { ok: false, error: 'not-found' };
@@ -16712,12 +16713,13 @@ const PLAN_FRONT = {
       }
       return local.approve(body);
     },
-    async cancel(id) {
+    async cancel(payload) {
+      const p = typeof payload === 'string' ? { id: payload } : (payload || {});
       if (this.remote === 'ok') {
-        const out = await this.call('qr-auth-challenge', { action: 'cancel', challenge_id: id });
+        const out = await this.call('qr-auth-challenge', { action: 'cancel', challenge_id: p.id, cancel_sig: p.sig || '' });
         if (out) return out;
       }
-      return local.cancel(id);
+      return local.cancel(p);
     },
     async reject(body) {
       if (this.remote === 'ok') {
@@ -16790,8 +16792,12 @@ const PLAN_FRONT = {
 
       if (this.challenge && this.challenge.id) {
         const prev = this.challenge.id;
+        let cancelSig = '';
+        try {
+          if (this.keys && this.keys.ecdsa) cancelSig = await signText(this.keys.ecdsa.privateKey, ['SMK1', 'cancel', prev].join('|'));
+        } catch (e) { cancelSig = ''; }
         this.challenge = null;
-        try { await server.cancel(prev); } catch (e) {   }
+        try { await server.cancel({ id: prev, sig: cancelSig }); } catch (e) {   }
       }
       this.status = 'issuing';
       this.inherited = null;

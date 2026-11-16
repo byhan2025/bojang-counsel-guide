@@ -149,6 +149,23 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    /* ---------- PC: 이전 코드 무효화 (새로고침) ---------- */
+    if (action === "cancel") {
+      const id = String(body.challenge_id ?? "");
+      const sig = String(body.cancel_sig ?? "");
+      if (!id || !sig) return fail("bad-request", 400);
+      const { data: ch } = await admin()
+        .from("qr_challenges")
+        .select("id, pc_pub_ecdsa, status")
+        .eq("id", id)
+        .maybeSingle();
+      if (!ch) return fail("not-found", 404);
+      const okCancel = await verifyPcSignature(ch.pc_pub_ecdsa as Jwk, sig, ["SMK1", "cancel", id].join("|"));
+      if (!okCancel) return fail("bad-pc-signature", 401, "PC 키 서명 검증에 실패했습니다.");
+      await admin().from("qr_challenges").update({ status: "replaced" }).eq("id", id).eq("status", "pending");
+      return json({ ok: true });
+    }
+
     /* ---------- PC: 챌린지 발급 ---------- */
     if (action !== "create") return fail("bad-request", 400, "알 수 없는 action 입니다.");
 

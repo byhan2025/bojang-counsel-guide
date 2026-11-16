@@ -327,7 +327,8 @@
       this.write(st);
       return { ok: true, session_token: token, pc_name: c.pc_name };
     },
-    cancel(id) {
+    cancel(payload) {
+      const id = typeof payload === 'string' ? payload : payload && payload.id;
       const st = this.read();
       const c = st.challenges[id];
       if (!c) return { ok: false, error: 'not-found' };
@@ -511,12 +512,13 @@
       }
       return local.approve(body);
     },
-    async cancel(id) {
+    async cancel(payload) {
+      const p = typeof payload === 'string' ? { id: payload } : (payload || {});
       if (this.remote === 'ok') {
-        const out = await this.call('qr-auth-challenge', { action: 'cancel', challenge_id: id });
+        const out = await this.call('qr-auth-challenge', { action: 'cancel', challenge_id: p.id, cancel_sig: p.sig || '' });
         if (out) return out;
       }
-      return local.cancel(id);
+      return local.cancel(p);
     },
     async reject(body) {
       if (this.remote === 'ok') {
@@ -592,8 +594,12 @@
       /* 새 코드를 받으면 이 PC 의 이전 코드는 즉시 무효화합니다(단회·교체) */
       if (this.challenge && this.challenge.id) {
         const prev = this.challenge.id;
+        let cancelSig = '';
+        try {
+          if (this.keys && this.keys.ecdsa) cancelSig = await signText(this.keys.ecdsa.privateKey, ['SMK1', 'cancel', prev].join('|'));
+        } catch (e) { cancelSig = ''; }
         this.challenge = null;
-        try { await server.cancel(prev); } catch (e) { /* noop */ }
+        try { await server.cancel({ id: prev, sig: cancelSig }); } catch (e) { /* noop */ }
       }
       this.status = 'issuing';
       this.inherited = null;
