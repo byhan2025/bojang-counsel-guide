@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""보험에 반하다 v5.1 — Playwright 자동 검증.
+"""v5.1 역사 검증 — Free/Pro 잠금 동선.
+
+v5.2 베타에서는 잠금이 모두 해제되어 이 스크립트의 잠금 기대값이 유효하지 않습니다.
+기본 실행은 안내 후 종료(exit 0)하고, v5.1 동작을 재현할 때만 BOJANG_LEGACY=1로 실행합니다.
+  BOJANG_LEGACY=1 python3 tests/test_v5_1.py
+
+보험에 반하다 v5.1 — Playwright 자동 검증.
 
 실행: python3 tests/test_v5_1.py
 검증: Free/Pro 요금제 전환 · 잠금 동선(30장 7번·10/30장 PDF·고객 2명째·FC 도구) ·
@@ -14,6 +20,11 @@ import socketserver
 import sys
 import threading
 import time
+
+if os.environ.get("BOJANG_LEGACY") != "1":
+    print("[SKIP] test_v5_1.py — v5.1 Free/Pro 잠금 동선은 v5.2 베타에서 잠금이 모두 해제되어 더 이상 유효하지 않습니다.")
+    print("       v5.2 검증은 tests/test_v5_2.py를 실행하세요. v5.1 동작 재현은 BOJANG_LEGACY=1.")
+    sys.exit(0)
 
 # 이 환경의 번들 Chromium은 별도 공유 라이브러리가 필요합니다(없으면 시스템 기본값 사용).
 for _libs in ("/workspace/tmp/libs/usr/lib/x86_64-linux-gnu", "/workspace/.pwlibs/root/usr/lib/x86_64-linux-gnu"):
