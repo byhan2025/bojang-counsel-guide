@@ -192,13 +192,13 @@ def main():
             # 1. v5.6 버전 표기 · 정적 구조
             # =========================================================
             title = page.title()
-            check("타이틀 v5.6 이상", any(v in title for v in ("v5.6", "v5.7", "v5.8")) and "보장분석 라이프 리포트" in title, title)
-            check("헤더 버전 표기 v5.6 이상", any(v in page.inner_text(".hh-ver") for v in ("v5.6", "v5.7", "v5.8")), page.inner_text(".hh-ver"))
-            check("헤더 eyebrow V5.6 이상", any(v in page.inner_text(".hh-eyebrow") for v in ("V5.6", "V5.7", "V5.8")), page.inner_text(".hh-eyebrow"))
+            check("타이틀 v5.6 이상", any(v in title for v in ("v5.6", "v5.7", "v5.8", "v5.9")) and "보장분석 라이프 리포트" in title, title)
+            check("헤더 버전 표기 v5.6 이상", any(v in page.inner_text(".hh-ver") for v in ("v5.6", "v5.7", "v5.8", "v5.9")), page.inner_text(".hh-ver"))
+            check("헤더 eyebrow V5.6 이상", any(v in page.inner_text(".hh-eyebrow") for v in ("V5.6", "V5.7", "V5.8", "V5.9")), page.inner_text(".hh-eyebrow"))
             sw = read(os.path.join(ROOT, "sw.js"))
-            check("서비스워커 캐시 v5.6 이상", any(v in sw for v in ("bojang-guide-v5.6", "bojang-guide-v5.7", "bojang-guide-v5.8")), sw.splitlines()[2])
+            check("서비스워커 캐시 v5.6 이상", any(v in sw for v in ("bojang-guide-v5.6", "bojang-guide-v5.7", "bojang-guide-v5.8", "bojang-guide-v5.9")), sw.splitlines()[2])
             man = json.loads(read(os.path.join(ROOT, "manifest.json")))
-            check("manifest v5.6 이상", any(v in man.get("name", "") for v in ("v5.6", "v5.7", "v5.8")), man.get("name"))
+            check("manifest v5.6 이상", any(v in man.get("name", "") for v in ("v5.6", "v5.7", "v5.8", "v5.9")), man.get("name"))
 
             model_src = read(os.path.join(ROOT, "model.js"))
             content_src = read(os.path.join(ROOT, "content.js"))
@@ -304,6 +304,8 @@ def main():
             page.evaluate("""(cs) => { BojangApp.state.cov.custom = JSON.parse(JSON.stringify(cs)); BojangApp.analyze(); }""", CUSTOM)
             page.wait_for_timeout(200)
             exported = ""
+            page.evaluate("() => BojangApp.openMoreMenu(true)")
+            page.wait_for_timeout(150)
             try:
                 with page.expect_download(timeout=15000) as dl:
                     page.click("#btn-json-export")
@@ -483,7 +485,7 @@ def main():
             # 8. 단일 HTML · 콘솔
             # =========================================================
             single = read(os.path.join(ROOT, "dist", "bojang-guide.single.html"))
-            check("단일 HTML — v5.6·직접 기재 반영", any(v in single for v in ("v5.6", "v5.7", "v5.8")) and "증권 담보 직접 기재" in single and "CUSTOM_PRESETS" in single, "v5.7" in single)
+            check("단일 HTML — v5.6·직접 기재 반영", any(v in single for v in ("v5.6", "v5.7", "v5.8", "v5.9")) and "증권 담보 직접 기재" in single and "CUSTOM_PRESETS" in single, "v5.7" in single)
             check("단일 HTML — 외부 참조 0", single.count('src="./') == 0 and single.count('href="./') == 0, (single.count('src="./'), single.count('href="./')))
             console_errors = [e for e in errors if "favicon" not in e.lower()]
             check("콘솔 오류 0", len(console_errors) == 0, console_errors[:3])

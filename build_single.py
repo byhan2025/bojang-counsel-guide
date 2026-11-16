@@ -20,6 +20,9 @@ def read(name):
 def build():
     html = read("index.html")
     css = read("styles.css")
+    version = read("version.js")
+    security = read("security.js")
+    storage = read("storage-idb.js")
     content = read("content.js")
     playbook = read("playbook.js")
     model = read("model.js")
@@ -52,6 +55,9 @@ def build():
     html = html.replace('<link rel="icon" href="./icons/icon-192.png" sizes="192x192">',
                         f'<link rel="icon" href="{icon_192}" sizes="192x192">')
     bundle = "\n".join([
+        "<script>\n" + version + "\n</script>",
+        "<script>\n" + security + "\n</script>",
+        "<script>\n" + storage + "\n</script>",
         "<script>\n" + content + "\n</script>",
         "<script>\n" + playbook + "\n</script>",
         "<script>\n" + model + "\n</script>",
@@ -67,7 +73,9 @@ def build():
         "<script>\n" + inputhub + "\n</script>",
         "<script>\n" + app + "\n</script>",
     ])
-    old = ('<script src="./content.js"></script>\n<script src="./playbook.js"></script>\n'
+    old = ('<script src="./version.js"></script>\n<script src="./security.js"></script>\n'
+           '<script src="./storage-idb.js"></script>\n'
+           '<script src="./content.js"></script>\n<script src="./playbook.js"></script>\n'
            '<script src="./model.js"></script>\n<script src="./pdfkit.js"></script>\n'
            '<script src="./qr.js"></script>\n<script src="./report.js"></script>\n<script src="./client.js"></script>\n<script src="./live.js"></script>\n<script src="./tools.js"></script>\n'
            '<script src="./monetize.js"></script>\n<script src="./backend.js"></script>\n<script src="./import-parser.js"></script>\n<script src="./inputhub.js"></script>\n<script src="./app.js"></script>')

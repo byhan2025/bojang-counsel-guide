@@ -116,7 +116,7 @@ def main():
             # 1. 중립 기본값 — 서비스명·부제·네이비·특정 브랜드 미노출
             # =========================================================
             title = page.title()
-            check("타이틀 v5.2 이상 · 중립 서비스명", "보장분석 라이프 리포트" in title and any(v in title for v in ("v5.2", "v5.3", "v5.4", "v5.5", "v5.6", "v5.7", "v5.8")), title)
+            check("타이틀 v5.2 이상 · 중립 서비스명", "보장분석 라이프 리포트" in title and any(v in title for v in ("v5.2", "v5.3", "v5.4", "v5.5", "v5.6", "v5.7", "v5.8", "v5.9")), title)
             h1 = page.inner_text(".brand-text h1").replace("\n", "")
             check("헤더 기본 브랜드 = 보장분석 라이프 리포트", h1 == "보장분석 라이프 리포트", h1)
             sub = page.inner_text(".brand-text p")
@@ -220,6 +220,8 @@ def main():
             # =========================================================
             # 5. 베타 PDF — 1·10·30장 모두 무료, 워터마크 없음
             # =========================================================
+            page.evaluate("() => BojangApp.openMoreMenu(true)")
+            page.wait_for_timeout(120)
             page.click('[data-home-go="analysis"]')
             page.wait_for_timeout(400)
             page.click("#btn-analyze")
@@ -248,9 +250,11 @@ def main():
             # =========================================================
             # 6. 베타 고객 저장 — 2명째도 저장
             # =========================================================
-            page.evaluate("() => localStorage.removeItem('bojang.history.v4')")
+            page.evaluate("() => BojangStore.saveHistory([]).then(() => { BojangApp.state.history = []; BojangApp.renderHistory(); })")
             page.reload(wait_until="load")
             page.wait_for_timeout(700)
+            page.evaluate("() => BojangApp.openMoreMenu(true)")
+            page.wait_for_timeout(120)
             page.click('[data-home-go="analysis"]')
             page.wait_for_timeout(300)
             page.click("#btn-analyze")
@@ -267,6 +271,8 @@ def main():
             # =========================================================
             page.click("#btn-home")
             page.wait_for_timeout(300)
+            page.evaluate("() => BojangApp.openMoreMenu(true)")
+            page.wait_for_timeout(120)
             page.click('[data-home-go="codes"]')
             page.wait_for_timeout(500)
             total_codes = page.eval_on_selector_all(".code-card", "e => e.length")
@@ -278,6 +284,8 @@ def main():
             check("베타: 코드 복사 시 페이월 없음", not page.is_visible("#paywall"), page.is_visible("#paywall"))
             page.click("#btn-home")
             page.wait_for_timeout(300)
+            page.evaluate("() => BojangApp.openMoreMenu(true)")
+            page.wait_for_timeout(120)
             page.click('[data-home-go="disclose"]')
             page.wait_for_timeout(500)
             claim_label = page.inner_text("#claim-copy")
@@ -301,6 +309,8 @@ def main():
             }""")
             page.click("#btn-home")
             page.wait_for_timeout(300)
+            page.evaluate("() => BojangApp.openMoreMenu(true)")
+            page.wait_for_timeout(120)
             page.click('[data-home-go="remodel"]')
             page.wait_for_timeout(700)
             kpi = page.inner_text(".rm-hero-grid")
@@ -345,6 +355,8 @@ def main():
             # =========================================================
             page.click("#btn-home")
             page.wait_for_timeout(300)
+            page.evaluate("() => BojangApp.openMoreMenu(true)")
+            page.wait_for_timeout(120)
             page.click('[data-home-go="brand"]')
             page.wait_for_timeout(500)
             check("브랜드 기본 초안 = 중립", page.input_value("#bf-name") == "보장분석 라이프 리포트", page.input_value("#bf-name"))
@@ -411,6 +423,8 @@ def main():
 
             page.click("#btn-home")
             page.wait_for_timeout(300)
+            page.evaluate("() => BojangApp.openMoreMenu(true)")
+            page.wait_for_timeout(120)
             page.click('[data-home-go="client"]')
             page.wait_for_timeout(900)
             cover = page.inner_text("#slide-1")
@@ -424,7 +438,7 @@ def main():
             # 10. 산출물 · 서비스워커 · 단일 HTML
             # =========================================================
             sw = open(os.path.join(ROOT, "sw.js"), encoding="utf-8").read()
-            check("서비스워커 캐시 v5.2 이상", any(v in sw for v in ("bojang-guide-v5.2", "bojang-guide-v5.3", "bojang-guide-v5.4", "bojang-guide-v5.5", "bojang-guide-v5.6", "bojang-guide-v5.7", "bojang-guide-v5.8")), sw.strip().splitlines()[2] if sw else sw)
+            check("서비스워커 캐시 v5.2 이상", any(v in sw for v in ("bojang-guide-v5.2", "bojang-guide-v5.3", "bojang-guide-v5.4", "bojang-guide-v5.5", "bojang-guide-v5.6", "bojang-guide-v5.7", "bojang-guide-v5.8", "bojang-guide-v5.9")), sw.strip().splitlines()[2] if sw else sw)
             doc = open(os.path.join(ROOT, "docs", "backend-architecture.md"), encoding="utf-8").read()
             check("백엔드 설계서 요금제 5,000/50,000", "5,000원/월" in doc and "50,000원/년" in doc and "29,000원" not in doc, [k for k in ("5,000원/월", "50,000원/년") if k in doc])
             single = os.path.join(ROOT, "dist", "bojang-guide.single.html")

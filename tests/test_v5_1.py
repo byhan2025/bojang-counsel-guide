@@ -164,7 +164,7 @@ def main():
             # =========================================================
             # 4. Free 고객 저장 1명
             # =========================================================
-            page.evaluate("() => localStorage.removeItem('bojang.history.v4')")
+            page.evaluate("() => BojangStore.saveHistory([]).then(() => { BojangApp.state.history = []; BojangApp.renderHistory(); })")
             page.reload(wait_until="load")
             page.wait_for_timeout(800)
             page.click("#btn-plan-dummy", timeout=1000) if False else None

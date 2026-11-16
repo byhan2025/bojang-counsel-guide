@@ -28,16 +28,46 @@
 
   /* =========================================================
      허브 (입력 방식 선택)
+     v5.9 — 마지막으로 쓴 입력 방식을 기억해 허브에 표시하고,
+            첫 방문 가이드(투어)와 모달이 겹치지 않도록 순서를 지킵니다.
      ========================================================= */
-  function openHub() {
+  const LAST_KEY = 'bojang.lastmode.v1';
+  const MODE_LABEL = { manual: '수기 입력', camera: '사진 즉시 촬영', pdf: '보장분석 PDF·텍스트', analysis: '6단계 입력실', quick: '한 화면 빠른 입력' };
+
+  function readLast() {
+    try { return localStorage.getItem(LAST_KEY) || ''; } catch (e) { return ''; }
+  }
+  function rememberLast(mode) {
+    if (!MODE_LABEL[mode]) return;
+    try { localStorage.setItem(LAST_KEY, mode); } catch (e) { /* private mode */ }
+  }
+
+  function paintLast() {
+    const el = $('#ih-last');
+    if (!el) return;
+    const last = readLast();
+    el.textContent = last ? '지난번에는 ' + MODE_LABEL[last] + '으로 입력했습니다' : '';
+    el.hidden = !last;
+  }
+
+  function openHubNow() {
     const el = $('#input-hub');
     if (!el) return;
     el.hidden = false;
     $$('#input-hub .hub-opt').forEach((b) => b.classList.remove('is-open'));
     const manual = $('#ih-manual');
     if (manual) manual.hidden = true;
+    paintLast();
     const first = $('#input-hub .hub-opt');
     if (first) first.focus({ preventScroll: true });
+  }
+
+  function openHub() {
+    /* 가이드 투어가 떠 있으면 먼저 닫고, 그 뒤에 허브를 엽니다 */
+    if (root.BojangTour && root.BojangTour.beforeInputHub) {
+      if (root.BojangTour.beforeInputHub(openHubNow)) return;
+    }
+    openHubNow();
   }
 
   function closeHub() {
@@ -51,12 +81,14 @@
       if (m) m.hidden = false;
       return;
     }
+    rememberLast(mode);
     closeHub();
     if (mode === 'camera') { ctx.openView('capture'); return; }
     if (mode === 'pdf') { ctx.openView('import'); return; }
   }
 
   function goManual(where) {
+    rememberLast(where === 'quick' ? 'quick' : 'analysis');
     closeHub();
     ctx.openView(where === 'quick' ? 'quick' : 'analysis');
     if (ctx.toast) ctx.toast(where === 'quick' ? '한 화면 빠른 입력으로 이동했습니다' : '6단계 입력실로 이동했습니다');
@@ -137,10 +169,12 @@
     let blob = result.blob;
     result.blob = null;   /* 화면·상태에는 축소본을 남기지 않습니다 */
 
-    /* v5.4 — 실서버 모드 + 로그인 상태면 진짜 AI 비전 엔드포인트로 전송 */
+    /* v5.4 — 실서버 모드 + 로그인 상태면 진짜 AI 비전 엔드포인트로 전송
+       v5.9 — 공식 도메인이 아닌 복제본에서는 서버 호출을 차단합니다 */
     const backend = root.BojangBackend;
     const live = !!(backend && backend.isLive && backend.isLive());
-    const canVision = !!((backend && backend.canUseVision && backend.canUseVision()) || BojangImport.VISION_ENDPOINT);
+    const networkOk = !(root.BojangGuard && root.BojangGuard.networkAllowed && !root.BojangGuard.networkAllowed());
+    const canVision = networkOk && !!((backend && backend.canUseVision && backend.canUseVision()) || BojangImport.VISION_ENDPOINT);
 
     let vision = null;
     if (canVision) {
@@ -165,7 +199,9 @@
     $('#cap-warn').innerHTML = warn.map((w) => `<li>${esc(w)}</li>`).join('');
     $('#cap-warn').hidden = !warn.length;
     if (!live) {
-      $('#cap-beta').textContent = BETA_NOTE;
+      $('#cap-beta').textContent = networkOk ? BETA_NOTE : '공식 배포처가 아닌 주소라 AI 사진 인식 서버 호출이 차단되었습니다 — PDF·텍스트·수기 입력을 이용해 주세요.';
+    } else if (!networkOk) {
+      $('#cap-beta').textContent = '공식 배포처가 아닌 주소라 AI 사진 인식 서버 호출이 차단되었습니다 — PDF·텍스트·수기 입력을 이용해 주세요.';
     } else if (visionOk) {
       const ms = vision.ms ? ` · ${vision.ms}ms` : '';
       $('#cap-beta').textContent = `AI 비전 인식 완료 · ${vision.model || 'vision'}${ms} · 사진은 서버에 저장되지 않았습니다(persisted:false)`;

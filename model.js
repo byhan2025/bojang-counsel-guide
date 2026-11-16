@@ -248,6 +248,48 @@
   /* ---------- 구버전 데이터 마이그레이션 (v4.2) ----------
      저장된 localStorage 세션·상담 이력·가져온 JSON을 지금 구조로 옮깁니다.
      금액을 알 수 없는 boolean 보유 표시는 표준 금액으로 채우고, 확인이 필요하다는 메모를 남깁니다. */
+  /* ---------- v5.9 음수·비정상 금액 차단 ----------
+     입력칸·세션·가져온 JSON·클라우드 복원 어느 경로로 들어와도 0 이상으로 맞춥니다.
+     음수(-5)나 숫자가 아닌 값은 0 으로, 진단비는 5,000만원, 월 보험료는 300만원 상한을 넘지 않습니다.
+     반환값은 보정한 칸 수입니다. */
+  function clampAmounts(state) {
+    if (!state || !state.cov) return 0;
+    let fixed = 0;
+    const fix = (v, max) => {
+      const x = Number(v);
+      const safe = isFinite(x) ? Math.max(0, Math.min(max == null ? 100000 : max, x)) : 0;
+      if (safe !== x) fixed++;
+      return safe;
+    };
+    const cov = state.cov;
+    if (cov.cancer) {
+      cov.cancer.general = fix(cov.cancer.general);
+      cov.cancer.similar = fix(cov.cancer.similar);
+      const t = cov.cancer.treatment;
+      if (t && typeof t === 'object') Object.keys(t).forEach((k) => { t[k] = fix(t[k]); });
+    }
+    ['brain', 'heart'].forEach((key) => {
+      const c = cov[key];
+      if (!c) return;
+      if (c.dx && typeof c.dx === 'object') Object.keys(c.dx).forEach((k) => { c.dx[k] = fix(c.dx[k], DX_MAX); });
+      if (c.treat && typeof c.treat === 'object') Object.keys(c.treat).forEach((k) => { c.treat[k] = fix(c.treat[k]); });
+    });
+    if (cov.surgery) Object.keys(cov.surgery).forEach((k) => { cov.surgery[k] = fix(cov.surgery[k]); });
+    if (cov.care) {
+      cov.care.daily = fix(cov.care.daily);
+      cov.care.nDaily = fix(cov.care.nDaily);
+    }
+    if (cov.custom && typeof cov.custom === 'object') {
+      Object.keys(cov.custom).forEach((k) => {
+        const arr = cov.custom[k];
+        if (Array.isArray(arr)) arr.forEach((it) => { if (it && typeof it === 'object') it.amount = fix(it.amount); });
+      });
+    }
+    state.premium = fix(state.premium, 300);
+    if (Array.isArray(state.contracts)) state.contracts.forEach((c) => { if (c) c.premium = fix(c.premium, 300); });
+    return fixed;
+  }
+
   function normalizeState(state) {
     const res = { migrated: false, notes: [] };
     if (!state || !state.cov) return res;
@@ -361,6 +403,8 @@
     if (!Array.isArray(state.contracts)) state.contracts = [];
     if (!Array.isArray(state.family)) state.family = [];
     if (!state.disc || typeof state.disc !== 'object') state.disc = {};
+    /* v5.9 — 구조를 맞춘 뒤 음수·비정상 금액을 0 이상으로 보정합니다 */
+    res.clamped = clampAmounts(state);
     return res;
   }
 
@@ -1042,6 +1086,7 @@
 
   root.BojangModel = {
     won, clamp, evalItem, summaryOf, weights, computeScore, gradeLetter,
+    clampAmounts,
     parseDate, insuranceAge, nextAgeDay, ageBandFromBirth,
     partRows, counts, checkpoints, steps, full, oneLine, LEVEL_LABEL,
     FAMILY_KEYS, FAMILY_NOTE, familyList, familyNotes, disclosureJudge, contractStats, MATURITY,

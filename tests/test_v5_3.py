@@ -247,9 +247,9 @@ def main():
             # 1. 버전 · 입력 방식 허브
             # =========================================================
             title = page.title()
-            check("타이틀 v5.3 이상", ("v5.3" in title or "v5.4" in title or "v5.5" in title) and "보장분석 라이프 리포트" in title, title)
-            check("메인 eyebrow V5.3 이상", ("V5.3" in page.inner_text(".hh-eyebrow") or "V5.4" in page.inner_text(".hh-eyebrow") or "V5.5" in page.inner_text(".hh-eyebrow")), page.inner_text(".hh-eyebrow"))
-            check("메인 버전 표기", ("v5.3" in page.inner_text(".hh-ver") or "v5.4" in page.inner_text(".hh-ver") or "v5.5" in page.inner_text(".hh-ver")), page.inner_text(".hh-ver"))
+            check("타이틀 v5.3 이상", any(v in title for v in ("v5.3", "v5.4", "v5.5", "v5.6", "v5.7", "v5.8", "v5.9")) and "보장분석 라이프 리포트" in title, title)
+            check("메인 eyebrow V5.3 이상", any(v in page.inner_text(".hh-eyebrow") for v in ("V5.3", "V5.4", "V5.5", "V5.6", "V5.7", "V5.8", "V5.9")), page.inner_text(".hh-eyebrow"))
+            check("메인 버전 표기", any(v in page.inner_text(".hh-ver") for v in ("v5.3", "v5.4", "v5.5", "v5.6", "v5.7", "v5.8", "v5.9")), page.inner_text(".hh-ver"))
             check("새 상담 시작 = 입력 방식 허브", "새 상담 시작" in page.inner_text("#btn-start-consult")
                   and page.get_attribute("#btn-start-consult", "data-inputhub") == "1", page.inner_text("#btn-start-consult"))
 
@@ -322,11 +322,19 @@ def main():
               return { big, img, n: dump.length };
             }""")
             check("저장소에 이미지·대용량 값 0", leaked["big"] == 0 and leaked["img"] == 0, leaked)
+            # v5.9: 상담 이력은 IndexedDB 로 이관되었습니다.
+            #   · 촬영 사진이 IndexedDB 에 남지 않는지(이미지·대용량 0)를 확인합니다.
             dbs = page.evaluate("""async () => {
               if (!indexedDB.databases) return -1;
-              try { return (await indexedDB.databases()).length; } catch (e) { return -1; }
+              try { return (await indexedDB.databases()).map((d) => d.name); } catch (e) { return -1; }
             }""")
-            check("IndexedDB 사용 0", dbs in (0, -1), dbs)
+            idb_dump = page.evaluate("""async () => {
+              if (!window.BojangStore) return { rows: 0, img: 0, big: 0 };
+              const rows = await BojangStore.table('history').toArray();
+              const blob = JSON.stringify(rows);
+              return { rows: rows.length, img: (blob.match(/data:image|base64/g) || []).length, big: blob.length };
+            }""")
+            check("IndexedDB — 상담 이력 저장소만(사진·이미지 0)", dbs in (0, -1, ['bojang-guide']) and idb_dump["img"] == 0, (dbs, idb_dump))
             page.evaluate("() => window.scrollTo(0, 260)")
             page.wait_for_timeout(200)
             page.screenshot(path=os.path.join(SHOTS, "v53-02-camera-volatile.png"))

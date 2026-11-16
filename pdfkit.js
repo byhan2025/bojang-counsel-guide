@@ -348,6 +348,13 @@
         const w = this.measure(right, 6.2, 700);
         this.text(brandName, this.W - this.MR - w - 8, y + 5, { size: 6.2, weight: 600, color: C.muted, align: 'right' });
       }
+      /* v5.9 — 유출 추적 워터마크(ID-XXXX). 꼬리말 왼쪽 문구 바로 뒤에 아주 작게 */
+      const idMark = o.idMark || this.idMark;
+      if (idMark) {
+        const leftText = o.left || '상담 보조용 자료 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다';
+        const lw = this.measure(leftText, 6.2, 500);
+        this.text(idMark, this.ML + lw + 8, y + 5.6, { size: 4.4, weight: 700, color: C.muted });
+      }
     }
     /* 무료 체험판 워터마크 — 하단 띠 (베타 기간에는 표시되지 않습니다) */
     watermark(text) {
@@ -755,6 +762,7 @@
     for (let i = 0; i < drawers.length; i++) {
       const s = new Sheet();
       s.overflow = 0;
+      s.idMark = opts.idMark || '';
       s.suppressBrandSlogan = !!opts.watermark;
       try { drawers[i](s, i); } catch (e) { console.error('page ' + (i + 1) + ' draw error', e); throw e; }
       if (opts.collect) opts.collect.push({ page: i + 1, contentBottom: Math.round(s.contentBottom || 0), limit: Math.round(s.limit) });

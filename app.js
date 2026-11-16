@@ -11,9 +11,9 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const cv = (item, part) => (state.cov[item.key] && state.cov[item.key][part.key]);
 
-  const HKEY = 'bojang.history.v4';
+  const HKEY = 'bojang.history.v4';          /* v5.9 부터는 IndexedDB 로 이관 — 옛 키는 호환용 */
   const VKEY = 'bojang.viewmode.v1';
-  const SKEY = 'bojang.session.v4';
+  const SKEY = 'bojang.session.v4';          /* 입력 중인 상담 1건 — 이력(대용량)은 IndexedDB */
 
   const DEFAULT = {
     age: '40', gender: '남', job: '1', silson: '4', premium: 27,
@@ -33,6 +33,24 @@
     flags: { savings: false, renew: true, manyRiders: false }
   };
 
+  /* v5.9 — 진짜 빈 상담. '새 상담 시작'·'초기화'는 이 값을 씁니다(샘플 고객을 채우지 않습니다).
+     샘플은 메인의 '샘플 데이터로 체험하기' 버튼으로만 들어갑니다. */
+  const EMPTY = {
+    age: '40', gender: '남', job: '1', silson: 'none', premium: 0,
+    client: { name: '', birth: '', consultant: '' },
+    contracts: [], family: [], disc: {},
+    cov: {
+      cancer: { general: 0, similar: 0, treatment: { surgery: 0, drug: 0, radio: 0, icu: 0, extra: 0 }, recur: false },
+      brain: { dx: { vascular: 0, stroke: 0, bleed: 0 }, treat: { lysis: 0, surgery: 0, icu: 0 } },
+      heart: { dx: { ischemic: 0, ami: 0 }, treat: { lysis: 0, surgery: 0, icu: 0 } },
+      surgery: { disease: 0, disease15: 0, diseaseNdae: 0, diseaseNonPay: 0, injury: 0, injury15: 0 },
+      care: { daily: 0, nDaily: 0, basis: 'unknown', family: 'conditional', nursing: false, ltc: false, mode: 'normal' },
+      custom: { cancer: [], brain: [], heart: [], surgery: [], care: [] }
+    },
+    flags: { savings: false, renew: false, manyRiders: false }
+  };
+  function emptyState() { return JSON.parse(JSON.stringify(EMPTY)); }
+
   function todayLabel() {
     const d = new Date();
     return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
@@ -47,7 +65,10 @@
     cov: JSON.parse(JSON.stringify(DEFAULT.cov)),
     flags: Object.assign({}, DEFAULT.flags),
     guide: 'cancer', view: 'advisor', step: 1, expanded: false, tab: 'analysis',
-    analyzed: false, lastResult: null, label: '', history: []
+    analyzed: false, lastResult: null, label: '', history: [],
+    /* v5.9 — 첫 실행 상태는 연습용 샘플입니다. 화면에 '샘플'로 표시하고,
+       '새 상담 시작'을 누르면 빈 상담(EMPTY)으로 바뀝니다. */
+    sample: true
   };
   window.__bojangState = state;
 
@@ -1128,6 +1149,8 @@
     const free = !(window.BojangPlan && window.BojangPlan.unlocked && window.BojangPlan.unlocked());
     const brand = window.BojangBrand ? window.BojangBrand.get() : { name: '보장분석 라이프 리포트' };
     const watermark = free && kind === 'summary' ? `${brand.name} · 무료 체험판` : '';
+    /* v5.9 — 상세(10장) PDF 꼬리말에 발급 식별 워터마크(ID-XXXX)를 넣습니다 */
+    const idMark = kind === 'detail' && window.BojangGuard ? window.BojangGuard.mark() : '';
     const blob = await PDFKit.renderPages(build.pages, {
       quality: kind === 'summary' ? 0.92 : kind === 'detail' ? 0.86 : 0.83,
       overflow,
@@ -1135,16 +1158,22 @@
       memoMax: memoOpts.memoMax,
       memoLabels: memoOpts.memoLabels,
       watermark,
+      idMark,
       meta: { title: `${build.m.client.name}_${PDF_LABEL[kind]}` },
       onProgress: (done, total) => {
         overlay(true, `${PDF_LABEL[kind]} PDF 생성 중`, `${total}페이지 중 ${done}페이지를 그렸습니다`, done / total);
       }
     });
     const filename = PDFKit.fileName(kind, build.m.client.name, isoDate(build.m.dateLabel));
-    window.__lastPdf = { kind, watermark: !!watermark, pages: build.pages.length, filename };
-    return { blob, filename, pages: build.pages.length, overflow, ms: Math.round(performance.now() - started), model: build.m, watermark };
+    window.__lastPdf = { kind, watermark: !!watermark, pages: build.pages.length, filename, idMark };
+    return { blob, filename, pages: build.pages.length, overflow, ms: Math.round(performance.now() - started), model: build.m, watermark, idMark };
   }
-  window.BojangApp = { buildPdfBlob, doPdf, state, analyze, cursorModel: model, applyImport, switchView, renderAllInputs };
+  window.BojangApp = {
+    buildPdfBlob, doPdf, state, analyze, cursorModel: model, applyImport, switchView, renderAllInputs,
+    /* v5.9 */ newConsult: resetConsult, loadSample: loadSampleConsult, renderHistory, openMoreMenu,
+    legal: { open: openLegal, close: closeLegal, render: renderLegal }, guardNumberInput,
+    isSample: () => !!state.sample
+  };
 
   function isoDate(label) {
     const m = /(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/.exec(label || '');
@@ -1231,10 +1260,26 @@
     return window.BojangPlan && window.BojangPlan.unlocked() ? 30 : 1;
   }
 
-  function loadHistory() {
-    const list = lsGet(HKEY, []);
+  /* v5.9 — 상담 이력은 IndexedDB(BojangStore)에 저장합니다. */
+  function store() { return window.BojangStore; }
+
+  async function loadHistory() {
+    let list = [];
+    try {
+      if (store()) list = await store().loadHistory();
+      else list = lsGet(HKEY, []);
+    } catch (e) {
+      list = lsGet(HKEY, []);
+    }
     state.history = Array.isArray(list) ? list.slice(0, historyMax()) : [];
     renderHistory();
+    return state.history;
+  }
+
+  function persistHistory(list) {
+    const rows = Array.isArray(list) ? list : [];
+    if (!store()) { lsSet(HKEY, rows); return; }
+    store().saveHistory(rows).catch(() => { lsSet(HKEY, rows); });
   }
 
   function saveConsult() {
@@ -1243,7 +1288,9 @@
       window.BojangPlan.openPaywall('save2');
       return;
     }
-    const label = ($('#cust-label').value || '').trim() || `${state.client.name} · ${state.age}대 ${state.gender}`;
+    const label = ($('#cust-label').value || '').trim() || `${state.client.name || '이름 미입력'} · ${state.age}대 ${state.gender}`;
+    /* v5.9 — 저장 직전에 음수·비정상 금액을 0 이상으로 보정합니다 */
+    try { if (window.BojangModel && window.BojangModel.clampAmounts) window.BojangModel.clampAmounts(state); } catch (e) { /* noop */ }
     const entry = {
       id: 'c' + Date.now(), label, savedAt: new Date().toISOString(),
       score: state.lastResult.m.score, letter: state.lastResult.m.letter,
@@ -1256,9 +1303,9 @@
       }
     };
     const next = [entry].concat(state.history).slice(0, historyMax());
-    if (lsSet(HKEY, next)) {
-      state.history = next; renderHistory();
-      toast(window.BojangPlan && window.BojangPlan.unlocked() ? '저장했습니다 (베타 · 최대 30건)' : '무료 체험 · 고객 1명을 저장했습니다 (Pro는 30명)');
+    persistHistory(next);
+    state.history = next; renderHistory();
+    toast(window.BojangPlan && window.BojangPlan.unlocked() ? '저장했습니다 (베타 · 최대 30건)' : '무료 체험 · 고객 1명을 저장했습니다 (Pro는 30명)');
       /* v5.8 — 로그인 + 서버 연결 상태면 클라우드(consultations, 없으면 clients)로도 올립니다 */
       if (window.BojangBackend && window.BojangBackend.isLive && window.BojangBackend.isLive()
           && window.BojangBackend.hasSession && window.BojangBackend.hasSession()) {
@@ -1272,7 +1319,6 @@
           updateCloudBadge();
         }).catch(() => {});
       }
-    } else toast('저장 공간을 쓸 수 없습니다');
   }
 
   /* ================= v5.8 — 클라우드 상담 기록 이어보기 ================= */
@@ -1308,7 +1354,7 @@
       .sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || '')))
       .slice(0, historyMax());
     state.history = next;
-    lsSet(HKEY, next);
+    persistHistory(next);
     renderHistory();
     updateCloudBadge(result.table);
     if (added && !opts.silent) toast(`클라우드에서 상담 ${added}건을 불러왔습니다`);
@@ -1333,55 +1379,81 @@
     return ingestCloud(r, opts);
   }
 
-  function renderHistory() {
-    const hosts = $$('[id="history-list"], [id="history-list2"]');
-    if (!hosts.length) return;    const html = !state.history.length
-      ? `<p class="empty">저장된 상담이 없습니다. 진단 후 "상담 저장"을 누르면 이 기기에만 기록됩니다.</p>`
-      : state.history.map((h) => {
-        const d = new Date(h.savedAt);
-        const when = `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-        return `
+  function historyRowHTML(h) {
+    const d = new Date(h.savedAt);
+    const when = `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    const inputs = h.inputs || {};
+    return `
         <div class="hist${h.cloud ? ' is-cloud' : ''}" data-id="${h.id}">
           <div class="hist-main"><strong>${esc(h.label)}${h.cloud ? '<span class="hist-cloud" title="클라우드에서 불러온 상담">☁</span>' : ''}</strong>
-            <span>${when} · ${h.inputs.age}대 ${h.inputs.gender} · 실손 ${SILSON_LABEL[h.inputs.silson]}</span></div>
+            <span>${when} · ${inputs.age}대 ${inputs.gender} · 실손 ${SILSON_LABEL[inputs.silson]}</span></div>
           <span class="hist-score">${h.score}<i>점</i></span>
           <button type="button" class="hist-load" data-load="${h.id}">불러오기</button>
           <button type="button" class="hist-del" data-del="${h.id}" aria-label="삭제">×</button>
         </div>`;
-      }).join('');
-    hosts.forEach((host) => {
-      host.innerHTML = html;
-      $$('[data-load]', host).forEach((b) => {
-        b.addEventListener('click', () => {
-          const h = state.history.find((x) => x.id === b.dataset.load);
-          if (!h) return;
-          applyInputs(h.inputs);
-          if (h.client) { state.client = Object.assign(state.client, h.client, { dateLabel: todayLabel() }); renderClientFields(); }
-          if (Array.isArray(h.contracts)) { state.contracts = h.contracts; renderContracts(); }
-          renderAllInputs();
-          analyze();
-          switchView('analysis');
-          $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
-          toast(`"${h.label}" 상담을 불러왔습니다`);
-        });
-      });
-      $$('[data-del]', host).forEach((b) => {
-        b.addEventListener('click', () => {
-          const next = state.history.filter((x) => x.id !== b.dataset.del);
-          if (lsSet(HKEY, next)) { state.history = next; renderHistory(); renderHome(); toast('삭제했습니다'); }
-        });
+  }
+
+  function bindHistoryHost(host) {
+    if (!host) return;
+    $$('[data-load]', host).forEach((b) => {
+      b.addEventListener('click', () => {
+        const h = state.history.find((x) => x.id === b.dataset.load);
+        if (!h) return;
+        applyInputs(h.inputs);
+        if (h.client) { state.client = Object.assign(state.client, h.client, { dateLabel: todayLabel() }); renderClientFields(); }
+        if (Array.isArray(h.contracts)) { state.contracts = h.contracts; renderContracts(); }
+        renderAllInputs();
+        analyze();
+        switchView('analysis');
+        $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        toast(`"${h.label}" 상담을 불러왔습니다`);
       });
     });
+    $$('[data-del]', host).forEach((b) => {
+      b.addEventListener('click', () => {
+        const next = state.history.filter((x) => x.id !== b.dataset.del);
+        persistHistory(next);
+        state.history = next;
+        renderHistory(); renderHome();
+        toast('삭제했습니다');
+      });
+    });
+  }
+
+  function renderHistory() {
+    const hosts = $$('[id="history-list"], [id="history-list2"]');
+    const emptyHTML = `<p class="empty">저장된 상담이 없습니다. 진단 후 "상담 저장"을 누르면 이 기기에 저장됩니다.</p>`;
+    const html = !state.history.length ? emptyHTML : state.history.map(historyRowHTML).join('');
+    hosts.forEach((host) => { host.innerHTML = html; bindHistoryHost(host); });
+
+    /* v5.9 — 메인 첫 화면 2번 버튼 아래에 최근 3건만 */
+    const recent = $('#recent-list');
+    if (recent) {
+      const top = state.history.slice(0, 3);
+      recent.innerHTML = top.length
+        ? top.map(historyRowHTML).join('') + `<button type="button" class="recent-all" id="btn-recent-all">전체 이력 ${state.history.length}건 보기</button>`
+        : `<p class="recent-empty">저장된 상담이 없습니다 — 첫 상담을 저장하면 여기에 최근 3건이 바로 뜹니다.</p>`;
+      bindHistoryHost(recent);
+      const allBtn = $('#btn-recent-all');
+      if (allBtn) allBtn.addEventListener('click', () => { openMoreMenu(true); const el = $('#history-list'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+    }
+
     const subText = (cloudReady() ? '기기 + 클라우드 저장' : '이 기기에만 저장') + ' · 최대 ' + historyMax() + '건';
     const sub = $('#result-hist-sub');
     if (sub) sub.textContent = subText;
     const hsub = $('#home-hist-sub');
     if (hsub) hsub.textContent = subText;
+    const count = state.history.length + '건';
+    ['#home-hist-count', '#home-hist-count-card'].forEach((sel) => {
+      const el = $(sel);
+      if (el) el.textContent = count;
+    });
     updateCloudBadge();
     renderHome();
   }
 
   function applyInputs(inputs) {
+    state.sample = false;
     state.age = inputs.age; state.gender = inputs.gender; state.job = inputs.job;
     state.silson = inputs.silson; state.premium = inputs.premium;
     state.cov = JSON.parse(JSON.stringify(inputs.cov));
@@ -1399,17 +1471,23 @@
     saveSession();
   }
 
-  /* v4: 새 상담 시작 — 확인 모달을 거쳐 입력값을 한 번에 비웁니다 */
-  function resetConsult() {
-    state.age = DEFAULT.age; state.gender = DEFAULT.gender; state.job = DEFAULT.job;
-    state.silson = DEFAULT.silson; state.premium = DEFAULT.premium;
-    state.cov = JSON.parse(JSON.stringify(DEFAULT.cov));
-    state.flags = Object.assign({}, DEFAULT.flags);
+  /* v4: 새 상담 시작 — 확인 모달을 거쳐 입력값을 한 번에 비웁니다.
+     v5.9: 예전에는 '비운다'고 안내하고 샘플 고객(DEFAULT)을 다시 채워 넣어 빈 상담과 구분이 안 됐습니다.
+     지금은 EMPTY 로 진짜 빈 상담을 열고, 샘플은 메인의 '샘플 데이터로 체험하기'로만 들어갑니다. */
+  function resetConsult(opts) {
+    opts = opts || {};
+    const e = emptyState();
+    state.sample = false;
+    state.age = e.age; state.gender = e.gender; state.job = e.job;
+    state.silson = e.silson; state.premium = e.premium;
+    state.cov = JSON.parse(JSON.stringify(e.cov));
+    state.flags = Object.assign({}, e.flags);
     state.family = [];
     state.disc = {};
-    state.client = Object.assign({}, DEFAULT.client, { dateLabel: todayLabel() });
+    state.client = Object.assign({}, e.client, { dateLabel: todayLabel() });
     state.contracts = [];
-    state.migration = { migrated: false, notes: [] };
+    state.label = '';
+    state.migration = { migrated: false, notes: [], clamped: 0 };
     syncSegments();
     renderClientFields();
     renderFamilyChips();
@@ -1431,7 +1509,15 @@
     switchView('home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     saveSession();
-    toast('새 상담을 시작합니다 — 입력값을 모두 비웠습니다');
+    toast(opts.silent ? '빈 상담으로 초기화했습니다' : '새 상담을 빈 상태로 시작합니다 — 샘플 값은 채우지 않았습니다');
+  }
+
+  /* v5.9 — 샘플 체험은 명시적으로만: 연령대 프리셋을 채우고 '샘플'임을 알립니다 */
+  function loadSampleConsult(age) {
+    const a = String(age || state.age || '40');
+    state.sample = true;
+    applyPreset(a);
+    toast('샘플 데이터를 채웠습니다 (연습·시연용) — 실제 고객 값으로 바꿔 주세요');
   }
 
   function syncSegments() {
@@ -1904,7 +1990,8 @@
     host.innerHTML = `
       <div class="hc-avatar" aria-hidden="true">${esc((state.client.name || '홍').slice(0, 1))}</div>
       <div class="hc-main">
-        <div class="hc-name">${esc(state.client.name || '홍길동')}님 <span>${ia != null ? `보험나이 ${ia}세` : `${state.age}대`} · ${state.gender} · ${state.job}급</span></div>
+        <div class="hc-name">${esc(state.client.name || '홍길동')}님 <span>${ia != null ? `보험나이 ${ia}세` : `${state.age}대`} · ${state.gender} · ${state.job}급</span>
+          ${state.sample ? '<em class="hc-sample">샘플</em>' : ''}</div>
         <div class="hc-meta">
           <span>월 ${won(state.premium)}만원</span>
           <span>실손 ${SILSON_LABEL[state.silson]}</span>
@@ -1914,9 +2001,23 @@
       </div>
       ${state.migration && state.migration.notes && state.migration.notes.length
         ? `<div class="mig-note">구버전 데이터를 새 구조로 옮겼습니다 · ${state.migration.notes.join(' / ')}</div>` : ''}`;
-    const hc = $('#home-hist-count');
-    if (hc) hc.textContent = state.history.length + '건';
+    ['#home-hist-count', '#home-hist-count-card'].forEach((sel) => {
+      const el = $(sel);
+      if (el) el.textContent = state.history.length + '건';
+    });
     renderPresets();
+  }
+
+  /* v5.9 — 더보기/전체 메뉴 열기·닫기 (첫 화면은 3버튼만 보입니다) */
+  function openMoreMenu(open) {
+    const box = $('#more-menu');
+    const btn = $('#btn-more-menu');
+    if (!box || !btn) return;
+    const next = typeof open === 'boolean' ? open : box.hidden;
+    box.hidden = !next;
+    btn.setAttribute('aria-expanded', String(next));
+    btn.classList.toggle('is-open', next);
+    if (next) { try { box.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* noop */ } }
   }
 
   function renderPresets() {
@@ -1939,6 +2040,7 @@
   function applyPreset(age) {
     const p = PRESETS[age];
     if (!p) return;
+    state.sample = true;
     state.age = age;
     state.premium = p.premium;
     state.silson = p.silson;
@@ -2191,7 +2293,7 @@
 
   function exportPayload() {
     return {
-      app: 'bojang-guide', version: '5.7', exportedAt: new Date().toISOString(),
+      app: 'bojang-guide', version: (window.BojangVersion ? window.BojangVersion.num : '5.9'), exportedAt: new Date().toISOString(),
       summary: { name: state.client.name, age: state.age, gender: state.gender, score: state.lastResult ? state.lastResult.m.score : null },
       state: snapshotState()
     };
@@ -2413,6 +2515,30 @@
     document.body.classList.remove('tour-open');
     if (done) tourMark();
     else tourSnooze();
+    /* v5.9 — 투어가 끝난 뒤에 하던 일(입력 방식 모달 등)을 이어서 엽니다 */
+    const cb = afterTour;
+    afterTour = null;
+    if (cb) setTimeout(cb, 30);
+  }
+
+  /* v5.9 — 투어와 입력 방식 선택 모달이 겹치지 않도록 순서를 보장합니다.
+     · 투어가 떠 있으면: 투어를 닫고 그 뒤에 하던 일을 실행
+     · 초대 카드만 떠 있으면: 카드만 닫고 바로 실행 (다시 권하지 않도록 7일 스누즈) */
+  let afterTour = null;
+  function tourIsOpen() {
+    const o = $('#tour');
+    const inv = $('#tour-invite');
+    return !!((o && !o.hidden) || (inv && !inv.hidden));
+  }
+  function anyModalOpen() {
+    return $$('.modal').some((m) => !m.hidden && m.id !== 'tour');
+  }
+  function beforeInputHub(fn) {
+    const overlay = $('#tour');
+    const inv = $('#tour-invite');
+    if (overlay && !overlay.hidden) { afterTour = fn; tourEnd(false); return true; }
+    if (inv && !inv.hidden) { inv.hidden = true; tourSnooze(); return false; }
+    return false;
   }
 
   function openInvite() {
@@ -2421,15 +2547,101 @@
     if (state.tab && state.tab !== 'home') return;
     const active = $('.view.is-active');
     if (active && active.id !== 'view-home') return;
+    /* v5.9 — 다른 모달(입력 방식·법적 고지 등)이 떠 있으면 겹치지 않게 미룹니다 */
+    if (anyModalOpen()) return;
     const inv = $('#tour-invite');
     if (inv) inv.hidden = false;
   }
 
-  window.BojangTour = { start: tourStart, end: tourEnd, next: () => tourGo(tourIdx + 1), prev: () => tourGo(tourIdx - 1), step: () => tourIdx, total: TOUR_STEPS.length, done: tourDone, mark: tourMark };
+  window.BojangTour = { start: tourStart, end: tourEnd, next: () => tourGo(tourIdx + 1), prev: () => tourGo(tourIdx - 1), step: () => tourIdx, total: TOUR_STEPS.length, done: tourDone, mark: tourMark, isOpen: tourIsOpen, beforeInputHub };
+
+  /* =========================================================
+     v5.9 — 정식 이용약관 · 개인정보처리방침
+     푸터와 계정 모달의 버튼이 같은 모달을 엽니다.
+     ========================================================= */
+  const LEGAL = {
+    terms: {
+      title: '이용약관',
+      sub: '시행일 2026-11-16 · 보장분석 라이프 리포트 (베타)',
+      sections: [
+        ['제1조 (목적)', '이 약관은 보장분석 라이프 리포트(이하 "서비스")의 이용 조건과 절차, 이용자와 제공자의 권리·의무를 정합니다. 서비스는 보험설계사(FC)의 상담을 돕는 문서 작성·계산 도구입니다.'],
+        ['제2조 (서비스의 성격)', '① 서비스는 보험 상품의 모집·권유·중개가 아닌 상담 보조 도구이며, 특정 보험사나 상품을 추천하지 않습니다. ② 점수·권장 보장선·리모델링안은 서비스가 자체적으로 만든 상담 보조 산식이고, 보험사의 인수·지급 기준이 아닙니다. ③ 실제 지급 여부와 금액은 가입한 상품의 약관과 증권이 기준입니다.'],
+        ['제3조 (이용자의 의무)', '① 이용자는 고객에게 보장분석 사실과 자료 사용 목적을 알리고 동의를 받아야 합니다. ② 주민등록번호·계좌번호 등 고유식별정보는 입력하지 않습니다. ③ 서비스가 만든 리포트를 고객에게 설명할 때 근거(약관·증권·공표 통계)를 함께 확인합니다.'],
+        ['제4조 (금지 행위)', '① 서비스 파일·화면·문구를 무단으로 복제·배포·판매하거나 다른 이름의 상품으로 재판매하는 행위. ② 보호 조치(공식 도메인 잠금·발급 워터마크)를 제거하거나 우회하는 행위. ③ 서비스로 만든 허위·과장 자료로 고객을 기만하는 행위.'],
+        ['제5조 (베타 운영)', '베타 기간에는 Pro 전 기능을 무료로 제공하며, 기능·화면·요금제가 예고 없이 바뀌거나 중단될 수 있습니다. 베타 참여자 혜택은 별도 안내로 정합니다.'],
+        ['제6조 (책임의 범위)', '서비스는 상담 보조 도구로, 이용자의 판단과 설명 책임을 대신하지 않습니다. 천재지변·통신 장애·이용자 기기 문제로 생긴 손해에 대해 제공자는 고의·중과실이 없는 한 책임을 지지 않습니다.'],
+        ['제7조 (준거법)', '이 약관은 대한민국 법령에 따르며, 분쟁은 제공자와 이용자가 성실히 협의해 해결합니다.']
+      ]
+    },
+    privacy: {
+      title: '개인정보처리방침',
+      sub: '시행일 2026-11-16 · 보장분석 라이프 리포트 (베타)',
+      sections: [
+        ['1. 수집·이용 항목', '① 이 기기 저장(IndexedDB): 상담 이력 — 고객명(선택)·생년월일(선택)·연령대·성별·직업급수·실손 세대·월 보험료·담보 금액·계약 목록·고지 체크·상담 라벨·점수. ② 이 기기 저장(localStorage): 화면 설정(보기 모드·가이드 확인 여부·큰 글씨)과 입력 중인 상담 1건. ③ 클라우드(로그인·동기화 시): 이메일, 상담 스냅샷(고객명·생년월일·담보 금액·점수·상담 라벨), 브랜드 설정(상호·담당자·연락처·로고).'],
+        ['2. 사진 촬영 — 즉시 휘발', '카메라로 찍은 보장분석표 사진은 기기·서버 어디에도 저장하지 않습니다(서버 저장 0건). 촬영본은 화면 메모리에서 전처리한 뒤 분석 직후 즉시 파기되고, localStorage·IndexedDB·서버 어느 곳에도 남지 않습니다.'],
+        ['3. AI 사진 인식 — Gemini 비전 1회 전송', '사진에서 담보 숫자를 자동으로 읽을 때에만, 축소한 이미지를 Google Gemini 비전 API로 1회 전송합니다. 전송은 그 1회로 끝나고 서버에 보관하지 않으며(persisted:false), 인식 결과 텍스트만 화면에 표시합니다. 이용자가 사진 인식을 쓰지 않으면 어떤 이미지도 외부로 나가지 않습니다.'],
+        ['4. 보관 위치와 기간', '① 상담 이력은 이 기기의 IndexedDB에, 입력 중인 상담 1건은 localStorage에 보관되고 이용자가 삭제할 때까지 남습니다. ② 클라우드 동기화를 켜면 상담 스냅샷이 Supabase(서울 리전)에 저장되며, 이용자가 상담을 삭제하거나 계정을 정리할 때까지 보관합니다. ③ PDF·JSON 파일은 이용자 기기에서 만들어지고, 서비스가 따로 보관하지 않습니다.'],
+        ['5. 제3자 제공·처리위탁', '개인정보를 제3자에게 판매·제공하지 않습니다. 다만 서비스 운영을 위해 Supabase(데이터 저장)와 Google Gemini(사진 인식 1회 전송)에 처리를 위탁합니다. 법령에 따라 수사기관이 요구하는 경우는 예외로 합니다.'],
+        ['6. 이용자의 권리', '이용자는 언제든지 ① 상담 이력 삭제(목록의 × 버튼), ② 클라우드 기록 삭제·로그아웃, ③ 브라우저 데이터 삭제로 기기 저장값을 지울 수 있습니다. 삭제한 자료는 복구되지 않습니다.'],
+        ['7. 안전성 확보 조치', '① 모든 서버 통신은 HTTPS로 암호화합니다. ② 클라우드 데이터는 계정 단위 접근 제어(RLS)로 분리합니다. ③ 공식 배포처가 아닌 도메인에서 열린 복제본은 서버 호출을 차단합니다. ④ 발급 PDF에는 발급 단위 식별 워터마크(ID-XXXX)가 들어가 유출 경로를 추적할 수 있습니다.'],
+        ['8. 문의', '개인정보 관련 문의는 브랜드 설정에 입력한 담당 설계사 연락처로 받습니다.']
+      ]
+    }
+  };
+  let legalTab = 'terms';
+
+  function renderLegal(tab) {
+    const key = LEGAL[tab] ? tab : 'terms';
+    legalTab = key;
+    const data = LEGAL[key];
+    const title = $('#legal-title');
+    if (title) title.textContent = data.title;
+    const sub = $('#legal-sub');
+    if (sub) sub.textContent = data.sub;
+    const body = $('#legal-body');
+    if (body) body.innerHTML = data.sections.map((s) => `<section class="lg-sec"><h4>${esc(s[0])}</h4><p>${esc(s[1])}</p></section>`).join('');
+    $$('.legal-tab').forEach((b) => {
+      const on = b.dataset.legalTab === key;
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+  }
+
+  function openLegal(tab) {
+    try { if (window.BojangBackend && window.BojangBackend.closeAccount) window.BojangBackend.closeAccount(); } catch (e) { /* noop */ }
+    renderLegal(tab || legalTab);
+    const el = $('#legal-modal');
+    if (el) el.hidden = false;
+    const inv = $('#tour-invite');
+    if (inv) inv.hidden = true;
+  }
+  function closeLegal() {
+    const el = $('#legal-modal');
+    if (el) el.hidden = true;
+  }
+
+  /* v5.9 — 음수 금액 입력 차단 (모든 숫자 입력칸 공통)
+     '-5' 처럼 입력하면 그 자리에서 0으로 되돌리고, 상한을 넘으면 상한으로 맞춥니다.
+     입력칸에 보이는 값과 요약·점수가 항상 같아집니다. */
+  function guardNumberInput(e) {
+    const el = e.target;
+    if (!el || el.tagName !== 'INPUT' || el.type !== 'number') return;
+    if (el.value === '' || el.value === '-' || el.value === '.') return;
+    const n = Number(el.value);
+    const max = Number(el.getAttribute('max'));
+    const cap = isFinite(max) && max > 0 ? max : 100000;
+    if (!isFinite(n)) { el.value = '0'; return; }
+    if (n < 0) { el.value = '0'; return; }
+    if (n > cap) { el.value = String(cap); }
+  }
 
   /* ================= 초기화 ================= */
-  function init() {
+  async function init() {
     state.view = lsGet(VKEY, 'advisor') === 'client' ? 'client' : 'advisor';
+    /* v5.9 — 공식 도메인 잠금(복제 경고 배너·서버 호출 차단) */
+    try { if (window.BojangGuard) window.BojangGuard.init(); } catch (e) { /* noop */ }
+    /* v5.9 — 이전 버전 localStorage 상담 이력을 IndexedDB 로 옮깁니다 */
+    try { if (window.BojangStore) await window.BojangStore.migrate(); } catch (e) { /* noop */ }
     loadSession();
 
     renderClientFields();
@@ -2442,7 +2654,7 @@
     renderGuideChips();
     renderGuideBody();
     renderToolkit();
-    loadHistory();
+    await loadHistory();
     renderQuick();
     if (window.BojangPlan) window.BojangPlan.init();
     /* v5.4 — 계정·구독·서버 연결(실서버 모드 / 베타 오프라인 자동 판별) */
@@ -2487,15 +2699,40 @@
         setTimeout(() => { const el = $('#pdf-panel'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 60);
       } else if (k === 'history') {
         switchView('home');
-        setTimeout(() => { const el = $('#recent-card'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+        openMoreMenu(true);
+        setTimeout(() => { const el = $('#history-list'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 80);
       }
     });
     $('#btn-home').addEventListener('click', goHome);
+    /* v5.9 — 첫 화면 3버튼 · 더보기 메뉴 · 샘플 체험 */
+    const moreBtn = $('#btn-more-menu');
+    if (moreBtn) moreBtn.addEventListener('click', () => openMoreMenu());
+    const sampleBtn = $('#btn-sample');
+    if (sampleBtn) sampleBtn.addEventListener('click', () => loadSampleConsult());
     $('#btn-home-load').addEventListener('click', () => {
-      const el = $('#recent-card');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      toast(state.history.length ? '저장된 상담 목록입니다 — 불러오기를 누르세요' : '저장된 상담이 없습니다');
+      if (!state.history.length) { toast('저장된 상담이 없습니다 — 새 상담으로 시작해 보세요'); }
+      const el = $('#recent-list');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
+
+    /* v5.9 — 이용약관 · 개인정보처리방침 */
+    document.addEventListener('click', (e) => {
+      const lg = e.target.closest('[data-legal]');
+      if (lg) { e.preventDefault(); openLegal(lg.dataset.legal); return; }
+      const tab = e.target.closest('[data-legal-tab]');
+      if (tab) { renderLegal(tab.dataset.legalTab); }
+    });
+    const legalX = $('#legal-x'), legalClose = $('#legal-close'), legalModal = $('#legal-modal');
+    if (legalX) legalX.addEventListener('click', closeLegal);
+    if (legalClose) legalClose.addEventListener('click', closeLegal);
+    if (legalModal) legalModal.addEventListener('click', (e) => { if (e.target.id === 'legal-modal') closeLegal(); });
+    document.addEventListener('keydown', (e) => {
+      const lm = $('#legal-modal');
+      if (e.key === 'Escape' && lm && !lm.hidden) closeLegal();
+    });
+    /* 모든 숫자 입력칸 — 음수·상한 초과를 그 자리에서 막습니다 */
+    document.addEventListener('input', guardNumberInput, true);
+
     $('#btn-json-export').addEventListener('click', exportJson);
     $('#btn-json-import').addEventListener('click', openJsonModal);
     $('#jm-cancel').addEventListener('click', closeJsonModal);

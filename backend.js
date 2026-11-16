@@ -156,8 +156,15 @@
     state.subscription = null;
   }
 
+  /* v5.9 — 공식 도메인이 아닌 복제본에서는 서버 호출을 막습니다 */
+  const DOMAIN_LOCK = '공식 배포처가 아닌 주소에서는 서버 기능(클라우드·AI·결제)을 쓸 수 없습니다.';
+  function guardAllows() {
+    return !(root.BojangGuard && root.BojangGuard.networkAllowed && !root.BojangGuard.networkAllowed());
+  }
+
   async function request(path, opts) {
     opts = opts || {};
+    if (!guardAllows()) return { ok: false, status: 0, error: 'domain-lock', message: DOMAIN_LOCK };
     const url = cfg.url + path;
     const headers = Object.assign({
       apikey: cfg.anonKey,
@@ -201,6 +208,7 @@
   function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v || '').trim()); }
 
   async function signUp(email, password) {
+    if (!guardAllows()) return { ok: false, reason: 'domain-lock', message: DOMAIN_LOCK };
     if (!isLive()) return { ok: false, reason: 'beta-local', message: BETA_NOTICE };
     if (!validEmail(email)) return { ok: false, reason: 'invalid-email', message: '이메일 형식을 확인해 주세요.' };
     if (String(password || '').length < 6) return { ok: false, reason: 'weak-password', message: '비밀번호는 6자 이상으로 정해 주세요.' };
@@ -221,6 +229,7 @@
   }
 
   async function signIn(email, password) {
+    if (!guardAllows()) return { ok: false, reason: 'domain-lock', message: DOMAIN_LOCK };
     if (!isLive()) return { ok: false, reason: 'beta-local', message: BETA_NOTICE };
     if (!validEmail(email)) return { ok: false, reason: 'invalid-email', message: '이메일 형식을 확인해 주세요.' };
     if (!String(password || '')) return { ok: false, reason: 'no-password', message: '비밀번호를 입력해 주세요.' };
@@ -289,6 +298,13 @@
       return { ok: false, reason: 'beta-local', message: BETA_NOTICE };
     }
     state.busy = true; state.message = '연결을 확인하고 있습니다…'; render();
+    if (!guardAllows()) {
+      state.busy = false;
+      state.connection = 'error';
+      state.message = DOMAIN_LOCK;
+      render();
+      return { ok: false, reason: 'domain-lock', message: DOMAIN_LOCK };
+    }
     let ok = false;
     let detail = '';
     try {
@@ -632,6 +648,7 @@
      ========================================================= */
   async function parseCoverageVision(blob, opts) {
     opts = opts || {};
+    if (!guardAllows()) return { ok: false, reason: 'domain-lock', items: [], premium: null, silson: null, message: DOMAIN_LOCK };
     if (!isLive()) return { ok: false, reason: 'beta-local', items: [], premium: null, silson: null, message: BETA_NOTICE };
     if (!hasSession()) return { ok: false, reason: 'auth-required', items: [], premium: null, silson: null, message: '사진 AI 인식은 로그인 후 사용할 수 있습니다.' };
     const url = functionUrl(VISION_PATH);
@@ -692,6 +709,7 @@
      ========================================================= */
   async function subscribe(planKey) {
     const key = planKey === 'year' ? 'year' : 'month';
+    if (!guardAllows()) return { ok: false, reason: 'domain-lock', message: DOMAIN_LOCK };
     if (!isLive()) {
       return { ok: false, reason: 'beta-local', message: BETA_NOTICE + '. 서버 연결 후 실제 결제가 진행됩니다.' };
     }
@@ -830,6 +848,11 @@
         </div>
 
         <p class="acct-msg" id="acct-msg" role="status" aria-live="polite"></p>
+        <div class="acct-legal">
+          <span>약관·개인정보</span>
+          <button type="button" data-legal="terms">이용약관</button>
+          <button type="button" data-legal="privacy">개인정보처리방침</button>
+        </div>
         <p class="acct-note">이 기기의 상담 기록은 로그아웃해도 그대로 남습니다. 클라우드 동기화는 로그인 후 직접 실행합니다.</p>
       </div>`;
     document.body.appendChild(wrap);

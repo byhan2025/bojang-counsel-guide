@@ -3436,3 +3436,133 @@ body.is-modal{overflow:hidden;}
   border:1px solid var(--line);background:#fff;color:var(--ink-2);
 }
 .disc-actions .da-copy{background:var(--navy-800);border-color:var(--navy-800);color:#fff;}
+
+/* =========================================================
+   v5.9 — 첫 화면 3버튼 · 더보기 메뉴 · 약관 모달 · 복제 경고 · 발급 워터마크
+   ========================================================= */
+.hh-actions-v59{grid-template-columns:1fr;gap:9px;}
+.hh-actions-v59 .hh-three{
+  position:relative;grid-template-columns:auto 1fr;grid-template-areas:"no ico" "no title" "no sub";
+  align-items:center;column-gap:11px;padding:15px 14px 14px;border-radius:16px;
+}
+.hh-actions-v59 .hh-three .hb-no{
+  grid-area:no;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);
+  font-size:12px;font-weight:800;color:#fff;letter-spacing:0;
+}
+.hh-actions-v59 .hh-three .hb-ico{grid-area:ico;justify-self:start;font-size:12px;opacity:.9;}
+.hh-actions-v59 .hh-three b{grid-area:title;font-size:14px;font-weight:800;letter-spacing:-0.03em;display:flex;align-items:center;gap:7px;}
+.hh-actions-v59 .hh-three > span:last-child{grid-area:sub;font-size:10px;color:#b9d0e2;font-weight:600;}
+.hh-actions-v59 .hh-btn.primary .hb-no{background:rgba(255,255,255,.24);}
+.hh-actions-v59 .hh-btn.primary b{color:#fff;}
+.hb-count{
+  font-style:normal;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:999px;
+  background:rgba(255,255,255,.18);color:#eaf7ff;letter-spacing:0;
+}
+.hh-three-block{display:grid;gap:0;}
+.hh-three-block .hh-btn{border-bottom-left-radius:0;border-bottom-right-radius:0;}
+.recent-list{
+  display:grid;gap:6px;padding:7px 8px 8px;border:1px solid rgba(255,255,255,.16);
+  border-top:none;border-radius:0 0 16px 16px;background:rgba(255,255,255,.06);
+}
+.recent-list:empty{display:none;}
+.recent-list .hist{
+  background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.5);border-radius:11px;
+  padding:7px 8px;gap:6px;
+}
+.recent-list .hist-main strong{font-size:11.4px;color:var(--navy-800);}
+.recent-list .hist-main span{font-size:9px;color:#6c8399;}
+.recent-list .hist-score{font-size:13px;color:var(--navy-800);}
+.recent-list .hist-load{padding:5px 8px;font-size:10px;}
+.recent-list .hist-del{width:22px;height:22px;font-size:12px;}
+.recent-empty{margin:2px 0 1px;font-size:10px;line-height:1.5;color:#b9d0e2;font-weight:600;}
+.recent-all{
+  font-family:inherit;width:100%;padding:7px;border-radius:9px;font-size:10.5px;font-weight:800;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#eaf7ff;
+}
+.sample-link{
+  justify-self:start;font-family:inherit;font-size:10.5px;font-weight:700;letter-spacing:-0.01em;
+  color:#a9c3d8;background:none;border:none;padding:4px 2px;text-decoration:underline;text-underline-offset:3px;
+}
+.menu-toggle{
+  display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;padding:12px 13px;
+  font-family:inherit;text-align:left;border-radius:14px;
+  background:rgba(255,255,255,.08);border:1px dashed rgba(255,255,255,.28);color:#fff;
+}
+.menu-toggle .mt-ico{font-size:16px;font-weight:800;color:#a9c3d8;letter-spacing:.06em;}
+.menu-toggle .mt-main{display:grid;gap:1px;flex:1;min-width:0;}
+.menu-toggle .mt-main b{font-size:12px;font-weight:800;letter-spacing:-0.02em;}
+.menu-toggle .mt-main em{font-style:normal;font-size:9.2px;color:#a9c3d8;font-weight:600;line-height:1.45;}
+.menu-toggle .mt-caret{font-size:12px;color:#a9c3d8;transition:transform .16s ease;}
+.menu-toggle.is-open .mt-caret{transform:rotate(180deg);}
+.more-menu{display:grid;gap:2px;margin-top:8px;padding-top:4px;}
+.more-menu[hidden]{display:none!important;}
+.mm-tools{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:6px;}
+.mm-btn{
+  display:flex;align-items:center;gap:6px;justify-content:center;font-family:inherit;
+  font-size:10.8px;font-weight:800;padding:9px 8px;border-radius:11px;
+  background:#fff;border:1px solid var(--line);color:var(--ink-2);
+}
+.mm-btn em{font-style:normal;font-weight:600;color:var(--muted);font-size:9.5px;}
+.mm-btn.acct-hub-btn{grid-column:1 / -1;}
+.hc-sample{
+  display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;font-style:normal;
+  font-size:9px;font-weight:800;letter-spacing:0;background:rgba(255,212,122,.2);color:#ffd47a;
+}
+@media (max-width:400px){
+  .mm-tools{grid-template-columns:1fr;}
+  .hh-actions-v59 .hh-three b{font-size:13px;}
+}
+
+/* 푸터 — 이용약관 · 개인정보처리방침 */
+.app-legal{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  margin:22px 0 10px;padding:14px 4px 6px;border-top:1px solid var(--line);
+}
+.app-legal .al-brand{display:grid;gap:2px;min-width:0;}
+.app-legal .al-brand b{font-size:11px;font-weight:800;color:var(--navy-800);letter-spacing:-0.02em;}
+.app-legal .al-brand b em{font-style:normal;font-size:9.5px;color:var(--muted);margin-left:3px;}
+.app-legal .al-brand span{font-size:9.2px;color:var(--muted);line-height:1.5;}
+.app-legal .al-links{display:flex;gap:6px;flex-wrap:wrap;}
+.app-legal .al-links button{
+  font-family:inherit;font-size:10px;font-weight:800;color:#41597a;
+  background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 11px;
+}
+
+/* 약관 모달 */
+.legal-modal{z-index:120;}
+.legal-card{max-width:400px;max-height:86vh;display:flex;flex-direction:column;position:relative;}
+.legal-tabs{display:flex;gap:6px;margin:12px 0 10px;}
+.legal-tab{
+  flex:1;font-family:inherit;font-size:11.5px;font-weight:800;padding:9px 8px;border-radius:10px;
+  background:#f4f7fb;border:1px solid var(--line);color:#41597a;
+}
+.legal-tab.is-on{background:var(--navy-800);border-color:var(--navy-800);color:#fff;}
+.legal-sub{margin-top:4px;font-size:9.6px;color:var(--muted);}
+.legal-body{overflow:auto;margin-top:10px;padding-right:4px;-webkit-overflow-scrolling:touch;}
+.lg-sec{padding:9px 0;border-top:1px solid var(--line);}
+.lg-sec:first-child{border-top:none;padding-top:0;}
+.lg-sec h4{font-size:11.4px;font-weight:800;color:var(--navy-800);letter-spacing:-0.02em;}
+.lg-sec p{margin-top:4px;font-size:10.4px;line-height:1.62;color:var(--ink-2);word-break:keep-all;}
+.legal-card .modal-actions{grid-template-columns:1fr;margin-top:12px;}
+.legal-card .modal-ok{background:var(--navy-800);border-color:var(--navy-800);color:#fff;}
+.acct-legal{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);}
+.acct-legal span{font-size:9.4px;font-weight:800;color:var(--muted);}
+.acct-legal button{
+  font-family:inherit;font-size:9.8px;font-weight:800;color:#41597a;background:#f4f7fb;
+  border:1px solid var(--line);border-radius:999px;padding:5px 9px;
+}
+
+/* 복제 의심 경고 배너 */
+.clone-warning{
+  display:flex;gap:9px;align-items:flex-start;padding:10px 12px;
+  background:#fff3e6;border-bottom:1px solid #f0c9a0;color:#7a3d09;
+}
+.clone-warning .cw-tag{
+  flex:none;font-size:9px;font-weight:900;letter-spacing:.04em;padding:3px 7px;border-radius:6px;
+  background:#b3261e;color:#fff;
+}
+.clone-warning p{font-size:10.4px;line-height:1.55;margin:0;}
+.clone-warning b{font-weight:800;}
+.hub-last{display:block;font-size:9.6px;font-weight:700;color:var(--point);margin-bottom:2px;}
+.hub-last[hidden]{display:none!important;}

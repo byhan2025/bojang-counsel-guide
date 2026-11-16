@@ -306,16 +306,16 @@ def main():
             # =========================================================
             ctx, pg, errors = new_page(browser, base)
             title = pg.title()
-            check("타이틀 v5.8", "v5.8" in title and "보장분석 라이프 리포트" in title, title)
-            check("헤더 버전 표기 v5.8", "v5.8" in pg.inner_text(".hh-ver"), pg.inner_text(".hh-ver"))
-            check("헤더 eyebrow V5.8", "V5.8" in pg.inner_text(".hh-eyebrow"), pg.inner_text(".hh-eyebrow"))
+            check("타이틀 v5.8 이상", any(v in title for v in ("v5.8", "v5.9")) and "보장분석 라이프 리포트" in title, title)
+            check("헤더 버전 표기 v5.8 이상", any(v in pg.inner_text(".hh-ver") for v in ("v5.8", "v5.9")), pg.inner_text(".hh-ver"))
+            check("헤더 eyebrow V5.8 이상", any(v in pg.inner_text(".hh-eyebrow") for v in ("V5.8", "V5.9")), pg.inner_text(".hh-eyebrow"))
             sw = read(os.path.join(ROOT, "sw.js"))
-            check("서비스워커 캐시 v5.8", "bojang-guide-v5.8" in sw, sw.splitlines()[2])
+            check("서비스워커 캐시 v5.8 이상", any(v in sw for v in ("bojang-guide-v5.8", "bojang-guide-v5.9")), sw.splitlines()[2])
             man = json.loads(read(os.path.join(ROOT, "manifest.json")))
-            check("manifest v5.8", "v5.8" in man.get("name", ""), man.get("name"))
+            check("manifest v5.8 이상", any(v in man.get("name", "") for v in ("v5.8", "v5.9")), man.get("name"))
             check("manifest — 새 기능 설명", all(k in man.get("description", "") for k in ["클라우드", "고지의무", "카톡", "QR"]), man.get("description")[:70])
             monet = read(os.path.join(ROOT, "monetize.js"))
-            check("monetize — 버전·제목 v5.8", "v5.8" in monet.splitlines()[0] and "v5.8 ·" in monet, monet.splitlines()[0][:48])
+            check("monetize — 버전·제목 v5.8 이상", any(v in monet.splitlines()[0] for v in ("v5.8", "v5.9")) and any((v + " ·") in monet for v in ("v5.8", "v5.9")), monet.splitlines()[0][:48])
             check("README — v5.8 섹션", "v5.8에서 달라진 것" in read(os.path.join(ROOT, "README.md")), "README.md")
 
             backend_src = read(os.path.join(ROOT, "backend.js"))
@@ -654,7 +654,7 @@ def main():
             # =========================================================
             single = read(os.path.join(ROOT, "dist", "bojang-guide.single.html"))
             check("단일 HTML — v5.8 기능 반영", all(k in single for k in [
-                "v5.8", "syncConsultation", "pullConsultations", "kakaoSummary", "disc-tab", "const qs = 46;",
+                "v5.9", "syncConsultation", "pullConsultations", "kakaoSummary", "disc-tab", "const qs = 46;",
                 "parseCustomItems"]), True)
             refs = re.findall(r'<(?:script|link|img)[^>]+(?:src|href)="([^"]+)"', single)
             ext = [r for r in refs if r.startswith("http") or r.startswith("//")]
