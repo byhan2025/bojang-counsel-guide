@@ -194,9 +194,16 @@ def main():
             pg.wait_for_timeout(400)
             pg.evaluate("() => { const b=document.querySelector(\"#disc-tool [data-disc='m3_dx']\"); if (b) b.click(); }")
             pg.wait_for_timeout(400)
-            same = pg.evaluate("""() => ({ state: !!BojangApp.state.disc.m3_dx,
-              step6: !!document.querySelector('#disclosure-checks [data-disc="m3_dx"].is-on'),
-              saved: JSON.parse(localStorage.getItem('bojang.session.v4')||'{}').disc?.m3_dx === true })""")
+            same = pg.evaluate("""async () => {
+              /* v7.2 — 세션은 AES-GCM 암호화되어 저장됩니다. 복호화해서 확인합니다. */
+              const raw = JSON.parse(localStorage.getItem('bojang.session.v4') || 'null');
+              const S = window.BojangSecure;
+              const obj = (S && S.isEncrypted(raw)) ? await S.decrypt(raw) : raw;
+              return { state: !!BojangApp.state.disc.m3_dx,
+                step6: !!document.querySelector('#disclosure-checks [data-disc="m3_dx"].is-on'),
+                saved: !!(obj && obj.disc && obj.disc.m3_dx === true),
+                encrypted: !!(S && S.isEncrypted(raw)) };
+            }""")
             check("S2 도구 탭 체크 → state.disc", same["state"], same)
             check("S2 도구 탭 체크 → 6단계도 켜짐", same["step6"], same)
             check("S2 도구 탭 체크 → 저장", same["saved"], same)

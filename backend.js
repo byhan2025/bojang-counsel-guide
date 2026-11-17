@@ -175,15 +175,26 @@
   const BACKEND_HOSTS = ['ntfhdiujapctomzzaifu.supabase.co', 'localhost', '127.0.0.1', '::1'];
   const HOST_LOCK = '허용되지 않은 서버 주소입니다 — 공식 연결 정보(공식 프로젝트 URL)만 사용합니다.';
 
+  /* v7.2 — HTTPS + 기본 포트(443)만 허용. http: · 비표준 포트는 목적지 판정 자체를 거부합니다.
+     (4호 지적 후속: allowlist 호스트라도 http:// 또는 :8443 같은 포트로는 나가지 않습니다.) */
   function destinationHost(url) {
+    const raw = String(url || '').trim();
+    if (!/^https:\/\//i.test(raw)) return '';
     let u;
-    try { u = new URL(String(url || '').trim(), 'https://invalid.local/'); } catch (e) { return ''; }
-    if (u.protocol !== 'https:' && u.protocol !== 'http:') return '';
+    try { u = new URL(raw); } catch (e) { return ''; }
+    if (u.protocol !== 'https:') return '';
+    if (u.port && u.port !== '443') return '';
     return String(u.hostname || '').toLowerCase().replace(/^\[|\]$/g, '');
   }
   function hostAllowed(url) {
     const h = destinationHost(url);
     return !!h && BACKEND_HOSTS.indexOf(h) >= 0;
+  }
+  function destinationInfo(url) {
+    const raw = String(url || '').trim();
+    let u = null;
+    try { u = new URL(raw); } catch (e) { u = null; }
+    return { https: !!(u && u.protocol === 'https:'), port: u ? (u.port || '443') : '', host: destinationHost(url), allowed: hostAllowed(url) };
   }
   function hostLocked() { return { ok: false, status: 0, error: 'host-lock', message: HOST_LOCK }; }
 
@@ -278,8 +289,20 @@
     clearSession();
     consultTable = 'unknown';
     if (root.BojangPlan && root.BojangPlan.hydrate) root.BojangPlan.hydrate(null);
+    /* v7.2 — '로그아웃 시 로컬 데이터 삭제'를 켠 경우에만 기기 저장값을 지웁니다(사용자 선택권) */
+    let purged = [];
+    try {
+      if (root.BojangSecure && root.BojangSecure.deleteOnLogout && root.BojangSecure.deleteOnLogout()) {
+        purged = await root.BojangSecure.logout().then((r) => r.purged || []);
+      }
+    } catch (e) { /* noop */ }
     render();
-    return { ok: true, message: '로그아웃했습니다. 이 기기의 상담 기록은 그대로 남아 있습니다.' };
+    return {
+      ok: true, purged: purged.length,
+      message: purged.length
+        ? `로그아웃했습니다. 이 기기의 상담 기록 ${purged.length}건을 지웠습니다.`
+        : '로그아웃했습니다. 이 기기의 상담 기록은 그대로 남아 있습니다.'
+    };
   }
 
   async function refreshSession() {
@@ -1100,7 +1123,7 @@
     parseCoverageVision, subscribe,
     openAccount, closeAccount, render,
     BETA_NOTICE, LIVE_NOTICE, AUTH_REQUIRED, PRICE, CFG_KEY, SESSION_KEY,
-    allowedHosts: BACKEND_HOSTS.slice(), hostAllowed, HOST_LOCK,
+    allowedHosts: BACKEND_HOSTS.slice(), hostAllowed, destinationInfo, HOST_LOCK, requireHttps: true,
     state: () => ({ mode: state.mode, connection: state.connection, message: state.message, busy: state.busy, subscription: state.subscription, plan: state.plan }),
     config: () => Object.assign({}, cfg)
   };

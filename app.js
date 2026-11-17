@@ -27,6 +27,8 @@
       heart: { dx: { ischemic: 2000, ami: 1000 }, treat: { lysis: 0, surgery: 1500, icu: 500 } },
       surgery: { disease: 50, disease15: 300, diseaseNdae: 500, diseaseNonPay: 0, injury: 50, injury15: 300 },
       care: { daily: 10, nDaily: 0, basis: 'time', family: 'conditional', nursing: true, ltc: false, mode: 'normal' },
+      /* v7.2 — 6번째 생활·실손 참고 축 (점수·색 판정 제외) */
+      living: { deathInjury: 0, deathDisease: 0, disabilityInjury: 0, disabilityDisease: 0, driverFine: 0, driverLawyer: 0, driverSupport: 0, driverInjury: 0, liability: 0, fire: 0, fracture: 0, burn: 0, er: 0, inpatientInjury: 0, inpatientDisease: 0, silsonDeduct: 0, silsonNonPay: false, toothCare: false, toothProsthetic: false },
       /* v5.6 — 증권 담보 직접 기재 (영역별) */
       custom: { cancer: [], brain: [], heart: [], surgery: [], care: [] }
     },
@@ -45,6 +47,7 @@
       heart: { dx: { ischemic: 0, ami: 0 }, treat: { lysis: 0, surgery: 0, icu: 0 } },
       surgery: { disease: 0, disease15: 0, diseaseNdae: 0, diseaseNonPay: 0, injury: 0, injury15: 0 },
       care: { daily: 0, nDaily: 0, basis: 'unknown', family: 'conditional', nursing: false, ltc: false, mode: 'normal' },
+      living: { deathInjury: 0, deathDisease: 0, disabilityInjury: 0, disabilityDisease: 0, driverFine: 0, driverLawyer: 0, driverSupport: 0, driverInjury: 0, liability: 0, fire: 0, fracture: 0, burn: 0, er: 0, inpatientInjury: 0, inpatientDisease: 0, silsonDeduct: 0, silsonNonPay: false, toothCare: false, toothProsthetic: false },
       custom: { cancer: [], brain: [], heart: [], surgery: [], care: [] }
     },
     flags: { savings: false, renew: false, manyRiders: false }
@@ -89,23 +92,47 @@
     try { localStorage.setItem(key, JSON.stringify(value)); return true; }
     catch (e) { return false; }
   }
+  let saveSeq = 0;
+  function sessionPayload() {
+    return {
+      client: state.client, contracts: state.contracts, age: state.age, gender: state.gender,
+      job: state.job, jobNote: state.jobNote || '', jobTwoWheel: !!state.jobTwoWheel,
+      silson: state.silson, silson2: state.silson2 || 'unknown', premium: state.premium, cov: state.cov, flags: state.flags,
+      family: state.family, disc: state.disc, sample: !!state.sample, followUp: state.followUp || ''
+    };
+  }
   function saveSession() {
     /* v6.2 — 샘플 체험 모드에서는 어떤 경로로도 세션(입력 중 상담)을 덮어쓰지 않습니다 */
     if (state.sampleMode) return;
-    lsSet(SKEY, {
-      client: state.client, contracts: state.contracts, age: state.age, gender: state.gender,
-      job: state.job, silson: state.silson, silson2: state.silson2 || 'unknown', premium: state.premium, cov: state.cov, flags: state.flags,
-      family: state.family, disc: state.disc, sample: !!state.sample, followUp: state.followUp || ''
-    });
+    const S = window.BojangSecure;
+    /* v7.2 — '민감정보 미저장(세션 전용)' 모드: 기기에 아예 남기지 않습니다 */
+    if (S && S.privacyMode() === 'session') {
+      try { localStorage.removeItem(SKEY); } catch (e) { /* private mode */ }
+      return;
+    }
+    const payload = sessionPayload();
+    /* v7.2 — WebCrypto(AES-GCM)로 암호화해 저장. 키는 IndexedDB 의 추출 불가 CryptoKey.
+       암호화를 쓸 수 없으면(구형 브라우저) 종전처럼 평문 저장으로 내려갑니다. */
+    if (S && S.available && S.available()) {
+      const seq = ++saveSeq;
+      S.encrypt(payload).then((enc) => { if (seq === saveSeq && enc) lsSet(SKEY, enc); })
+        .catch(() => { if (seq === saveSeq) lsSet(SKEY, payload); });
+      return;
+    }
+    lsSet(SKEY, payload);
   }
-  function loadSession() {
-    const s = lsGet(SKEY, null);
+  async function loadSession() {
+    let s = lsGet(SKEY, null);
+    if (s == null) return;
+    if (window.BojangSecure && window.BojangSecure.isEncrypted(s)) {
+      try { s = await window.BojangSecure.decrypt(s); } catch (e) { s = null; }
+    }
     if (!s) return;
     if (s.client) state.client = Object.assign(state.client, s.client, { dateLabel: todayLabel() });
     if (Array.isArray(s.contracts)) state.contracts = s.contracts;
     if (Array.isArray(s.family)) state.family = s.family.filter((k) => FAMILY_HISTORY.some((f) => f.key === k));
     if (s.disc && typeof s.disc === 'object') state.disc = s.disc;
-    ['age', 'gender', 'job', 'silson', 'silson2', 'premium', 'sample', 'followUp'].forEach((k) => { if (s[k] != null) state[k] = s[k]; });
+    ['age', 'gender', 'job', 'jobNote', 'jobTwoWheel', 'silson', 'silson2', 'premium', 'sample', 'followUp'].forEach((k) => { if (s[k] != null) state[k] = s[k]; });
     if (s.cov) state.cov = Object.assign(state.cov, s.cov);
     if (s.flags) state.flags = Object.assign(state.flags, s.flags);
     /* v4.2: 구버전 구조(단일 치료비·boolean 치료비·종수/N대·간병 일당)를 새 구조로 자동 변환 */
@@ -143,7 +170,7 @@
       state.gender = v; refreshAll(); saveSession();
     });
     buildSeg($('#seg-job'), [{ value: '1', label: '1급' }, { value: '2', label: '2급' }, { value: '3', label: '3급' }], state.job, (v) => {
-      state.job = v; $('#job-hint').textContent = JOB_HINTS[v]; refreshAll(); saveSession();
+      state.job = v; $('#job-hint').textContent = JOB_HINTS[v]; renderJobNote(); refreshAll(); saveSession();
     });
     buildSeg($('#seg-silson'), [
       { value: 'none', label: '없음' }, { value: '1', label: '1세대' }, { value: '2', label: '2세대' },
@@ -153,6 +180,7 @@
     });
     renderSilson2();
     $('#job-hint').textContent = JOB_HINTS[state.job];
+    renderJobNote();
     $('#premium').value = state.premium;
   }
 
@@ -377,7 +405,7 @@
           <span class="dxc-label">핵심 범위</span>
           <b data-dxcore>${won(core ? core.val : 0)}</b><em>만원</em>
           <span class="dxc-rec">권장 ${won(pr.rec)}만원</span>
-          <span class="dxc-state">${core && core.val >= 2000 ? '기준선 충족' : '기준선 미달'}</span>
+          <span class="dxc-state">${core && core.val >= 2000 ? '기준선 충족' : '기준선 확인 권장'}</span>
         </div>
         <div class="dx-warn${dx.gapWarn ? ' is-on' : ''}" data-dxwarn>
           ⚠ <b>범위 공백 경고</b> — ${esc(dx.gapLabel || '')} 금액이 0원입니다. ${item.key === 'brain' ? '뇌경색(I63)은 뇌졸중 금액만 지급되고, 뇌혈관 후유증(I69)은 지급되지 않습니다.' : '협심증(I20)과 스텐트 시술 구간이 지급되지 않습니다.'}
@@ -689,7 +717,94 @@
           <button type="button" class="seg-btn${careMode === 'step' ? ' is-on' : ''}" data-caremode="step">체증형</button>
         </div>
       </div>`);
+    renderLivingCard();
+    renderRiderQueue();
     bindCoverageInputs();
+  }
+
+  /* =========================================================
+     v7.2 — 6번째 '생활·실손' 참고 축 카드
+     18개 항목을 5개 묶음으로 보여 주고, 금액·보유 여부만 입력합니다.
+     점수·색 판정에는 넣지 않고 '빠진 생활 보장'만 알려 줍니다.
+     ========================================================= */
+  function livingValue(key) {
+    const box = state.cov.living || (state.cov.living = {});
+    return box[key];
+  }
+  function renderLivingCard() {
+    const host = $('#card-living');
+    if (!host) return;
+    const L = BojangModel.livingRef(state);
+    const groups = L.groups.map((g) => `
+      <div class="living-group" data-lg="${g.key}">
+        <div class="lg-head"><b>${g.label}</b><span>${g.present}/${g.total}</span></div>
+        ${g.items.map((it) => it.type === 'bool'
+          ? `<label class="living-row bool"><input type="checkbox" data-live-bool="${it.key}"${it.value ? ' checked' : ''} aria-label="${it.label}"><span>${it.label}<em>${it.hint}</em></span></label>`
+          : `<label class="living-row"><span>${it.label}<em>${it.hint}</em></span>
+               <input type="number" inputmode="numeric" min="0" max="100000" step="10" value="${it.value ? it.value : ''}" placeholder="0" data-live-amt="${it.key}" aria-label="${it.label} (만원)"><i class="unit">만원</i></label>`).join('')}
+      </div>`).join('');
+    host.innerHTML = `
+      <div class="card cov-card ref-card" data-item="living">
+        <div class="card-title">
+          <span class="cov-rank">6</span>생활 · 실손
+          <span class="card-sub">참고 축 — 점수·색 판정 제외</span>
+          <span class="badge badge-ref">참고 ${L.present}/${L.total}</span>
+        </div>
+        <p class="ref-note">${esc(L.note)} 40·50대 가입 시 상해·운전자·배상·치아 담보는 보험료가 크지 않아 '빠진 칸'을 채우는 편이 좋습니다.</p>
+        <div class="living-groups">${groups}</div>
+        <p class="ref-foot">${L.missing.length ? '빠진 항목: ' + esc(L.missing.join(' · ')) : '생활·실손 항목이 모두 입력되었습니다.'}</p>
+      </div>`;
+    $$('#card-living [data-live-amt]').forEach((input) => {
+      input.addEventListener('input', () => {
+        const box = state.cov.living || (state.cov.living = {});
+        box[input.dataset.liveAmt] = clamp(Number(input.value || 0), 0, 100000);
+        saveSession();
+      });
+    });
+    $$('#card-living [data-live-bool]').forEach((cb) => {
+      cb.addEventListener('change', () => {
+        const box = state.cov.living || (state.cov.living = {});
+        box[cb.dataset.liveBool] = !!cb.checked;
+        saveSession();
+      });
+    });
+  }
+
+  /* =========================================================
+     v7.2 — 미매칭 1탭 연결 큐
+     담보명 사전에 없는 특약(또는 다른 축으로 분류된 특약)을 6개 축 버튼 한 번으로 연결합니다.
+     ========================================================= */
+  function renderRiderQueue() {
+    const host = $('#rider-queue');
+    if (!host) return;
+    const list = BojangModel.unmatchedRiders(state);
+    if (!list.length) {
+      host.innerHTML = '<div class="rq-empty">직접 기재 담보가 모두 담보 축에 연결되었습니다.</div>';
+      return;
+    }
+    const choices = (window.BojangDambo && BojangDambo.choices) ? BojangDambo.choices() : [];
+    host.innerHTML = `
+      <div class="rq-head"><span class="eyebrow">RIDER LINK</span> 미매칭 특약 ${list.length}건
+        <em>1탭으로 담보 축에 연결하세요 — 사전 자동 매칭은 참고용입니다</em></div>
+      ${list.map((x) => `
+        <div class="rq-row" data-rq-id="${esc(x.id)}" data-rq-area="${x.area}">
+          <div class="rq-name"><b>${esc(x.name)}</b><span>${CUSTOM_LABELS[x.area]} 영역 · ${x.amount ? won(x.amount) + '만원' : '금액 미입력'} · ${x.reason === 'mismatch' ? '다른 축(' + esc(x.axisLabel || '') + ')으로 분류됨' : '사전에 없는 이름'}</span></div>
+          <div class="rq-choices">${choices.map((c) => `<button type="button" class="rq-btn${x.axis === c.key ? ' is-on' : ''}" data-rq-link="${x.id}" data-rq-axis="${c.key}" data-rq-name="${esc(x.name)}">${c.label}</button>`).join('')}</div>
+        </div>`).join('')}`;
+    $$('#rider-queue [data-rq-link]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const id = b.dataset.rqLink, axis = b.dataset.rqAxis;
+        const dm = BojangModel.riderMatch(b.dataset.rqName || '');
+        const sub = dm && dm.axis === axis ? dm.sub : null;
+        const ok = BojangModel.linkRider(state, id, axis, sub);
+        if (!ok) { toast('연결할 담보를 찾지 못했습니다'); return; }
+        toast(axis === 'living' ? '생활·실손 참고 축으로 연결했습니다' : '연결했습니다');
+        renderCoverageCards();
+        refreshBadges();
+        saveSession();
+        if (state.analyzed) analyze();
+      });
+    });
   }
 
   function emptyFor(itemKey, partKey) {
@@ -983,8 +1098,28 @@
     }).join('');
   }
 
+  /* v7.2 — 직업급수 자동 매칭 · 2·3급/이륜차 알림 */
+  function renderJobNote() {
+    const host = $('#job-grade-note');
+    if (!host) return;
+    const J = window.BojangJobGrades;
+    if (!J) { host.innerHTML = ''; return; }
+    const g = J.of(state.job);
+    const m = state.jobNote ? J.match(state.jobNote) : null;
+    const twoWheel = !!(state.jobTwoWheel || (m && m.twoWheel));
+    const alerts = J.alerts(state.job, twoWheel) || [];
+    const who = m ? `${esc(m.label)} — ${esc(m.gradeLabel)}` : `${esc(g.label)}`;
+    host.className = 'job-grade-note tone-' + (g.risk === 'high' || twoWheel ? 'gap' : g.risk === 'mid' ? 'need' : 'ok');
+    host.innerHTML = `<span class="jgn-badge">${esc(g.short)}</span>
+      <div class="jgn-body"><b>${who}</b><em>${esc(g.note)}</em>
+      ${alerts.length ? `<span class="jgn-alert">${esc(alerts[0].title)} — ${esc(alerts[0].body)}</span>` : '<span class="jgn-ok">상해 담보 가입 제한이 거의 없는 구분입니다.</span>'}
+      ${m && m.check.length ? `<span class="jgn-check">확인: ${esc(m.check.join(' · '))}</span>` : ''}
+      <span class="jgn-law">확정 급수는 가입 상품의 직업급수표가 기준입니다.</span></div>`;
+  }
+
   /* ================= 진단 ================= */
   function analyze() {
+    renderJobNote();
     const m = model();
     const rows = m.rows;
     const sc = { score: m.score, grade: m.grade, penalty: m.penalty, w: m.weights };
@@ -995,7 +1130,7 @@
     $('#result-hero').innerHTML = `
       <div class="hero-top">
         <span class="hero-eyebrow">COVERAGE SCORE</span>
-        <span class="hero-input">${state.client.name}님 · ${state.age}대 ${state.gender} · ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]}</span>
+        <span class="hero-input">${esc(state.client.name)}님 · ${state.age}대 ${esc(state.gender)} · ${state.job}급 · 실손 ${SILSON_LABEL[state.silson]}</span>
       </div>
       <div class="score-wrap">
         <div class="ring-box">
@@ -1025,6 +1160,25 @@
         : '연령대·직업급수·실손 세대를 반영한 가중 평균 (자체 산식)'}</div>
     `;
 
+    /* v7.2 — 결과 최상단 한 문장 결론 배너 (보완 후보 N개 · 1순위) */
+    const conc = (BojangModel.conclusion ? BojangModel.conclusion(state, m) : { text: '', count: 0, first: null });
+    const cb = $('#result-conclusion');
+    if (cb) {
+      cb.className = 'conclusion-banner tone-' + (conc.count === 0 ? 'ok' : conc.count >= 3 ? 'gap' : 'need');
+      cb.innerHTML = `
+        <span class="cbn-eyebrow">결론</span>
+        <b class="cbn-text" id="conclusion-text">${esc(conc.text)}</b>
+        <span class="cbn-meta">${conc.count === 0 ? '추가 가입보다 갱신·만기 점검' : '1순위부터 한 칸씩 · 금액 기준선은 연령대별'}</span>`;
+    }
+
+    /* v7.2 — 연령대별 권장 기준선: 기준일·출처를 한 줄로 고정 표기 */
+    const stdLine = $('#age-standard-line');
+    if (stdLine) {
+      const std = (typeof ageStandard === 'function') ? ageStandard('cancer', state.age) : null;
+      const tier = std ? std.tierLabel : (typeof ageTierOf === 'function' ? ({ young: '20~30대', mid: '40~50대', senior: '60대+' }[ageTierOf(state.age)]) : '');
+      stdLine.innerHTML = `<b>${esc(tier)} 권장 기준선</b> · 기준일 2026-11-17 · 출처: 중앙암등록본부 국가암등록통계(2023) · 통계청 2024 사망원인통계 · 건강보험심사평가원 진료비통계 · 국민건강보험공단 노인장기요양 통계연보 · 상품별 인수·약관 기준 우선`;
+    }
+
     $('#radar').innerHTML = radarSVG(rows);
     $('#stats').innerHTML = statsHTML();
 
@@ -1033,7 +1187,7 @@
     rows.forEach(({ item, r, pct, level, label, summary, gaps }) => {
       const el = document.createElement('div');
       el.className = 'prow';
-      const tail = summary + (gaps.length ? ` · 부족 ${gaps.map((g) => won(g.need) + '만원').join(', ')}` : '');
+      const tail = esc(summary) + (gaps.length ? ` · 보완 후보 ${gaps.map((g) => won(g.need) + '만원').join(', ')}` : '');
       el.innerHTML = `
         <div class="prow-head">
           <span class="prow-rank">${item.rank}</span>
@@ -1218,10 +1372,10 @@
     document.body.classList.remove('is-modal');
   }
 
-  async function copyKakaoSummary() {
+  async function copyKakaoSummary(btn) {
     if (!state.lastResult) { toast('먼저 진단해 주세요'); return ''; }
     const text = kakaoSummary();
-    await copy(text, '카톡 요약을 복사했습니다 — 카톡에 붙여넣으세요');
+    return await copy(text, '카톡 요약을 복사했습니다 — 카톡에 붙여넣으세요', btn || $('#btn-kakao'));
     openKakaoModal(text);
     return text;
   }
@@ -1241,7 +1395,7 @@
     L.push('');
     L.push('■ 먼저 채울 곳');
     if (!m.needList.length) L.push('· 지금 구조 유지 + 금액 조정');
-    else m.needList.slice(0, 3).forEach((x, i) => L.push(`${i + 1}) ${x.item.name} — ${x.summary}${x.gaps.length ? ` (${won(x.gaps.reduce((a, g) => a + g.need, 0))}만원 부족)` : ''}`));
+    else m.needList.slice(0, 3).forEach((x, i) => L.push(`${i + 1}) ${x.item.name} — ${x.summary}${x.gaps.length ? ` (${won(x.gaps.reduce((a, g) => a + g.need, 0))}만원 보완 후보)` : ''}`));
     L.push('');
     L.push('■ 실행 로드맵 3단계');
     m.steps.forEach((s, i) => L.push(`${i + 1}단계 ${s.title} — ${s.body.replace(/\s+/g, ' ').slice(0, 70)}${s.body.length > 70 ? '…' : ''}`));
@@ -1263,9 +1417,17 @@
     $('#pdf-cancel').hidden = true;
   }
 
+  /* v7.2 — PDF 파일명·문서 제목(메타데이터)에 고객 실명을 기본 제외.
+     사용자가 원할 때만(#pdf-include-name) 이름을 넣습니다. 본문 표지의 이름은 상담용이라 그대로 둡니다. */
+  function pdfIncludeName() {
+    const cb = $('#pdf-include-name');
+    return !!(cb && cb.checked) || !!state.pdfIncludeName;
+  }
   async function buildPdfBlob(kind) {
     const started = performance.now();
     const build = BojangReport.build(kind, state);
+    const includeName = pdfIncludeName();
+    const pdfName = includeName ? build.m.client.name : '';
     const overflow = [];
     const memoOpts = BojangReport.MEMO[kind] || {};
     /* v5.2 베타: 전 기능 무료 — 워터마크 없음 (잠금 판정은 BojangPlan.unlocked) */
@@ -1282,14 +1444,14 @@
       memoLabels: memoOpts.memoLabels,
       watermark,
       idMark,
-      meta: { title: `${build.m.client.name}_${PDF_LABEL[kind]}` },
+      meta: { title: includeName ? `${build.m.client.name}_${PDF_LABEL[kind]}` : `보장분석_${PDF_LABEL[kind]}` },
       onProgress: (done, total) => {
         overlay(true, `${PDF_LABEL[kind]} PDF 생성 중`, `${total}페이지 중 ${done}페이지를 그렸습니다`, done / total);
       }
     });
-    const filename = PDFKit.fileName(kind, build.m.client.name, isoDate(build.m.dateLabel));
-    window.__lastPdf = { kind, watermark: !!watermark, pages: build.pages.length, filename, idMark };
-    return { blob, filename, pages: build.pages.length, overflow, ms: Math.round(performance.now() - started), model: build.m, watermark, idMark };
+    const filename = PDFKit.fileName(kind, pdfName || '고객', isoDate(build.m.dateLabel));
+    window.__lastPdf = { kind, watermark: !!watermark, pages: build.pages.length, filename, idMark, includeName };
+    return { blob, filename, pages: build.pages.length, overflow, ms: Math.round(performance.now() - started), model: build.m, watermark, idMark, includeName, nameExcluded: !includeName };
   }
   window.BojangApp = {
     buildPdfBlob, doPdf, state, analyze, cursorModel: model, applyImport, switchView, renderAllInputs,
@@ -1834,16 +1996,49 @@
     toastTimer = setTimeout(() => el.classList.remove('is-on'), 2400);
   }
 
-  async function copy(text, okMsg) {
+  /* v7.2 — 복사 완료 피드백: 버튼 상태 전환(복사됨 ✓) + 토스트(aria-live) 를 함께.
+     클립보드가 막힌 환경에서도 '복사했습니다'만 띄우지 않고 실패를 분명히 알립니다. */
+  const COPY_BTN_LABEL = new WeakMap();
+  function copyBtnDone(btn) {
+    if (!btn || !btn.dataset) return;
+    if (!COPY_BTN_LABEL.has(btn)) COPY_BTN_LABEL.set(btn, btn.textContent);
+    btn.dataset.copied = '1';
+    btn.classList.add('is-copied');
+    btn.setAttribute('aria-label', '복사 완료');
+    btn.textContent = '복사됨 ✓';
+    setTimeout(() => {
+      if (!btn.dataset.copied) return;
+      delete btn.dataset.copied;
+      btn.classList.remove('is-copied');
+      btn.textContent = COPY_BTN_LABEL.get(btn) || '복사';
+    }, 1600);
+  }
+  async function copy(text, okMsg, btn) {
+    let ok = false;
     try {
-      if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text);
-      else {
+      if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); ok = true; }
+    } catch (e) { ok = false; }
+    if (!ok) {
+      /* 클립보드 API 가 막힌 환경(권한 거부·비보안 컨텍스트)은 textarea 폴백 */
+      try {
         const ta = document.createElement('textarea');
         ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.top = '-1000px';
-        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-      }
+        document.body.appendChild(ta); ta.select(); ok = document.execCommand('copy'); document.body.removeChild(ta);
+      } catch (e) { ok = false; }
+    }
+    if (ok) {
+      copyBtnDone(btn);
       toast(okMsg || '복사했습니다');
-    } catch (e) { toast('복사가 막혔습니다. 길게 눌러 직접 선택해 주세요'); }
+      return true;
+    }
+    if (btn) {
+      if (!COPY_BTN_LABEL.has(btn)) COPY_BTN_LABEL.set(btn, btn.textContent);
+      btn.classList.add('is-copy-failed');
+      btn.textContent = '복사 실패';
+      setTimeout(() => { btn.classList.remove('is-copy-failed'); btn.textContent = COPY_BTN_LABEL.get(btn) || '복사'; }, 1800);
+    }
+    toast('복사가 막혔습니다. 길게 눌러 직접 선택해 주세요');
+    return false;
   }
   window.__bojangCopy = copy;
   window.__bojangToast = toast;
@@ -2126,7 +2321,7 @@
       b.addEventListener('click', (e) => {
         e.preventDefault(); e.stopPropagation();
         const i = Number(b.dataset.copy);
-        copy(g.talk[i].replace(/^"|"$/g, ''), '화법을 복사했습니다');
+        copy(g.talk[i].replace(/^"|"$/g, ''), '화법을 복사했습니다', b);
       });
     });
   }
@@ -2175,7 +2370,7 @@
     $$('.obj-copy', ob).forEach((b) => {
       b.addEventListener('click', () => {
         const o = OBJECTIONS[Number(b.dataset.i)];
-        copy(`${o.trigger}\n\n[공감] ${o.empathy}\n[환기] ${o.awaken}\n[대안] ${o.alternative}`, '화법을 복사했습니다');
+        copy(`${o.trigger}\n\n[공감] ${o.empathy}\n[환기] ${o.awaken}\n[대안] ${o.alternative}`, '화법을 복사했습니다', b);
       });
     });
   }
@@ -2441,7 +2636,7 @@
     if (qc) qc.textContent = `${state.client.name} · ${state.age}대 ${state.gender} · 실손 ${SILSON_LABEL[state.silson]} · 월 ${won(state.premium)}만원`;
     if ($('#q-age')) buildSeg($('#q-age'), AGES.map((a) => ({ value: a, label: a + '대' })), state.age, (v) => { state.age = v; state.ageAuto = false; renderAllInputs(); saveSession(); if (state.analyzed) analyze(); });
     if ($('#q-gender')) buildSeg($('#q-gender'), [{ value: '남', label: '남' }, { value: '여', label: '여' }], state.gender, (v) => { state.gender = v; renderAllInputs(); saveSession(); if (state.analyzed) analyze(); });
-    if ($('#q-job')) buildSeg($('#q-job'), [{ value: '1', label: '1급' }, { value: '2', label: '2급' }, { value: '3', label: '3급' }], state.job, (v) => { state.job = v; renderAllInputs(); saveSession(); if (state.analyzed) analyze(); });
+    if ($('#q-job')) buildSeg($('#q-job'), [{ value: '1', label: '1급' }, { value: '2', label: '2급' }, { value: '3', label: '3급' }], state.job, (v) => { state.job = v; renderJobNote(); renderAllInputs(); saveSession(); if (state.analyzed) analyze(); });
     if ($('#q-silson')) buildSeg($('#q-silson'), [{ value: 'none', label: '없음' }, { value: '1', label: '1세대' }, { value: '2', label: '2세대' }, { value: '3', label: '3세대' }, { value: '4', label: '4세대' }, { value: '5', label: '5세대' }], state.silson, (v) => { state.silson = v; renderAllInputs(); saveSession(); if (state.analyzed) analyze(); });
   }
 
@@ -2833,7 +3028,7 @@
       sections: [
         ['1. 수집·이용 항목', '① 이 기기 저장(IndexedDB): 상담 이력 — 고객명(선택)·생년월일(선택)·연령대·성별·직업급수·실손 세대·월 보험료·담보 금액·계약 목록·고지 체크·상담 라벨·점수. ② 이 기기 저장(localStorage): 화면 설정(보기 모드·가이드 확인 여부·큰 글씨)과 입력 중인 상담 1건. ③ 클라우드(로그인해 동기화를 켰을 때만): 이메일, 상담 스냅샷 — 고객명·생년월일·연령대·성별·직업급수·실손 세대·월 보험료·담보 금액·계약 목록·고지 체크·상담 라벨·점수 — 와 브랜드 설정(상호·담당자·연락처·로고)이 Supabase(서울 리전)에 저장됩니다. 로그인하지 않으면 이 기기 저장만 사용합니다.'],
         ['2. 사진 촬영 — 앱·자체 서버에 저장하지 않음', '카메라로 찍은 보장분석표 사진은 이 앱과 자체 Supabase DB에 저장하지 않습니다(서버 저장 0건). 촬영본은 화면 메모리에서 전처리해 인식에 쓰고, localStorage·IndexedDB 어디에도 남기지 않습니다.'],
-        ['3. AI 사진 인식 — 실제 전송 경로', '사진에서 담보 숫자를 자동으로 읽을 때에만 다음 경로로 이미지가 전송됩니다: ① 이 브라우저 → ② 자체 서버(Supabase Edge Function · parse-coverage-vision) → ③ 외부 AI(Google Gemini, 설정에 따라 OpenAI). ②는 이미지를 DB·스토리지에 저장하지 않고 메모리에서만 처리하며 응답 후 즉시 참조를 해제합니다. ③에서 모델 오류·요청 제한이 나면 대체 모델 후보로 다시 시도할 수 있습니다 — OpenAI 경로 또는 사용자 지정 Gemini 포함 최대 4개 모델 후보입니다(사용자 지정 Gemini → gemini-3.8-flash → gemini-4-hydrogen → gemini-flash-latest). 전송된 이미지의 공급자 측 보관·삭제는 해당 API 개인정보·남용방지 정책을 따르며, 앱이 공급자 측 즉시 삭제를 보증하지는 않습니다. 인식 결과 텍스트만 화면에 표시하고, 사진 인식을 쓰지 않으면 어떤 이미지도 외부로 나가지 않습니다.'],
+        ['3. AI 사진 인식 — 공급자별 전송 경로', '사진에서 담보 숫자를 자동으로 읽을 때에만 다음 경로로 이미지가 전송됩니다: ① 이 브라우저 → ② 자체 서버(Supabase Edge Function · parse-coverage-vision) → ③ 외부 AI. ②는 이미지를 DB·스토리지에 저장하지 않고 메모리에서만 처리하며 응답 후 즉시 참조를 해제합니다. ③은 공급자별로 다릅니다. · OpenAI 경로(단일 모델): 모델 1개로 고정되어 오류 시 자동 대체하지 않고 실패를 알립니다. · Gemini 경로(최대 4개 모델 후보): 모델 오류·요청 제한이 나면 사용자 지정 Gemini → gemini-3.8-flash → gemini-4-hydrogen → gemini-flash-latest 순으로 최대 4개 후보를 재시도합니다. 전송된 이미지의 공급자 측 보관·삭제는 해당 API 개인정보·남용방지 정책을 따르며, 앱이 공급자 측 즉시 삭제를 보증하지는 않습니다. 인식 결과 텍스트만 화면에 표시하고, 사진 인식을 쓰지 않으면 어떤 이미지도 외부로 나가지 않습니다.'],
         ['4. 보관 위치와 기간', '① 상담 이력은 이 기기의 IndexedDB에, 입력 중인 상담 1건은 localStorage에 보관되고 이용자가 삭제할 때까지 남습니다. ② 클라우드 동기화를 켜면 상담 스냅샷이 Supabase(서울 리전)에 저장되며, 이용자가 상담을 삭제하거나 계정을 정리할 때까지 보관합니다. ③ PDF·JSON 파일은 이용자 기기에서 만들어지고, 서비스가 따로 보관하지 않습니다.'],
         ['5. 제3자 제공·처리위탁', '개인정보를 제3자에게 판매·제공하지 않습니다. 다만 서비스 운영을 위해 Supabase(서울 리전 · 로그인·상담 동기화 데이터 저장)와 외부 AI API(Google Gemini 등 · 사진 인식 시에만 해당)에 처리를 위탁합니다. AI 공급자 측 이미지 보관은 해당 공급자의 API 정책(남용 감시 목적의 제한 기간 보관 포함)을 따릅니다. 법령에 따라 수사기관이 요구하는 경우는 예외로 합니다.'],
         ['6. 이용자의 권리', '이용자는 언제든지 ① 상담 이력 삭제(목록의 × 버튼), ② 클라우드 기록 삭제·로그아웃, ③ 브라우저 데이터 삭제로 기기 저장값을 지울 수 있습니다. 삭제한 자료는 복구되지 않습니다.'],
@@ -2875,9 +3070,9 @@
       title: '사진 AI 인식 (2단 전송)',
       where: '브라우저 → 자체 Edge Function → 외부 AI',
       items: [
-        '사진을 AI로 읽을 때만: 브라우저 → Supabase Edge Function(parse-coverage-vision) → 외부 AI(Google Gemini, 설정에 따라 OpenAI)',
+        '사진을 AI로 읽을 때만: 브라우저 → Supabase Edge Function(parse-coverage-vision) → 외부 AI (OpenAI 경로 = 단일 모델 / Gemini 경로 = 최대 4개 모델 후보)',
         'Edge Function은 사진을 DB·스토리지에 저장하지 않고 메모리에서만 처리(응답 후 참조 해제)',
-        '모델 오류·요청 제한 시 대체 모델 후보로 재시도(OpenAI 경로 또는 사용자 지정 Gemini 포함 최대 4개 모델 후보) · 전송 이미지 보관은 공급자 API 정책을 따름'
+        'OpenAI 경로(단일 모델) · Gemini 경로(최대 4개 모델 후보, 오류 시 순차 재시도) — 공급자별 분리 표기 · 전송 이미지 보관은 공급자 API 정책을 따름'
       ],
       keep: '앱은 공급자 측 즉시 삭제를 보증하지 않음 · 사진 인식을 쓰지 않으면 전송 0건 · 판정 불가 환경(파일 실행·가드 없음)은 fail-closed로 차단'
     }
@@ -2949,6 +3144,51 @@
     if (n > cap) { el.value = String(cap); }
   }
 
+  /* =========================================================
+     v7.2 — 기기 저장 보안 설정 UI (더보기 메뉴)
+     ========================================================= */
+  function renderPrivacySettings() {
+    const S = window.BojangSecure;
+    const stateEl = $('#mmp-state');
+    const sess = $('#opt-session-only');
+    const del = $('#opt-delete-logout');
+    const foot = $('#mmp-foot');
+    if (!S) return;
+    const ps = S.privacyState();
+    if (sess) sess.checked = ps.mode === 'session';
+    if (del) del.checked = !!ps.deleteOnLogout;
+    if (stateEl) stateEl.textContent = ps.crypto ? 'AES-GCM 잠금' : '암호화 미지원(평문)';
+    if (foot) foot.textContent = ps.mode === 'session'
+      ? '세션 전용 — 입력 중 상담을 기기에 저장하지 않습니다. 화면을 닫으면 사라집니다.'
+      : (ps.crypto ? '상담 이력은 기기 안에서 AES-GCM으로 암호화해 보관합니다.' : '이 브라우저는 WebCrypto를 지원하지 않아 평문으로 저장됩니다.');
+  }
+  function bindPrivacySettings() {
+    const S = window.BojangSecure;
+    if (!S) return;
+    const sess = $('#opt-session-only');
+    const del = $('#opt-delete-logout');
+    const purge = $('#btn-purge-local');
+    if (sess) sess.addEventListener('change', () => {
+      S.setPrivacyMode(sess.checked ? 'session' : 'persist');
+      if (sess.checked) { try { localStorage.removeItem(SKEY); } catch (e) { /* noop */ } toast('세션 전용 — 이제 입력 중 상담을 기기에 저장하지 않습니다'); }
+      else { saveSession(); toast('기기 저장 — 상담을 AES-GCM으로 암호화해 보관합니다'); }
+      renderPrivacySettings();
+    });
+    if (del) del.addEventListener('change', () => {
+      S.setDeleteOnLogout(del.checked);
+      toast(del.checked ? '로그아웃할 때 이 기기의 상담 기록도 지웁니다' : '로그아웃해도 상담 기록은 이 기기에 남습니다');
+      renderPrivacySettings();
+    });
+    if (purge) purge.addEventListener('click', async () => {
+      if (!window.confirm('이 기기에 저장된 상담 이력·입력값을 지웁니다. 되돌릴 수 없습니다. 계속할까요?')) return;
+      const removed = await S.purgeLocal();
+      renderHistory();
+      renderPrivacySettings();
+      toast(removed.length ? `기기 저장 데이터 ${removed.length}건을 지웠습니다` : '지울 기기 저장 데이터가 없습니다');
+    });
+    renderPrivacySettings();
+  }
+
   /* ================= 초기화 ================= */
   async function init() {
     state.view = lsGet(VKEY, 'advisor') === 'client' ? 'client' : 'advisor';
@@ -2956,7 +3196,7 @@
     try { if (window.BojangGuard) window.BojangGuard.init(); } catch (e) { /* noop */ }
     /* v5.9 — 이전 버전 localStorage 상담 이력을 IndexedDB 로 옮깁니다 */
     try { if (window.BojangStore) await window.BojangStore.migrate(); } catch (e) { /* noop */ }
-    loadSession();
+    await loadSession();
 
     renderClientFields();
     renderSegments();
@@ -2973,6 +3213,7 @@
     if (window.BojangPlan) window.BojangPlan.init();
     /* v5.4 — 계정·구독·서버 연결(실서버 모드 / 베타 오프라인 자동 판별) */
     if (window.BojangBackend) window.BojangBackend.init();
+    bindPrivacySettings();
     renderHome();
     if (window.BojangTools) window.BojangTools.init();
     /* v7.0 — 사후관리 디데이 · 청구 서류 매칭 · 상담 메모 빠른 채움 */
@@ -3191,9 +3432,9 @@
       toast('진단을 완료했습니다');
     });
 
-    $('#btn-kakao').addEventListener('click', () => { copyKakaoSummary(); });
+    $('#btn-kakao').addEventListener('click', (ev) => { copyKakaoSummary(ev && ev.currentTarget); });
     const kakaoCopy = $('#kakao-copy');
-    if (kakaoCopy) kakaoCopy.addEventListener('click', () => { copy(kakaoSummary(), '카톡 요약을 복사했습니다 — 카톡에 붙여넣으세요'); });
+    if (kakaoCopy) kakaoCopy.addEventListener('click', () => { copy(kakaoSummary(), '카톡 요약을 복사했습니다 — 카톡에 붙여넣으세요', kakaoCopy); });
     const kakaoClose = $('#kakao-close');
     if (kakaoClose) kakaoClose.addEventListener('click', closeKakaoModal);
     const kakaoModal = $('#kakao-modal');

@@ -16,7 +16,7 @@
     TONE_COLOR.gap = C.red; TONE_COLOR.danger = C.red;
     TONE_COLOR.info = C.blue; TONE_COLOR.short = C.short; TONE_COLOR.none = C.gray;
   }
-  const LEVEL_LABEL = { enough: '충분', check: '점검', short: '부족', none: '없음' };
+  const LEVEL_LABEL = { enough: '충분', check: '점검', short: '보완 후보', none: '미가입' };
   /* 리포트 표에서 쓰는 5종 짧은 이름 (칸 넘잘 방지) */
   const TREAT_SHORT = { surgery: '암수술', drug: '항암약물', radio: '항암방사선', icu: '중환자실', extra: '비급여' };
 
@@ -449,7 +449,7 @@
       { value: dn.none, color: C.gray }
     ];
     s.donut(dcx, dcy, 30, segs, { inner: 19, innerFill: C.hero, centerValue: dn.total, centerLabel: '항목', centerSize: 14, centerColor: '#fff' });
-    const legend = [['충분', C.mint, dn.enough], ['점검', C.orange, dn.check], ['부족', C.short, dn.short], ['없음', C.gray, dn.none]];
+    const legend = [['충분', C.mint, dn.enough], ['점검', C.orange, dn.check], ['보완 후보', C.short, dn.short], ['미가입', C.gray, dn.none]];
     legend.forEach((l, i) => {
       const ly = y + h / 2 - 22 + i * 12;
       s.rect(dcx + 36, ly + 1, 5, 5, { fill: l[1], r: 2.5 });
@@ -462,7 +462,7 @@
     if (m.first) {
       s.text(`${m.first.item.rank}순위 ${m.first.item.name}`, fx, y + 24, { size: 11, weight: 800, color: C.heroGold });
       s.text(`${m.first.pct}% · ${m.first.label}`, fx, y + 40, { size: 6.8, weight: 600, color: '#fff' });
-      if (m.first.gaps.length) s.text(`부족 ${won(m.first.gaps[0].need)}만원`, fx, y + 50, { size: 6.8, weight: 700, color: C.heroWarn });
+      if (m.first.gaps.length) s.text(`보완 후보 ${won(m.first.gaps[0].need)}만원`, fx, y + 50, { size: 6.8, weight: 700, color: C.heroWarn });
     } else {
       s.text('구조 유지', fx, y + 24, { size: 11, weight: 800, color: C.heroOk });
       s.text('금액·갱신 점검', fx, y + 40, { size: 6.8, weight: 600, color: '#fff' });
@@ -482,7 +482,7 @@
       ['현재 보장', s.ML + rankW + 6, 'left'],
       ['충족도', s.ML + rankW + curW + 4, 'left'],
       ['판정', s.ML + rankW + curW + gauW + verdictW / 2, 'center'],
-      ['부족분', s.ML + w - 7, 'right']
+      ['보완 후보', s.ML + w - 7, 'right']
     ];
     heads.forEach((h) => s.text(h[0], h[1], y + 5, { size: 6.2, weight: 700, color: '#fff', align: h[2] }));
     let cy = y + headH;
@@ -873,7 +873,7 @@
             : (p.type === 'scale' ? (REC_SCOPE[r.item.key] || (p.option ? p.option.label : '—')) : (p.part && p.part.options ? (p.part.options[p.part.options.length - 1].label) : '—'));
         return [`${r.item.rank}. ${r.item.name}`, { text: cur, weight: 600 }, { text: tgt, color: C.muted }, { text: r.label, badge: r.level, align: 'center' }, { text: r.gaps.length ? `+${won(r.gaps.reduce((a, g) => a + g.need, 0))}만원` : '—', color: r.gaps.length ? C.red : C.muted, weight: 700 }];
       });
-      y = s.table(s.ML, y, s.CW, ['우선순위', '현재 보장', '권장 기준', '상태', '부족분'], rows, {
+      y = s.table(s.ML, y, s.CW, ['우선순위', '현재 보장', '권장 기준', '상태', '보완 후보'], rows, {
         widths: [86, 128, 128, 96, 77], size: 6.8, rowH: 16.5, align: ['left', 'left', 'left', 'center', 'right']
       });
       const sT = PK(m.rows[0], 'treatment');
@@ -947,7 +947,7 @@
       s.brandWordmark(s.ML, 54, { size: 8.6, contact: false });
       s.text('PREMIUM COVERAGE REPORT', s.ML, 76, { size: 6.4, weight: 800, color: C.blue });
       s.text('보장분석 리포트', s.ML, 86, { size: 30, weight: 800, color: C.navy });
-      s.text('과도한 보장은 줄이고, 부족한 보장은 채우는', s.ML, 128, { size: 10, weight: 700, color: C.blue });
+      s.text('과도한 보장은 줄이고, 보완 후보는 채우는', s.ML, 128, { size: 10, weight: 700, color: C.blue });
       s.para(`${m.client.name}님의 보장자산을 한눈에 진단하고, 보완 우선순위를 숫자와 근거로 설명하는 10장 분석 리포트입니다.`, s.ML, 146, 264, { size: 8.2, color: C.ink2, lh: 1.5 });
 
       s.text(`${m.client.name} 고객님`, s.ML, 196, { size: 10.4, weight: 800, color: C.navy });
@@ -1053,7 +1053,7 @@
 
     /* 02 보장 진단 결과 */
     P.push(function (s) {
-      let y = H(s, 2, '보장 진단 결과', '전체 보장을 한 장으로 요약했습니다. 충분·점검·부족·없음의 개수로 먼저 보세요.');
+      let y = H(s, 2, '보장 진단 결과', '전체 보장을 한 장으로 요약했습니다. 충분·점검·보완 후보·미가입의 개수로 먼저 보세요.');
       const dn = m.counts;
       s.rect(s.ML, y, 250, 132, { fill: '#fff', r: 6, stroke: C.line });
       s.text('전체 보장 현황', s.ML + 12, y + 10, { size: 7.4, weight: 800, color: C.navy });
@@ -1061,7 +1061,7 @@
         { value: dn.enough, color: C.mint }, { value: dn.check, color: C.orange },
         { value: dn.short, color: C.short }, { value: dn.none, color: C.gray }
       ], { inner: 29, centerValue: m.score, centerLabel: '종합 점수', centerSize: 18 });
-      const lg = [['충분', C.mint, dn.enough], ['점검', C.orange, dn.check], ['부족', C.short, dn.short], ['없음', C.gray, dn.none]];
+      const lg = [['충분', C.mint, dn.enough], ['점검', C.orange, dn.check], ['보완 후보', C.short, dn.short], ['미가입', C.gray, dn.none]];
       lg.forEach((l, i) => {
         const ly = y + 44 + i * 17;
         s.rect(s.ML + 140, ly + 1, 7, 7, { fill: l[1], r: 3.5 });
@@ -1141,7 +1141,7 @@
         { text: r.label, badge: r.level, align: 'center' },
         { text: r.gaps.length ? `${won(r.gaps.reduce((a, g) => a + g.need, 0))}만원` : (r.level === 'ok' ? '—' : '범위 점검'), weight: 700, color: r.gaps.length ? C.red : C.muted, align: 'right' }
       ]);
-      y = s.table(s.ML, y + 2, s.CW, ['우선순위', '현재 보장', '충족도', '판정', '부족분'], rows5, {
+      y = s.table(s.ML, y + 2, s.CW, ['우선순위', '현재 보장', '충족도', '판정', '보완 후보'], rows5, {
         widths: [86, 214, 56, 88, 71], size: 6.6, rowH: 25, align: ['left', 'left', 'center', 'center', 'right']
       });
       s.footer({ left: `${m.client.name}님 · 보장 진단 결과`, right: '02 / 10' });
@@ -1170,7 +1170,7 @@
       if (m.disclosure.reasons.length) s.text(m.disclosure.reasons.join(' · '), dx + 10, y + 52, { size: 5.4, weight: 600, color: C.orange });
       y += 72;
 
-      y = s.sectionHead(s.ML, y, s.CW, '03', '세부 담보 점검 매트릭스', '충분 / 점검 / 부족 / 없음');
+      y = s.sectionHead(s.ML, y, s.CW, '03', '세부 담보 점검 매트릭스', '충분 / 점검 / 보완 후보 / 미가입');
       const rows = m.parts.map((p) => [
         { text: `${p.rank}. ${p.itemName}`, weight: 700, color: C.navy },
         { text: p.label, weight: 500 },
@@ -1180,7 +1180,7 @@
       y = s.table(s.ML, y + 2, s.CW, ['우선순위', '세부 담보', '현재 / 권장', '상태'], rows, {
         widths: [92, 168, 190, 65], size: 6.5, rowH: 13.0, align: ['left', 'left', 'left', 'center']
       });
-      y = noteStrip(s, y + 8, '「없음」은 담보 자체가 없는 상태, 「부족」은 금액이 권장 기준에 못 미치는 상태, 「점검」은 코드 범위·지급 횟수 확인이 필요한 상태입니다. 권장 기준은 상담 보조용 예시이며 실제 판단은 증권의 담보명·코드·지급 조건으로 확인합니다.', { size: 6.4 });
+      y = noteStrip(s, y + 8, '「미가입」은 담보 자체가 없는 상태, 「보완 후보」는 금액이 권장 기준에 못 미치는 상태, 「점검」은 코드 범위·지급 횟수 확인이 필요한 상태입니다. 권장 기준은 상담 보조용 예시이며 실제 판단은 증권의 담보명·코드·지급 조건으로 확인합니다.', { size: 6.4 });
 
       /* v5.6 — 증권 직접 기재 추가 담보 (많으면 상위 건 + 남은 건수) */
       const cusAll = customAllOf(m);
@@ -1271,7 +1271,7 @@
       ], { accent: C.blue });
       y = s.sectionHead(s.ML, y + 6, s.CW, '02', '암 담보 코드 · 지급 구조', null);
       y = codeTable(s, s.ML, y + 2, s.CW, PLAYBOOK_CODES('cancer'), { rowH: 12.4 });
-      y = s.sectionHead(s.ML, y + 6, s.CW, '03', '지금 채울 것 — 담당자 소견', cr.gaps.length ? `${won(cr.gaps[0].need)}만원 부족` : '기준선 이상');
+      y = s.sectionHead(s.ML, y + 6, s.CW, '03', '지금 채울 것 — 담당자 소견', cr.gaps.length ? `${won(cr.gaps[0].need)}만원 보완 후보` : '기준선 이상');
       y = ownerNote(s, m, y, cancerNote(m), { accent: C.blue });
       y = s.sectionHead(s.ML, y + 6, s.CW, '04', '설계 권장안 — 암 주요치료비 5종 세부', '권장 기준 — 예산에 맞춰 조정합니다');
       const recs = [
@@ -1696,7 +1696,7 @@
       s.text(`${m.score} / 100점`, s.ML + 70, y + 26, { size: 9, weight: 700, color: C.heroOk });
       s.text(m.grade.line, s.ML + 70, y + 39, { size: 7.2, weight: 500, color: C.heroInk2 });
       s.text(`보완 필요 ${m.needList.length}개 항목`, s.W - s.MR - 16, y + 10, { size: 7.4, weight: 700, color: '#fff', align: 'right' });
-      s.text(`충분 ${m.counts.enough} · 점검 ${m.counts.check} · 부족 ${m.counts.short} · 없음 ${m.counts.none}`, s.W - s.MR - 16, y + 23, { size: 6.3, weight: 500, color: C.heroInk, align: 'right' });
+      s.text(`충분 ${m.counts.enough} · 점검 ${m.counts.check} · 보완 후보 ${m.counts.short} · 미가입 ${m.counts.none}`, s.W - s.MR - 16, y + 23, { size: 6.3, weight: 500, color: C.heroInk, align: 'right' });
       s.text(`월 ${won(m.premium)}만원 · 연 ${won(m.annual)}만원 · 연 대비 진단비 ${m.ratio ? m.ratio.toFixed(1) + '배' : '—'}`, s.W - s.MR - 16, y + 38, { size: 6.3, weight: 600, color: C.heroInk2, align: 'right' });
       y += 72;
 
@@ -2023,7 +2023,7 @@
         { value: dn.enough, color: C.mint }, { value: dn.check, color: C.orange },
         { value: dn.short, color: C.short }, { value: dn.none, color: C.gray }
       ], { inner: 24, centerValue: m.score, centerLabel: '점수', centerSize: 16 });
-      [['충분', C.mint, dn.enough], ['점검', C.orange, dn.check], ['부족', C.short, dn.short], ['없음', C.gray, dn.none]].forEach((l, i) => {
+      [['충분', C.mint, dn.enough], ['점검', C.orange, dn.check], ['보완 후보', C.short, dn.short], ['미가입', C.gray, dn.none]].forEach((l, i) => {
         const ly = y + 34 + i * 14;
         s.rect(s.ML + 104, ly + 1, 6, 6, { fill: l[1], r: 3 });
         s.text(l[0], s.ML + 115, ly - 1, { size: 6.4, weight: 600, color: C.ink2 });
@@ -2148,9 +2148,9 @@
       y = s.bullets(s.ML, y, s.CW, [
         pb.why,
         '숫자를 먼저 말하면 고객은 방어적으로 듣습니다. "지금 얼마인지"를 먼저 말하고 "권장 기준"을 뒤에 두면 같은 숫자도 판단으로 들립니다.',
-        '부족분을 말할 때는 총액이 아니라 한 항목만 짚습니다. 한 번에 세 개를 고치라고 하면 아무것도 결정되지 않습니다.'
+        '보완 후보를 말할 때는 총액이 아니라 한 항목만 짚습니다. 한 번에 세 개를 고치라고 하면 아무것도 결정되지 않습니다.'
       ], { size: 7, gap: 3 });
-      y = noteStrip(s, y + 6, `오늘의 결정 목표: ${cr.gaps.length ? `${cr.gaps[0].label} ${won(cr.gaps[0].need)}만원 부족분을 채울지 결정` : '재진단·유사암 조건 확인 후 유지 결정'}`, { size: 6.8, fill: C.orangeSoft, stroke: C.orangeLine, accent: C.orange });
+      y = noteStrip(s, y + 6, `오늘의 결정 목표: ${cr.gaps.length ? `${cr.gaps[0].label} ${won(cr.gaps[0].need)}만원 보완 후보를 채울지 결정` : '재진단·유사암 조건 확인 후 유지 결정'}`, { size: 6.8, fill: C.orangeSoft, stroke: C.orangeLine, accent: C.orange });
       y = typeCards(s, y + 10, PLAN_EXTRA.cancer.types);
       y = questionCard(s, y, PLAYBOOK.cancer.questions[0], '이 페이지에서 쓸 질문 하나');
       /* v5.6 — 증권 직접 기재 담보 참고 */

@@ -1,7 +1,7 @@
 /* 보장분석 상담 가이드 v4 — 고객 화면 30장 프레젠테이션 엔진
    · 입력 폼·내부 대본 없이, 고객과 함께 넘기는 시각화 슬라이드 30장(01/30~30/30)
    · 앱 안에서는 캔버스 없이 HTML/SVG로 즉시 렌더 (PDF는 버튼을 눌렀을 때만 생성)
-   · 좌우 스와이프 · 영역 점프 칩 · '부족 항목만 보기' 필터 · 상담자 복귀 잠금 */
+   · 좌우 스와이프 · 영역 점프 칩 · '보완 후보만 보기' 필터 · 상담자 복귀 잠금 */
 (function (root) {
   'use strict';
 
@@ -11,7 +11,7 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
   const TONE = { ok: '#0e9c86', need: '#d9821b', gap: '#d9382f', warn: '#d9821b', info: '#1264b0' };
-  const LEVEL = { enough: '충분', check: '점검', short: '부족', none: '없음' };
+  const LEVEL = { enough: '충분', check: '점검', short: '보완 후보', none: '미가입' };
   /* v6.1 — 직접 기재 담보를 포함한 실포값. 모델과 같은 정의를 씁니다. */
   const effOf = (s) => Number(s && (s.eff != null ? s.eff : s.val)) || 0;
   const effSumOf = (p) => (p && p.subs && p.subs.length) ? p.subs.reduce((a, s) => a + effOf(s), 0) : Number((p && p.val) || 0) || 0;
@@ -256,7 +256,7 @@
         </div>
         <div class="cover-eyebrow">LIFE REPORT · BOJANG ANALYSIS</div>
         <h1 class="cover-title">${esc(m.client.name)}님의<br>보장분석 리포트</h1>
-        <p class="cover-lead">과도한 보장은 줄이고, 부족한 보장은 채우는<br>5대 담보 · 30장 시각화 리포트</p>
+        <p class="cover-lead">과도한 보장은 줄이고, 보완 후보는 채우는<br>5대 담보 · 30장 시각화 리포트</p>
         <div class="cover-grade">
           <span class="cg-label">종합 보장등급</span>
           <b class="cg-letter">${m.letter}</b>
@@ -299,7 +299,7 @@
         <ul class="dist-legend">
           <li><i style="background:#0e9c86"></i>충분<b>${dn.enough}</b></li>
           <li><i style="background:#d9821b"></i>점검<b>${dn.check}</b></li>
-          <li><i style="background:#d9382f"></i>부족<b>${dn.short}</b></li>
+          <li><i style="background:#d9382f"></i>보완 후보<b>${dn.short}</b></li>
           <li><i style="background:#93a2b4"></i>없음<b>${dn.none}</b></li>
         </ul>
       </div>
@@ -328,7 +328,7 @@
       </div>
       ${m.first
         ? `<div class="first-call"><span>1순위 보강</span><b>${m.first.item.rank}순위 ${esc(m.first.item.name)}</b>
-           <em>${m.first.pct}% · ${esc(m.first.label)}${m.first.gaps.length ? ` · ${won(m.first.gaps[0].need)}만원 부족` : ''}</em></div>
+           <em>${m.first.pct}% · ${esc(m.first.label)}${m.first.gaps.length ? ` · ${won(m.first.gaps[0].need)}만원 보완 후보` : ''}</em></div>
            ${m.thinnest && m.thinnest.item.key !== m.first.item.key ? `<p class="sl-src thin-line">충족도가 가장 낮은 축은 <b>${esc(m.thinnest.item.name)} ${m.thinnest.pct}%</b>입니다 — 순위와 다른 숫자일 수 있습니다.</p>` : ''}`
         : noteBox('5대 담보가 기준선을 넘었습니다. 이제는 금액 조정과 갱신 대비가 남은 과제입니다.', 'ok')}`, {});
 
@@ -451,7 +451,7 @@
             </div>`).join('')}
         </div>
       </div>
-      ${cr.gaps.length ? noteBox(`부족분 — ${cr.gaps.map((g) => `${g.label} ${won(g.need)}만원`).join(' · ')}`, 'warn') : noteBox('주요 금액은 기준선을 넘었습니다. 다음은 재진단·지급 횟수 점검입니다.', 'ok')}`, { need: needOf('cancer') });
+      ${cr.gaps.length ? noteBox(`보완 후보 — ${cr.gaps.map((g) => `${g.label} ${won(g.need)}만원`).join(' · ')}`, 'warn') : noteBox('주요 금액은 기준선을 넘었습니다. 다음은 재진단·지급 횟수 점검입니다.', 'ok')}`, { need: needOf('cancer') });
 
     /* ---------- 08 암 보장 구조 ---------- */
     add(8, 'cancer', 'cancer', `
@@ -517,7 +517,7 @@
         <p>한 번에 다 채우지 않습니다. 지금 비어 있는 칸부터 순서대로.</p></div>
       <ol class="steps-list">
         <li><b>① 유사암 칸</b><p>갑상선·제자리·경계성은 일반암에서 빠집니다. 별도 담보가 없으면 0원입니다.</p><em>${PK(cr, 'similar').val ? `현재 ${won(PK(cr, 'similar').val)}만원` : '현재 없음'} → 권장 ${won(PK(cr, 'similar').rec)}만원</em></li>
-        <li><b>② 치료비 5종</b><p>표적·면역항암 시대에는 진단비만으로 부족합니다. 암수술·항암약물·항암방사선·중환자실·비급여를 따로 봅니다.</p><em>5종 중 ${treatHave}종 · ${won(treatEff)}만원 → 권장 ${won(treat.rec)}만원</em></li>
+        <li><b>② 치료비 5종</b><p>표적·면역항암 시대에는 진단비만으로는 확인이 어렵습니다. 암수술·항암약물·항암방사선·중환자실·비급여를 따로 봅니다.</p><em>5종 중 ${treatHave}종 · ${won(treatEff)}만원 → 권장 ${won(treat.rec)}만원</em></li>
         <li><b>③ 재진단 칸</b><p>1회한 담보는 재발·전이 때 다시 나오지 않습니다. 두 번째 진단을 따로 준비합니다.</p><em>${PK(cr, 'recur').val ? '보유' : '없음'} → 보유 권장</em></li>
       </ol>
       ${treatHave < 5 ? noteBox(`비어 있는 치료비 — ${tsubs.filter((s) => !(effOf(s) > 0)).map((s) => s.label).join(' · ')}`, 'warn') : noteBox('치료비 5종이 모두 채워졌습니다. 이제는 지급 횟수(1회한·재진단)와 가입 시점을 확인합니다.', 'ok')}
@@ -765,7 +765,7 @@
       <div class="sl-head"><span class="k">4순위 · 수술비</span><h2>수술비 보완 방향</h2>
         <p>수술비는 보조입니다. 큰 그림은 진단비·치료비로 잡고, 수술비는 빈틈을 막습니다.</p></div>
       <ol class="steps-list">
-        <li><b>① 빈 칸 찾기</b><p>질병 4축(일반·1~5종·N대·비급여) 중 빈 칸을 채우고, 상해는 일반·1~5종을 따로 봅니다. 회사별 질환 묶음(용종·체외추파 등)도 확인합니다.</p><em>${sr.gaps.length ? sr.gaps.map((g) => g.label + ' ' + won(g.need) + '만원 부족').join(' · ') : '모든 항목이 기준선을 넘었습니다'}</em></li>
+        <li><b>① 빈 칸 찾기</b><p>질병 4축(일반·1~5종·N대·비급여) 중 빈 칸을 채우고, 상해는 일반·1~5종을 따로 봅니다. 회사별 질환 묶음(용종·체외추파 등)도 확인합니다.</p><em>${sr.gaps.length ? sr.gaps.map((g) => g.label + ' ' + won(g.need) + '만원 보완 후보').join(' · ') : '모든 항목이 기준선을 넘었습니다'}</em></li>
         <li><b>② 상해 축</b><p>질병 수술비만 있으면 사고로 다쳐 수술해도 지급되지 않습니다. 일반 상해수술비와 상해 1~5종을 함께 봅니다.</p><em>상해 ${['injury', 'injury15'].filter((k) => Number(PK(sr, k).val) > 0).length}/2축</em></li>
         <li><b>③ 청구 동행</b><p>수술 후 수술확인서·진단서를 받아 분류표와 맞는지 먼저 확인합니다.</p><em>청구 소멸시효 3년(상법 제662조)</em></li>
       </ol>
@@ -1192,7 +1192,7 @@
           goTo(list[0].no);
           if (locked(g.from)) askUpgrade();
         }
-        else if (H && H.toast) H.toast(`${g.label} 영역은 지금 충족 상태라 '부족 항목만 보기'에서 숨겨졌습니다`);
+        else if (H && H.toast) H.toast(`${g.label} 영역은 지금 충족 상태라 '보완 후보만 보기'에서 숨겨졌습니다`);
       });
     });
     $('#deck-prev').addEventListener('click', prev);

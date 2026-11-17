@@ -133,7 +133,7 @@
 
   function parse(text) {
     const t = String(text || '');
-    const out = { name: '', birth: '', age: null, gender: '', premium: null, silson: null, family: [], cov: {}, disc: {}, hits: [], warnings: [] };
+    const out = { name: '', birth: '', age: null, gender: '', premium: null, silson: null, job: null, jobNote: '', jobTwoWheel: false, family: [], cov: {}, disc: {}, hits: [], warnings: [] };
     if (!t.trim()) return out;
 
     out.name = parseName(t);
@@ -143,6 +143,19 @@
     else if (/남성|남자|남\s*고객|\(남\)|남성분/.test(t)) out.gender = '남';
     out.premium = parsePremium(t);
     out.silson = parseSilson(t);
+
+    /* v7.2 — 직업급수·이륜차(배달·오토바이) 키워드 자동 추출 + 경고 */
+    const J = root.BojangJobGrades;
+    const jobHit = J && J.match ? J.match(t) : null;
+    if (jobHit) {
+      out.job = jobHit.grade;
+      out.jobNote = jobHit.label;
+      out.jobTwoWheel = !!jobHit.twoWheel;
+      out.hits.push({ field: '직업급수', value: jobHit.gradeLabel + (jobHit.twoWheel ? ' · 이륜차' : '') });
+      if (jobHit.twoWheel) out.warnings.push('이륜차·배달 키워드가 있습니다 — 상해 담보는 3급 기준으로 가입 가능 여부·이륜차 운전 특약을 확인하세요.');
+      else if (jobHit.grade === '3') out.warnings.push('고위험 직업(3급) 키워드가 있습니다 — 상해 담보 부담보·할증 조건을 확인하세요.');
+      else if (jobHit.grade === '2') out.warnings.push('현장·운송 직업(2급) 키워드가 있습니다 — 상해수술비·상해입원일당 가입 조건을 확인하세요.');
+    }
 
     /* 가족력 — '가족력' 근처에 있는 질병만 */
     if (/가족력\s*(없|없음|해당\s*없)/.test(t)) out.family = ['none'];
@@ -241,6 +254,7 @@
     if (parsed.age != null) sels.push('#seg-age .is-on');
     if (parsed.gender) sels.push('#seg-gender .is-on');
     if (parsed.silson) sels.push('#seg-silson .is-on');
+    if (parsed.job) sels.push('#seg-job .is-on');
     (parsed.family || []).forEach((k) => sels.push(`#family-chips [data-fam="${k}"]`));
     Object.keys(parsed.disc || {}).forEach((k) => sels.push(`#disclosure-checks [data-disc="${k}"]`));
     if (parsed.cov && parsed.cov.cancer) sels.push('input[data-item="cancer"][data-part="general"]');
@@ -257,7 +271,7 @@
     const S = root.BojangApp && root.BojangApp.state;
     if (!S) return null;
     return JSON.stringify({
-      client: S.client, age: S.age, gender: S.gender, premium: S.premium, silson: S.silson,
+      client: S.client, age: S.age, gender: S.gender, job: S.job, jobNote: S.jobNote, jobTwoWheel: S.jobTwoWheel, premium: S.premium, silson: S.silson,
       family: S.family, cov: S.cov, disc: S.disc
     });
   }
@@ -274,6 +288,7 @@
     if (parsed.gender) { S.gender = parsed.gender; n++; }
     if (parsed.premium != null) { S.premium = parsed.premium; n++; }
     if (parsed.silson) { S.silson = parsed.silson; n++; }
+    if (parsed.job) { S.job = parsed.job; S.jobNote = parsed.jobNote || ''; S.jobTwoWheel = !!parsed.jobTwoWheel; n++; }
     if (parsed.family && parsed.family.length) { S.family = parsed.family.slice(); n++; }
 
     Object.keys(parsed.cov || {}).forEach((area) => {

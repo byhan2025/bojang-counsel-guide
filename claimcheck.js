@@ -56,13 +56,21 @@
   /* =========================================================
      서류
      ========================================================= */
+  /* v7.2 — 서류마다 실제 발급처를 병기합니다(현장에서 '어디서 떼나'가 가장 자주 막히는 지점). */
   const DOCS = [
-    { key: 'dx', label: '진단서', note: '병명·코드·진단확정일' },
-    { key: 'detail', label: '진료비 세부내역서', note: '급여/비급여 구분' },
-    { key: 'surgery', label: '수술확인서', note: '수술명·수술일·방법' },
-    { key: 'path', label: '병리조직결과지', note: '원발/전이·악성 여부' },
-    { key: 'admit', label: '입·퇴원확인서', note: '입원일수·간병 기간' },
-    { key: 'receipt', label: '진료비 영수증', note: '실손 청구 기본' }
+    { key: 'dx', label: '진단서', note: '병명·코드·진단확정일', where: '원무과 제증명창구(진료과 담당의 작성)' },
+    { key: 'detail', label: '진료비 세부내역서', note: '급여/비급여 구분', where: '원무과 수납창구 · 진료비 계산서' },
+    { key: 'surgery', label: '수술확인서', note: '수술명·수술일·방법', where: '진료과 외래창구 · 수술실 담당의 확인' },
+    { key: 'path', label: '병리조직결과지', note: '원발/전이·악성 여부', where: '병리과(조직검사 결과지) · 원무과 제증명창구' },
+    { key: 'admit', label: '입·퇴원확인서', note: '입원일수·간병 기간', where: '병동 원무과 · 퇴원 수속 창구' },
+    { key: 'receipt', label: '진료비 영수증', note: '실손 청구 기본', where: '원무과 수납창구(퇴원 정산 시)' }
+  ];
+  const DOC_WHERE = DOCS.reduce((a, d) => (a[d.key] = d.where, a), {});
+  /* 간병일당 실무 증빙 3종 — 사업자등록번호 · 계좌이체 내역 · 간병일지 */
+  const CARE_PROOFS = [
+    { key: 'biz', label: '간병인 사업자등록번호', where: '간병업체 사업자등록증 사본 · 간병인 등록증' },
+    { key: 'bank', label: '계좌이체 내역', where: '간병비를 간병인·업체 계좌로 이체한 내역(현금 지급은 인정이 어렵습니다)' },
+    { key: 'diary', label: '간병일지', where: '병원 간병일지 · 업체 간병기록(사용 일수·시간)' }
   ];
   const DOC_LABEL = DOCS.reduce((a, d) => (a[d.key] = d.label, a), {});
 
@@ -247,7 +255,7 @@
     if (code.group === '암' && docSet.path && !docSet.dx) notes.push('병리 결과지만으로는 진단확정일을 증명하기 어렵습니다 — 진단서를 함께 받으세요.');
 
     const expiry = input.accident ? expiryOf(input.accident) : null;
-    return { code, cls, rows, missing, notes, soleReceipt, expiry, disclaimer: DISCLAIMER };
+    return { code, cls, rows, missing, notes, soleReceipt, expiry, careProof: input.care ? CARE_PROOFS : null, disclaimer: DISCLAIMER };
   }
 
   function expiryOf(accident) {
@@ -329,7 +337,7 @@
     if (host.dataset.bound === '1') return;
     host.dataset.bound = '1';
     host.innerHTML = DOCS.map((d) => `<button type="button" class="cc-doc" data-cc-doc="${d.key}" aria-pressed="false">
-      <span class="cc-box" aria-hidden="true"></span><b>${esc(d.label)}</b><em>${esc(d.note)}</em></button>`).join('');
+      <span class="cc-box" aria-hidden="true"></span><b>${esc(d.label)}</b><em>${esc(d.note)}</em><i class="cc-where">발급처 · ${esc(d.where)}</i></button>`).join('');
     $$('[data-cc-doc]', host).forEach((b) => {
       b.addEventListener('click', () => {
         const on = !b.classList.contains('is-on');
@@ -349,7 +357,7 @@
       </div>`).join('');
     const miss = r.missing.length ? `<div class="cc-block cc-miss">
         <div class="cc-block-title">추가로 필요한 서류 — 1순위부터</div>
-        <ul class="cc-miss-list">${r.missing.map((m) => `<li><span class="cc-rank">${m.rank}순위</span><b>${esc(DOC_LABEL[m.key] || m.key)}</b><span>${esc(m.why)}</span></li>`).join('')}</ul>
+        <ul class="cc-miss-list">${r.missing.map((m) => `<li><span class="cc-rank">${m.rank}순위</span><b>${esc(DOC_LABEL[m.key] || m.key)}</b><span>${esc(m.why)}${DOC_WHERE[m.key] ? `<i class="cc-where">발급처 · ${esc(DOC_WHERE[m.key])}</i>` : ''}</span></li>`).join('')}</ul>
       </div>` : `<div class="cc-block cc-ok"><div class="cc-block-title">추가로 필요한 서류 없음</div><p>핵심 서류가 모두 체크되어 있습니다. 사본·원본 요구 여부만 보험사에 확인하세요.</p></div>`;
     /* v7.1 — 유효하지 않은 사고일은 '긴급'이 아니라 입력 오류로 안내 */
     let ex;
@@ -373,6 +381,10 @@
         <div class="cm-rows">${rows || '<p class="cc-none">이 코드에 바로 연결되는 후보 담보가 없습니다. 고지·인수 판단 항목입니다.</p>'}</div>
       </div>
       ${miss}
+      ${r.careProof ? `<div class="cc-block cc-care-proof">
+        <div class="cc-block-title">간병일당 증빙 3종 · 발급처</div>
+        <ul class="cc-miss-list">${r.careProof.map((c) => `<li><b>${esc(c.label)}</b><span>${esc(c.where)}</span></li>`).join('')}</ul>
+      </div>` : ''}
       ${ex}
       ${r.notes.length ? `<div class="cc-block"><div class="cc-block-title">상담 메모</div><ul class="cc-notes">${r.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul></div>` : ''}
       <p class="cc-disclaimer">※ ${esc(r.disclaimer)}</p>`;
@@ -407,7 +419,7 @@
   }
 
   root.BojangClaimCheck = {
-    init, run, match, classify, searchCodes, findCode, expiryOf, checkDate, DOCS, DISCLAIMER,
+    init, run, match, classify, searchCodes, findCode, expiryOf, checkDate, DOCS, DOC_WHERE, CARE_PROOFS, DISCLAIMER,
     preview: (input) => resultHTML(match(input)),
     pick: (codeStr) => {
       picked = (typeof FC_CODES !== 'undefined' ? FC_CODES : []).find((c) => c.code === codeStr) || null;

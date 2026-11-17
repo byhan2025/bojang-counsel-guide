@@ -77,11 +77,11 @@
   const TONE = {
     enough: { fg: '#0E7C69', bg: '#E6F6F2', label: '충분', solid: C.mint },
     check: { fg: '#B0690F', bg: '#FDF2E3', label: '점검', solid: C.orange },
-    short: { fg: '#B3261E', bg: '#FDECEA', label: '부족', solid: '#E05B52' },
+    short: { fg: '#B3261E', bg: '#FDECEA', label: '보완 후보', solid: '#E05B52' },
     none: { fg: '#5B6B7E', bg: '#EFF2F6', label: '없음', solid: C.gray },
     ok: { fg: '#0E7C69', bg: '#E6F6F2', label: '적정', solid: C.mint },
-    need: { fg: '#B0690F', bg: '#FDF2E3', label: '보강 필요', solid: C.orange },
-    gap: { fg: '#B3261E', bg: '#FDECEA', label: '공백 위험', solid: C.red },
+    need: { fg: '#B0690F', bg: '#FDF2E3', label: '확인 권장', solid: C.orange },
+    gap: { fg: '#B3261E', bg: '#FDECEA', label: '보완 후보', solid: C.red },
     info: { fg: '#24476B', bg: '#EAF1F8', label: '안내', solid: C.blue },
     warn: { fg: '#B0690F', bg: '#FDF2E3', label: '주의', solid: C.orange },
     danger: { fg: '#B3261E', bg: '#FDECEA', label: '위험', solid: C.red }
@@ -103,6 +103,25 @@
       ctx.setTransform(DENS, 0, 0, DENS, 0, 0);
       ctx.textBaseline = 'top';
       this.cv = cv; this.ctx = ctx;
+      /* v7.2 — PDF 텍스트 레이어용 기록.
+         레이아웃은 지금처럼 Canvas 에 그대로 그리고, fillText 로 그려진 모든 문자열을
+         위치·크기와 함께 모아 두었다가 PDF 본문에 '보이지 않는 텍스트(Tr 3)'로 얹습니다.
+         → 화면 품질·레이아웃은 그대로, pymupdf 로 실제 한국어/숫자가 추출됩니다. */
+      this.texts = [];
+      try {
+        const orig = ctx.fillText.bind(ctx);
+        const self = this;
+        ctx.fillText = function (str, x, y, maxWidth) {
+          try {
+            const txt = String(str == null ? '' : str);
+            if (txt.trim()) {
+              const m = /([\d.]+)px/.exec(String(ctx.font || ''));
+              self.texts.push({ s: txt, x: Number(x) || 0, y: Number(y) || 0, size: m ? parseFloat(m[1]) : 9, align: ctx.textAlign || 'left' });
+            }
+          } catch (e) { /* 기록 실패는 그리기에 영향 없음 */ }
+          return orig(str, x, y, maxWidth);
+        };
+      } catch (e) { /* noop */ }
       this.W = W; this.H = H;
       this.ML = 40; this.MR = 40; this.MT = 34; this.MB = 40;
       this.CW = W - this.ML - this.MR;
@@ -697,6 +716,72 @@
     return out;
   }
 
+  /* ---------- PDF 텍스트 레이어 (v7.2) ----------
+     한글을 폰트 임베드 없이 추출되게 하는 방법:
+       Type0 / Identity-H 폰트 + ToUnicode CMap.
+     글리프는 그리지 않고(Tr 3 = 보이지 않음) 코드→유니코드 매핑만 넣어,
+     화면 품질은 Canvas JPEG 그대로 두고 검색·복사·추출만 가능하게 합니다. */
+  function hex4(n) { return ('0000' + (n & 0xFFFF).toString(16).toUpperCase()).slice(-4); }
+  function pdfTextString(str) { return String(str == null ? '' : str).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ' '); }
+
+  function textLayerContent(texts) {
+    const lines = texts || [];
+    const chars = [];
+    const map = new Map();
+    lines.forEach((t) => {
+      for (const ch of pdfTextString(t.s)) {
+        if (ch === '\n' || ch === '\r') continue;
+        if (!map.has(ch)) { map.set(ch, chars.length + 1); chars.push(ch); }
+      }
+    });
+    if (!chars.length) return { content: '', cmap: '', chars };
+    const body = [];
+    body.push('BT');
+    body.push('3 Tr');                      /* invisible text render mode */
+    lines.forEach((t) => {
+      const txt = pdfTextString(t.s);
+      if (!txt.trim()) return;
+      const size = Math.max(1, Math.min(60, Number(t.size) || 9));
+      const x = Number(t.x) || 0;
+      const y = H - ((Number(t.y) || 0) + size);
+      let hex = '';
+      for (const ch of txt) {
+        const code = map.get(ch);
+        if (code) hex += hex4(code);
+        else hex += hex4(32);
+      }
+      if (!hex) return;
+      body.push('/F1 ' + size.toFixed(2) + ' Tf');
+      body.push('1 0 0 1 ' + x.toFixed(2) + ' ' + y.toFixed(2) + ' Tm');
+      body.push('<' + hex + '> Tj');
+    });
+    body.push('ET');
+    /* ToUnicode CMap — 100개 단위로 bfchar 블록을 나눕니다 */
+    const entries = '';
+    const blocks = [];
+    for (let i = 0; i < chars.length; i += 100) {
+      const chunk = chars.slice(i, i + 100).map((ch, j) => '<' + hex4(i + j + 1) + '> <' + hex4(ch.codePointAt(0)) + '>');
+      blocks.push(chunk.length + ' beginbfchar\n' + chunk.join('\n') + '\nendbfchar');
+    }
+    const cmap = [
+      '/CIDInit /ProcSet findresource begin',
+      '12 dict begin',
+      'begincmap',
+      '/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def',
+      '/CMapName /Adobe-Identity-UCS def',
+      '/CMapType 2 def',
+      '1 begincodespacerange',
+      '<0000> <FFFF>',
+      'endcodespacerange',
+      blocks.join('\n'),
+      'endcmap',
+      'CMapName currentdict /CMap defineresource pop',
+      'end',
+      'end'
+    ].join('\n') + entries;
+    return { content: body.join('\n'), cmap, chars };
+  }
+
   function assemble(pages, meta) {
     meta = meta || {};
     const enc = new TextEncoder();
@@ -707,8 +792,11 @@
     const put = (s) => push(enc.encode(s));
 
     const n = pages.length;
-    const pageObj = (i) => 4 + i * 3;
-    const total = 3 + n * 3;
+    /* 페이지마다 7개 객체: Page · Contents · Image · Font · DescendantFont · Descriptor · ToUnicode */
+    const perPage = 7;
+    const firstPageObj = 4;
+    const pageObj = (i) => firstPageObj + i * perPage;
+    const total = 3 + n * perPage;
 
     put('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
 
@@ -727,22 +815,41 @@
     const kids = [];
     for (let i = 0; i < n; i++) kids.push(`${pageObj(i)} 0 R`);
     obj(2, `<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${n} >>`);
-    const title = (meta.title || '보장분석 리포트').replace(/[()\\]/g, ' ');
-    /* v5.9 — PDF 메타데이터에도 같은 버전 상수를 씁니다 (예전에는 v3 로 박혀 있었습니다) */
-    const appVer = (root.BojangVersion && root.BojangVersion.value) ? root.BojangVersion.value : 'v5.9';
-    obj(3, `<< /Title (${title.replace(/[^\x20-\x7E]/g, '')}) /Producer (Bojang Guide ${appVer}) /Creator (Bojang Guide) >>`);
+    /* v7.2 — 제목은 UTF-16BE(BOM) 16진 문자열로 넣어 한글 고객명도 그대로 보존/제외됩니다.
+       (PDFDocEncoding 으로는 한글을 담을 수 없어 이름이 잘리던 문제를 없앴습니다.) */
+    const title = String(meta.title || '보장분석 리포트');
+    const appVer = (root.BojangVersion && root.BojangVersion.value) ? root.BojangVersion.value : 'v7.2';
+    function utf16hex(str) {
+      let out = 'FEFF';
+      for (const ch of String(str)) {
+        const cp = ch.codePointAt(0);
+        if (cp > 0xFFFF) {
+          const v = cp - 0x10000;
+          out += hex4(0xD800 + (v >> 10)) + hex4(0xDC00 + (v & 0x3FF));
+        } else out += hex4(cp);
+      }
+      return out;
+    }
+    obj(3, `<< /Title <${utf16hex(title)}> /Producer (Bojang Guide ${appVer}) /Creator (Bojang Guide) >>`);
 
     pages.forEach((pg, i) => {
       const pn = pageObj(i);
-      const cn = pn + 1, imn = pn + 2;
-      obj(pn, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W.toFixed(2)} ${H.toFixed(2)}] /Resources << /XObject << /Im0 ${imn} 0 R >> /ProcSet [/PDF /ImageC] >> /Contents ${cn} 0 R >>`);
-      const content = `q ${W.toFixed(2)} 0 0 ${H.toFixed(2)} 0 0 cm /Im0 Do Q`;
+      const cn = pn + 1, imn = pn + 2, fn = pn + 3, dn = pn + 4, dsc = pn + 5, un = pn + 6;
+      const layer = textLayerContent(pg.texts || []);
+      obj(pn, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W.toFixed(2)} ${H.toFixed(2)}] /Resources << /XObject << /Im0 ${imn} 0 R >> /Font << /F1 ${fn} 0 R >> /ProcSet [/PDF /ImageC /Text] >> /Contents ${cn} 0 R >>`);
+      const image = `q ${W.toFixed(2)} 0 0 ${H.toFixed(2)} 0 0 cm /Im0 Do Q`;
+      const content = image + (layer.content ? '\n' + layer.content : '');
       obj(cn, `<< /Length ${enc.encode(content).length} >>`, enc.encode(content));
       const bytes = pg.bytes;
       offsets[imn] = len;
       put(`${imn} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${pg.w} /Height ${pg.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bytes.length} >>\nstream\n`);
       push(bytes);
       put('\nendstream\nendobj\n');
+      /* 보이지 않는 텍스트용 Type0 폰트 (임베드 없음 · ToUnicode 로 추출) */
+      obj(fn, `<< /Type /Font /Subtype /Type0 /BaseFont /BojangText /Encoding /Identity-H /DescendantFonts [${dn} 0 R] /ToUnicode ${un} 0 R >>`);
+      obj(dn, `<< /Type /Font /Subtype /CIDFontType2 /BaseFont /BojangText /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor ${dsc} 0 R /DW 1000 /CIDToGIDMap /Identity >>`);
+      obj(dsc, '<< /Type /FontDescriptor /FontName /BojangText /Flags 4 /FontBBox [0 -200 1000 900] /ItalicAngle 0 /Ascent 900 /Descent -200 /CapHeight 700 /StemV 80 >>');
+      obj(un, `<< /Length ${enc.encode(layer.cmap || '/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\nendcmap\nend\nend').length} >>`, enc.encode(layer.cmap || '/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\nendcmap\nend\nend'));
     });
 
     const xrefOff = len;
@@ -789,7 +896,7 @@
       }
       const url = s.cv.toDataURL('image/jpeg', quality);
       const b64 = url.slice(url.indexOf(',') + 1);
-      pages.push({ bytes: b64ToBytes(b64), w: PXW, h: PXH });
+      pages.push({ bytes: b64ToBytes(b64), w: PXW, h: PXH, texts: s.texts.slice(0, 4000) });
       s.cv.width = 1; s.cv.height = 1; // 메모리 해제
       if (opts.onProgress) opts.onProgress(i + 1, drawers.length);
       await new Promise((r) => setTimeout(r, 0));
@@ -803,10 +910,13 @@
       const t = new Date();
       return `${t.getFullYear()}${String(t.getMonth() + 1).padStart(2, '0')}${String(t.getDate()).padStart(2, '0')}`;
     })();
-    /* v6.1.1 — 가림 모드의 별표 마스크는 파일명에서 O 로 살려 "김*수" → "김O수" */
-    const who = (name || '고객').replace(/\*/g, 'O').replace(/[\\/:*?"<>|\s]/g, '');
+    /* v6.1.1 — 가림 모드의 별표 마스크는 파일명에서 O 로 살려 "김*수" → "김O수"
+       v7.2 — 이름이 없거나 '고객'이면 파일명에서 빼고 `보장분석_1장요약_날짜.pdf` 로 저장합니다
+       (고객 실명은 기본 제외 — #pdf-include-name 을 켤 때만 들어갑니다). */
+    const raw = String(name == null ? '' : name).trim();
+    const who = (raw && raw !== '고객') ? raw.replace(/\*/g, 'O').replace(/[\\/:*?"<>|\s]/g, '') : '';
     const label = kind === 'summary' ? '보장분석_1장요약' : kind === 'detail' ? '보장분석_10장상세' : '상담플랜_30장가이드';
-    return `${who}_${label}_${d}.pdf`;
+    return `${who ? who + '_' : ''}${label}_${d}.pdf`;
   }
 
   async function saveBlob(blob, filename, o) {
@@ -850,5 +960,5 @@
 
   refreshTone();
 
-  root.PDFKit = { Sheet, renderPages, saveBlob, fileName, C, TONE, W, H, PXW, PXH, FONT, won, syncPalette, mix, hex2rgb, refreshTone };
+  root.PDFKit = { Sheet, renderPages, saveBlob, fileName, textLayerContent, C, TONE, W, H, PXW, PXH, FONT, won, syncPalette, mix, hex2rgb, refreshTone };
 })(typeof window !== 'undefined' ? window : globalThis);

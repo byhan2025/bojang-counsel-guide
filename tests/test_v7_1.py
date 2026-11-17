@@ -87,21 +87,21 @@ def main():
             # =========================================================
             ver = read(os.path.join(ROOT, "version.js"))
             VER = (re.findall(r"const APP_VERSION = '([^']+)'", ver) or [""])[0]
-            check("version.js 단일 상수 v7.1.1", VER == "v7.1.1" and len(re.findall(r"const APP_VERSION = '([^']+)'", ver)) == 1, VER)
-            check("window.APP_VERSION = v7.1.1", pg.evaluate("() => window.APP_VERSION") == "v7.1.1")
-            check("sw 캐시 bojang-guide-v7.1.1", "const CACHE = 'bojang-guide-v7.1.1';" in read(os.path.join(ROOT, "sw.js")))
+            check("version.js 단일 상수 v7.2", VER == "v7.2" and len(re.findall(r"const APP_VERSION = '([^']+)'", ver)) == 1, VER)
+            check("window.APP_VERSION = v7.2", pg.evaluate("() => window.APP_VERSION") == "v7.2")
+            check("sw 캐시 bojang-guide-v7.2", "const CACHE = 'bojang-guide-v7.2';" in read(os.path.join(ROOT, "sw.js")))
             check("sw — publicdata.js 캐시", "'./publicdata.js'" in read(os.path.join(ROOT, "sw.js")))
             man = json.loads(read(os.path.join(ROOT, "manifest.json")))
-            check("manifest v7.1.1", "v7.1.1" in man.get("name", ""), man.get("name"))
+            check("manifest v7.2", "v7.2" in man.get("name", ""), man.get("name"))
             check("manifest — 공공데이터 설명", all(k in man.get("description", "") for k in ("공공데이터", "복용약", "공휴일")), man.get("description", "")[-60:])
             readme = read(os.path.join(ROOT, "README.md"))
-            check("README v7.1.1 절", "## v7.1.1에서 달라진 것" in readme and "## v7.1에서 달라진 것" in readme and "## v7.0에서 달라진 것" in readme)
+            check("README v7.1.1·v7.2 절", "## v7.2에서 달라진 것" in readme and "## v7.1.1에서 달라진 것" in readme and "## v7.1에서 달라진 것" in readme and "## v7.0에서 달라진 것" in readme)
             check("README — k-skill 공공데이터 절", "F · PUBLIC DATA" in readme and "약관 괴리" in readme)
             html = read(os.path.join(ROOT, "index.html"))
-            check("index — title v7.1.1", "리포트 v7.1.1 ·" in html)
-            check("index — meta app-version v7.1.1", '<meta name="app-version" content="v7.1.1">' in html)
+            check("index — title v7.2", "리포트 v7.2 ·" in html)
+            check("index — meta app-version v7.2", '<meta name="app-version" content="v7.2">' in html)
             check("index — publicdata.js 로드", '<script src="./publicdata.js"></script>' in html)
-            check("화면 표기 v7.1.1", pg.inner_text(".hh-ver").strip().startswith("v7.1.1"), pg.inner_text(".hh-ver"))
+            check("화면 표기 v7.2", pg.inner_text(".hh-ver").strip().startswith("v7.2"), pg.inner_text(".hh-ver"))
 
             # =========================================================
             # B. KCD 코드 칩 클릭 (data-cm-code → dataset.cmCode)
@@ -607,7 +607,7 @@ def main():
                        script: B.hostAllowed('javascript:alert(1)'),
                        hosts: B.allowedHosts };
             }""")
-            check("v7.1.1 백엔드 — 공식 프로젝트·로컬 호스트만 허용", all(beh[k] for k in ("official", "officialFn", "local", "localhost")), beh)
+            check("v7.2 백엔드 — HTTPS·443 공식 호스트만 허용(http:·비표준 포트 차단)", beh["official"] and beh["officialFn"] and not beh["local"] and not beh["localhost"] and not beh["evil"] and not beh["lookalike"], beh)
             check("v7.1.1 백엔드 — 위장·타 프로젝트·무스킴·스크립트 차단", all(beh[k] is False for k in ("evil", "lookalike", "otherProject", "noScheme", "script")), beh)
             check("v7.1.1 백엔드 — allowlist 1번은 공식 프로젝트 고정", beh["hosts"] and beh["hosts"][0] == "ntfhdiujapctomzzaifu.supabase.co", beh["hosts"])
             ext_before = len(external)
@@ -700,7 +700,7 @@ def main():
             # 단일 HTML
             sh = os.path.join(ROOT, "dist", "bojang-guide.single.html")
             sh_html = read(sh)
-            check("단일 HTML — v7.1.1 표기", "v7.1.1" in sh_html and 'content="v7.1.1"' in sh_html, len(sh_html) // 1024)
+            check("단일 HTML — v7.2 표기", "v7.2" in sh_html and 'content="v7.2"' in sh_html, len(sh_html) // 1024)
             check("단일 HTML — 공공데이터 모듈 포함", "BojangPublicData" in sh_html and "복용약" in sh_html)
             check("단일 HTML — 외부 참조 0", len(re.findall(r'(?:src|href)="\./', sh_html)) == 0)
 

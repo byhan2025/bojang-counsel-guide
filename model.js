@@ -128,10 +128,14 @@
     const name = String(src.name == null ? '' : src.name).replace(/\s+/g, ' ').trim().slice(0, 40);
     const amount = clamp(Math.round(Number(src.amount || 0) || 0), 0, 100000);
     const mode = src.mode === 'individual' ? 'individual' : 'bundle';
+    const AX = ['cancer', 'brain', 'heart', 'surgery', 'care', 'living'];
+    const linkAxis = AX.indexOf(String(src.linkAxis || '')) >= 0 ? String(src.linkAxis) : null;
     return {
       id: String(src.id || `cu_${key}_${i}`),
       name, amount, mode,
-      note: String(src.note == null ? '' : src.note).replace(/\s+/g, ' ').trim().slice(0, 60)
+      note: String(src.note == null ? '' : src.note).replace(/\s+/g, ' ').trim().slice(0, 60),
+      linkAxis,
+      linkSub: src.linkSub ? String(src.linkSub).slice(0, 24) : null
     };
   }
 
@@ -177,10 +181,24 @@
     items.forEach((x) => {
       let target = null;
       let skip = CUSTOM_DX_RE.test(x.name);
-      if (!skip && map.length) {
-        const hit = map.find((m) => m[1].test(x.name));
-        if (hit && (hit[0] === 'main' || byKey[hit[0]] != null)) target = hit[0];
+      /* v7.2 — 담보명 사전(BojangDambo)으로 먼저 찾고, 없을 때만 기존 정규식으로 내려갑니다.
+         사용자가 1탭으로 연결한 linkAxis/linkSub 가 있으면 그 선택이 사전보다 우선합니다.
+         다른 축으로 분류된 특약(예: 수술 영역에 적힌 암수술비)은 이 영역 금액에 넣지 않고
+         rows 에만 남겨 화면에서 '축이 다릅니다'로 안내합니다. */
+      const dm = (typeof BojangDambo !== 'undefined' && BojangDambo.match) ? BojangDambo.match(x.name) : null;
+      const wantAxis = x.linkAxis || (dm && dm.axis) || null;
+      const wantSub = x.linkSub || (dm && dm.sub) || null;
+      const sharedAxis = !!(dm && (dm.shared || isSharedRider(x.name))) && (key === 'brain' || key === 'heart');
+      const axisMismatch = !!wantAxis && wantAxis !== key && !sharedAxis;
+      const unmatched = !wantAxis;
+      if (!skip && !axisMismatch) {
+        if (wantSub && (wantSub === 'main' ? true : byKey[wantSub] != null)) target = wantSub;
+        else if (!wantSub && map.length) {
+          const hit = map.find((m) => m[1].test(x.name));
+          if (hit && (hit[0] === 'main' || byKey[hit[0]] != null)) target = hit[0];
+        }
       }
+      if (axisMismatch) skip = true;
       if (!skip && x.amount > 0) {
         if (target === 'main') {
           /* 통합형 주요치료비 — 혈전용해·수술 두 칸에 권장 비율로 나눕니다(중환자실 제외) */
@@ -191,7 +209,8 @@
         } else if (target) byKey[target] += x.amount;
         else if (recSum > 0) list.forEach((s) => { byKey[s.key] += (x.amount * (Number(s.rec) || 0)) / recSum; });
       }
-      rows.push({ id: x.id, name: x.name, amount: x.amount, mode: x.mode, sub: target, skip });
+      rows.push({ id: x.id, name: x.name, amount: x.amount, mode: x.mode, sub: target, skip,
+        axis: wantAxis, subWanted: wantSub, axisMismatch, unmatched, linked: !!x.linkAxis });
     });
     /* 형제 축(뇌↔심장) 공유 담보 반영 — 이 영역에 같은 담보가 직접 적혀 있지 않을 때만 */
     if ((key === 'brain' || key === 'heart') && opts.sibling) {
@@ -346,6 +365,11 @@
       cov.care.daily = fix(cov.care.daily);
       cov.care.nDaily = fix(cov.care.nDaily);
     }
+    if (cov.living && typeof cov.living === 'object') {
+      Object.keys(cov.living).forEach((k) => {
+        if (typeof cov.living[k] === 'number') cov.living[k] = fix(cov.living[k]);
+      });
+    }
     if (cov.custom && typeof cov.custom === 'object') {
       Object.keys(cov.custom).forEach((k) => {
         const arr = cov.custom[k];
@@ -458,6 +482,14 @@
       if (!c.mode) c.mode = 'normal';
     }
 
+    /* 4-b) v7.2 — 생활·실손 참고 축 19칸 (없으면 0/false로 채웁니다. 기존 상담은 영향 없음) */
+    if (!cov.living || typeof cov.living !== 'object' || Array.isArray(cov.living)) cov.living = {};
+    (typeof LIVING_ITEMS !== 'undefined' ? LIVING_ITEMS : []).forEach((l) => {
+      const cur = cov.living[l.key];
+      if (l.type === 'bool') cov.living[l.key] = !!cur;
+      else cov.living[l.key] = Number(cur || 0) || 0;
+    });
+
     /* 5) v5.6 — 증권 담보 직접 기재 배열을 항상 5개 영역으로 맞춥니다 (없으면 빈 배열) */
     if (!cov.custom || typeof cov.custom !== 'object' || Array.isArray(cov.custom)) cov.custom = {};
     CUSTOM_KEYS.forEach((k) => {
@@ -498,16 +530,18 @@
     if (v >= tiers.enough) return { code: 'enough', label: '충분', pct: 100 };
     if (v >= tiers.rec) return { code: 'rec', label: '권장 충족', pct: Math.round((v / tiers.enough) * 100) };
     if (v >= tiers.min) return { code: 'min', label: '최소 충족', pct: Math.round((v / tiers.enough) * 100) };
-    if (rec > 0) return { code: 'low', label: '최소 미달', pct: Math.round((v / rec) * 100) };
-    return { code: 'low', label: '최소 미달', pct: 0 };
+    if (rec > 0) return { code: 'low', label: '기준선 확인 권장', pct: Math.round((v / rec) * 100) };
+    return { code: 'low', label: '기준선 확인 권장', pct: 0 };
   }
 
   /* ---------- 담보 1개 평가 ---------- */
   function evalItem(state, item) {
-    const baseRec = item.rec[state.age] || 0;
+    const std = (typeof ageStandard === 'function') ? ageStandard(item.key, state.age) : null;
+    const baseRec = std ? std.rec : (item.rec[state.age] || 0);
+    const itemTiers = std ? std.tiers : item.tiers;
     const firstKey = item.parts[0] && item.parts[0].key;
     const parts = item.parts.map((p) => {
-      const tiers = p.tiers || (p.key === firstKey ? item.tiers : null) || null;
+      const tiers = p.tiers || (p.key === firstKey ? itemTiers : null) || null;
       let fill = 0, rec = 0, val = 0, option = null, subs = null, stage = null, dx = null;
       let customInfo = null;
       if (p.type === 'amount') {
@@ -584,6 +618,7 @@
         fill = val ? 1 : 0;
       }
       return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p, subs, stage, tiers, dx,
+        judgeable: p.std !== false, noStandard: p.std === false,
         customVal: customInfo ? subs.reduce((a, s) => a + Number(s.custom || 0), 0) : 0,
         crossVal: customInfo ? subs.reduce((a, s) => a + Number(s.cross || 0), 0) : 0,
         sharedRider: customInfo ? !!customInfo.sharedRider : false,
@@ -600,10 +635,11 @@
        조금 있어도 핵심 축이 0원이면 공백입니다. */
     const primaryGap = primaryEmpty(parts[0]);
     let level, label;
-    if (primaryGap) { level = 'gap'; label = '공백 위험'; }
+    if (primaryGap) { level = 'gap'; label = '보완 후보'; }
     else if (fill >= 0.9) { level = 'ok'; label = '적정'; }
-    else { level = 'need'; label = '보강 필요'; }
-    return { item, baseRec, parts, fill, level, label, primary, primaryGap, careCapped: careBasisUnknown, tiers: item.tiers || null };
+    else { level = 'need'; label = '확인 권장'; }
+    return { item, baseRec, parts, fill, level, label, primary, primaryGap, careCapped: careBasisUnknown, tiers: itemTiers || null,
+      standard: std || null };
   }
 
   /* ---------- 보장 요약 문장 ---------- */
@@ -748,7 +784,7 @@
   }
 
   /* ---------- 세부 항목 매트릭스 ---------- */
-  const LEVEL_LABEL = { enough: '충분', check: '점검', short: '부족', none: '없음' };
+  const LEVEL_LABEL = { enough: '충분', check: '점검', short: '보완 후보', none: '미가입' };
 
   function partRows(state, rows) {
     const out = [];
@@ -967,8 +1003,8 @@
     const cg = Number(cov.cancer.general || 0);
     const cTier = PRIORITY[0].tiers;
     if (cg <= 0) cps.push({ level: 'danger', title: '일반암 진단비 없음', body: `암 진단은 곧 소득 중단입니다. 최소 ${won(cTier.min)}만원, 권장 ${won(cTier.rec)}만원이 출발선입니다.` });
-    else if (cg < cTier.min) cps.push({ level: 'warn', title: `일반암 ${won(cg)}만원 — 최소선 미달`, body: `초기 치료비 부담 최소선이 ${won(cTier.min)}만원입니다. ${won(cTier.min - cg)}만원이 비어 있습니다.` });
-    else if (cg < cTier.rec) cps.push({ level: 'info', title: `일반암 ${won(cg)}만원 — 권장선 미달`, body: `권장 ${won(cTier.rec)}만원(초기 생활비+치료비 여유) 대비 ${won(cTier.rec - cg)}만원 부족합니다. 충분선은 ${won(cTier.enough)}만원입니다.` });
+    else if (cg < cTier.min) cps.push({ level: 'warn', title: `일반암 ${won(cg)}만원 — 최소선 확인 권장`, body: `초기 치료비 부담 최소선은 ${won(cTier.min)}만원입니다. ${won(cTier.min - cg)}만원을 보완 후보로 두고 확인을 권장합니다.` });
+    else if (cg < cTier.rec) cps.push({ level: 'info', title: `일반암 ${won(cg)}만원 — 권장선 확인 권장`, body: `권장 ${won(cTier.rec)}만원(초기 생활비+치료비 여유) 대비 ${won(cTier.rec - cg)}만원이 보완 후보입니다. 충분선은 ${won(cTier.enough)}만원입니다.` });
     if (Number(cov.cancer.similar || 0) <= 0) cps.push({ level: 'warn', title: '유사암 담보 없음', body: '갑상선암(C73)·기타피부암(C44)·제자리암(D00~D09)·경계성종양(D37~D48)은 일반암에서 빠져 별도 담보로 지급됩니다. 이 담보가 없으면 지급액이 0이거나 아주 작습니다.' });
     if (treatSum(state) <= 0 && effSum(treatGroup('cancer')) <= 0) cps.push({ level: 'warn', title: '암 주요치료비 5종 없음', body: '표적·면역항암·방사선·비급여 치료는 진단비와 별도 축입니다. 진단비만 있으면 장기 치료에서 공백이 생깁니다. 5종(암수술·항암약물·항암방사선·중환자실·비급여)을 각각 확인하세요.' });
     else {
@@ -1073,6 +1109,53 @@
         body: overHits.map((o) => `· ${o.label} → ${o.action}`).join(' ') });
     }
 
+    /* =========================================================
+       v7.2 — 손해보험 약관·청구 실무 정밀화 4종 (한대리 10선)
+       ========================================================= */
+    /* ① 유사암 한도 — 일반암의 10~20% 분리 표기 */
+    const similarVal = Number(cov.cancer.similar || 0);
+    if (similarVal > 0 && cg > 0) {
+      const sp = Math.round((similarVal / cg) * 100);
+      if (sp > 20) cps.push({ level: 'info', title: `유사암 ${won(similarVal)}만원 — 일반암의 ${sp}%`, body: `갑상선암·제자리암·경계성종양은 보통 일반암의 10~20% 한도입니다. 지금은 ${sp}%로 한도보다 두껍게 잡혀 있어, 같은 보험료를 일반암·치료비로 옮길 여지가 있습니다. 약관의 유사암 지급 한도를 확인하세요.` });
+      else if (sp < 10) cps.push({ level: 'warn', title: `유사암 ${won(similarVal)}만원 — 일반암의 ${sp}%`, body: `유사암(갑상선암 C73·기타피부암 C44·제자리암 D00~D09·경계성종양 D37~D48) 한도가 일반암의 10% 미만입니다. 일반암 금액이 커도 실제 유사암 지급액은 작을 수 있으니 별도 한도를 확인하세요.` });
+      else cps.push({ level: 'ok', title: `유사암 한도 적정 — 일반암의 ${sp}%`, body: '유사암은 일반암의 10~20% 한도가 통상입니다. 별도 한도가 증권에 찍혀 있는지 마지막으로 확인하세요.' });
+    } else if (similarVal <= 0) {
+      cps.push({ level: 'info', title: '유사암 한도 0원 — 일반암과 분리 표기', body: '유사암 담보가 없으면 갑상선암·제자리암·경계성종양 진단 시 일반암 진단비가 지급되지 않습니다. 일반암의 10~20% 한도로 따로 가입돼 있는지 확인하세요.' });
+    }
+
+    /* ② 뇌·심장 관혈(개두·개흉) vs 비관혈(스텐트·색전술) 괴리 */
+    [['brain', '뇌'], ['heart', '심장']].forEach(([key, name]) => {
+      const sval = effOf(treatGroup(key), 'surgery');
+      if (sval > 0) cps.push({ level: 'info', title: `${name} 수술비 — 관혈·비관혈 지급액 구분`, body: (typeof NEURO_SURGERY_GAP !== 'undefined' ? NEURO_SURGERY_GAP.body : '관혈(개두·개흉)과 비관혈(스텐트·색전술)의 지급액이 다릅니다.') + ` 현재 ${name} 수술비 ${won(sval)}만원이 잡혀 있습니다.` });
+    });
+
+    /* ③ 복용약 — 간편심사 3·2·5 / 3·5·5 분기 & 검진 경고 */
+    const d = state.disc || {};
+    if (d.m3_daily || d.m3_med || d.y5_med30) {
+      cps.push({
+        level: 'warn', title: '복용약 — 3·2·5 / 3·5·5 분기 확인',
+        body: '고혈압·당뇨·고지혈증·항응고제 등 상시 복용약은 ① 3개월 투약·상시복용 문항(일반심사) ② 5년 30일 투약 문항(일반심사)에 걸립니다. 간편심사 3·2·5는 3개월 입원·수술만, 3·5·5는 3개월 입원·수술과 5년 입원·수술을 묻습니다. 복용 중이라는 이유만으로 간편심사가 자동 통과되지는 않으므로, 상품별 문항표로 확인한 뒤 고지하세요.'
+      });
+    }
+    if (d.y1_test) {
+      cps.push({
+        level: 'warn', title: '검진 재검·추가검사 — 3개월 알릴 의무',
+        body: '건강검진에서 재검·추가검사·추적관찰 소견을 받고 최근 3개월 이내 의사 소견(진단서·소견서·진료의뢰서)을 받았다면 3개월 문항의 고지 대상입니다. 결과만 기다리는 단계라면 청약 시점과 소견 수령 시점을 함께 확인하고, 추적관찰만으로 끝난 경우는 문항에서 제외됩니다.'
+      });
+    }
+
+    /* ④ 직업급수 2·3급 · 이륜차(배달) */
+    if (typeof BojangJobGrades !== 'undefined') {
+      const ja = BojangJobGrades.alerts(state.job, state.jobTwoWheel || jobTwoWheel(state.jobNote));
+      (ja || []).forEach((a) => cps.push({ level: a.level === 'gap' ? 'warn' : 'info', title: `직업급수 — ${a.title}`, body: a.body }));
+    }
+
+    /* ⑤ 간병 증빙 3종과 서류 발급처 */
+    if (cr.daily > 0 || cr.nDaily > 0) {
+      const docs = (typeof CARE_PROOF_DOCS !== 'undefined' ? CARE_PROOF_DOCS : []).map((x) => `${x.label}(${x.where})`).join(' · ');
+      cps.push({ level: 'info', title: '간병일당 청구 증빙 3종', body: `간병일당은 ① 간병인 사업자등록번호 ② 계좌이체 내역 ③ 간병일지 세 가지가 서로 맞아야 지급됩니다. ${docs}. 현금 지급은 인정이 어렵습니다.` });
+    }
+
     if (!cps.length) cps.push({ level: 'ok', title: '구조적 구멍 없음', body: '5대 담보와 실손 구성이 기준선을 넘습니다. 이제는 금액 조정과 갱신 대비가 남은 과제입니다.' });
     return cps;
   }
@@ -1085,7 +1168,7 @@
     return [
       { title: '유지 — 기존 핵심 사수', short: '유지', body: '지금 가진 암·뇌·심장 진단비 중 가장 두꺼운 담보는 해지하지 않습니다. 나이와 병력 때문에 같은 조건으로 다시 들 수 없습니다.' },
       { title: '조정 — 배서 다이어트', short: '조정', body: `적립(저축)성·중복·미사용 특약을 정리해 보험료를 확보합니다.${state.silson === '1' || state.silson === '2' ? ' 실손은 선택형 할인 특약과 5세대 전환을 같은 표에 놓고 비교하세요.' : ' 갱신형은 다음 갱신 시점의 예상 보험료까지 확인합니다.'}` },
-      { title: '보완 — 우선순위 핀셋', short: '보완', body: `1순위부터 부족분만 채웁니다. 보강 대상: ${targetText}. 한 번에 다 하지 말고 1순위 한 칸씩, 예산 안에서 끝내세요.` }
+      { title: '보완 — 우선순위 핀셋', short: '보완', body: `1순위부터 보완 후보만 채웁니다. 보강 대상: ${targetText}. 한 번에 다 하지 말고 1순위 한 칸씩, 예산 안에서 끝내세요.` }
     ];
   }
 
@@ -1108,7 +1191,8 @@
         }
       });
       const pct = Math.round(clamp(r.fill, 0, 1) * 100);
-      return { item, r, pct, baseRec: r.baseRec, level: r.level, label: r.label, summary: summaryOf(state, item, r), gaps };
+      return { item, r, pct, baseRec: r.baseRec, level: r.level, label: r.label, summary: summaryOf(state, item, r), gaps,
+        standard: r.standard || null, tierLabel: (r.standard && r.standard.tierLabel) || '' };
     });
     const parts = partRows(state, rows);
     const sc = computeScore(state, rows);
@@ -1134,6 +1218,13 @@
     const totalSum = sums.cancerDx + sums.cancerTreat + sums.brainDx + sums.heartDx + sums.brainTreat + sums.heartTreat + sums.surgery + sums.customDx;
     const annual = Number(state.premium || 0) * 12;
     const cps = checkpoints(state, rows, totalSum, annual);
+    const tierOf = (key) => {
+      const st = (typeof ageStandard === 'function') ? ageStandard(key, state.age) : null;
+      return st ? st.tiers : null;
+    };
+    const living = livingRef(state);
+    const frame = coverageFrame();
+    const unmatched = unmatchedRiders(state);
     const st = steps(state, rows);
     const needList = rows.filter((x) => x.r.level !== 'ok');
     /* “가장 비어 있는 축”(충족도 최저)과 “1순위”(우선순위 순서)를 분리해서 문장을 쓸니다 */
@@ -1163,7 +1254,7 @@
         } : null
       };
     };
-    return {
+    const result = {
       state, rows, parts, score: sc.score, grade: sc.grade, letter: gradeLetter(sc.score),
       weights: sc.w, penalty: sc.penalty,
       counts: counts(parts, state.silson),
@@ -1174,7 +1265,11 @@
       contracts: state.contracts || [], contractTotal, contractStats: cstats,
       family, familyLabels: family.map((k) => FAMILY_NOTE[k].title), familyNotes: familyNotes(state),
       disclosure: disc, MATURITY,
-      tiers: { cancer: PRIORITY[0].tiers, brain: PRIORITY[1].tiers, heart: PRIORITY[2].tiers, care: PRIORITY[4].tiers },
+      tiers: { cancer: tierOf('cancer') || PRIORITY[0].tiers, brain: tierOf('brain') || PRIORITY[1].tiers, heart: tierOf('heart') || PRIORITY[2].tiers, care: tierOf('care') || PRIORITY[4].tiers },
+      ageTier: (typeof ageStandard === 'function' && ageStandard('cancer', state.age)) ? ageStandard('cancer', state.age) : null,
+      living, frame: { count: frame.length, list: frame },
+      unmatched,
+      conclusion: null,
       brainTreat: { subs: (cancerTreatPart && cancerTreatPart.subs) || [], sum: effSum(cancerTreatPart), rec: (cancerTreatPart && cancerTreatPart.rec) || 0, count: effCnt(cancerTreatPart), missing: (cancerTreatPart ? (cancerTreatPart.subs || []).filter((s) => subEff(s) <= 0).map((s) => s.label) : treatMissing(state)), legacy: state.cov.cancer.treatmentLegacy || 0 },
       neuro: { brain: neuroOf(brainRow), heart: neuroOf(heartRow) },
       dx: {
@@ -1196,6 +1291,129 @@
       customKeys: CUSTOM_KEYS,
       dateLabel: (state.client && state.client.dateLabel) || ''
     };
+    result.conclusion = conclusion(state, result);
+    return result;
+  }
+
+  /* =========================================================
+     v7.2 — 담보 틀 47~55칸 · 생활·실손 참고 축 · 미매칭 1탭 연결
+     ========================================================= */
+  function jobTwoWheel(text) {
+    const J = root.BojangJobGrades;
+    if (!J || !J.match) return false;
+    const m = J.match(text);
+    return !!(m && m.twoWheel);
+  }
+
+  /* 담보명 사전 조회 — 화면·가져오기·직접 기재가 같은 함수를 씁니다 */
+  function riderMatch(name) {
+    const D = root.BojangDambo;
+    if (!D || !D.match) return null;
+    return D.match(name);
+  }
+
+  /* 담보 틀 — 5대 담보 31칸 + 생활·실손 참고 19칸 = 50칸.
+     그룹(치료비 5종·3종)은 세부 칸을 각각 셉니다. */
+  function coverageFrame() {
+    const out = [];
+    PRIORITY.forEach((p) => {
+      (p.parts || []).forEach((pt) => {
+        if ((pt.type === 'group' || pt.type === 'dxset') && (pt.subs || []).length) {
+          pt.subs.forEach((sb) => out.push({ axis: p.key, axisLabel: p.name, part: pt.key, sub: sb.key, label: sb.label, type: pt.type, reference: false }));
+        } else {
+          out.push({ axis: p.key, axisLabel: p.name, part: pt.key, sub: null, label: pt.label, type: pt.type, reference: false });
+        }
+      });
+    });
+    (typeof LIVING_ITEMS !== 'undefined' ? LIVING_ITEMS : []).forEach((l) => {
+      out.push({ axis: 'living', axisLabel: '생활·실손', part: l.key, sub: l.key, label: l.label, type: l.type, reference: true });
+    });
+    return out;
+  }
+  function frameCount() { return coverageFrame().length; }
+
+  /* 생활·실손 참고 축 — 점수·색 판정에 쓰지 않고 '빠진 생활 보장'만 보여 줍니다 */
+  const LIVING_GROUPS = [
+    { key: 'life', label: '사망·후유장해', items: ['deathInjury', 'deathDisease', 'disabilityInjury', 'disabilityDisease'] },
+    { key: 'driver', label: '운전자', items: ['driverFine', 'driverLawyer', 'driverSupport', 'driverInjury'] },
+    { key: 'daily', label: '배상·재산', items: ['liability', 'fire'] },
+    { key: 'minor', label: '상해·질병 소액', items: ['fracture', 'burn', 'er', 'inpatientInjury', 'inpatientDisease'] },
+    { key: 'silson', label: '실손·치아', items: ['silsonDeduct', 'silsonNonPay', 'toothCare', 'toothProsthetic'] }
+  ];
+  function livingRef(state) {
+    const box = (state && state.cov && state.cov.living && typeof state.cov.living === 'object') ? state.cov.living : {};
+    const items = (typeof LIVING_ITEMS !== 'undefined' ? LIVING_ITEMS : []).map((l) => {
+      const raw = box[l.key];
+      const on = l.type === 'bool' ? !!raw : Number(raw || 0) > 0;
+      return { key: l.key, label: l.label, hint: l.hint, type: l.type, value: l.type === 'bool' ? !!raw : Number(raw || 0), on };
+    });
+    const byKey = items.reduce((a, x) => (a[x.key] = x, a), {});
+    const groups = LIVING_GROUPS.map((g) => ({
+      key: g.key, label: g.label,
+      items: g.items.map((k) => byKey[k]).filter(Boolean),
+      present: g.items.filter((k) => byKey[k] && byKey[k].on).length,
+      total: g.items.length
+    }));
+    const present = items.filter((x) => x.on).length;
+    return {
+      items, groups, present, total: items.length,
+      missing: items.filter((x) => !x.on).map((x) => x.label),
+      note: '생활·실손은 참고 축입니다 — 점수와 색 판정에 넣지 않고, 빠진 생활 보장만 보여 줍니다.'
+    };
+  }
+
+  /* 미매칭·오분류 특약 큐 — 1탭으로 축을 연결합니다 */
+  function unmatchedRiders(state) {
+    const out = [];
+    CUSTOM_KEYS.forEach((key) => {
+      customList(state, key).forEach((x) => {
+        if (!x.name) return;
+        const dm = riderMatch(x.name);
+        const axis = x.linkAxis || (dm && dm.axis) || null;
+        const sub = x.linkSub || (dm && dm.sub) || null;
+        const shared = !!(dm && dm.shared) && (key === 'brain' || key === 'heart');
+        if (!axis) out.push({ area: key, areaLabel: CUSTOM_AREA_LABEL[key], id: x.id, name: x.name, amount: x.amount, reason: 'unmatched', axis: null, sub: null });
+        /* 사용자가 1탭으로 연결한 항목은 '다른 축'이어도 큐에서 뺍니다(연결 완료). */
+        else if (axis !== key && !shared && !x.linkAxis) out.push({ area: key, areaLabel: CUSTOM_AREA_LABEL[key], id: x.id, name: x.name, amount: x.amount, reason: 'mismatch', axis, sub, axisLabel: (root.BojangDambo ? root.BojangDambo.axisLabel(axis) : axis) });
+      });
+    });
+    return out;
+  }
+  /* 사용자가 1탭으로 연결 — 담보 영역과 무관하게 id 로 찾습니다 */
+  function linkRider(state, id, axis, sub) {
+    const AX = ['cancer', 'brain', 'heart', 'surgery', 'care', 'living'];
+    if (AX.indexOf(axis) < 0) return false;
+    let hit = null;
+    CUSTOM_KEYS.forEach((key) => {
+      const arr = (state && state.cov && state.cov.custom && state.cov.custom[key]) || [];
+      arr.forEach((x) => { if (x && String(x.id) === String(id)) hit = x; });
+    });
+    if (!hit) return false;
+    hit.linkAxis = axis;
+    hit.linkSub = sub || null;
+    return true;
+  }
+  function clearRiderLink(state, id) {
+    let ok = false;
+    CUSTOM_KEYS.forEach((key) => {
+      const arr = (state && state.cov && state.cov.custom && state.cov.custom[key]) || [];
+      arr.forEach((x) => { if (x && String(x.id) === String(id)) { delete x.linkAxis; delete x.linkSub; ok = true; } });
+    });
+    return ok;
+  }
+
+  /* 결과 화면 최상단 한 문장 결론 — 보완 후보 개수와 1순위를 함께 */
+  function conclusion(state, m) {
+    const rows = (m && m.rows) || [];
+    const need = rows.filter((x) => x.r.level !== 'ok');
+    const first = need[0] || null;
+    const n = need.length;
+    const score = m ? m.score : 0;
+    let text;
+    if (!rows.length) text = '보완 후보 담보 0개 — 5대 담보를 입력하면 결론을 계산합니다.';
+    else if (n === 0) text = '보완 후보 담보 0개 — 5대 담보가 기준선을 충족합니다. 추가 가입보다 갱신·만기 점검을 권장합니다.';
+    else text = `보완 후보 담보 ${n}개, 가장 시급한 것은 ${first.item.name}`;
+    return { text, count: n, first: first ? first.item.name : null, score, stable: n === 0 };
   }
 
   /* ---------- 보완 시뮬레이션 (같은 보험료 재배치·추가 보완 점수 미리보기) ----------
@@ -1350,7 +1568,7 @@
   function oneLine(state, m) {
     if (!m.needList.length) return '5대 담보가 기준선을 넘었습니다. 금액 조정과 갱신 대비가 남은 과제입니다.';
     const x = m.needList[0];
-    return `${x.item.name} ${x.pct}% — ${x.label}. ${x.gaps.length ? `${x.gaps[0].label} ${won(x.gaps[0].need)}만원 부족.` : '세부 담보 점검이 필요합니다.'}`;
+    return `${x.item.name} ${x.pct}% — ${x.label}. ${x.gaps.length ? `${x.gaps[0].label} ${won(x.gaps[0].need)}만원이 보완 후보입니다 — 확인을 권장합니다.` : '세부 담보 점검을 권장합니다.'}`;
   }
 
   root.BojangModel = {
@@ -1367,6 +1585,7 @@
     customList, customTotal, customAll, customCredits, sanitizeCustom,
     effSum, fillSum, effCnt, subEff, subOwn, gapOf, primaryEmpty,
     oneTimeTimeline, silsonCompare, normalizeDisc,
-    renewTrend, RENEW_TREND
+    renewTrend, RENEW_TREND,
+    jobTwoWheel, riderMatch, coverageFrame, frameCount, livingRef, unmatchedRiders, linkRider, clearRiderLink, conclusion, LIVING_GROUPS
   };
 })(typeof window !== 'undefined' ? window : globalThis);

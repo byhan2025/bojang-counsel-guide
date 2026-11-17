@@ -4511,3 +4511,109 @@ body.is-client .slide{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px)
 /* v7.1 — 청구 매칭: 빠진 서류 표시 · 간병 '참고' 배지 */
 .cc-lack{margin-top:4px;font-size:10.5px;font-weight:800;color:#8a1f14;}
 .cc-advisory{font-size:9.4px;font-weight:800;color:#7a4a17;background:#fdf3de;border:1px solid #f0dcb0;border-radius:999px;padding:2px 7px;}
+
+/* =========================================================
+   v7.2 — 현장 UX·카피 기준 (부이 대리 5항목)
+   ========================================================= */
+
+/* ① 결과 최상단 한 문장 결론 배너 */
+.conclusion-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 12px;padding:14px 16px;
+  border-radius:14px;border:1px solid var(--line);background:var(--sky2);}
+.conclusion-banner .cbn-eyebrow{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  color:#fff;background:var(--navy);border-radius:999px;padding:4px 9px;}
+.conclusion-banner .cbn-text{font-size:16px;font-weight:800;line-height:1.35;color:var(--navy-800);}
+.conclusion-banner .cbn-meta{font-size:12px;font-weight:600;color:var(--ink-2, #4a5a6d);}
+.conclusion-banner.tone-gap{background:var(--danger-soft);border-color:#f3c9c3;}
+.conclusion-banner.tone-gap .cbn-text{color:#8f2a21;}
+.conclusion-banner.tone-need{background:#fdf6e8;border-color:#f0dcb4;}
+.conclusion-banner.tone-need .cbn-text{color:#7a5414;}
+.conclusion-banner.tone-ok{background:var(--mint-soft, #e6f6f2);border-color:#c6e9df;}
+.conclusion-banner.tone-ok .cbn-text{color:#0b6b5d;}
+
+/* ② 연령대별 권장 기준선 — 기준일·출처 한 줄 고정 */
+.age-standard-line{margin:8px 2px 0;font-size:11px;line-height:1.5;font-weight:600;color:#5b6b7d;
+  border-top:1px dashed var(--line);padding-top:8px;}
+.age-standard-line b{color:var(--navy-800);}
+
+/* ③ 생활·실손 참고 축 카드 */
+.ref-card{border-style:dashed;}
+.ref-note{margin:0 0 10px;font-size:12px;line-height:1.5;color:#4a5a6d;}
+.living-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;}
+.living-group{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fbfdff;}
+.lg-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.lg-head b{font-size:12px;font-weight:800;color:var(--navy-800);}
+.lg-head span{font-size:11px;font-weight:700;color:#6b7c8f;}
+.living-row{display:flex;align-items:center;gap:8px;min-height:44px;padding:4px 0;border-bottom:1px dotted #e8eef6;}
+.living-row:last-child{border-bottom:0;}
+.living-row > span{flex:1;font-size:12px;font-weight:600;color:var(--ink);display:flex;flex-direction:column;}
+.living-row > span em{font-style:normal;font-size:11px;font-weight:500;color:#7b8a9c;}
+.living-row input[type="number"]{width:86px;min-height:44px;padding:6px 8px;border:1px solid var(--line);border-radius:9px;
+  font-size:12px;text-align:right;background:#fff;}
+.living-row input[type="checkbox"]{width:22px;height:22px;}
+.living-row .unit{font-size:11px;color:#7b8a9c;}
+.ref-foot{margin:10px 0 0;font-size:11px;color:#5b6b7d;}
+
+/* ④ 미매칭 1탭 연결 큐 */
+.rider-queue{margin-top:10px;padding:12px;border:1px solid #f0dcb4;border-radius:13px;background:#fffdf7;}
+.rq-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:800;color:#7a5414;margin-bottom:8px;}
+.rq-head em{font-style:normal;font-weight:500;font-size:11px;color:#7b6a4a;}
+.rq-row{display:grid;gap:7px;padding:9px 0;border-top:1px dashed #f0e2c4;}
+.rq-row:first-of-type{border-top:0;}
+.rq-name{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;}
+.rq-name b{font-size:12px;color:var(--navy-800);}
+.rq-name span{font-size:11px;color:#7b6a4a;}
+.rq-choices{display:flex;gap:6px;flex-wrap:wrap;}
+.rq-btn{min-height:44px;padding:6px 12px;border:1px solid #e6d6b4;border-radius:10px;background:#fff;
+  font-size:12px;font-weight:700;color:#6b5320;cursor:pointer;}
+.rq-btn.is-on{background:var(--navy);border-color:var(--navy);color:#fff;}
+.rq-empty{font-size:12px;color:#5b6b7d;padding:10px;border:1px dashed var(--line);border-radius:12px;background:#fbfdff;}
+
+/* ⑤ 직업급수 자동 매칭 알림 */
+.job-grade-note{display:none;margin-top:8px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fbfdff;}
+.job-grade-note:not(:empty){display:flex;gap:10px;align-items:flex-start;}
+.job-grade-note .jgn-badge{flex:0 0 auto;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;background:var(--sky);color:var(--navy-800);}
+.job-grade-note.tone-gap{background:var(--danger-soft);border-color:#f3c9c3;}
+.job-grade-note.tone-need{background:#fdf6e8;border-color:#f0dcb4;}
+.job-grade-note.tone-ok{background:#eef8f4;border-color:#cbe8dd;}
+.jgn-body{display:grid;gap:3px;font-size:12px;line-height:1.45;}
+.jgn-body b{font-size:12px;color:var(--navy-800);}
+.jgn-body em{font-style:normal;font-size:11px;color:#5b6b7d;}
+.jgn-alert{font-weight:700;color:#8f2a21;}
+.jgn-ok{color:#0b6b5d;font-weight:600;}
+.jgn-check,.jgn-law{font-size:11px;color:#6b7c8f;}
+
+/* ⑥ 기기 저장 보안 설정 */
+.mm-privacy{margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:13px;background:#fbfdff;display:grid;gap:8px;}
+.mmp-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.mmp-head b{font-size:12px;font-weight:800;color:var(--navy-800);}
+.mmp-head em{font-style:normal;font-size:11px;font-weight:700;color:#0b6b5d;background:#e6f6f2;border-radius:999px;padding:3px 8px;}
+.mmp-row{display:flex;gap:9px;align-items:flex-start;min-height:44px;cursor:pointer;}
+.mmp-row input{width:22px;height:22px;margin-top:2px;}
+.mmp-row span{display:flex;flex-direction:column;gap:2px;}
+.mmp-row b{font-size:12px;font-weight:800;color:var(--ink);}
+.mmp-row em{font-style:normal;font-size:11px;color:#6b7c8f;line-height:1.45;}
+.mmp-foot{margin:0;font-size:11px;color:#5b6b7d;}
+
+/* ⑦ PDF 이름 옵션 */
+.pdf-name-opt{display:flex;gap:9px;align-items:flex-start;min-height:44px;padding:8px 2px;cursor:pointer;}
+.pdf-name-opt input{width:22px;height:22px;margin-top:1px;}
+.pdf-name-opt span{display:flex;flex-direction:column;gap:2px;font-size:12px;font-weight:700;color:var(--ink);}
+.pdf-name-opt em{font-style:normal;font-size:11px;font-weight:500;color:#6b7c8f;}
+
+/* ⑧ 글자 하한 — 본문 12px · 보조 11px · 소형 라벨 10px */
+.card p,.card li,.card dd,.card td,.card th,.prow-tail span,.cp p,.step p,.talk p,
+.cov-card .part-label span,.custom-note,.field-note,.cc-doc em,.cc-miss-list span,
+.na-sub,.na-empty-copy,.rq-name span,.living-row > span{font-size:12px;}
+.hint,.card-sub,.stat-source,.unit,.part-label span,.prow-name span,
+.cc-where,.jgn-body em,.mmp-row em,.pdf-name-opt em,.stat-notes span{font-size:11px !important;}
+.eyebrow,.badge,.mini-badge,.cov-rank,.prow-rank,.tag,.kicker,.chip,.quick,
+.prow-pct i,.cc-rank,.cc-kind,.cc-advisory{font-size:10px;}
+#deck .slide p,#deck .slide li,#deck .slide dd,#deck .slide td,#deck .slide th{font-size:12px;}
+#deck .slide .eyebrow,#deck .slide .k,#deck .slide .badge{font-size:10px;}
+#deck .slide .hint,#deck .slide .sub,#deck .slide .cap,#deck .slide .foot-note{font-size:11px;}
+
+/* ⑨ 터치 대상 44px 하한 */
+.seg-btn,.quick,.chip,.chip-custom,.scale-opt,.cc-doc,.rq-btn,.mm-btn,.btn,.btn-ghost,
+.copy-mini,.prow-jump,.pdf-btn,.custom-add,.custom-presets .chip-custom,.sb-pdf,.sb-exit,
+.tab,.hg-card,.menu-toggle,.living-row,.mmp-row,.pdf-name-opt{min-height:44px;}
+.prow-jump,.copy-mini,.chip,.quick,.seg-btn{padding-top:10px;padding-bottom:10px;}

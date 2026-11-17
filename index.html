@@ -4,10 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v7.1.1 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
-<meta name="app-version" content="v7.1.1">
+<title>보장분석 라이프 리포트 v7.2 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<meta name="app-version" content="v7.2">
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
+<!-- v7.2 — CSP: 인라인 번들·data: 이미지·blob: PDF/워커만 허용하고 object·base 변경을 막습니다 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://ntfhdiujapctomzzaifu.supabase.co wss://ntfhdiujapctomzzaifu.supabase.co; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'self'">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" href="./icons/icon-192.png" sizes="192x192">
@@ -184,6 +186,16 @@
           <button type="button" class="mm-btn acct-hub-btn" id="btn-account-home" data-account="1"><span aria-hidden="true">👤</span> 계정 / 구독 <em id="acct-hub-sub">로그인 · 서버 연결</em></button>
         </div>
 
+        <div class="mm-privacy" id="mm-privacy">
+          <div class="mmp-head"><b>기기 저장 보안</b><em id="mmp-state">AES-GCM 잠금</em></div>
+          <label class="mmp-row"><input type="checkbox" id="opt-session-only">
+            <span><b>민감정보 미저장(세션 전용)</b><em>켜면 입력 중 상담을 이 기기에 저장하지 않습니다 · 화면을 닫으면 사라집니다</em></span></label>
+          <label class="mmp-row"><input type="checkbox" id="opt-delete-logout">
+            <span><b>로그아웃 시 로컬 데이터 삭제</b><em>상담 이력·입력값을 지우고 화면 설정만 남깁니다</em></span></label>
+          <button type="button" class="mm-btn" id="btn-purge-local"><span aria-hidden="true">🗑</span> 기기 저장 데이터 지금 삭제</button>
+          <p class="mmp-foot" id="mmp-foot">상담 이력은 기기 안에서 AES-GCM으로 암호화해 보관합니다.</p>
+        </div>
+
     <div class="home-section-title"><span class="eyebrow">MENU</span> 전체 메뉴 <span class="hst-sub">상담·분석·발행에 필요한 모든 화면</span></div>
     <div class="home-grid">
       <button type="button" class="hg-card" data-home-go="analysis">
@@ -318,7 +330,7 @@
 
     <details class="app-foot-details">
       <summary>기준일 · 반영 기능 자세히 보기</summary>
-      <p class="app-foot">기준일 2026-11-17 · v7.1.1 기준점(회의실 6대 결함 완결 패치 — 암·유사암 진단비 필수서류(병리조직결과지)·프록시 표준 약 이름만 전송·백엔드 목적지 allowlist·표지 보장 가치 문구 복원(360×740 넘침 0)·공휴일 참고일 분리·OCR 모델 후보 4개 문구) · v7.1 기준점(공공데이터 실무 연동 — 복용약 고지 체크·맞춤 공식통계·약관 괴리·공휴일 영업일 보정(100% 오프라인 내장, 프록시 선택) · 결과 화면 '이 고객 다음 할 일' 한 줄 띠 · KCD 칩 클릭 불통 수정 · 간병인 사용일당 3분기 표기 · 고객 표지 플로팅 버튼 겹침 해소) · v7.0 기준점(사후관리 디데이 5종과 리터치 카톡 문구 · 진료서류 청구 담보 매칭과 상법 제662조 소멸시효 · 상담 메모 6단계 빠른 채움(100% 로컬) · 첫 화면 샘플 버튼 카피 개선) · v6.2 기준점(첫 화면 ①입력→②분석→③PDF 흐름 배너 · 로그인 없는 30장 샘플 체험 모드(가상 고객 격리·저장 차단) · 개인정보처리방침 데이터 흐름 1장 도식 · AI 보조자료 면책 문구(결과 화면·1·10·30장 PDF 꼬리말)) · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
+      <p class="app-foot">기준일 2026-11-17 · v7.2 기준점(담보 틀 31→50칸 — 생활·실손 참고 축 19칸 · 보험사별 담보명 동의어 사전 110+ · 미매칭 1탭 연결 큐 · 직업급수표 내장과 2·3급·이륜차 알림 · 유사암 한도 10~20%·관혈/비관혈 괴리·복용약 3·2·5/3·5·5 분기·검진 3개월 알림의무·간병 증빙 3종과 발급처 · 결과 최상단 한 문장 결론과 '보완 후보' 용어 통일 · 연령대별 권장 기준선(20~30/40~50/60대+)과 기준일·출처 고정 · PDF 실제 텍스트 레이어와 고객명 기본 제외 · AES-GCM 기기 저장 암호화와 세션 전용 모드 · backend HTTPS·443 전용 · OCR 공급자별 문구 · sw 캐시 분리 · CI) · v7.1.1 기준점(회의실 6대 결함 완결 패치 — 암·유사암 진단비 필수서류(병리조직결과지)·프록시 표준 약 이름만 전송·백엔드 목적지 allowlist·표지 보장 가치 문구 복원(360×740 넘침 0)·공휴일 참고일 분리·OCR 모델 후보 4개 문구) · v7.1 기준점(공공데이터 실무 연동 — 복용약 고지 체크·맞춤 공식통계·약관 괴리·공휴일 영업일 보정(100% 오프라인 내장, 프록시 선택) · 결과 화면 '이 고객 다음 할 일' 한 줄 띠 · KCD 칩 클릭 불통 수정 · 간병인 사용일당 3분기 표기 · 고객 표지 플로팅 버튼 겹침 해소) · v7.0 기준점(사후관리 디데이 5종과 리터치 카톡 문구 · 진료서류 청구 담보 매칭과 상법 제662조 소멸시효 · 상담 메모 6단계 빠른 채움(100% 로컬) · 첫 화면 샘플 버튼 카피 개선) · v6.2 기준점(첫 화면 ①입력→②분석→③PDF 흐름 배너 · 로그인 없는 30장 샘플 체험 모드(가상 고객 격리·저장 차단) · 개인정보처리방침 데이터 흐름 1장 도식 · AI 보조자료 면책 문구(결과 화면·1·10·30장 PDF 꼬리말)) · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
     </details>
   </section>
 
@@ -329,12 +341,12 @@
     <div class="intro-card cap-intro no-print">
       <div class="intro-eyebrow">CAPTURE · VOLATILE</div>
       <h2>찍고, 읽고,<br>바로 지웁니다</h2>
-      <p>앨범에서 고르는 방식이 아니라 카메라가 바로 열립니다. 사진은 기기·자체 서버에 저장되지 않으며, AI 인식 실행 시에만 외부 AI API(Google Gemini 등)로 전송됩니다.</p>
+      <p>앨범에서 고르는 방식이 아니라 카메라가 바로 열립니다. 사진은 기기·자체 서버에 저장되지 않으며, AI 인식 실행 시에만 외부 AI API로 전송됩니다. <b>공급자별 경로</b> — OpenAI 경로(단일 모델): 모델 1개로 고정, 오류 시 자동 대체 없음. Gemini 경로(최대 4개 모델 후보): 오류·요청 제한 시 최대 4개 모델 후보로 재시도.</p>
     </div>
 
     <div class="sec-notice" id="cap-notice" role="note">
       <span class="sn-tag">촬영 전 확인</span>
-      <p>이름·주민등록번호 등 민감정보는 가리고 담보표만 촬영해 주세요. 촬영된 사진은 기기와 자체 Supabase DB에 저장되지 않고 브라우저 메모리에서 즉시 파기됩니다. AI 인식 실행 시에는 외부 AI API(Google Gemini 등)로 전송되며 공급자 정책이 적용됩니다.</p>
+      <p>이름·주민등록번호 등 민감정보는 가리고 담보표만 촬영해 주세요. 촬영된 사진은 기기와 자체 Supabase DB에 저장되지 않고 브라우저 메모리에서 즉시 파기됩니다. 전송 경로는 공급자별로 다릅니다 — <b>OpenAI 경로(단일 모델)</b>은 모델 1개로 고정, <b>Gemini 경로(최대 4개 모델 후보)</b>는 오류·요청 제한 시 최대 4개 모델 후보로 재시도합니다. 전송된 이미지는 해당 공급자 API 정책이 적용됩니다.</p>
     </div>
 
     <div class="cap-actions">
@@ -494,6 +506,7 @@
             <div class="field">
               <label class="field-label">직업급수 <span class="hint" id="job-hint">사무·관리직</span></label>
               <div class="seg seg-3" id="seg-job" role="group" aria-label="직업급수"></div>
+              <div class="job-grade-note" id="job-grade-note" aria-live="polite"></div>
             </div>
             <div class="field">
               <label class="field-label">실손의료보험 세대</label>
@@ -534,6 +547,12 @@
           <div class="wiz-panel-title"><span class="n">4</span>수술 · 간병<em>종수·N대, 일당·요양</em></div>
           <div id="card-surgery"></div>
           <div id="card-care"></div>
+        </div>
+
+        <div class="wiz-panel" data-step="4">
+          <div class="wiz-panel-title"><span class="n">6</span>생활 · 실손 <em>참고 축 19칸 — 점수·색 판정 제외</em></div>
+          <div id="card-living"></div>
+          <div id="rider-queue" class="rider-queue"></div>
         </div>
 
         <div class="wiz-panel" data-step="5">
@@ -613,6 +632,8 @@
         <div class="ph-meta"><span id="ph-client">—</span><span id="ph-date">—</span></div>
       </div>
 
+      <div class="conclusion-banner" id="result-conclusion" role="status" aria-live="polite"></div>
+
       <div class="result-hero" id="result-hero"></div>
 
       <div class="rm-cta no-print">
@@ -637,6 +658,7 @@
       <div class="card">
         <div class="card-title"><span class="eyebrow">PRIORITY</span> 5대 우선순위 진단</div>
         <div id="result-rows" class="priority-rows"></div>
+        <p class="age-standard-line" id="age-standard-line"></p>
       </div>
 
       <div class="card">
@@ -676,6 +698,7 @@
           <span class="pb-label">설계사용 30장 상담 플랜 PDF</span>
           <span class="pb-sub">오프닝부터 클로징까지 · 질문·화법·함정·설계안·반론 풀스크립트</span>
         </button>
+        <label class="pdf-name-opt"><input type="checkbox" id="pdf-include-name"> <span>PDF 파일명·제목에 고객 이름 포함<em>기본은 제외 — 켜면 이름이 들어갑니다</em></span></label>
         <p class="pdf-hint" id="pdf-hint">베타 기간에는 <b>1·10·30장 모두 무료</b>로 저장됩니다. PC는 저장 위치를 고르거나 다운로드 폴더로, 아이폰은 공유 시트에서 <b>파일 앱 저장 · 문자 · 카카오톡</b>으로 바로 보낼 수 있습니다.</p>
       </div>
 
@@ -1147,7 +1170,7 @@
   <div class="modal-card hub-card" role="dialog" aria-modal="true" aria-labelledby="ih-title">
     <span class="hub-eyebrow">START · INPUT MODE</span>
     <strong id="ih-title">어떻게 입력할까요?</strong>
-    <p>고객의 보장분석표를 어떤 방법으로 가져올지 먼저 고르세요. 수기·PDF는 이 기기에서 처리되며, 사진 AI 인식 실행 시에만 <b>브라우저 → 자체 서버(Supabase Edge Function) → 외부 AI(Google Gemini 등)</b> 경로로 전송됩니다(모델 오류 시 대체 모델 후보로 재시도 — OpenAI 경로 또는 사용자 지정 Gemini 포함 최대 4개 모델 후보). 사진은 앱과 자체 서버 DB에 저장하지 않습니다.</p>
+    <p>고객의 보장분석표를 어떤 방법으로 가져올지 먼저 고르세요. 수기·PDF는 이 기기에서 처리되며, 사진 AI 인식 실행 시에만 <b>브라우저 → 자체 서버(Supabase Edge Function) → 외부 AI(Google Gemini 등)</b> 경로로 전송됩니다. 공급자별로 다릅니다 — <b>OpenAI 경로(단일 모델)</b>는 모델 1개 고정, <b>Gemini 경로(최대 4개 모델 후보)</b>는 오류·요청 제한 시 최대 4개 모델 후보로 재시도합니다. 사진은 앱과 자체 서버 DB에 저장하지 않습니다.</p>
     <div class="hub-list">
       <button type="button" class="hub-opt" data-mode="manual">
         <span class="ho-ico" aria-hidden="true">✎</span>
@@ -1249,6 +1272,9 @@
 <script src="./security.js"></script>
 <script src="./storage-idb.js"></script>
 <script src="./content.js"></script>
+<script src="./dambo-dictionary.js"></script>
+<script src="./jobgrades.js"></script>
+<script src="./ocr.js"></script>
 <script src="./playbook.js"></script>
 <script src="./model.js"></script>
 <script src="./pdfkit.js"></script>

@@ -79,7 +79,7 @@ const PRIORITY = [
     tierNote: '최소 3,000 · 권장 5,000 · 충분 1억 (전 연령 동일 기준선)',
     weight: 30,
     parts: [
-      { key: 'general', type: 'amount', label: '일반암 진단비', hint: '최소 3,000 / 권장 5,000 / 충분 1억', weight: 0.5, factor: 1, step: 500, quick: [0, 3000, 5000, 10000], tiers: { min: 3000, rec: 5000, enough: 10000 } },
+      { key: 'general', type: 'amount', label: '일반암 진단비', hint: '연령대 기준선 참고', weight: 0.5, factor: 1, step: 500, quick: [0, 3000, 5000, 10000] },
       { key: 'similar', type: 'amount', label: '유사암 진단비', hint: '갑상선·기타피부·제자리·경계성', weight: 0.15, factor: 0.2, step: 100, quick: [0, 200, 500, 1000, 2000] },
       { key: 'treatment', type: 'group', label: '암 주요치료비 5종', hint: '암수술 · 항암약물 · 항암방사선 · 중환자실 · 비급여', weight: 0.25, subs: CANCER_TREAT_SUBS, min: CANCER_TREAT_MIN, max: CANCER_TREAT_MAX, step: CANCER_TREAT_STEP, quick: CANCER_TREAT_QUICK },
       { key: 'recur', type: 'bool', label: '재진단·전이암 보장', weight: 0.1 }
@@ -973,3 +973,142 @@ const PREMIUM_GUIDE = {
     '추가 지출이 필요하면 고객이 선택합니다. 상담자가 먼저 금액을 정하지 않습니다.'
   ]
 };
+
+/* =========================================================
+   v7.2 — 연령대별 권장 기준선 (20~30대 / 40~50대 / 60대+)
+   v7.1까지는 20~70세 모두 같은 권장액을 썼습니다(content.js:77). 실제로는
+   · 20~30대: 노출 기간이 길지만 소득이 낮아 총 보장액을 낮게, 대신 저렴한 구성
+   · 40~50대: 암·뇌·심장 발생이 본격적으로 늘고 가계 책임이 가장 큰 구간 — 기준선 최대
+   · 60대+: 가입 가능 금액·인수 한도가 낮고 실손·건강보험·노인장기요양과 겹침 — 권장액을 낮춤
+   근거는 공개 통계이며, 상품별 인수 기준이 우선합니다. 통계로 기준을 세울 수 없는
+   항목(재진단 보장·간병 요건 등)은 std:false 로 두어 색 판정에서 제외합니다. */
+const AGE_TIER_ORDER = ['young', 'mid', 'senior'];
+const AGE_TIERS = {
+  young: { key: 'young', label: '20~30대', ages: ['20', '30'], short: '20·30대' },
+  mid: { key: 'mid', label: '40~50대', ages: ['40', '50'], short: '40·50대' },
+  senior: { key: 'senior', label: '60대+', ages: ['60', '70'], short: '60대+' }
+};
+
+const AGE_STANDARDS = {
+  cancer: {
+    young: { min: 2000, rec: 4000, enough: 8000 },
+    mid: { min: 3000, rec: 5000, enough: 10000 },
+    senior: { min: 2000, rec: 3000, enough: 5000 },
+    source: '중앙암등록본부 「국가암등록통계」 2023년 발표(5년 상대생존율 73.7%)',
+    basis: '40대부터 암 발생이 본격적으로 늘고 60대 이후 가장 높습니다. 20~30대는 노출 기간이 길어 최소 2,000·권장 4,000으로 시작하고, 40~50대는 가계 책임이 가장 큰 구간이라 권장 5,000을 유지합니다. 60대+는 가입 한도·인수 제한과 실손·건강보험 중복을 감안해 권장 3,000으로 낮춥니다.'
+  },
+  brain: {
+    young: { min: 1000, rec: 2000, enough: 3000 },
+    mid: { min: 1000, rec: 2000, enough: 3000 },
+    senior: { min: 1000, rec: 1500, enough: 2000 },
+    source: '통계청 「2024 사망원인통계」(뇌혈관질환 6.9%) · 건강보험심사평가원 진료비 통계',
+    basis: '뇌혈관질환은 60대 이후 발생·사망이 급증하지만 60대+는 가입 한도가 낮아 권장 1,500으로 조정합니다. 진단비는 1회성이라 2,000을 넘기기보다 치료비 3종(혈전용해·수술·중환자실)을 채우는 것이 실제 지출에 가깝습니다.'
+  },
+  heart: {
+    young: { min: 1000, rec: 2000, enough: 3000 },
+    mid: { min: 1000, rec: 2000, enough: 3000 },
+    senior: { min: 1000, rec: 1500, enough: 2000 },
+    source: '통계청 「2024 사망원인통계」(심장질환 9.4%) · 건강보험심사평가원 진료비 통계',
+    basis: '심장질환은 사망원인 2위로 40대 이후 급증합니다. 40~50대 권장 2,000을 유지하되 60대+는 가입 한도를 감안해 1,500으로 낮추고, 관혈(개흉)과 비관혈(스텐트) 수술비를 나눠 확인합니다.'
+  },
+  surgery: {
+    young: { min: 100, rec: 300, enough: 500 },
+    mid: { min: 300, rec: 500, enough: 1000 },
+    senior: { min: 100, rec: 300, enough: 500 },
+    source: '건강보험심사평가원 「2023 수술 통계」 · 국민건강보험공단 진료비 자료',
+    basis: '수술비는 40~50대에 가장 많이 발생하고 1회 지급이 반복됩니다. 20~30대는 1~5종 기준 300, 40~50대는 500, 60대+는 300을 권장선으로 둡니다.'
+  },
+  care: {
+    young: { min: 5, rec: 10, enough: 20 },
+    mid: { min: 5, rec: 10, enough: 20 },
+    senior: { min: 5, rec: 10, enough: 20 },
+    source: '국민건강보험공단 「2025 노인장기요양보험 통계연보」(인정자 123만 5,045명 · 월평균 급여비 154만원)',
+    basis: '간병인 일당은 연령대보다 지역·시간제에 따라 갈립니다(5만~20만원, 통상 10만원 이상). 그래서 권장액은 전 연령 10만원으로 같게 두고, 시간제·금액제와 가족간병 인정 여부를 함께 봅니다.'
+  }
+};
+
+function ageTierOf(age) {
+  const a = Number(String(age == null ? '' : age).replace(/[^0-9]/g, '')) || 0;
+  if (a >= 60) return 'senior';
+  if (a >= 40) return 'mid';
+  return 'young';
+}
+
+/* 담보 축 + 나이 → { tier, rec, tiers, source, basis } (기준이 없으면 null) */
+function ageStandard(key, age) {
+  const std = AGE_STANDARDS[key];
+  if (!std) return null;
+  const tier = ageTierOf(age);
+  const t = std[tier] || std.mid;
+  return {
+    key, tier, tierLabel: AGE_TIERS[tier].label,
+    rec: t.rec, tiers: { min: t.min, rec: t.rec, enough: t.enough },
+    source: std.source, basis: std.basis
+  };
+}
+
+/* PRIORITY 권장액을 연령대 값으로 다시 채웁니다(20~70세 칸 모두).
+   40~50대 값은 v7.1까지 쓰던 사용자 기준점(암 5,000 · 뇌·심장 2,000 · 간병 10)과 같습니다. */
+(function applyAgeStandards() {
+  PRIORITY.forEach((item) => {
+    const std = AGE_STANDARDS[item.key];
+    if (!std) return;
+    ['20', '30', '40', '50', '60', '70'].forEach((age) => {
+      const t = std[ageTierOf(age)];
+      if (t && t.rec) item.rec[age] = t.rec;
+    });
+    item.tiersByAge = {};
+    AGE_TIER_ORDER.forEach((k) => { item.tiersByAge[k] = { min: std[k].min, rec: std[k].rec, enough: std[k].enough }; });
+    if (item.key !== 'surgery') item.tiers = item.tiersByAge.mid;
+  });
+})();
+
+/* 통계 기준을 세울 수 없는 항목 — 점수에는 참고로 남기되 색 판정(빨강/노랑)에서 뺍니다. */
+(function markNoStandardParts() {
+  const noStd = { cancer: ['recur'], care: ['basis', 'family', 'nursing', 'ltc'] };
+  PRIORITY.forEach((item) => {
+    (item.parts || []).forEach((p) => { if ((noStd[item.key] || []).indexOf(p.key) >= 0) p.std = false; });
+  });
+})();
+
+/* =========================================================
+   v7.2 — 6번째 '생활·실손' 참고 축 (18칸)
+   점수·판정은 5대 담보 그대로이고, 이 축은 '빠진 생활 보장이 있는지'만 참고로 보여 줍니다.
+   실손은 세대(1~5)로 이미 입력하므로 여기서는 특약·자기부담금을 확인합니다. */
+const LIVING_ITEMS = [
+  { key: 'deathInjury', label: '일반상해 사망', type: 'amount', hint: '상해 사망 보험금' },
+  { key: 'deathDisease', label: '질병 사망', type: 'amount', hint: '질병 사망 보험금' },
+  { key: 'disabilityInjury', label: '상해 후유장해', type: 'amount', hint: '3~100% 후유장해' },
+  { key: 'disabilityDisease', label: '질병 후유장해', type: 'amount', hint: '3~100% 후유장해' },
+  { key: 'driverFine', label: '운전자 벌금', type: 'amount', hint: '교통사고 벌금' },
+  { key: 'driverLawyer', label: '운전자 변호사선임비', type: 'amount', hint: '형사 변호 비용' },
+  { key: 'driverSupport', label: '자동차사고 처리지원금', type: 'amount', hint: '합의·소송 지원' },
+  { key: 'driverInjury', label: '자동차사고 부상치료비', type: 'amount', hint: '1~3급 부상' },
+  { key: 'liability', label: '가족일상생활 배상책임', type: 'amount', hint: '타인 신체·재물' },
+  { key: 'fire', label: '화재·재난 재산손해', type: 'amount', hint: '주택 화재' },
+  { key: 'fracture', label: '골절 진단비', type: 'amount', hint: '상해 골절' },
+  { key: 'burn', label: '화상 진단비', type: 'amount', hint: '상해 화상' },
+  { key: 'er', label: '응급실 내원비', type: 'amount', hint: '응급실 1회' },
+  { key: 'inpatientInjury', label: '상해 입원일당', type: 'amount', hint: '1일 기준' },
+  { key: 'inpatientDisease', label: '질병 입원일당', type: 'amount', hint: '1일 기준' },
+  { key: 'silsonDeduct', label: '실손 자기부담금', type: 'amount', hint: '회당 자기부담' },
+  { key: 'silsonNonPay', label: '실손 비급여 특약', type: 'bool', hint: '도수·주사·MRI' },
+  { key: 'toothCare', label: '치아 보존치료', type: 'bool', hint: '충치·신경치료' },
+  { key: 'toothProsthetic', label: '치아 보철치료', type: 'bool', hint: '임플란트·브릿지' }
+];
+
+/* v7.2 — 유사암 한도(일반암의 10~20%) · 뇌·심장 관혈/비관혈 괴리 안내 */
+const SIMILAR_CANCER_CAP = {
+  minPct: 10, maxPct: 20,
+  title: '유사암 한도는 일반암의 10~20%',
+  body: '갑상선암(C73)·기타피부암(C44)·제자리암(D00~D09)·경계성종양(D37~D48)은 일반암 진단비의 10~20% 한도로 따로 가입된 경우가 많습니다. 일반암 5,000만원이어도 유사암은 500~1,000만원만 나올 수 있으니, 일반암 금액과 별도로 유사암 금액을 확인하세요.'
+};
+const NEURO_SURGERY_GAP = {
+  title: '뇌·심장은 관혈(개두·개흉)과 비관혈(스텐트·색전술)을 나눠 확인',
+  body: '뇌·심장 수술비는 관혈(개두·개흉)과 비관혈(스텐트·코일색전술·혈전제거술)의 지급액이 크게 다릅니다. 비관혈만 있는데 관혈 수술을 받으면 수술비가 0원인 경우가 있으므로, 두 가지가 각각 담보에 있는지 증권에서 확인하세요.'
+};
+const CARE_PROOF_DOCS = [
+  { key: 'biz', label: '간병인 사업자등록번호', where: '간병업체 사업자등록증 사본 · 간병인 등록증', note: '개인 간병인이면 사업자등록증 또는 고유번호증' },
+  { key: 'bank', label: '계좌이체 내역', where: '간병비를 간병인·업체 계좌로 이체한 내역(현금 지급은 인정이 어렵습니다)', note: '이체일·금액·받는 사람이 보여야 합니다' },
+  { key: 'diary', label: '간병일지', where: '병원 간병일지 또는 업체 제공 간병기록(사용 일수·시간)', note: '1일 8시간(또는 6시간) 이상 사용 사실을 확인' }
+];

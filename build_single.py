@@ -21,8 +21,8 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(ROOT, "dist")
 
 SCRIPTS = [
-    "version.js", "security.js", "storage-idb.js", "content.js", "playbook.js",
-    "model.js", "pdfkit.js", "qr.js", "qrscan.js", "report.js", "client.js",
+    "version.js", "security.js", "storage-idb.js", "content.js", "dambo-dictionary.js",
+    "jobgrades.js", "ocr.js", "playbook.js", "model.js", "pdfkit.js", "qr.js", "qrscan.js", "report.js", "client.js",
     "live.js", "tools.js", "aftercare.js", "claimcheck.js", "publicdata.js", "memofill.js", "monetize.js", "backend.js", "smartkey.js",
     "import-parser.js", "inputhub.js", "app.js",
 ]
@@ -157,8 +157,9 @@ def build(protect=True):
     bundle = "\n".join("<script>\n%s\n</script>" % sources[name] for name in SCRIPTS)
     old = ('<script src="./version.js"></script>\n<script src="./security.js"></script>\n'
            '<script src="./storage-idb.js"></script>\n'
-           '<script src="./content.js"></script>\n<script src="./playbook.js"></script>\n'
-           '<script src="./model.js"></script>\n<script src="./pdfkit.js"></script>\n'
+           '<script src="./content.js"></script>\n<script src="./dambo-dictionary.js"></script>\n'
+           '<script src="./jobgrades.js"></script>\n<script src="./ocr.js"></script>\n'
+           '<script src="./playbook.js"></script>\n<script src="./model.js"></script>\n<script src="./pdfkit.js"></script>\n'
            '<script src="./qr.js"></script>\n<script src="./report.js"></script>\n<script src="./client.js"></script>\n<script src="./live.js"></script>\n<script src="./tools.js"></script>\n'
            '<script src="./aftercare.js"></script>\n<script src="./claimcheck.js"></script>\n<script src="./publicdata.js"></script>\n<script src="./memofill.js"></script>\n'
            '<script src="./monetize.js"></script>\n<script src="./backend.js"></script>\n'
