@@ -3900,7 +3900,7 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 #deck .slide[data-no="26"] .sl-note{padding:8px 10px;}
 
 </style>
-<!-- build 11a3e0f17b76 · protected=true -->
+<!-- build e57f820250fe · protected=true -->
 </head>
 <body>
 
@@ -11382,15 +11382,12 @@ const PLAN_FRONT = {
       const oc = (typeof OVER_COVERAGE !== 'undefined' ? OVER_COVERAGE : (m.overCoverage || []));
       if (oc.length) {
         y = s.sectionHead(s.ML, y, s.CW, '04', '과보장 점검 5종 — 더 넣기 전에 확인', m.sellLess ? '5대 담보 90% 이상: 오늘은 추가 가입을 권하지 않습니다' : '이미 충분한 항목이면 추가 가입 대신 조정합니다');
-        const half = Math.ceil(oc.length / 2);
         oc.forEach((o, i) => {
-          const col = Math.floor(i / half), row = i % half;
-          const x = s.ML + col * ((s.CW - 10) / 2 + 10);
-          const cy = y + row * 11.5;
-          s.text(`· ${o.t}`, x, cy, { size: 6.1, weight: 700, color: C.navy });
-          s.text(`— ${o.d}`, x + 86, cy, (s.CW - 10) / 2 - 86, { size: 5.8, weight: 500, color: C.ink2 });
+          const cy = y + i * 10.4;
+          s.text(`${i + 1}. ${o.t || o.label || ''}`, s.ML, cy, { size: 6.0, weight: 700, color: C.navy });
+          s.text(`— ${o.d || o.action || ''}`, s.ML + 186, cy, s.CW - 186, { size: 5.8, weight: 500, color: C.ink2 });
         });
-        y += half * 11.5 + 6;
+        y += oc.length * 10.4 + 4;
       }
 
       y = s.sectionHead(s.ML, y, s.CW, '05', '다음 단계 체크리스트', '고객과 함께 확인합니다');
@@ -11404,7 +11401,10 @@ const PLAN_FRONT = {
       y += 4;
 
       y = closingCard(s, y, m);
-      s.text(`상담일 ${m.dateLabel} · 이 리포트는 ${m.client.name}님 1인 기준으로 ${b.consultant}가 작성했습니다. 점수·권장선은 상담 보조용 자체 산식이며 실제 지급 여부·금액은 가입 상품의 약관과 증권이 기준입니다.`, s.ML, y + 6, { size: 5.6, weight: 500, color: C.muted });
+      const noteY = y + 5;
+      if (noteY < s.H - 58) {
+        s.para(`상담일 ${m.dateLabel} · ${m.client.name}님 1인 기준 · ${b.consultant} 작성. 점수·권장선은 상담 보조용 자체 산식이며 실제 지급은 약관·증권이 기준입니다.`, s.ML, noteY, s.CW, { size: 5.2, color: C.muted, lh: 1.35 });
+      }
       s.footer({ left: `${m.client.name}님 · 보장자산 요약`, right: '10 / 10' });
     });
 
