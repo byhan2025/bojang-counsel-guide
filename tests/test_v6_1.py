@@ -109,11 +109,13 @@ def main():
             # A. 버전
             # =========================================================
             ver = read(os.path.join(ROOT, "version.js"))
-            check("version.js 단일 상수 v6.1", re.findall(r"const APP_VERSION = '([^']+)'", ver) == ["v6.1"],
-                  re.findall(r"const APP_VERSION = '([^']+)'", ver))
-            check("window.APP_VERSION = v6.1", pg.evaluate("() => window.APP_VERSION") == "v6.1")
-            check("sw 캐시 bojang-guide-v6.1", "const CACHE = 'bojang-guide-v6.1';" in read(os.path.join(ROOT, "sw.js")))
-            check("manifest v6.1", "v6.1" in read(os.path.join(ROOT, "manifest.json")))
+            # v6.2 — 버전 검사는 version.js 상수를 기준으로 읽습니다(이후 버전에서도 회귀 검사로 유지)
+            VER = (re.findall(r"const APP_VERSION = '([^']+)'", ver) or [""])[0]
+            check("version.js 단일 상수 선언", len(re.findall(r"const APP_VERSION = '([^']+)'", ver)) == 1, VER)
+            check("version.js 버전 형식", bool(re.fullmatch(r"v\d+\.\d+(\.\d+)?", VER)), VER)
+            check("window.APP_VERSION = " + VER, pg.evaluate("() => window.APP_VERSION") == VER, pg.evaluate("() => window.APP_VERSION"))
+            check("sw 캐시 bojang-guide-" + VER, ("const CACHE = 'bojang-guide-%s';" % VER) in read(os.path.join(ROOT, "sw.js")))
+            check("manifest " + VER, VER in read(os.path.join(ROOT, "manifest.json")))
             check("README v6.1 절", "## v6.1에서 달라진 것" in read(os.path.join(ROOT, "README.md")))
             html = read(os.path.join(ROOT, "index.html"))
             check("index — v6.0 표기 잔재 0", "v6.0" not in html, "v6.0" in html)
@@ -441,8 +443,9 @@ def main():
             single = os.path.join(ROOT, "dist", "bojang-guide.single.html")
             if os.path.exists(single):
                 sh = read(single)
-                check("L 단일 HTML — v6.1", "v6.1" in sh)
-                check("L 단일 HTML — 표시 버전 v6.1", 'content="v6.1"' in sh and "<title>" in sh and "v6.1 · 고객 맞춤형" in sh)
+                check("L 단일 HTML — 버전 표기", VER in sh, VER)
+                check("L 단일 HTML — 표시 버전 " + VER,
+                      ('content="%s"' % VER) in sh and "<title>" in sh and (VER + " · 고객 맞춤형") in sh, VER)
             else:
                 check("L 단일 HTML 생성 필요", False, "build_single.py 미실행")
             check("J 콘솔 오류 0", len(errors) == 0, errors[:3])

@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v6.1 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
-<meta name="app-version" content="v6.1">
+<title>보장분석 라이프 리포트 v6.2 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<meta name="app-version" content="v6.2">
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
 
@@ -3899,10 +3899,177 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 #deck .slide[data-no="26"] .sil-table .ct-line{padding:1px 6px;font-size:11px;}
 #deck .slide[data-no="26"] .sl-note{padding:8px 10px;}
 
+/* =========================================================
+   v6.2 — ① 첫 화면 핵심 흐름 배너 (입력 → 분석 → PDF)
+   · 360px에서도 겹침 없이 12px 이상으로 읽히도록 3열 그리드 + 줄바꿈 허용
+   ========================================================= */
+.flow-banner{
+  margin-top:12px;padding:11px 12px 12px;border-radius:15px;
+  background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.18);
+}
+.flow-banner .fb-cap{
+  display:flex;align-items:center;gap:7px;margin-bottom:10px;
+  font-size:12px;font-weight:700;letter-spacing:-0.01em;color:#dbeaf7;
+}
+.flow-banner .fb-eyebrow{
+  flex:0 0 auto;font-size:12px;font-weight:900;letter-spacing:.02em;line-height:1.2;
+  padding:2px 7px;border-radius:6px;background:rgba(143,240,220,.16);
+  color:#8ff0dc;border:1px solid rgba(143,240,220,.32);
+}
+.flow-banner .fb-track{
+  display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);
+  align-items:start;gap:5px;
+}
+.flow-banner .fb-step{display:grid;justify-items:center;gap:4px;min-width:0;text-align:center;}
+.flow-banner .fb-no{
+  display:grid;place-items:center;width:22px;height:22px;border-radius:50%;
+  font-size:12px;font-weight:900;color:#0a1d33;background:#8ff0dc;
+}
+.flow-banner .fb-t{
+  font-size:12px;font-weight:800;line-height:1.35;letter-spacing:-0.02em;color:#fff;
+  word-break:keep-all;overflow-wrap:anywhere;
+}
+.flow-banner .fb-s{
+  font-size:12px;font-weight:600;line-height:1.3;color:#b9d0e2;
+  word-break:keep-all;overflow-wrap:anywhere;
+}
+.flow-banner .fb-arrow{
+  align-self:center;font-size:12px;font-weight:900;color:#7fb0d4;line-height:1;
+  padding-top:2px;
+}
+@media (max-width:400px){
+  .flow-banner{padding:10px 10px 11px;}
+  .flow-banner .fb-track{gap:4px;}
+  .flow-banner .fb-s{font-size:12px;}
+}
+
+/* ---------- v6.2 로그인 없는 샘플 체험 버튼 ---------- */
+.sample-demo{
+  display:flex;align-items:center;gap:10px;width:100%;margin-top:2px;
+  font-family:inherit;text-align:left;padding:11px 12px;border-radius:14px;
+  background:rgba(143,240,220,.10);border:1px dashed rgba(143,240,220,.5);color:#fff;
+}
+.sample-demo:active{transform:translateY(1px);}
+.sample-demo .sd-ico{font-size:16px;line-height:1;flex:0 0 auto;}
+.sample-demo .sd-txt{display:grid;gap:2px;flex:1;min-width:0;}
+.sample-demo .sd-txt b{font-size:12.5px;font-weight:800;letter-spacing:-0.02em;line-height:1.35;}
+.sample-demo .sd-txt em{font-style:normal;font-size:10.5px;font-weight:600;color:#a9d8cd;line-height:1.4;}
+.sample-demo .sd-go{font-size:13px;font-weight:900;color:#8ff0dc;flex:0 0 auto;}
+
+/* ---------- v6.2 샘플 체험 모드 배지 (고정 상단 바) ---------- */
+.sample-bar{
+  position:fixed;left:0;right:0;top:0;z-index:80;
+  display:flex;align-items:center;gap:8px;
+  padding:calc(6px + env(safe-area-inset-top)) 10px 6px;
+  background:linear-gradient(90deg,#0b7f74,#0fb093);
+  color:#fff;box-shadow:0 2px 10px rgba(6,26,44,.28);
+}
+.sample-bar[hidden]{display:none!important;}
+.sample-bar .sb-badge{
+  flex:0 0 auto;font-size:11px;font-weight:900;letter-spacing:-0.01em;
+  padding:3px 8px;border-radius:999px;background:#fff;color:#0b6f66;
+}
+.sample-bar .sb-name{
+  flex:1;min-width:0;font-size:11px;font-weight:700;line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#eafffb;
+}
+.sample-bar .sb-pdf{
+  flex:0 0 auto;font-family:inherit;font-size:11px;font-weight:800;
+  padding:5px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.45);
+  background:rgba(255,255,255,.1);color:#fff;white-space:nowrap;
+}
+.sample-bar .sb-menu{
+  position:absolute;left:10px;right:10px;top:100%;z-index:81;
+  display:grid;gap:5px;padding:8px;border-radius:12px;
+  background:#fff;box-shadow:0 10px 26px rgba(6,26,44,.28);
+}
+.sample-bar .sb-menu[hidden]{display:none!important;}
+.sample-bar .sb-menu button{
+  display:flex;align-items:center;gap:8px;text-align:left;font-family:inherit;
+  padding:8px 10px;border-radius:9px;border:1px solid #d8e6f3;background:#f6fafd;color:#16293e;
+}
+.sample-bar .sb-menu button b{font-size:11.5px;font-weight:800;}
+.sample-bar .sb-menu button span{font-size:10px;color:#5b7590;font-weight:600;}
+.sample-bar .sb-exit{
+  flex:0 0 auto;font-family:inherit;font-size:11px;font-weight:800;
+  padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.7);
+  background:rgba(255,255,255,.16);color:#fff;
+}
+@media (max-width:400px){
+  .sample-bar .sb-name{display:none;}
+}
+body.is-sample .deck{padding-top:var(--sample-bar-h,calc(34px + env(safe-area-inset-top)));}
+body.is-sample .deck-top{padding-top:calc(6px + env(safe-area-inset-top));}
+
+/* ---------- v6.2 데이터 흐름 1장 도식 (개인정보처리방침 모달) ---------- */
+.lg-flow{
+  margin:0 0 14px;padding:12px;border-radius:14px;
+  background:linear-gradient(165deg,#f3f8fd,#eef4fb);border:1px solid #d8e6f3;
+}
+.lg-flow .lgf-head{display:grid;gap:3px;margin-bottom:10px;}
+.lg-flow .lgf-head .eyebrow{font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#1264b0;}
+.lg-flow .lgf-head b{font-size:13px;font-weight:800;color:#16293e;letter-spacing:-0.02em;}
+.lg-flow .lgf-head span.lgf-sub{font-size:11px;color:#5b7590;font-weight:600;line-height:1.45;}
+/* 모달 폭이 좁으므로 3단을 세로 흐름으로 쌓아 한눈에 읽히게 합니다 (①↓②↓③) */
+.lg-flow .lgf-track{display:grid;grid-template-columns:minmax(0,1fr);gap:5px;}
+.lg-flow .lgf-node{
+  display:grid;gap:5px;align-content:start;padding:10px 11px 11px;border-radius:11px;
+  background:#fff;border:1px solid #d8e6f3;
+}
+.lg-flow .lgf-node .lgf-top{display:flex;align-items:center;gap:5px;}
+.lg-flow .lgf-no{
+  display:grid;place-items:center;width:18px;height:18px;border-radius:50%;flex:0 0 auto;
+  font-size:10.5px;font-weight:900;color:#fff;background:#16293e;
+}
+.lg-flow .lgf-node b{font-size:12px;font-weight:800;color:#16293e;letter-spacing:-0.02em;line-height:1.3;}
+.lg-flow .lgf-where{font-size:10.5px;font-weight:800;color:#1264b0;letter-spacing:-0.01em;}
+.lg-flow .lgf-node ul{display:grid;gap:3px;margin:1px 0 0;padding:0;}
+.lg-flow .lgf-node li{
+  font-size:10.5px;line-height:1.5;color:#3f5771;display:flex;gap:5px;word-break:keep-all;
+}
+.lg-flow .lgf-node li::before{content:"·";color:#1264b0;font-weight:900;}
+.lg-flow .lgf-node .lgf-keep{
+  margin-top:4px;padding-top:6px;border-top:1px dashed #d8e6f3;
+  font-size:10.5px;font-weight:700;color:#0b7f74;line-height:1.5;
+}
+.lg-flow .lgf-arrow{
+  justify-self:center;font-size:11px;font-weight:900;color:#7ba6cc;
+  transform:rotate(90deg);line-height:1;
+}
+.lg-flow .lgf-note{
+  margin-top:9px;font-size:10px;line-height:1.5;color:#5b7590;font-weight:600;
+}
+@media (max-width:520px){
+  .lg-flow{padding:11px;}
+  .lg-flow .lgf-head b{font-size:12.5px;}
+}
+
+/* ---------- v6.2 AI 보조자료 면책 (분석 결과 화면) ---------- */
+.disclaimer-official{
+  margin-top:14px;padding:9px 11px;border-radius:11px;
+  background:#f3f8fd;border:1px solid #d8e6f3;border-left:3px solid #16293e;
+  font-size:10.5px;line-height:1.6;color:#33475e;
+}
+.disclaimer-official b{font-weight:700;color:#16293e;}
+
 </style>
-<!-- build 9b82aa9b3252 · protected=true -->
+<!-- build 9db74a31d71a · protected=true -->
 </head>
 <body>
+
+<!-- ================= v6.2 샘플 체험 모드 배지 (가상 데이터 전용) ================= -->
+<div class="sample-bar" id="sample-bar" role="status" aria-live="polite" hidden>
+  <span class="sb-badge">샘플 체험 모드(가상 데이터)</span>
+  <span class="sb-name">가상 고객 김서연 · 저장·전송되지 않습니다</span>
+  <button type="button" class="sb-pdf" id="btn-sample-pdf" aria-expanded="false" aria-controls="sb-menu">PDF 3종</button>
+  <button type="button" class="sb-exit" id="btn-sample-exit">체험 종료</button>
+  <div class="sb-menu" id="sb-menu" hidden>
+    <button type="button" data-sample-pdf="summary"><b>1장 요약</b><span>핵심만 압축한 한 장</span></button>
+    <button type="button" data-sample-pdf="detail"><b>10장 상세</b><span>담보·갱신 구조까지</span></button>
+    <button type="button" data-sample-pdf="advisor"><b>30장 플랜북</b><span>설계사용 상담 대본</span></button>
+  </div>
+</div>
 
 <header class="app-header">
   <div class="header-inner">
@@ -3985,13 +4152,37 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
       </div>
       <div class="hh-top">
         <span class="hh-eyebrow" data-app-version-eyebrow>LIFE REPORT · BETA V6.0</span>
-        <span class="hh-ver" data-app-version-label>v6.1 · 2026.11</span>
+        <span class="hh-ver" data-app-version-label>v6.2 · 2026.11</span>
       </div>
       <h2>무엇을 하시겠어요?</h2>
       <p>상담 전 과정을 한 화면에서 시작합니다. 입력·계산과 PDF는 <b>이 기기에서</b> 하고, 로그인해 클라우드 동기화를 켜면 상담 스냅샷(이름·생년월일·연령대·성별·보험료·담보·계약·고지 체크)만 <b>Supabase(서울)</b>에 저장됩니다.</p>
       <div class="hh-client" id="home-client"></div>
       <div class="hh-plan" id="home-plan-banner"></div>
-      <!-- ============ v6.1 첫 화면 3버튼 ============ -->
+      <!-- ============ v6.2 첫 화면 핵심 흐름 배너 (① 입력 → ② 분석 → ③ PDF) ============ -->
+      <div class="flow-banner" id="flow-banner" aria-label="이 앱의 핵심 흐름 — 입력, 분석, PDF">
+        <div class="fb-cap"><span class="fb-eyebrow">FLOW</span>상담 한 건이 이렇게 이어집니다</div>
+        <div class="fb-track">
+          <div class="fb-step">
+            <span class="fb-no" aria-hidden="true">①</span>
+            <b class="fb-t">증권 촬영·간편 입력</b>
+            <span class="fb-s">사진 · PDF · 수기</span>
+          </div>
+          <span class="fb-arrow" aria-hidden="true">→</span>
+          <div class="fb-step">
+            <span class="fb-no" aria-hidden="true">②</span>
+            <b class="fb-t">5대 담보·약관·KCD 분석</b>
+            <span class="fb-s">암·뇌·심장·수술·간병</span>
+          </div>
+          <span class="fb-arrow" aria-hidden="true">→</span>
+          <div class="fb-step">
+            <span class="fb-no" aria-hidden="true">③</span>
+            <b class="fb-t">1·10·30장 PDF</b>
+            <span class="fb-s">카톡 요약까지</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ v6.1 첫 화면 3버튼 (v6.2 샘플 체험 추가) ============ -->
       <div class="hh-actions hh-actions-v59" id="home-three">
         <button type="button" class="hh-btn primary hh-three" id="btn-start-consult" data-inputhub="1">
           <span class="hb-no" aria-hidden="true">1</span>
@@ -4010,7 +4201,13 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
           <span class="hb-no" aria-hidden="true">3</span>
           <span class="hb-ico" aria-hidden="true">🎙</span><b>라이브 상담</b><span>오프닝부터 클로징까지 5단계 대본 · 질문 · 반론</span>
         </button>
-        <button type="button" class="sample-link" id="btn-sample">샘플 데이터로 체험하기 (연습·시연용) →</button>
+        <button type="button" class="sample-demo" id="btn-sample-demo">
+          <span class="sd-ico" aria-hidden="true">🎬</span>
+          <span class="sd-txt"><b>로그인 없이 진짜 30장 샘플 바로 열기</b>
+            <em>가상 고객 김서연 · 저장·이력과 섞이지 않는 체험 모드</em></span>
+          <span class="sd-go" aria-hidden="true">→</span>
+        </button>
+        <button type="button" class="sample-link" id="btn-sample">샘플 값만 채우기 (연습·시연용) →</button>
       </div>
 
       <button type="button" class="menu-toggle" id="btn-more-menu" aria-expanded="false" aria-controls="more-menu">
@@ -4149,7 +4346,7 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 
     <details class="app-foot-details">
       <summary>기준일 · 반영 기능 자세히 보기</summary>
-      <p class="app-foot">기준일 2026-11-17 · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
+      <p class="app-foot">기준일 2026-11-17 · v6.2 기준점(첫 화면 ①입력→②분석→③PDF 흐름 배너 · 로그인 없는 30장 샘플 체험 모드(가상 고객 격리·저장 차단) · 개인정보처리방침 데이터 흐름 1장 도식 · AI 보조자료 면책 문구(결과 화면·1·10·30장 PDF 꼬리말)) · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
     </details>
   </section>
 
@@ -4501,6 +4698,7 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
         </div>
       </div>
 
+      <p class="disclaimer disclaimer-official" id="ai-disclaimer"><b>본 자료는 상담 이해를 돕기 위한 보조 자료이며, 보험회사의 공식 심사·보장 판단·보험금 지급 결정을 대신하지 않습니다.</b></p>
       <p class="disclaimer">종합 점수·권장선은 상담 보조용 자체 산식입니다. 통계는 통계청 2024 · 중앙암등록본부 2023 · 중앙심뇌혈관질환센터 2023 · 건보공단 2025 공표 수치이며, 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.</p>
     </div>
 
@@ -4896,7 +5094,7 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
   </div>
 </div>
 
-<!-- ================= v6.1 정식 이용약관 · 개인정보처리방침 ================= -->
+<!-- ================= v6.1 정식 이용약관 · 개인정보처리방침 (v6.2 데이터 흐름 도식) ================= -->
 <div class="modal legal-modal" id="legal-modal" hidden>
   <div class="modal-card legal-card" role="dialog" aria-modal="true" aria-labelledby="legal-title">
     <button type="button" class="pw-x" id="legal-x" aria-label="닫기">×</button>
@@ -4916,7 +5114,7 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 
 <footer class="app-legal no-print" id="app-legal">
   <div class="al-brand">
-    <b>보장분석 라이프 리포트 <em data-app-version>v6.1</em></b>
+    <b>보장분석 라이프 리포트 <em data-app-version>v6.2</em></b>
     <span>상담 보조 도구 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다</span>
   </div>
   <div class="al-links">
@@ -4929,7 +5127,7 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 (function (root) {
   'use strict';
 
-  const APP_VERSION = 'v6.1';
+  const APP_VERSION = 'v6.2';
   const APP_VERSION_NUM = APP_VERSION.replace(/^v/, '');
   const APP_VERSION_MONTH = '2026.11';
   const APP_TAGLINE = '고객 맞춤형 보장 점검 · 리모델링 상담 가이드';
@@ -7999,6 +8197,8 @@ const PLAN_FRONT = {
 
   const won = (n) => Number(n || 0).toLocaleString('ko-KR');
 
+  const AI_DISCLAIMER = '본 자료는 상담 이해를 돕기 위한 보조 자료이며, 보험회사의 공식 심사·보장 판단·보험금 지급 결정을 대신하지 않습니다.';
+
   class Sheet {
     constructor() {
       const cv = document.createElement('canvas');
@@ -8234,7 +8434,8 @@ const PLAN_FRONT = {
     footer(o) {
       o = o || {};
       this.contentBottom = this.maxY || 0;
-      const y = this.H - 26;
+
+      const y = this.H - 32;
       const B = (root.BojangBrand && root.BojangBrand.get) ? root.BojangBrand.get() : null;
       const brandName = B ? B.name : '보장분석 라이프 리포트';
       const accent = B && root.BojangBrand.themes ? ((root.BojangBrand.themes[B.theme] || {}).deep || C.blue) : C.blue;
@@ -8242,21 +8443,24 @@ const PLAN_FRONT = {
       if (o.brandSlogan && B && B.slogan && !this.suppressBrandSlogan && (this.maxY || 0) < y - 12) {
         this.text(B.slogan, this.ML, y - 10, { size: 5.8, weight: 600, color: C.muted });
       }
-      this.text(o.left || '상담 보조용 자료 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다', this.ML, y + 5, { size: 6.2, weight: 500, color: C.muted });
+      this.text(o.left || '상담 보조용 자료 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다', this.ML, y + 4, { size: 6.0, weight: 500, color: C.muted });
       const right = o.right || brandName;
-      this.text(right, this.W - this.MR, y + 5, { size: 6.2, weight: 700, color: accent, align: 'right' });
+      this.text(right, this.W - this.MR, y + 4, { size: 6.0, weight: 700, color: accent, align: 'right' });
 
       if (o.right && o.right !== brandName) {
-        const w = this.measure(right, 6.2, 700);
-        this.text(brandName, this.W - this.MR - w - 8, y + 5, { size: 6.2, weight: 600, color: C.muted, align: 'right' });
+        const w = this.measure(right, 6.0, 700);
+        this.text(brandName, this.W - this.MR - w - 8, y + 4, { size: 6.0, weight: 600, color: C.muted, align: 'right' });
       }
 
       const idMark = o.idMark || this.idMark;
       if (idMark) {
         const leftText = o.left || '상담 보조용 자료 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다';
-        const lw = this.measure(leftText, 6.2, 500);
-        this.text(idMark, this.ML + lw + 8, y + 5.6, { size: 4.4, weight: 700, color: C.muted });
+        const lw = this.measure(leftText, 6.0, 500);
+        this.text(idMark, this.ML + lw + 8, y + 4.6, { size: 4.4, weight: 700, color: C.muted });
       }
+
+      const disc = o.disclaimer === false ? '' : (o.disclaimer || AI_DISCLAIMER);
+      if (disc) this.text(disc, this.ML, y + 13.0, { size: 5.2, weight: 500, color: C.muted });
     }
 
     watermark(text) {
@@ -9811,6 +10015,9 @@ const PLAN_FRONT = {
     return v.slice(0, cut).replace(/[\s(·,]+$/, '') + '…';
   }
 
+  function withAreaTag(x, o) {
+    return (o && o.withArea && x.area) ? '[' + x.area + '] ' : '';
+  }
   function customFit(s, items, w, size, withArea) {
     const parts = items.map((x) => `${withArea && x.area ? '[' + x.area + '] ' : ''}${cutName(x.name, 26)} ${won(x.amount)}만원(${CUSTOM_MODE_TXT[x.mode] || '통합형'})`);
     const tail = (n) => (n > 0 ? `   외 ${n}건` : '');
@@ -9824,13 +10031,31 @@ const PLAN_FRONT = {
   function customBox(s, y, items, o) {
     o = o || {};
     if (!items || !items.length) return y;
-    const h = o.h || 28;
+
+    const limit = s.limit || (s.H - s.MB);
+    const avail = limit - y;
+    if (avail < 14) return y;
+    const tight = avail < 34;
+    const h = Math.min(o.h || 28, Math.max(14, avail - 2));
     const total = items.reduce((a, x) => a + Number(x.amount || 0), 0);
     s.rect(s.ML, y, s.CW, h, { fill: o.fill || C.tint2, r: 4, stroke: C.tintLine });
     s.rect(s.ML, y, 2.4, h, { fill: o.accent || C.blue, r: 1.2 });
-    s.text(o.title || '증권 직접 기재 담보', s.ML + 10, y + 5, { size: 6.2, weight: 800, color: o.accent || C.blue });
-    s.text(`${items.length}건 · 합계 ${won(total)}만원`, s.ML + s.CW - 10, y + 5, { size: 5.8, weight: 600, color: C.muted, align: 'right' });
-    s.text(customFit(s, items, s.CW - 22, 6.0, !!o.withArea), s.ML + 10, y + 15.5, { size: 6.0, weight: 500, color: C.ink2 });
+
+    if (h < 24) {
+      const head = `${o.title || '증권 직접 기재 담보'} — `;
+      const body = items.map((x) => `${withAreaTag(x, o)}${cutName(x.name, 26)} ${won(x.amount)}만원(${CUSTOM_MODE_TXT[x.mode] || '통합형'})`).join('   ');
+      let line = head + body;
+      const wmax = s.CW - 22;
+      if (s.measure(line, 5.4, 600) > wmax) {
+        while (line.length > 8 && s.measure(line + '…', 5.4, 600) > wmax) line = line.slice(0, -1);
+        line += '…';
+      }
+      s.text(line, s.ML + 10, y + Math.max(2.6, (h - 7) / 2), { size: 5.4, weight: 600, color: C.ink2 });
+      return y + h + (o.gap || 0);
+    }
+    s.text(o.title || '증권 직접 기재 담보', s.ML + 10, y + (tight ? 3.6 : 5), { size: tight ? 5.8 : 6.2, weight: 800, color: o.accent || C.blue });
+    s.text(`${items.length}건 · 합계 ${won(total)}만원`, s.ML + s.CW - 10, y + (tight ? 3.6 : 5), { size: tight ? 5.4 : 5.8, weight: 600, color: C.muted, align: 'right' });
+    s.text(customFit(s, items, s.CW - 22, tight ? 5.5 : 6.0, !!o.withArea), s.ML + 10, y + h - (tight ? 8.6 : 12.5), { size: tight ? 5.5 : 6.0, weight: 500, color: C.ink2 });
     return y + h + (o.gap || 0);
   }
 
@@ -11330,15 +11555,15 @@ const PLAN_FRONT = {
       let y = H(s, 10, '보장자산 요약 & 실행 로드맵', '점수 요약, 남은 빈틈, 오늘부터의 실행 순서와 상담 창구를 한 장에 정리했습니다.');
       const b = brandInfo(m);
 
-      s.rect(s.ML, y, s.CW, 72, { fill: C.hero, r: 6 });
-      s.text('종합 보장등급', s.ML + 16, y + 11, { size: 6.4, weight: 700, color: C.heroInk });
-      s.text(m.letter, s.ML + 16, y + 20, { size: 28, weight: 800, color: '#fff' });
-      s.text(`${m.score} / 100점`, s.ML + 74, y + 30, { size: 9, weight: 700, color: C.heroOk });
-      s.text(m.grade.line, s.ML + 74, y + 44, { size: 7.2, weight: 500, color: C.heroInk2 });
-      s.text(`보완 필요 ${m.needList.length}개 항목`, s.W - s.MR - 16, y + 13, { size: 7.4, weight: 700, color: '#fff', align: 'right' });
-      s.text(`충분 ${m.counts.enough} · 점검 ${m.counts.check} · 부족 ${m.counts.short} · 없음 ${m.counts.none}`, s.W - s.MR - 16, y + 27, { size: 6.3, weight: 500, color: C.heroInk, align: 'right' });
-      s.text(`월 ${won(m.premium)}만원 · 연 ${won(m.annual)}만원 · 연 대비 진단비 ${m.ratio ? m.ratio.toFixed(1) + '배' : '—'}`, s.W - s.MR - 16, y + 44, { size: 6.3, weight: 600, color: C.heroInk2, align: 'right' });
-      y += 82;
+      s.rect(s.ML, y, s.CW, 62, { fill: C.hero, r: 6 });
+      s.text('종합 보장등급', s.ML + 16, y + 8, { size: 6.4, weight: 700, color: C.heroInk });
+      s.text(m.letter, s.ML + 16, y + 17, { size: 26, weight: 800, color: '#fff' });
+      s.text(`${m.score} / 100점`, s.ML + 70, y + 26, { size: 9, weight: 700, color: C.heroOk });
+      s.text(m.grade.line, s.ML + 70, y + 39, { size: 7.2, weight: 500, color: C.heroInk2 });
+      s.text(`보완 필요 ${m.needList.length}개 항목`, s.W - s.MR - 16, y + 10, { size: 7.4, weight: 700, color: '#fff', align: 'right' });
+      s.text(`충분 ${m.counts.enough} · 점검 ${m.counts.check} · 부족 ${m.counts.short} · 없음 ${m.counts.none}`, s.W - s.MR - 16, y + 23, { size: 6.3, weight: 500, color: C.heroInk, align: 'right' });
+      s.text(`월 ${won(m.premium)}만원 · 연 ${won(m.annual)}만원 · 연 대비 진단비 ${m.ratio ? m.ratio.toFixed(1) + '배' : '—'}`, s.W - s.MR - 16, y + 38, { size: 6.3, weight: 600, color: C.heroInk2, align: 'right' });
+      y += 72;
 
       y = s.sectionHead(s.ML, y, s.CW, '01', '세부 담보 점수', '14개 세부 담보 + 실손 — 50% 미만만 굵게 표시');
       const cw = (s.CW - 10) / 2;
@@ -11362,33 +11587,33 @@ const PLAN_FRONT = {
       const chipW = (s.CW - 8 * 4) / 5;
       chips.forEach((ch, i) => {
         const x = s.ML + i * (chipW + 8);
-        s.rect(x, y, chipW, 30, { fill: '#fff', r: 4, stroke: C.line });
-        s.text(ch[0], x + 8, y + 6, { size: 6.2, weight: 700, color: C.navy });
-        s.text(ch[1], x + 8, y + 17, { size: 5.4, weight: 500, color: C.muted });
+        s.rect(x, y, chipW, 28, { fill: '#fff', r: 4, stroke: C.line });
+        s.text(ch[0], x + 8, y + 5, { size: 6.2, weight: 700, color: C.navy });
+        s.text(ch[1], x + 8, y + 15, { size: 5.4, weight: 500, color: C.muted });
       });
-      y += 38;
+      y += 36;
 
       y = s.sectionHead(s.ML, y, s.CW, '03', '실행 로드맵', '한 번에 다 하지 않습니다');
       const cw3 = (s.CW - 16) / 3;
       m.steps.forEach((st, i) => {
         const x = s.ML + i * (cw3 + 8);
-        s.rect(x, y, cw3, 72, { fill: i === 0 ? C.tint : i === 1 ? C.orangeSoft : C.mintSoft, r: 5, stroke: C.line });
+        s.rect(x, y, cw3, 70, { fill: i === 0 ? C.tint : i === 1 ? C.orangeSoft : C.mintSoft, r: 5, stroke: C.line });
         s.rect(x, y, cw3, 2.6, { fill: [C.blue, C.orange, C.mint][i], r: 1.3 });
         s.text(`STEP ${i + 1}`, x + 9, y + 8, { size: 5.6, weight: 800, color: [C.blue, C.orange, C.mint][i] });
         s.text(st.title.replace(/^[^ ]+ — /, ''), x + 9, y + 17, { size: 8.6, weight: 800, color: C.navy });
         s.para(st.body, x + 9, y + 31, cw3 - 18, { size: 5.9, color: C.ink2, lh: 1.35 });
       });
-      y += 80;
+      y += 78;
 
       const oc = (typeof OVER_COVERAGE !== 'undefined' ? OVER_COVERAGE : (m.overCoverage || []));
       if (oc.length) {
         y = s.sectionHead(s.ML, y, s.CW, '04', '과보장 점검 5종 — 더 넣기 전에 확인', m.sellLess ? '5대 담보 90% 이상: 오늘은 추가 가입을 권하지 않습니다' : '이미 충분한 항목이면 추가 가입 대신 조정합니다');
         oc.forEach((o, i) => {
-          const cy = y + i * 10.4;
+          const cy = y + i * 9.8;
           s.text(`${i + 1}. ${o.t || o.label || ''}`, s.ML, cy, { size: 6.0, weight: 700, color: C.navy });
           s.text(`— ${o.d || o.action || ''}`, s.ML + 186, cy, s.CW - 186, { size: 5.8, weight: 500, color: C.ink2 });
         });
-        y += oc.length * 10.4 + 4;
+        y += oc.length * 9.8 + 4;
       }
 
       y = s.sectionHead(s.ML, y, s.CW, '05', '다음 단계 체크리스트', '고객과 함께 확인합니다');
@@ -11398,7 +11623,7 @@ const PLAN_FRONT = {
         '실손 세대 확인 후 유지 / 선택형 할인 / 5세대 전환 비교',
         '갱신 시점과 예상 보험료, 만기 이후 대안 확인',
         '고지의무 3·1·5(간편 3·2·5) 질문지 작성 · 다음 상담일 확정'
-      ], { size: 7, rowH: 14 });
+      ], { size: 7, rowH: 13 });
       y += 4;
 
       y = closingCard(s, y, m);
@@ -20300,6 +20525,8 @@ const PLAN_FRONT = {
     catch (e) { return false; }
   }
   function saveSession() {
+
+    if (state.sampleMode) return;
     lsSet(SKEY, {
       client: state.client, contracts: state.contracts, age: state.age, gender: state.gender,
       job: state.job, silson: state.silson, silson2: state.silson2 || 'unknown', premium: state.premium, cov: state.cov, flags: state.flags,
@@ -21412,6 +21639,8 @@ const PLAN_FRONT = {
     buildPdfBlob, doPdf, state, analyze, cursorModel: model, applyImport, switchView, renderAllInputs,
       newConsult: resetConsult, loadSample: loadSampleConsult, renderHistory, openMoreMenu,
       startNewConsult,
+
+    openSampleDemo, exitSampleDemo, isSampleMode: () => !!state.sampleMode,
     legal: { open: openLegal, close: closeLegal, render: renderLegal }, guardNumberInput,
     isSample: () => !!state.sample,
 
@@ -21524,6 +21753,8 @@ const PLAN_FRONT = {
   }
 
   function saveConsult() {
+
+    if (state.sampleMode) { toast('샘플 체험 모드에서는 저장되지 않습니다 — 가상 데이터입니다'); return; }
     if (!state.lastResult) { toast('먼저 진단해 주세요'); return; }
     if (!(window.BojangPlan && window.BojangPlan.unlocked()) && state.history.length >= 1) {
       window.BojangPlan.openPaywall('save2');
@@ -21757,6 +21988,106 @@ const PLAN_FRONT = {
     state.sample = true;
     applyPreset(a);
     toast('샘플 데이터를 채웠습니다 (연습·시연용) — 실제 고객 값으로 바꿔 주세요');
+  }
+
+  const SAMPLE_CUSTOMER = {
+    client: { name: '김서연', birth: '1988-05-14', consultant: '' },
+    age: '30', gender: '여', job: '2', silson: '4', silson2: 'unknown', premium: 23,
+    cov: {
+      cancer: { general: 3000, similar: 1000, treatment: { surgery: 500, drug: 0, radio: 0, icu: 0, extra: 0 }, recur: false },
+      brain: { dx: { vascular: 2000, stroke: 0, bleed: 0 }, treat: { lysis: 0, surgery: 500, icu: 0 } },
+      heart: { dx: { ischemic: 1000, ami: 0 }, treat: { lysis: 0, surgery: 0, icu: 0 } },
+      surgery: { disease: 30, disease15: 100, diseaseNdae: 0, diseaseNonPay: 0, injury: 20, injury15: 0 },
+      care: { daily: 0, nDaily: 0, basis: 'unknown', family: 'conditional', nursing: false, ltc: false, mode: 'normal' },
+      custom: { cancer: [], brain: [], heart: [], surgery: [], care: [] }
+    },
+    contracts: [
+      { insurer: '한빛생명', product: '무배당 종합보험', premium: 9, pay: '납입중', maturity: '100세', renew: false },
+      { insurer: '대성화재', product: '실손의료비 4세대', premium: 8, pay: '납입중', maturity: '1년 갱신', renew: true },
+      { insurer: '한빛생명', product: '암보험 (20년납)', premium: 6, pay: '납입중', maturity: '80세', renew: false }
+    ],
+    family: ['cancer', 'heart'],
+    disc: { m3_med: true },
+    flags: { savings: false, renew: true, manyRiders: false }
+  };
+  let sampleBackup = null;
+  function inSampleMode() { return !!state.sampleMode; }
+
+  function renderSampleBar() {
+    const on = inSampleMode();
+    const bar = $('#sample-bar');
+    if (bar) bar.hidden = !on;
+    const menu = $('#sb-menu');
+    if (menu && !on) { menu.hidden = true; const pb = $('#btn-sample-pdf'); if (pb) pb.setAttribute('aria-expanded', 'false'); }
+
+    if (on && bar) document.documentElement.style.setProperty('--sample-bar-h', Math.round(bar.getBoundingClientRect().height) + 'px');
+    document.body.classList.toggle('is-sample', on);
+    return on;
+  }
+
+  function openSampleDemo() {
+    if (inSampleMode()) return false;
+    sampleBackup = JSON.parse(JSON.stringify({
+      client: state.client, contracts: state.contracts, age: state.age, gender: state.gender,
+      job: state.job, silson: state.silson, silson2: state.silson2 || 'unknown', premium: state.premium,
+      cov: state.cov, flags: state.flags, family: state.family, disc: state.disc,
+      label: state.label, step: state.step, analyzed: !!state.analyzed, sample: !!state.sample
+    }));
+    const S = SAMPLE_CUSTOMER;
+    state.client = Object.assign({}, S.client, { dateLabel: todayLabel() });
+    state.age = S.age; state.gender = S.gender; state.job = S.job;
+    state.silson = S.silson; state.silson2 = S.silson2;
+    state.premium = S.premium;
+    state.cov = JSON.parse(JSON.stringify(S.cov));
+    state.contracts = JSON.parse(JSON.stringify(S.contracts));
+    state.family = S.family.slice();
+    state.disc = Object.assign({}, S.disc);
+    state.flags = Object.assign({}, S.flags);
+    state.label = '';
+    try { if (window.BojangModel && BojangModel.normalizeState) BojangModel.normalizeState(state); } catch (e) {   }
+    state.sample = true;
+    state.sampleMode = true;
+    state.analyzed = false; state.lastResult = null;
+    renderAllInputs();
+    $('#cust-label').value = '';
+    analyze();
+    switchView('analysis');
+    state.view = 'client';
+    applyView();
+    if (window.BojangDeck) window.BojangDeck.goTo(1, true);
+    renderSampleBar();
+    toast('샘플 체험 모드 — 가상 고객 김서연님으로 30장을 열었습니다 (저장되지 않음)');
+    return true;
+  }
+
+  function exitSampleDemo() {
+    if (!inSampleMode()) return false;
+    const b = sampleBackup; sampleBackup = null;
+    state.sampleMode = false;
+    if (window.BojangDeck) window.BojangDeck.hide();
+    state.view = 'advisor'; lsSet(VKEY, 'advisor');
+    if (b) {
+      state.client = Object.assign({}, b.client, { dateLabel: todayLabel() });
+      state.contracts = b.contracts; state.age = b.age; state.gender = b.gender;
+      state.job = b.job; state.silson = b.silson; state.silson2 = b.silson2;
+      state.premium = b.premium; state.cov = b.cov; state.flags = b.flags;
+      state.family = b.family; state.disc = b.disc; state.label = b.label;
+      state.sample = !!b.sample;
+      try { if (window.BojangModel && BojangModel.normalizeState) BojangModel.normalizeState(state); } catch (e) {   }
+      state.analyzed = false; state.lastResult = null;
+      $('#result').hidden = true; $('#save-bar').hidden = true;
+      renderAllInputs();
+      $('#cust-label').value = b.label || '';
+      if (b.analyzed) analyze();
+      setStep(b.step || 1, true);
+    } else {
+      resetConsult({ silent: true });
+    }
+    applyView(); renderSampleBar(); renderHome(); renderClientStrip(); renderSummary();
+    switchView('home');
+    try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch (e) {   }
+    toast('샘플 체험을 종료했습니다 — 내 상담 데이터는 그대로입니다');
+    return true;
   }
 
   function syncSegments() {
@@ -22592,6 +22923,7 @@ const PLAN_FRONT = {
   }
 
   function goHome() {
+    if (state.sampleMode) { exitSampleDemo(); return; }
     if (state.view === 'client') { state.view = 'advisor'; lsSet(VKEY, 'advisor'); applyView(); }
     switchView('home');
   }
@@ -22803,6 +23135,62 @@ const PLAN_FRONT = {
   };
   let legalTab = 'terms';
 
+  const DATA_FLOW = [
+    {
+      no: '1',
+      title: '브라우저 로컬 계산',
+      where: '이 기기 · IndexedDB',
+      items: [
+        '담보 계산·점수·PDF 생성을 이 기기 안에서 처리',
+        '상담 이력(IndexedDB) · 입력 중 상담 1건(localStorage)',
+        '계산을 위해 서버로 보내지 않음'
+      ],
+      keep: '보관: 이용자가 삭제할 때까지 · 삭제: 목록 × / 브라우저 데이터 삭제'
+    },
+    {
+      no: '2',
+      title: '자체 서버 저장',
+      where: 'Supabase · 서울 · 로그인 시',
+      items: [
+        '동기화를 켠 경우에만 상담 스냅샷 저장(이름·생년월일·연령대·성별·보험료·담보·계약·고지 체크)',
+        'HTTPS 암호화 · 계정 단위 접근 제어(RLS)',
+        '사진·기기 개인키는 저장하지 않음'
+      ],
+      keep: '보관: 상담 삭제·계정 정리 시까지'
+    },
+    {
+      no: '3',
+      title: '외부 AI 비전 분석',
+      where: '사진 업로드 시 1회 전달',
+      items: [
+        '보장분석표 사진을 AI로 읽을 때만 축소 이미지 1회 전달',
+        '앱·자체 서버에는 사진 저장 0건',
+        '전송 이미지의 보관·삭제는 해당 AI 공급자 API 정책을 따름'
+      ],
+      keep: '앱은 공급자 측 즉시 삭제를 보증하지 않음 · 사진 인식을 쓰지 않으면 전송 없음'
+    }
+  ];
+
+  function dataFlowHTML() {
+    return `<section class="lg-flow" aria-label="데이터 흐름 1장 도식">
+      <div class="lgf-head">
+        <span class="eyebrow">DATA FLOW · 1장 요약</span>
+        <b>고객 데이터가 거치는 세 지점</b>
+        <span class="lgf-sub">아래 세 지점 중 실제로 쓰이는 곳만 거칩니다. 로그인하지 않으면 ②는 쓰이지 않고, 사진 AI 인식을 쓰지 않으면 ③도 쓰이지 않습니다.</span>
+      </div>
+      <div class="lgf-track">
+        ${DATA_FLOW.map((n, i) => `${i ? '<span class="lgf-arrow" aria-hidden="true">→</span>' : ''}
+        <div class="lgf-node">
+          <div class="lgf-top"><span class="lgf-no" aria-hidden="true">${n.no}</span><b>${esc(n.title)}</b></div>
+          <span class="lgf-where">${esc(n.where)}</span>
+          <ul>${n.items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+          <span class="lgf-keep">${esc(n.keep)}</span>
+        </div>`).join('')}
+      </div>
+      <p class="lgf-note">1·10·30장 PDF와 30장 슬라이드는 이 기기에서 만들어지며, 서비스가 파일을 따로 보관하지 않습니다.</p>
+    </section>`;
+  }
+
   function renderLegal(tab) {
     const key = LEGAL[tab] ? tab : 'terms';
     legalTab = key;
@@ -22812,7 +23200,8 @@ const PLAN_FRONT = {
     const sub = $('#legal-sub');
     if (sub) sub.textContent = data.sub;
     const body = $('#legal-body');
-    if (body) body.innerHTML = data.sections.map((s) => `<section class="lg-sec"><h4>${esc(s[0])}</h4><p>${esc(s[1])}</p></section>`).join('');
+    if (body) body.innerHTML = (key === 'privacy' ? dataFlowHTML() : '')
+      + data.sections.map((s) => `<section class="lg-sec"><h4>${esc(s[0])}</h4><p>${esc(s[1])}</p></section>`).join('');
     $$('.legal-tab').forEach((b) => {
       const on = b.dataset.legalTab === key;
       b.classList.toggle('is-on', on);
@@ -22821,7 +23210,7 @@ const PLAN_FRONT = {
   }
 
   function openLegal(tab) {
-    try { if (window.BojangBackend && window.BojangBackend.closeAccount) window.BojangBackend.closeAccount(); } catch (e) {   }
+    try { if (window.BojangBackend && window.BojangBackend.closeAccount) window.BojangBackend.closeAccount(); } catch (e) { /* noop */ }
     renderLegal(tab || legalTab);
     const el = $('#legal-modal');
     if (el) el.hidden = false;
@@ -22833,6 +23222,9 @@ const PLAN_FRONT = {
     if (el) el.hidden = true;
   }
 
+  /* v5.9 — 음수 금액 입력 차단 (모든 숫자 입력칸 공통)
+     '-5' 처럼 입력하면 그 자리에서 0으로 되돌리고, 상한을 넘으면 상한으로 맞춥니다.
+     입력칸에 보이는 값과 요약·점수가 항상 같아집니다. */
   function guardNumberInput(e) {
     const el = e.target;
     if (!el || el.tagName !== 'INPUT' || el.type !== 'number') return;
@@ -22845,12 +23237,13 @@ const PLAN_FRONT = {
     if (n > cap) { el.value = String(cap); }
   }
 
+  /* ================= 초기화 ================= */
   async function init() {
     state.view = lsGet(VKEY, 'advisor') === 'client' ? 'client' : 'advisor';
-
-    try { if (window.BojangGuard) window.BojangGuard.init(); } catch (e) {   }
-
-    try { if (window.BojangStore) await window.BojangStore.migrate(); } catch (e) {   }
+    /* v5.9 — 공식 도메인 잠금(복제 경고 배너·서버 호출 차단) */
+    try { if (window.BojangGuard) window.BojangGuard.init(); } catch (e) { /* noop */ }
+    /* v5.9 — 이전 버전 localStorage 상담 이력을 IndexedDB 로 옮깁니다 */
+    try { if (window.BojangStore) await window.BojangStore.migrate(); } catch (e) { /* noop */ }
     loadSession();
 
     renderClientFields();
@@ -22866,7 +23259,7 @@ const PLAN_FRONT = {
     await loadHistory();
     renderQuick();
     if (window.BojangPlan) window.BojangPlan.init();
-
+    /* v5.4 — 계정·구독·서버 연결(실서버 모드 / 베타 오프라인 자동 판별) */
     if (window.BojangBackend) window.BojangBackend.init();
     renderHome();
     if (window.BojangTools) window.BojangTools.init();
@@ -22884,6 +23277,7 @@ const PLAN_FRONT = {
     setStep(1, true);
     renderSummary();
 
+    /* 메인 허브 · 화면 이동 */
     document.addEventListener('click', (e) => {
       const back = e.target.closest('[data-home]');
       if (back) { goHome(); return; }
@@ -22913,17 +23307,52 @@ const PLAN_FRONT = {
       }
     });
     $('#btn-home').addEventListener('click', goHome);
-
+    /* v5.9 — 첫 화면 3버튼 · 더보기 메뉴 · 샘플 체험 */
     const moreBtn = $('#btn-more-menu');
     if (moreBtn) moreBtn.addEventListener('click', () => openMoreMenu());
     const sampleBtn = $('#btn-sample');
     if (sampleBtn) sampleBtn.addEventListener('click', () => loadSampleConsult());
+    /* v6.2 — 로그인 없는 30장 샘플 체험 (가상 고객 · 완전 격리) */
+    const sampleDemoBtn = $('#btn-sample-demo');
+    if (sampleDemoBtn) sampleDemoBtn.addEventListener('click', () => openSampleDemo());
+    const sampleExitBtn = $('#btn-sample-exit');
+    if (sampleExitBtn) sampleExitBtn.addEventListener('click', () => exitSampleDemo());
+    /* v6.2 — 샘플 체험 중에도 1·10·30장 PDF를 바로 열어 볼 수 있게 (체험 전용 메뉴) */
+    const samplePdfBtn = $('#btn-sample-pdf');
+    const samplePdfMenu = $('#sb-menu');
+    const closeSamplePdf = () => {
+      if (!samplePdfMenu) return;
+      samplePdfMenu.hidden = true;
+      if (samplePdfBtn) samplePdfBtn.setAttribute('aria-expanded', 'false');
+    };
+    if (samplePdfBtn && samplePdfMenu) {
+      samplePdfBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const next = samplePdfMenu.hidden;
+        samplePdfMenu.hidden = !next;
+        samplePdfBtn.setAttribute('aria-expanded', String(next));
+      });
+      $$('[data-sample-pdf]', samplePdfMenu).forEach((b) => {
+        b.addEventListener('click', () => {
+          const kind = b.dataset.samplePdf;
+          closeSamplePdf();
+          toast(kind === 'advisor' ? '샘플 30장 플랜북 PDF를 만듭니다' : '샘플 PDF를 만듭니다');
+          doPdf(kind);
+        });
+      });
+      document.addEventListener('click', (e) => {
+        if (samplePdfMenu.hidden) return;
+        if (e.target.closest('#sb-menu') || e.target.closest('#btn-sample-pdf')) return;
+        closeSamplePdf();
+      });
+    }
     $('#btn-home-load').addEventListener('click', () => {
       if (!state.history.length) { toast('저장된 상담이 없습니다 — 새 상담으로 시작해 보세요'); }
       const el = $('#recent-list');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
+    /* v5.9 — 이용약관 · 개인정보처리방침 */
     document.addEventListener('click', (e) => {
       const lg = e.target.closest('[data-legal]');
       if (lg) { e.preventDefault(); openLegal(lg.dataset.legal); return; }
@@ -22938,7 +23367,7 @@ const PLAN_FRONT = {
       const lm = $('#legal-modal');
       if (e.key === 'Escape' && lm && !lm.hidden) closeLegal();
     });
-
+    /* 모든 숫자 입력칸 — 음수·상한 초과를 그 자리에서 막습니다 */
     document.addEventListener('input', guardNumberInput, true);
 
     $('#btn-json-export').addEventListener('click', exportJson);
@@ -23025,7 +23454,7 @@ const PLAN_FRONT = {
       if (b.id === 'btn-cloud-sync') return;
       b.addEventListener('click', () => syncHistoryFromCloud({ manual: true }));
     });
-
+    /* backend 는 window 로 이벤트를 쏩니다 — document 가 아니라 window 에서 받아야 합니다 */
     window.addEventListener('bojang:cloud', (e) => { ingestCloud(e.detail, { silent: true }); });
     if (cloudReady()) setTimeout(() => syncHistoryFromCloud({ silent: true }), 900);
     $('#btn-save').addEventListener('click', saveConsult);
@@ -23060,6 +23489,7 @@ const PLAN_FRONT = {
       switchView('guide');
     });
 
+    /* v5.7 — 퀵 가이드 투어 */
     const tourBtn = $('#btn-tour');
     if (tourBtn) tourBtn.addEventListener('click', tourStart);
     const tourHome = $('#btn-tour-home');
@@ -23099,12 +23529,14 @@ const PLAN_FRONT = {
         copy: copy,
         doPdf: doPdf,
         onExit: () => {
+          if (exitSampleDemo()) return;
           state.view = 'advisor';
           lsSet(VKEY, 'advisor');
           applyView();
           toast('상담자 화면으로 돌아왔습니다');
         },
         onHome: () => {
+          if (exitSampleDemo()) return;
           if (window.BojangDeck) window.BojangDeck.hide();
           state.view = 'advisor';
           lsSet(VKEY, 'advisor');

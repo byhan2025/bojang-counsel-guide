@@ -1,6 +1,6 @@
 /* 보장분석 상담 가이드 — 서비스 워커
    앱 셸을 캐시해 홈 화면에서 오프라인으로도 열립니다. */
-const CACHE = 'bojang-guide-v6.1';
+const CACHE = 'bojang-guide-v6.2';
 const ASSETS = [
   './',
   './index.html',

@@ -89,6 +89,9 @@
 
   const won = (n) => Number(n || 0).toLocaleString('ko-KR');
 
+  /* v6.2 — 1·10·30장 PDF 꼬리말 공통 면책 문구 (공식 심사·지급 판단을 대신하지 않음) */
+  const AI_DISCLAIMER = '본 자료는 상담 이해를 돕기 위한 보조 자료이며, 보험회사의 공식 심사·보장 판단·보험금 지급 결정을 대신하지 않습니다.';
+
   /* =========================================================
      Sheet — 한 페이지를 그리는 캔버스 래퍼
      ========================================================= */
@@ -332,7 +335,9 @@
     footer(o) {
       o = o || {};
       this.contentBottom = this.maxY || 0;
-      const y = this.H - 26;
+      /* v6.2 — 꼬리말을 두 줄(정보 + AI 면책)로 쓰기 위해 기준선을 4pt 올리고,
+         정보 줄과 면책 줄 사이에 최소 1.4pt 간격을 둡니다 (겹침 0) */
+      const y = this.H - 32;
       const B = (root.BojangBrand && root.BojangBrand.get) ? root.BojangBrand.get() : null;
       const brandName = B ? B.name : '보장분석 라이프 리포트';
       const accent = B && root.BojangBrand.themes ? ((root.BojangBrand.themes[B.theme] || {}).deep || C.blue) : C.blue;
@@ -340,21 +345,24 @@
       if (o.brandSlogan && B && B.slogan && !this.suppressBrandSlogan && (this.maxY || 0) < y - 12) {
         this.text(B.slogan, this.ML, y - 10, { size: 5.8, weight: 600, color: C.muted });
       }
-      this.text(o.left || '상담 보조용 자료 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다', this.ML, y + 5, { size: 6.2, weight: 500, color: C.muted });
+      this.text(o.left || '상담 보조용 자료 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다', this.ML, y + 4, { size: 6.0, weight: 500, color: C.muted });
       const right = o.right || brandName;
-      this.text(right, this.W - this.MR, y + 5, { size: 6.2, weight: 700, color: accent, align: 'right' });
+      this.text(right, this.W - this.MR, y + 4, { size: 6.0, weight: 700, color: accent, align: 'right' });
       /* 페이지 번호가 오는 꼬리말에도 브랜드 이름을 함께 남깁니다 */
       if (o.right && o.right !== brandName) {
-        const w = this.measure(right, 6.2, 700);
-        this.text(brandName, this.W - this.MR - w - 8, y + 5, { size: 6.2, weight: 600, color: C.muted, align: 'right' });
+        const w = this.measure(right, 6.0, 700);
+        this.text(brandName, this.W - this.MR - w - 8, y + 4, { size: 6.0, weight: 600, color: C.muted, align: 'right' });
       }
       /* v5.9 — 유출 추적 워터마크(ID-XXXX). 꼬리말 왼쪽 문구 바로 뒤에 아주 작게 */
       const idMark = o.idMark || this.idMark;
       if (idMark) {
         const leftText = o.left || '상담 보조용 자료 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다';
-        const lw = this.measure(leftText, 6.2, 500);
-        this.text(idMark, this.ML + lw + 8, y + 5.6, { size: 4.4, weight: 700, color: C.muted });
+        const lw = this.measure(leftText, 6.0, 500);
+        this.text(idMark, this.ML + lw + 8, y + 4.6, { size: 4.4, weight: 700, color: C.muted });
       }
+      /* v6.2 — 모든 PDF(1·10·30장) 꼬리말 하단에 AI 보조자료 면책을 한 줄로 고정 표기 */
+      const disc = o.disclaimer === false ? '' : (o.disclaimer || AI_DISCLAIMER);
+      if (disc) this.text(disc, this.ML, y + 13.0, { size: 5.2, weight: 500, color: C.muted });
     }
     /* 무료 체험판 워터마크 — 하단 띠 (베타 기간에는 표시되지 않습니다) */
     watermark(text) {

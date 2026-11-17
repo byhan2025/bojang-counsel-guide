@@ -79,6 +79,9 @@
     return v.slice(0, cut).replace(/[\s(·,]+$/, '') + '…';
   }
   /* 한 줄에 들어가는 길이로 항목을 줄이고 남은 건수를 붙입니다 (넘침 방지) */
+  function withAreaTag(x, o) {
+    return (o && o.withArea && x.area) ? '[' + x.area + '] ' : '';
+  }
   function customFit(s, items, w, size, withArea) {
     const parts = items.map((x) => `${withArea && x.area ? '[' + x.area + '] ' : ''}${cutName(x.name, 26)} ${won(x.amount)}만원(${CUSTOM_MODE_TXT[x.mode] || '통합형'})`);
     const tail = (n) => (n > 0 ? `   외 ${n}건` : '');
@@ -92,13 +95,32 @@
   function customBox(s, y, items, o) {
     o = o || {};
     if (!items || !items.length) return y;
-    const h = o.h || 28;
+    /* v6.2 — 꼬리말(면책) 영역을 침범하지 않도록 남은 자리 안에서만 그립니다.
+       자리가 좁으면 두 줄을 더 붙여 압축하고, 아주 좁으면 한 줄로 줄입니다. */
+    const limit = s.limit || (s.H - s.MB);
+    const avail = limit - y;
+    if (avail < 14) return y;
+    const tight = avail < 34;
+    const h = Math.min(o.h || 28, Math.max(14, avail - 2));
     const total = items.reduce((a, x) => a + Number(x.amount || 0), 0);
     s.rect(s.ML, y, s.CW, h, { fill: o.fill || C.tint2, r: 4, stroke: C.tintLine });
     s.rect(s.ML, y, 2.4, h, { fill: o.accent || C.blue, r: 1.2 });
-    s.text(o.title || '증권 직접 기재 담보', s.ML + 10, y + 5, { size: 6.2, weight: 800, color: o.accent || C.blue });
-    s.text(`${items.length}건 · 합계 ${won(total)}만원`, s.ML + s.CW - 10, y + 5, { size: 5.8, weight: 600, color: C.muted, align: 'right' });
-    s.text(customFit(s, items, s.CW - 22, 6.0, !!o.withArea), s.ML + 10, y + 15.5, { size: 6.0, weight: 500, color: C.ink2 });
+    /* 한 줄밖에 못 들어가는 자리(높이 24pt 미만)에서는 제목과 항목을 한 줄로 합쳐 겹침 없이 보여 줍니다 */
+    if (h < 24) {
+      const head = `${o.title || '증권 직접 기재 담보'} — `;
+      const body = items.map((x) => `${withAreaTag(x, o)}${cutName(x.name, 26)} ${won(x.amount)}만원(${CUSTOM_MODE_TXT[x.mode] || '통합형'})`).join('   ');
+      let line = head + body;
+      const wmax = s.CW - 22;
+      if (s.measure(line, 5.4, 600) > wmax) {
+        while (line.length > 8 && s.measure(line + '…', 5.4, 600) > wmax) line = line.slice(0, -1);
+        line += '…';
+      }
+      s.text(line, s.ML + 10, y + Math.max(2.6, (h - 7) / 2), { size: 5.4, weight: 600, color: C.ink2 });
+      return y + h + (o.gap || 0);
+    }
+    s.text(o.title || '증권 직접 기재 담보', s.ML + 10, y + (tight ? 3.6 : 5), { size: tight ? 5.8 : 6.2, weight: 800, color: o.accent || C.blue });
+    s.text(`${items.length}건 · 합계 ${won(total)}만원`, s.ML + s.CW - 10, y + (tight ? 3.6 : 5), { size: tight ? 5.4 : 5.8, weight: 600, color: C.muted, align: 'right' });
+    s.text(customFit(s, items, s.CW - 22, tight ? 5.5 : 6.0, !!o.withArea), s.ML + 10, y + h - (tight ? 8.6 : 12.5), { size: tight ? 5.5 : 6.0, weight: 500, color: C.ink2 });
     return y + h + (o.gap || 0);
   }
 
@@ -1656,15 +1678,16 @@
       let y = H(s, 10, '보장자산 요약 & 실행 로드맵', '점수 요약, 남은 빈틈, 오늘부터의 실행 순서와 상담 창구를 한 장에 정리했습니다.');
       const b = brandInfo(m);
       /* 등급 히어로 */
-      s.rect(s.ML, y, s.CW, 72, { fill: C.hero, r: 6 });
-      s.text('종합 보장등급', s.ML + 16, y + 11, { size: 6.4, weight: 700, color: C.heroInk });
-      s.text(m.letter, s.ML + 16, y + 20, { size: 28, weight: 800, color: '#fff' });
-      s.text(`${m.score} / 100점`, s.ML + 74, y + 30, { size: 9, weight: 700, color: C.heroOk });
-      s.text(m.grade.line, s.ML + 74, y + 44, { size: 7.2, weight: 500, color: C.heroInk2 });
-      s.text(`보완 필요 ${m.needList.length}개 항목`, s.W - s.MR - 16, y + 13, { size: 7.4, weight: 700, color: '#fff', align: 'right' });
-      s.text(`충분 ${m.counts.enough} · 점검 ${m.counts.check} · 부족 ${m.counts.short} · 없음 ${m.counts.none}`, s.W - s.MR - 16, y + 27, { size: 6.3, weight: 500, color: C.heroInk, align: 'right' });
-      s.text(`월 ${won(m.premium)}만원 · 연 ${won(m.annual)}만원 · 연 대비 진단비 ${m.ratio ? m.ratio.toFixed(1) + '배' : '—'}`, s.W - s.MR - 16, y + 44, { size: 6.3, weight: 600, color: C.heroInk2, align: 'right' });
-      y += 82;
+      /* v6.2 — 꼬리말 면책 한 줄을 넣기 위해 이 페이지의 세로 리듬을 22pt 압축했습니다 */
+      s.rect(s.ML, y, s.CW, 62, { fill: C.hero, r: 6 });
+      s.text('종합 보장등급', s.ML + 16, y + 8, { size: 6.4, weight: 700, color: C.heroInk });
+      s.text(m.letter, s.ML + 16, y + 17, { size: 26, weight: 800, color: '#fff' });
+      s.text(`${m.score} / 100점`, s.ML + 70, y + 26, { size: 9, weight: 700, color: C.heroOk });
+      s.text(m.grade.line, s.ML + 70, y + 39, { size: 7.2, weight: 500, color: C.heroInk2 });
+      s.text(`보완 필요 ${m.needList.length}개 항목`, s.W - s.MR - 16, y + 10, { size: 7.4, weight: 700, color: '#fff', align: 'right' });
+      s.text(`충분 ${m.counts.enough} · 점검 ${m.counts.check} · 부족 ${m.counts.short} · 없음 ${m.counts.none}`, s.W - s.MR - 16, y + 23, { size: 6.3, weight: 500, color: C.heroInk, align: 'right' });
+      s.text(`월 ${won(m.premium)}만원 · 연 ${won(m.annual)}만원 · 연 대비 진단비 ${m.ratio ? m.ratio.toFixed(1) + '배' : '—'}`, s.W - s.MR - 16, y + 38, { size: 6.3, weight: 600, color: C.heroInk2, align: 'right' });
+      y += 72;
 
       /* 01 세부 점수 분포 */
       y = s.sectionHead(s.ML, y, s.CW, '01', '세부 담보 점수', '14개 세부 담보 + 실손 — 50% 미만만 굵게 표시');
@@ -1690,35 +1713,35 @@
       const chipW = (s.CW - 8 * 4) / 5;
       chips.forEach((ch, i) => {
         const x = s.ML + i * (chipW + 8);
-        s.rect(x, y, chipW, 30, { fill: '#fff', r: 4, stroke: C.line });
-        s.text(ch[0], x + 8, y + 6, { size: 6.2, weight: 700, color: C.navy });
-        s.text(ch[1], x + 8, y + 17, { size: 5.4, weight: 500, color: C.muted });
+        s.rect(x, y, chipW, 28, { fill: '#fff', r: 4, stroke: C.line });
+        s.text(ch[0], x + 8, y + 5, { size: 6.2, weight: 700, color: C.navy });
+        s.text(ch[1], x + 8, y + 15, { size: 5.4, weight: 500, color: C.muted });
       });
-      y += 38;
+      y += 36;
 
       /* 03 실행 로드맵 */
       y = s.sectionHead(s.ML, y, s.CW, '03', '실행 로드맵', '한 번에 다 하지 않습니다');
       const cw3 = (s.CW - 16) / 3;
       m.steps.forEach((st, i) => {
         const x = s.ML + i * (cw3 + 8);
-        s.rect(x, y, cw3, 72, { fill: i === 0 ? C.tint : i === 1 ? C.orangeSoft : C.mintSoft, r: 5, stroke: C.line });
+        s.rect(x, y, cw3, 70, { fill: i === 0 ? C.tint : i === 1 ? C.orangeSoft : C.mintSoft, r: 5, stroke: C.line });
         s.rect(x, y, cw3, 2.6, { fill: [C.blue, C.orange, C.mint][i], r: 1.3 });
         s.text(`STEP ${i + 1}`, x + 9, y + 8, { size: 5.6, weight: 800, color: [C.blue, C.orange, C.mint][i] });
         s.text(st.title.replace(/^[^ ]+ — /, ''), x + 9, y + 17, { size: 8.6, weight: 800, color: C.navy });
         s.para(st.body, x + 9, y + 31, cw3 - 18, { size: 5.9, color: C.ink2, lh: 1.35 });
       });
-      y += 80;
+      y += 78;
 
       /* v6.1 — 과보장 점검 5종 · 팔지 않는 상담 */
       const oc = (typeof OVER_COVERAGE !== 'undefined' ? OVER_COVERAGE : (m.overCoverage || []));
       if (oc.length) {
         y = s.sectionHead(s.ML, y, s.CW, '04', '과보장 점검 5종 — 더 넣기 전에 확인', m.sellLess ? '5대 담보 90% 이상: 오늘은 추가 가입을 권하지 않습니다' : '이미 충분한 항목이면 추가 가입 대신 조정합니다');
         oc.forEach((o, i) => {
-          const cy = y + i * 10.4;
+          const cy = y + i * 9.8;
           s.text(`${i + 1}. ${o.t || o.label || ''}`, s.ML, cy, { size: 6.0, weight: 700, color: C.navy });
           s.text(`— ${o.d || o.action || ''}`, s.ML + 186, cy, s.CW - 186, { size: 5.8, weight: 500, color: C.ink2 });
         });
-        y += oc.length * 10.4 + 4;
+        y += oc.length * 9.8 + 4;
       }
 
       /* 05 체크리스트 */
@@ -1729,7 +1752,7 @@
         '실손 세대 확인 후 유지 / 선택형 할인 / 5세대 전환 비교',
         '갱신 시점과 예상 보험료, 만기 이후 대안 확인',
         '고지의무 3·1·5(간편 3·2·5) 질문지 작성 · 다음 상담일 확정'
-      ], { size: 7, rowH: 14 });
+      ], { size: 7, rowH: 13 });
       y += 4;
 
       /* 담당자 명함 */

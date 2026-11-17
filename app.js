@@ -90,6 +90,8 @@
     catch (e) { return false; }
   }
   function saveSession() {
+    /* v6.2 — 샘플 체험 모드에서는 어떤 경로로도 세션(입력 중 상담)을 덮어쓰지 않습니다 */
+    if (state.sampleMode) return;
     lsSet(SKEY, {
       client: state.client, contracts: state.contracts, age: state.age, gender: state.gender,
       job: state.job, silson: state.silson, silson2: state.silson2 || 'unknown', premium: state.premium, cov: state.cov, flags: state.flags,
@@ -1215,6 +1217,8 @@
     buildPdfBlob, doPdf, state, analyze, cursorModel: model, applyImport, switchView, renderAllInputs,
     /* v5.9 */ newConsult: resetConsult, loadSample: loadSampleConsult, renderHistory, openMoreMenu,
     /* v6.0 */ startNewConsult,
+    /* v6.2 — 샘플 체험 모드 */
+    openSampleDemo, exitSampleDemo, isSampleMode: () => !!state.sampleMode,
     legal: { open: openLegal, close: closeLegal, render: renderLegal }, guardNumberInput,
     isSample: () => !!state.sample,
     /* v6.1 — 도구 탭 고지 체크가 6단계 입력과 같은 state.disc를 쓰도록 */
@@ -1329,6 +1333,8 @@
   }
 
   function saveConsult() {
+    /* v6.2 — 샘플 체험 모드는 가상 데이터이므로 이력·클라우드에 저장하지 않습니다 */
+    if (state.sampleMode) { toast('샘플 체험 모드에서는 저장되지 않습니다 — 가상 데이터입니다'); return; }
     if (!state.lastResult) { toast('먼저 진단해 주세요'); return; }
     if (!(window.BojangPlan && window.BojangPlan.unlocked()) && state.history.length >= 1) {
       window.BojangPlan.openPaywall('save2');
@@ -1571,6 +1577,112 @@
     state.sample = true;
     applyPreset(a);
     toast('샘플 데이터를 채웠습니다 (연습·시연용) — 실제 고객 값으로 바꿔 주세요');
+  }
+
+  /* =========================================================
+     v6.2 — 로그인 없는 '진짜 30장 샘플 바로 열기'
+     · 가상 고객(김서연) 데이터로만 30장 슬라이드·1·10·30장 PDF를 체험합니다.
+     · 실제 상담과 완전히 격리합니다 — 세션 저장·상담 이력 저장·클라우드 전송을 모두 막고,
+       종료하면 체험 직전 상담 상태를 그대로 되돌립니다.
+     ========================================================= */
+  const SAMPLE_CUSTOMER = {
+    client: { name: '김서연', birth: '1988-05-14', consultant: '' },
+    age: '30', gender: '여', job: '2', silson: '4', silson2: 'unknown', premium: 23,
+    cov: {
+      cancer: { general: 3000, similar: 1000, treatment: { surgery: 500, drug: 0, radio: 0, icu: 0, extra: 0 }, recur: false },
+      brain: { dx: { vascular: 2000, stroke: 0, bleed: 0 }, treat: { lysis: 0, surgery: 500, icu: 0 } },
+      heart: { dx: { ischemic: 1000, ami: 0 }, treat: { lysis: 0, surgery: 0, icu: 0 } },
+      surgery: { disease: 30, disease15: 100, diseaseNdae: 0, diseaseNonPay: 0, injury: 20, injury15: 0 },
+      care: { daily: 0, nDaily: 0, basis: 'unknown', family: 'conditional', nursing: false, ltc: false, mode: 'normal' },
+      custom: { cancer: [], brain: [], heart: [], surgery: [], care: [] }
+    },
+    contracts: [
+      { insurer: '한빛생명', product: '무배당 종합보험', premium: 9, pay: '납입중', maturity: '100세', renew: false },
+      { insurer: '대성화재', product: '실손의료비 4세대', premium: 8, pay: '납입중', maturity: '1년 갱신', renew: true },
+      { insurer: '한빛생명', product: '암보험 (20년납)', premium: 6, pay: '납입중', maturity: '80세', renew: false }
+    ],
+    family: ['cancer', 'heart'],
+    disc: { m3_med: true },
+    flags: { savings: false, renew: true, manyRiders: false }
+  };
+  let sampleBackup = null;
+  function inSampleMode() { return !!state.sampleMode; }
+
+  function renderSampleBar() {
+    const on = inSampleMode();
+    const bar = $('#sample-bar');
+    if (bar) bar.hidden = !on;
+    const menu = $('#sb-menu');
+    if (menu && !on) { menu.hidden = true; const pb = $('#btn-sample-pdf'); if (pb) pb.setAttribute('aria-expanded', 'false'); }
+    /* 배지 실제 높이만큼 고객 화면(deck)을 내려 겹치지 않게 합니다 (노치·안전영역 포함) */
+    if (on && bar) document.documentElement.style.setProperty('--sample-bar-h', Math.round(bar.getBoundingClientRect().height) + 'px');
+    document.body.classList.toggle('is-sample', on);
+    return on;
+  }
+
+  function openSampleDemo() {
+    if (inSampleMode()) return false;
+    sampleBackup = JSON.parse(JSON.stringify({
+      client: state.client, contracts: state.contracts, age: state.age, gender: state.gender,
+      job: state.job, silson: state.silson, silson2: state.silson2 || 'unknown', premium: state.premium,
+      cov: state.cov, flags: state.flags, family: state.family, disc: state.disc,
+      label: state.label, step: state.step, analyzed: !!state.analyzed, sample: !!state.sample
+    }));
+    const S = SAMPLE_CUSTOMER;
+    state.client = Object.assign({}, S.client, { dateLabel: todayLabel() });
+    state.age = S.age; state.gender = S.gender; state.job = S.job;
+    state.silson = S.silson; state.silson2 = S.silson2;
+    state.premium = S.premium;
+    state.cov = JSON.parse(JSON.stringify(S.cov));
+    state.contracts = JSON.parse(JSON.stringify(S.contracts));
+    state.family = S.family.slice();
+    state.disc = Object.assign({}, S.disc);
+    state.flags = Object.assign({}, S.flags);
+    state.label = '';
+    try { if (window.BojangModel && BojangModel.normalizeState) BojangModel.normalizeState(state); } catch (e) { /* noop */ }
+    state.sample = true;
+    state.sampleMode = true;
+    state.analyzed = false; state.lastResult = null;
+    renderAllInputs();
+    $('#cust-label').value = '';
+    analyze();
+    switchView('analysis');
+    state.view = 'client';
+    applyView();
+    if (window.BojangDeck) window.BojangDeck.goTo(1, true);
+    renderSampleBar();
+    toast('샘플 체험 모드 — 가상 고객 김서연님으로 30장을 열었습니다 (저장되지 않음)');
+    return true;
+  }
+
+  function exitSampleDemo() {
+    if (!inSampleMode()) return false;
+    const b = sampleBackup; sampleBackup = null;
+    state.sampleMode = false;
+    if (window.BojangDeck) window.BojangDeck.hide();
+    state.view = 'advisor'; lsSet(VKEY, 'advisor');
+    if (b) {
+      state.client = Object.assign({}, b.client, { dateLabel: todayLabel() });
+      state.contracts = b.contracts; state.age = b.age; state.gender = b.gender;
+      state.job = b.job; state.silson = b.silson; state.silson2 = b.silson2;
+      state.premium = b.premium; state.cov = b.cov; state.flags = b.flags;
+      state.family = b.family; state.disc = b.disc; state.label = b.label;
+      state.sample = !!b.sample;
+      try { if (window.BojangModel && BojangModel.normalizeState) BojangModel.normalizeState(state); } catch (e) { /* noop */ }
+      state.analyzed = false; state.lastResult = null;
+      $('#result').hidden = true; $('#save-bar').hidden = true;
+      renderAllInputs();
+      $('#cust-label').value = b.label || '';
+      if (b.analyzed) analyze();
+      setStep(b.step || 1, true);
+    } else {
+      resetConsult({ silent: true });
+    }
+    applyView(); renderSampleBar(); renderHome(); renderClientStrip(); renderSummary();
+    switchView('home');
+    try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch (e) { /* noop */ }
+    toast('샘플 체험을 종료했습니다 — 내 상담 데이터는 그대로입니다');
+    return true;
   }
 
   function syncSegments() {
@@ -2421,6 +2533,7 @@
 
   /* ================= 화면 이동 ================= */
   function goHome() {
+    if (state.sampleMode) { exitSampleDemo(); return; }
     if (state.view === 'client') { state.view = 'advisor'; lsSet(VKEY, 'advisor'); applyView(); }
     switchView('home');
   }
@@ -2645,6 +2758,65 @@
   };
   let legalTab = 'terms';
 
+  /* v6.2 — 개인정보처리방침 맨 위의 '데이터 흐름 1장 도식'
+     실제 동작(로컬 계산 → 로그인 시 자체 서버 → 사진 인식 시 1회 외부 AI 전송)만 담고,
+     단계별 저장·삭제·보관 주기를 함께 적습니다. 과장·보증 표현은 쓰지 않습니다. */
+  const DATA_FLOW = [
+    {
+      no: '1',
+      title: '브라우저 로컬 계산',
+      where: '이 기기 · IndexedDB',
+      items: [
+        '담보 계산·점수·PDF 생성을 이 기기 안에서 처리',
+        '상담 이력(IndexedDB) · 입력 중 상담 1건(localStorage)',
+        '계산을 위해 서버로 보내지 않음'
+      ],
+      keep: '보관: 이용자가 삭제할 때까지 · 삭제: 목록 × / 브라우저 데이터 삭제'
+    },
+    {
+      no: '2',
+      title: '자체 서버 저장',
+      where: 'Supabase · 서울 · 로그인 시',
+      items: [
+        '동기화를 켠 경우에만 상담 스냅샷 저장(이름·생년월일·연령대·성별·보험료·담보·계약·고지 체크)',
+        'HTTPS 암호화 · 계정 단위 접근 제어(RLS)',
+        '사진·기기 개인키는 저장하지 않음'
+      ],
+      keep: '보관: 상담 삭제·계정 정리 시까지'
+    },
+    {
+      no: '3',
+      title: '외부 AI 비전 분석',
+      where: '사진 업로드 시 1회 전달',
+      items: [
+        '보장분석표 사진을 AI로 읽을 때만 축소 이미지 1회 전달',
+        '앱·자체 서버에는 사진 저장 0건',
+        '전송 이미지의 보관·삭제는 해당 AI 공급자 API 정책을 따름'
+      ],
+      keep: '앱은 공급자 측 즉시 삭제를 보증하지 않음 · 사진 인식을 쓰지 않으면 전송 없음'
+    }
+  ];
+
+  function dataFlowHTML() {
+    return `<section class="lg-flow" aria-label="데이터 흐름 1장 도식">
+      <div class="lgf-head">
+        <span class="eyebrow">DATA FLOW · 1장 요약</span>
+        <b>고객 데이터가 거치는 세 지점</b>
+        <span class="lgf-sub">아래 세 지점 중 실제로 쓰이는 곳만 거칩니다. 로그인하지 않으면 ②는 쓰이지 않고, 사진 AI 인식을 쓰지 않으면 ③도 쓰이지 않습니다.</span>
+      </div>
+      <div class="lgf-track">
+        ${DATA_FLOW.map((n, i) => `${i ? '<span class="lgf-arrow" aria-hidden="true">→</span>' : ''}
+        <div class="lgf-node">
+          <div class="lgf-top"><span class="lgf-no" aria-hidden="true">${n.no}</span><b>${esc(n.title)}</b></div>
+          <span class="lgf-where">${esc(n.where)}</span>
+          <ul>${n.items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+          <span class="lgf-keep">${esc(n.keep)}</span>
+        </div>`).join('')}
+      </div>
+      <p class="lgf-note">1·10·30장 PDF와 30장 슬라이드는 이 기기에서 만들어지며, 서비스가 파일을 따로 보관하지 않습니다.</p>
+    </section>`;
+  }
+
   function renderLegal(tab) {
     const key = LEGAL[tab] ? tab : 'terms';
     legalTab = key;
@@ -2654,7 +2826,8 @@
     const sub = $('#legal-sub');
     if (sub) sub.textContent = data.sub;
     const body = $('#legal-body');
-    if (body) body.innerHTML = data.sections.map((s) => `<section class="lg-sec"><h4>${esc(s[0])}</h4><p>${esc(s[1])}</p></section>`).join('');
+    if (body) body.innerHTML = (key === 'privacy' ? dataFlowHTML() : '')
+      + data.sections.map((s) => `<section class="lg-sec"><h4>${esc(s[0])}</h4><p>${esc(s[1])}</p></section>`).join('');
     $$('.legal-tab').forEach((b) => {
       const on = b.dataset.legalTab === key;
       b.classList.toggle('is-on', on);
@@ -2765,6 +2938,40 @@
     if (moreBtn) moreBtn.addEventListener('click', () => openMoreMenu());
     const sampleBtn = $('#btn-sample');
     if (sampleBtn) sampleBtn.addEventListener('click', () => loadSampleConsult());
+    /* v6.2 — 로그인 없는 30장 샘플 체험 (가상 고객 · 완전 격리) */
+    const sampleDemoBtn = $('#btn-sample-demo');
+    if (sampleDemoBtn) sampleDemoBtn.addEventListener('click', () => openSampleDemo());
+    const sampleExitBtn = $('#btn-sample-exit');
+    if (sampleExitBtn) sampleExitBtn.addEventListener('click', () => exitSampleDemo());
+    /* v6.2 — 샘플 체험 중에도 1·10·30장 PDF를 바로 열어 볼 수 있게 (체험 전용 메뉴) */
+    const samplePdfBtn = $('#btn-sample-pdf');
+    const samplePdfMenu = $('#sb-menu');
+    const closeSamplePdf = () => {
+      if (!samplePdfMenu) return;
+      samplePdfMenu.hidden = true;
+      if (samplePdfBtn) samplePdfBtn.setAttribute('aria-expanded', 'false');
+    };
+    if (samplePdfBtn && samplePdfMenu) {
+      samplePdfBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const next = samplePdfMenu.hidden;
+        samplePdfMenu.hidden = !next;
+        samplePdfBtn.setAttribute('aria-expanded', String(next));
+      });
+      $$('[data-sample-pdf]', samplePdfMenu).forEach((b) => {
+        b.addEventListener('click', () => {
+          const kind = b.dataset.samplePdf;
+          closeSamplePdf();
+          toast(kind === 'advisor' ? '샘플 30장 플랜북 PDF를 만듭니다' : '샘플 PDF를 만듭니다');
+          doPdf(kind);
+        });
+      });
+      document.addEventListener('click', (e) => {
+        if (samplePdfMenu.hidden) return;
+        if (e.target.closest('#sb-menu') || e.target.closest('#btn-sample-pdf')) return;
+        closeSamplePdf();
+      });
+    }
     $('#btn-home-load').addEventListener('click', () => {
       if (!state.history.length) { toast('저장된 상담이 없습니다 — 새 상담으로 시작해 보세요'); }
       const el = $('#recent-list');
@@ -2948,12 +3155,14 @@
         copy: copy,
         doPdf: doPdf,
         onExit: () => {
+          if (exitSampleDemo()) return;
           state.view = 'advisor';
           lsSet(VKEY, 'advisor');
           applyView();
           toast('상담자 화면으로 돌아왔습니다');
         },
         onHome: () => {
+          if (exitSampleDemo()) return;
           if (window.BojangDeck) window.BojangDeck.hide();
           state.view = 'advisor';
           lsSet(VKEY, 'advisor');

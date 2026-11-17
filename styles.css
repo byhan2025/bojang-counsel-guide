@@ -3881,3 +3881,157 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 #deck .slide[data-no="26"] .sil-now{padding:8px 11px;}
 #deck .slide[data-no="26"] .sil-table .ct-line{padding:1px 6px;font-size:11px;}
 #deck .slide[data-no="26"] .sl-note{padding:8px 10px;}
+
+/* =========================================================
+   v6.2 — ① 첫 화면 핵심 흐름 배너 (입력 → 분석 → PDF)
+   · 360px에서도 겹침 없이 12px 이상으로 읽히도록 3열 그리드 + 줄바꿈 허용
+   ========================================================= */
+.flow-banner{
+  margin-top:12px;padding:11px 12px 12px;border-radius:15px;
+  background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.18);
+}
+.flow-banner .fb-cap{
+  display:flex;align-items:center;gap:7px;margin-bottom:10px;
+  font-size:12px;font-weight:700;letter-spacing:-0.01em;color:#dbeaf7;
+}
+.flow-banner .fb-eyebrow{
+  flex:0 0 auto;font-size:12px;font-weight:900;letter-spacing:.02em;line-height:1.2;
+  padding:2px 7px;border-radius:6px;background:rgba(143,240,220,.16);
+  color:#8ff0dc;border:1px solid rgba(143,240,220,.32);
+}
+.flow-banner .fb-track{
+  display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);
+  align-items:start;gap:5px;
+}
+.flow-banner .fb-step{display:grid;justify-items:center;gap:4px;min-width:0;text-align:center;}
+.flow-banner .fb-no{
+  display:grid;place-items:center;width:22px;height:22px;border-radius:50%;
+  font-size:12px;font-weight:900;color:#0a1d33;background:#8ff0dc;
+}
+.flow-banner .fb-t{
+  font-size:12px;font-weight:800;line-height:1.35;letter-spacing:-0.02em;color:#fff;
+  word-break:keep-all;overflow-wrap:anywhere;
+}
+.flow-banner .fb-s{
+  font-size:12px;font-weight:600;line-height:1.3;color:#b9d0e2;
+  word-break:keep-all;overflow-wrap:anywhere;
+}
+.flow-banner .fb-arrow{
+  align-self:center;font-size:12px;font-weight:900;color:#7fb0d4;line-height:1;
+  padding-top:2px;
+}
+@media (max-width:400px){
+  .flow-banner{padding:10px 10px 11px;}
+  .flow-banner .fb-track{gap:4px;}
+  .flow-banner .fb-s{font-size:12px;}
+}
+
+/* ---------- v6.2 로그인 없는 샘플 체험 버튼 ---------- */
+.sample-demo{
+  display:flex;align-items:center;gap:10px;width:100%;margin-top:2px;
+  font-family:inherit;text-align:left;padding:11px 12px;border-radius:14px;
+  background:rgba(143,240,220,.10);border:1px dashed rgba(143,240,220,.5);color:#fff;
+}
+.sample-demo:active{transform:translateY(1px);}
+.sample-demo .sd-ico{font-size:16px;line-height:1;flex:0 0 auto;}
+.sample-demo .sd-txt{display:grid;gap:2px;flex:1;min-width:0;}
+.sample-demo .sd-txt b{font-size:12.5px;font-weight:800;letter-spacing:-0.02em;line-height:1.35;}
+.sample-demo .sd-txt em{font-style:normal;font-size:10.5px;font-weight:600;color:#a9d8cd;line-height:1.4;}
+.sample-demo .sd-go{font-size:13px;font-weight:900;color:#8ff0dc;flex:0 0 auto;}
+
+/* ---------- v6.2 샘플 체험 모드 배지 (고정 상단 바) ---------- */
+.sample-bar{
+  position:fixed;left:0;right:0;top:0;z-index:80;
+  display:flex;align-items:center;gap:8px;
+  padding:calc(6px + env(safe-area-inset-top)) 10px 6px;
+  background:linear-gradient(90deg,#0b7f74,#0fb093);
+  color:#fff;box-shadow:0 2px 10px rgba(6,26,44,.28);
+}
+.sample-bar[hidden]{display:none!important;}
+.sample-bar .sb-badge{
+  flex:0 0 auto;font-size:11px;font-weight:900;letter-spacing:-0.01em;
+  padding:3px 8px;border-radius:999px;background:#fff;color:#0b6f66;
+}
+.sample-bar .sb-name{
+  flex:1;min-width:0;font-size:11px;font-weight:700;line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#eafffb;
+}
+.sample-bar .sb-pdf{
+  flex:0 0 auto;font-family:inherit;font-size:11px;font-weight:800;
+  padding:5px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.45);
+  background:rgba(255,255,255,.1);color:#fff;white-space:nowrap;
+}
+.sample-bar .sb-menu{
+  position:absolute;left:10px;right:10px;top:100%;z-index:81;
+  display:grid;gap:5px;padding:8px;border-radius:12px;
+  background:#fff;box-shadow:0 10px 26px rgba(6,26,44,.28);
+}
+.sample-bar .sb-menu[hidden]{display:none!important;}
+.sample-bar .sb-menu button{
+  display:flex;align-items:center;gap:8px;text-align:left;font-family:inherit;
+  padding:8px 10px;border-radius:9px;border:1px solid #d8e6f3;background:#f6fafd;color:#16293e;
+}
+.sample-bar .sb-menu button b{font-size:11.5px;font-weight:800;}
+.sample-bar .sb-menu button span{font-size:10px;color:#5b7590;font-weight:600;}
+.sample-bar .sb-exit{
+  flex:0 0 auto;font-family:inherit;font-size:11px;font-weight:800;
+  padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.7);
+  background:rgba(255,255,255,.16);color:#fff;
+}
+@media (max-width:400px){
+  .sample-bar .sb-name{display:none;}
+}
+body.is-sample .deck{padding-top:var(--sample-bar-h,calc(34px + env(safe-area-inset-top)));}
+body.is-sample .deck-top{padding-top:calc(6px + env(safe-area-inset-top));}
+
+/* ---------- v6.2 데이터 흐름 1장 도식 (개인정보처리방침 모달) ---------- */
+.lg-flow{
+  margin:0 0 14px;padding:12px;border-radius:14px;
+  background:linear-gradient(165deg,#f3f8fd,#eef4fb);border:1px solid #d8e6f3;
+}
+.lg-flow .lgf-head{display:grid;gap:3px;margin-bottom:10px;}
+.lg-flow .lgf-head .eyebrow{font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#1264b0;}
+.lg-flow .lgf-head b{font-size:13px;font-weight:800;color:#16293e;letter-spacing:-0.02em;}
+.lg-flow .lgf-head span.lgf-sub{font-size:11px;color:#5b7590;font-weight:600;line-height:1.45;}
+/* 모달 폭이 좁으므로 3단을 세로 흐름으로 쌓아 한눈에 읽히게 합니다 (①↓②↓③) */
+.lg-flow .lgf-track{display:grid;grid-template-columns:minmax(0,1fr);gap:5px;}
+.lg-flow .lgf-node{
+  display:grid;gap:5px;align-content:start;padding:10px 11px 11px;border-radius:11px;
+  background:#fff;border:1px solid #d8e6f3;
+}
+.lg-flow .lgf-node .lgf-top{display:flex;align-items:center;gap:5px;}
+.lg-flow .lgf-no{
+  display:grid;place-items:center;width:18px;height:18px;border-radius:50%;flex:0 0 auto;
+  font-size:10.5px;font-weight:900;color:#fff;background:#16293e;
+}
+.lg-flow .lgf-node b{font-size:12px;font-weight:800;color:#16293e;letter-spacing:-0.02em;line-height:1.3;}
+.lg-flow .lgf-where{font-size:10.5px;font-weight:800;color:#1264b0;letter-spacing:-0.01em;}
+.lg-flow .lgf-node ul{display:grid;gap:3px;margin:1px 0 0;padding:0;}
+.lg-flow .lgf-node li{
+  font-size:10.5px;line-height:1.5;color:#3f5771;display:flex;gap:5px;word-break:keep-all;
+}
+.lg-flow .lgf-node li::before{content:"·";color:#1264b0;font-weight:900;}
+.lg-flow .lgf-node .lgf-keep{
+  margin-top:4px;padding-top:6px;border-top:1px dashed #d8e6f3;
+  font-size:10.5px;font-weight:700;color:#0b7f74;line-height:1.5;
+}
+.lg-flow .lgf-arrow{
+  justify-self:center;font-size:11px;font-weight:900;color:#7ba6cc;
+  transform:rotate(90deg);line-height:1;
+}
+.lg-flow .lgf-note{
+  margin-top:9px;font-size:10px;line-height:1.5;color:#5b7590;font-weight:600;
+}
+@media (max-width:520px){
+  .lg-flow{padding:11px;}
+  .lg-flow .lgf-head b{font-size:12.5px;}
+}
+
+/* ---------- v6.2 AI 보조자료 면책 (분석 결과 화면) ---------- */
+.disclaimer-official{
+  margin-top:14px;padding:9px 11px;border-radius:11px;
+  background:#f3f8fd;border:1px solid #d8e6f3;border-left:3px solid #16293e;
+  font-size:10.5px;line-height:1.6;color:#33475e;
+}
+.disclaimer-official b{font-weight:700;color:#16293e;}
