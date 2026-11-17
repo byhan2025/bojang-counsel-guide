@@ -143,223 +143,162 @@
 
   /* =========================================================
      ③ 고지사항(알릴의무) 판정 + 청구 서류 1탭 복사
+     v6.1 — content.js DISCLOSURE_ITEMS 단일 스키마 + BojangModel.disclosureJudge 단일 엔진.
+     6단계 입력과 같은 저장소(state.disc)를 쓰므로 새로고침·PDF·요약에 그대로 반영됩니다.
      ========================================================= */
-  /* v5.8 — 고지의무 인터랙티브 체크 (일반 3·1·5 / 간편 3·2·5)
-     · 청약서 문항을 기간 탭(3개월·1년·2년·5년)으로 나눠 탭 한 번으로 체크합니다.
-     · 체크 즉시 ① 일반심사 고지 필요 여부 ② 간편심사 3·2·5 통과 가능 여부
-       ③ 가입 전 준비 서류 ④ 유병자 간편심사 전환 가이드를 다시 그립니다.
-     · 3개월 항목은 2·5년 문항에도 함께 걸리므로 자동으로 함께 켭니다(끄면 함께 꺼짐). */
-  const DISC_ITEMS = [
-    { key: 'm3dx', label: '진단(또는 의심 소견)을 받음', period: '3개월', q: '3개월 진단' },
-    { key: 'm3adm', label: '입원', period: '3개월', q: '3개월 입원' },
-    { key: 'm3op', label: '수술', period: '3개월', q: '3개월 수술' },
-    { key: 'y1', label: '추가검사(재검사) 필요 소견', period: '1년', q: '1년 재검사' },
-    { key: 'y2adm', label: '입원', period: '2년', q: '2년 입원' },
-    { key: 'y2op', label: '수술', period: '2년', q: '2년 수술' },
-    { key: 'y3', label: '3년 이내 입원·수술', period: '5년', q: '3년 입원·수술' },
-    { key: 'y5adm', label: '입원', period: '5년', q: '5년 입원' },
-    { key: 'y5op', label: '수술', period: '5년', q: '5년 수술' },
-    { key: 'y5tx', label: '7일 이상 통원치료', period: '5년', q: '5년 통원 7일' },
-    { key: 'major', label: '중대질병 — 암·간경화·투석 중 만성신장질환·파킨슨·루게릭', period: '5년', q: '5년 중대질병' }
-  ];
-  const DISC_PERIODS = ['3개월', '1년', '2년', '5년'];
+  const DISC_PERIODS = ['\u0033\uac1c\uc6d4', '1\ub144', '2\ub144', '5\ub144'];
   const DISC_PERIOD_NOTE = {
-    '3개월': '최근 3개월 이내 — 일반·간편 모두 첫 문항',
-    '1년': '최근 1년 이내 — 일반심사에만 있는 문항',
-    '2년': '최근 2년 이내 — 간편심사 3·2·5의 가운데 문항',
-    '5년': '최근 5년 이내 — 일반 5년 문항 · 간편은 중대질병만'
+    '\u0033\uac1c\uc6d4': '\ucd5c\uadfc 3\uac1c\uc6d4 \uc774\ub0b4 \u2014 \ubaa8\ub4e0 \uc2ec\uc0ac \uacf5\ud1b5 \ubb38\ud56d',
+    '1\ub144': '\ucd5c\uadfc 1\ub144 \uc774\ub0b4 \u2014 \uc77c\ubc18\uc2ec\uc0ac\uc5d0\ub9cc \uc788\ub294 \ubb38\ud56d',
+    '2\ub144': '\ucd5c\uadfc 2\ub144 \uc774\ub0b4 \u2014 \uac04\ud3b8 3\u00b72\u00b75 \uac00\uc6b4\ub370 \ubb38\ud56d',
+    '5\ub144': '\ucd5c\uadfc 5\ub144 \uc774\ub0b4 \u2014 \uc77c\ubc18 5\ub144 \ubb38\ud56d \u00b7 \uac04\ud3b8\uc740 \uc911\ub300\uc9c8\ubcc0'
   };
-  const disc = {};
-  let discPeriod = '3개월';
+  let discPeriod = '\u0033\uac1c\uc6d4';
 
-  const on = (k) => !!disc[k];
-  const anyOn = (keys) => keys.some((k) => disc[k]);
-  const M3 = ['m3dx', 'm3adm', 'm3op'];
-  const Y2 = ['y2adm', 'y2op'];
-  const Y5 = ['y3', 'y5adm', 'y5op', 'y5tx'];
-
-  /* 일반심사(3·1·5) 고지 여부 */
+  function discBox() {
+    const S = root.__bojangState || {};
+    if (!S.disc || typeof S.disc !== 'object') S.disc = {};
+    return S.disc;
+  }
+  const on = (k) => !!discBox()[k];
+  function toggleDisc(k) {
+    const d = discBox();
+    d[k] = !d[k];
+    if (root.BojangApp && root.BojangApp.discTouched) root.BojangApp.discTouched();
+  }
+  function judgeDisclosure() {
+    const S = root.__bojangState || { disc: {} };
+    if (root.BojangModel && root.BojangModel.disclosureJudge) return root.BojangModel.disclosureJudge(S);
+    return { code: 'standard', label: '\ud310\uc815 \ubd88\uac00', tone: 'info', headline: '', advice: '', reasons: [], matrix: {}, checked: 0 };
+  }
+  /* v6.1 — 예전 이름 호환(도구 탭·테스트). 판정은 model의 단일 엔진을 그대로 쓴다. */
   function generalJudge() {
-    const hit = [];
-    if (anyOn(M3)) hit.push('3개월 진단·입원·수술');
-    if (on('y1')) hit.push('1년 재검사 소견');
-    if (anyOn(Y2)) hit.push('2년 이내 입원·수술');
-    if (anyOn(Y5)) hit.push('5년 이내 입원·수술·통원');
-    if (on('major')) hit.push('5년 이내 중대질병');
-    return { need: hit.length > 0, hits: hit };
+    const j = judgeDisclosure();
+    return { need: !!(j.matrix && j.matrix.general), hits: (j.reasons || []) };
   }
-  /* 간편심사(3·2·5) — 3개월 진단·입원·수술 / 2년 입원·수술 / 5년 중대질병 */
   function simpleJudge() {
-    const hit = [];
-    if (anyOn(M3)) hit.push('3개월 진단·입원·수술');
-    if (anyOn(Y2)) hit.push('2년 이내 입원·수술');
-    if (on('major')) hit.push('5년 이내 중대질병');
-    return { need: hit.length > 0, hits: hit };
-  }
-  /* 간편심사 3·5·5 참고 */
-  function simple355Judge() {
-    const hit = [];
-    if (anyOn(M3)) hit.push('3개월');
-    if (anyOn(Y5)) hit.push('5년 이내 입원·수술');
-    if (on('major')) hit.push('5년 중대질병');
-    return { need: hit.length > 0, hits: hit };
+    const j = judgeDisclosure();
+    return { need: !!(j.matrix && j.matrix.sim325), hits: [] };
   }
 
   /* 가입 전 준비 서류 — 체크된 항목에서 역산 */
   function discDocs() {
     const docs = [];
-    const add = (s) => { if (!docs.some((d) => d.title === s)) docs.push(s); };
-    if (on('m3dx')) add('진단서 또는 진료확인서 (질병명·진단일 기재)');
-    if (on('m3adm') || anyOn(Y2) || on('y5adm')) add('입·퇴원확인서 (입원일·퇴원일·병명)');
-    if (on('m3op') || anyOn(Y2) || on('y5op') || on('y3')) add('수술확인서 (수술명·수술일·수술방법)');
-    if (on('y1')) add('검사 결과지·판독지 (재검사 소견 문구 확인)');
-    if (on('y5tx')) add('통원 진료확인서·진료비 영수증 (7일 이상 여부)');
-    if (on('major')) add('진단서·조직검사(병리) 결과지, 투석·복약 기록');
+    const add = (s) => { if (!docs.some((d) => d.title === s)) docs.push({ title: s }); };
+    if (on('m3_dx')) add('\uc9c4\ub2e8\uc11c \ub610\ub294 \uc9c4\ub8cc\ud655\uc778\uc11c (\uc9c8\ubcc0\uba85\u00b7\uc9c4\ub2e8\uc77c \uae30\uc7ac)');
+    if (on('m3_in') || on('y2_inop') || on('y5_inop')) add('\uc785\u00b7\ud1f4\uc6d0\ud655\uc778\uc11c (\uc785\uc6d0\uc77c\u00b7\ud1f4\uc6d0\uc77c\u00b7\ubcc0\uba85)');
+    if (on('m3_op') || on('y2_inop') || on('y5_inop')) add('\uc218\uc220\ud655\uc778\uc11c (\uc218\uc220\uba85\u00b7\uc218\uc220\uc77c\u00b7\uc218\uc220\ubc29\ubc95)');
+    if (on('m3_med') || on('m3_daily') || on('y5_med30')) add('\ucc98\ubc29\uc804\u00b7\ubcf5\uc57d\ub0b4\uc5ed (\uc57d\ud488\uba85\u00b7\ubcf5\uc6a9\uae30\uac04)');
+    if (on('y1_test')) add('\uac80\uc0ac \uacb0\uacfc\uc9c0\u00b7\ud310\ub3c5\uc9c0 (\uc7ac\uac80\uc0ac \uc18c\uacac \ubb38\uad6c \ud655\uc778)');
+    if (on('y5_care7')) add('\ud1b5\uc6d0 \uc9c4\ub8cc\ud655\uc778\uc11c\u00b7\uc9c4\ub8cc\ube44 \uc601\uc218\uc99d (7\uc77c \uc774\uc0c1 \uc5ec\ubd80)');
+    if (on('y5_major') || ['y5m_cancer', 'y5m_leuk', 'y5m_htn', 'y5m_angina', 'y5m_mi', 'y5m_valve', 'y5m_cirr', 'y5m_stroke', 'y5m_dm', 'y5m_aids', 'y5m_ckd', 'y5m_park', 'y5m_als'].some(on)) add('\uc9c4\ub2e8\uc11c\u00b7\uc870\uc9c1\uac80\uc0ac(\ubcc0\ub9ac) \uacb0\uacfc\uc9c0, \ud22c\uc11d\u00b7\ubcf5\uc57d \uae30\ub85d');
     if (docs.length) {
-      add('청약서 문항과 대조할 날짜 정리표 (마지막 입원·수술일)');
-      add('최근 1년 처방전·복약내역 (약물치료 문항 대비)');
+      add('\uccad\uc57d\uc11c \ubb38\ud56d\uacfc \ub300\uc870\ud560 \ub0a0\uc9dc \uc815\ub9ac\ud45c (\ub9c8\uc9c0\ub9c9 \uc785\uc6d0\u00b7\uc218\uc220\uc77c)');
+      add('\uc9c4\ub2e8\uc11c\uc0c1 \ucf54\ub4dc \ud655\uc778 (I64\u00b7I69 \ub4f1 \ubc94\uc704 \ubd84\ub9ac)');
     }
     return docs;
   }
 
-  /* 권장 심사 판정 */
-  function judgeDisclosure() {
-    const g = generalJudge(), s = simpleJudge(), s355 = simple355Judge();
-    if (anyOn(M3)) {
-      return {
-        code: 'hold', label: '3개월 경과 후 재검토', tone: 'warn', g, s, s355,
-        head: '간편심사도 3개월 문항은 똑같이 묻습니다',
-        body: '치료·검사가 끝난 날부터 3개월이 지난 뒤가 가장 넓은 선택지입니다. 그 전에는 인수 조건이 제한되거나 거절될 수 있어 청약 일정을 조정합니다.'
-      };
-    }
-    if (!g.need) {
-      return {
-        code: 'standard', label: '표준체 권장 — 고지 대상 없음', tone: 'ok', g, s, s355,
-        head: '일반심사(3·1·5)에서 고지할 항목이 없습니다',
-        body: '간편심사는 보험료가 1.2~2배 수준으로 높고 보장이 제한될 수 있습니다. 표준체를 먼저 심사하는 것이 순서입니다.'
-      };
-    }
-    if (!s.need) {
-      return {
-        code: 'simple325', label: '유병자 간편심사 3·2·5 전환 검토', tone: 'need', g, s, s355,
-        head: '일반심사에서는 고지 대상이지만 3·2·5 문항은 피해 갑니다',
-        body: '2년을 넘긴 입원·수술(또는 1년 재검사 소견)은 일반심사 5년·1년 문항에만 걸립니다. 간편심사 3·2·5는 3개월·2년·5년 중대질병만 묻기 때문에 통과 가능성이 있습니다. 다만 보험료가 1.2~2배, 가입 금액·특약 제한이 따릅니다.'
-      };
-    }
-    if (!s355.need) {
-      return {
-        code: 'simple355', label: '간편심사 3·5·5 · 초간편 검토', tone: 'need', g, s, s355,
-        head: '3·2·5는 어렵고 3·5·5까지 내려가야 합니다',
-        body: '2년 이내 입원·수술은 3·2·5의 가운데 문항에 걸립니다. 3·5·5(5년 문항) 또는 초간편심사 상품을 함께 놓고, 일반심사 할증 인수와 보험료를 비교합니다.'
-      };
-    }
-    if (on('major')) {
-      return {
-        code: 'review', label: '인수 심사 필요 — 중대질병 이력', tone: 'gap', g, s, s355,
-        head: '5년 이내 중대질병은 모든 간편심사에서 고지 대상입니다',
-        body: '3·2·5와 3·5·5 모두 5년 문항에 들어갑니다. 일반심사 할증 인수나 상품별 인수 기준을 먼저 확인하고, 고지 후 부담보·할증 조건을 고객에게 서면으로 설명합니다.'
-      };
-    }
-    return {
-      code: 's355c', label: '간편심사도 어려움 — 초간편·할증 인수 검토', tone: 'gap', g, s, s355,
-      head: '3·2·5와 3·5·5 문항에 모두 걸립니다',
-      body: '초간편심사 상품이나 일반심사 할증 인수를 함께 놓고 판단합니다. 고지 후 부담보·할증 조건은 서면으로 설명하고 고객 확인을 받습니다.'
-    };
-  }
-
   function disclosureText() {
     const j = judgeDisclosure();
+    const d = discBox();
+    const items = (typeof DISCLOSURE_ITEMS !== 'undefined' ? DISCLOSURE_ITEMS : []);
+    const picked = items.filter((x) => d[x.key]).map((x) => `${x.period} ${x.label.split(' (')[0]}`);
     const L = [];
-    L.push('[고지의무 체크 결과]');
-    L.push(`· 체크된 항목: ${DISC_ITEMS.filter((d) => disc[d.key]).map((d) => `${d.period} ${d.label}`).join(' / ') || '없음'}`);
-    L.push(`· 일반심사(3·1·5): ${j.g.need ? '고지 필요 — ' + j.g.hits.join(', ') : '고지 대상 없음'}`);
-    L.push(`· 간편심사(3·2·5): ${j.s.need ? '고지 필요 — ' + j.s.hits.join(', ') : '통과 가능'}`);
-    L.push(`· 권장: ${j.label}`);
-    L.push(`· ${j.head}`);
+    L.push('[\uace0\uc9c0\uc758\ubb34 \uccb4\ud06c \uacb0\uacfc]');
+    L.push(`\u00b7 \uccb4\ud06c\ub41c \ud56d\ubaa9: ${picked.join(' / ') || '\uc5c6\uc74c'}`);
+    L.push(`\u00b7 \uc77c\ubc18\uc2ec\uc0ac(3\u00b71\u00b75): ${j.matrix && j.matrix.general ? '\uace0\uc9c0 \ud544\uc694' : '\uace0\uc9c0 \ub300\uc0c1 \uc5c6\uc74c'}`);
+    L.push(`\u00b7 \uac04\ud3b8\uc2ec\uc0ac(3\u00b72\u00b75): ${j.matrix && j.matrix.sim325 ? '\uace0\uc9c0 \ud544\uc694' : '\ud1b5\uacfc \uac00\ub2a5'}`);
+    L.push(`\u00b7 \uac04\ud3b8\uc2ec\uc0ac(3\u00b75\u00b75): ${j.matrix && j.matrix.sim355 ? '\uace0\uc9c0 \ud544\uc694' : '\ud1b5\uacfc \uac00\ub2a5'}`);
+    L.push(`\u00b7 \ucd08\uac04\ud3b8: ${j.matrix && j.matrix.ultra ? '\uace0\uc9c0 \ud544\uc694' : '\ud1b5\uacfc \uac00\ub2a5'}`);
+    L.push(`\u00b7 \uad8c\uc7a5: ${j.label}`);
+    L.push(`\u00b7 ${j.headline}`);
     const docs = discDocs();
     if (docs.length) {
-      L.push('· 준비 서류');
-      docs.forEach((d, i) => L.push(`  ${i + 1}) ${d}`));
+      L.push('\u00b7 \uc900\ube44 \uc11c\ub958');
+      docs.forEach((x, i) => L.push(`  ${i + 1}) ${x.title}`));
     }
-    L.push('※ 최종 판단은 상품별 청약서 문항과 인수 심사가 기준입니다.');
+    L.push('\u203b \ucd5c\uc885 \ud310\ub2e8\uc740 \uc0c1\ud488\ubcc4 \uccad\uc57d\uc11c \ubb38\ud56d\uacfc \uc778\uc218 \uc2ec\uc0ac\uac00 \uae30\uc900\uc785\ub2c8\ub2e4.');
     return L.join('\n');
+  }
+
+  function verdictCard(label, ok, hits, passLabel) {
+    return `<div class="disc-verdict tone-${ok ? 'gap' : 'ok'}">
+      <span class="dv-label">${label}</span>
+      <b>${ok ? '\uace0\uc9c0 \ud544\uc694' : (passLabel || '\ud1b5\uacfc \uac00\ub2a5')}</b>
+      <p class="dv-head">${ok ? '\ubb38\ud56d\uc5d0 \uac78\ub9bd\ub2c8\ub2e4' : '\uc774 \uc0c1\ud488\uc758 \ubb38\ud56d\uc740 \ud53c\ud574\uac11\ub2c8\ub2e4'}</p>
+      <p class="dv-body">${esc(hits || '')}</p>
+    </div>`;
   }
 
   function renderDisclosureTool() {
     const host = $('#disc-tool');
     if (!host) return;
     const j = judgeDisclosure();
-    const items = DISC_ITEMS.filter((d) => d.period === discPeriod);
+    const d = discBox();
+    const items = (typeof DISCLOSURE_ITEMS !== 'undefined' ? DISCLOSURE_ITEMS : []).filter((x) => x.period === discPeriod);
+    const majors = (typeof DISCLOSURE_MAJOR10 !== 'undefined' ? DISCLOSURE_MAJOR10 : []).concat(typeof DISCLOSURE_MAJOR5 !== 'undefined' ? DISCLOSURE_MAJOR5.filter((m) => !DISCLOSURE_MAJOR10.some((x) => x.key === m.key)) : []);
     const docs = discDocs();
     const badge = (p) => {
-      const n = DISC_ITEMS.filter((d) => d.period === p && disc[d.key]).length;
+      const n = (typeof DISCLOSURE_ITEMS !== 'undefined' ? DISCLOSURE_ITEMS : []).filter((x) => x.period === p && d[x.key]).length;
       return `<em>${n}</em>`;
     };
     host.innerHTML = `
-      <div class="disc-tabs" role="tablist" aria-label="고지 문항 기간">
+      <div class="disc-tabs" role="tablist" aria-label="\uace0\uc9c0 \ubb38\ud56d \uae30\uac04">
         ${DISC_PERIODS.map((p) => `<button type="button" role="tab" aria-selected="${p === discPeriod}"
-            class="disc-tab${p === discPeriod ? ' is-on' : ''}${DISC_ITEMS.some((d) => d.period === p && disc[d.key]) ? ' has-on' : ''}"
+            class="disc-tab${p === discPeriod ? ' is-on' : ''}${(typeof DISCLOSURE_ITEMS !== 'undefined' ? DISCLOSURE_ITEMS : []).some((x) => x.period === p && d[x.key]) ? ' has-on' : ''}"
             data-disc-period="${p}">${p}${badge(p)}</button>`).join('')}
       </div>
       <div class="disc-panel">
-        <div class="dp-head">${discPeriod} 이내 항목<span>${DISC_PERIOD_NOTE[discPeriod]}</span></div>
-        ${items.map((d) => `<button type="button" class="dc-tick${disc[d.key] ? ' is-on' : ''}" data-disc="${d.key}" aria-pressed="${!!disc[d.key]}">
-          <span class="dc-box" aria-hidden="true"></span><span>${esc(d.label)}</span></button>`).join('')}
+        <div class="dp-head">${discPeriod} \uc774\ub0b4 \ud56d\ubaa9<span>${DISC_PERIOD_NOTE[discPeriod]}</span></div>
+        ${items.map((x) => `<button type="button" class="dc-tick${d[x.key] ? ' is-on' : ''}" data-disc="${x.key}" aria-pressed="${!!d[x.key]}" title="${esc(x.hint || '')}">
+          <span class="dc-box" aria-hidden="true"></span><span>${esc(x.label)}${x.hint ? `<em>${esc(x.hint)}</em>` : ''}</span></button>`).join('')}
+        ${discPeriod === '5년' ? `<div class="disc-major">
+          <div class="dm-head">10\ub300 \uc9c8\ubcc0 \u00b7 \uac04\ud3b8 \uc911\ub300\uc9c8\ubcc0 \u2014 \ud574\ub2f9 \uc9c8\ubcc0\ub9c8\ub2e4 \uace0\uc9c0</div>
+          <div class="dm-chips">${majors.map((m2) => `<button type="button" class="dm-chip${d[m2.key] ? ' is-on' : ''}" data-disc="${m2.key}">${esc(m2.label)}</button>`).join('')}</div>
+        </div>` : ''}
       </div>
       <div class="disc-judge">
-        <div class="disc-verdict tone-${j.g.need ? 'gap' : 'ok'}">
-          <span class="dv-label">일반심사 3·1·5</span>
-          <b>${j.g.need ? '고지 필요' : '고지 대상 없음'}</b>
-          <p class="dv-head">${j.g.need ? esc(j.g.hits.join(' · ')) : '3개월·1년·5년 문항 모두 해당 없음'}</p>
-          <p class="dv-body">${j.g.need ? '청약서 문항에 사실대로 적어야 합니다. 말로만 알린 것은 고지로 인정되지 않습니다.' : '표준체 심사를 먼저 진행합니다.'}</p>
-        </div>
-        <div class="disc-verdict tone-${j.s.need ? 'need' : 'ok'}">
-          <span class="dv-label">간편심사 3·2·5</span>
-          <b>${j.s.need ? '고지 필요' : '통과 가능'}</b>
-          <p class="dv-head">${j.s.need ? esc(j.s.hits.join(' · ')) : '3개월·2년·5년 중대질병 문항 해당 없음'}</p>
-          <p class="dv-body">${j.s.need ? '3·5·5(5년 문항) 또는 초간편심사로 내려가야 합니다.' : '유병자 간편심사로 전환하면 보험료는 1.2~2배, 가입 금액·특약은 제한됩니다.'}</p>
-        </div>
+        ${verdictCard('\uc77c\ubc18\uc2ec\uc0ac 3\u00b71\u00b75', !!(j.matrix && j.matrix.general), j.matrix && j.matrix.general ? (j.reasons || []).join(' \u00b7 ') : '3\uac1c\uc6d4\u00b71\ub144\u00b75\ub144 \ubb38\ud56d \ubaa8\ub450 \ud574\ub2f9 \uc5c6\uc74c', '\uace0\uc9c0 \ub300\uc0c1 \uc5c6\uc74c')}
+        ${verdictCard('\uac04\ud3b8\uc0ac 3\u00b72\u00b75', !!(j.matrix && j.matrix.sim325), j.matrix && j.matrix.sim325 ? '3\uac1c\uc6d4\u00b72\ub144\u00b75\ub144 \uc911\ub300\uc9c8\ubcc0 \ubb38\ud56d \ud574\ub2f9' : '3\u00b72\u00b75 \ubb38\ud56d\uc740 \ud53c\ud574\uac10')}
+        ${verdictCard('\uac04\ud3b8\uc0ac 3\u00b75\u00b75', !!(j.matrix && j.matrix.sim355), j.matrix && j.matrix.sim355 ? '5\ub144 \uc785\uc6d0\u00b7\uc218\uc220 \ub610\ub294 \uc911\ub300\uc9c8\ubcc0 \ubb38\ud56d \ud574\ub2f9' : '3\u00b75\u00b75 \ubb38\ud56d\uc740 \ud53c\ud574\uac10')}
+        ${verdictCard('\ucd08\uac04\ud3b8(3\uac1c\uc6d4\u00b75\ub144 \uc554)', !!(j.matrix && j.matrix.ultra), j.matrix && j.matrix.ultra ? '3\uac1c\uc6d4 \uc785\uc6d0\u00b7\uc218\uc220 \ub610\ub294 5\ub144 \uc554' : '\ucd08\uac04\ud3b8 \ubb38\ud56d\ub3c4 \ud53c\ud574\uac10')}
       </div>
       <div class="disc-verdict tone-${j.tone}" id="disc-verdict-main">
-        <span class="dv-label">권장 심사</span>
+        <span class="dv-label">\uad8c\uc7a5 \uc2ec\uc0ac</span>
         <b>${esc(j.label)}</b>
-        <p class="dv-head">${esc(j.head)}</p>
-        <p class="dv-body">${esc(j.body)}</p>
+        <p class="dv-head">${esc(j.headline)}</p>
+        <p class="dv-body">${esc(j.advice)}</p>
       </div>
       <div class="disc-docs">
-        <div class="dd-head">가입 전 준비 서류 ${docs.length ? `(${docs.length}건)` : '— 체크하면 자동으로 정리됩니다'}</div>
+        <div class="dd-head">\uac00\uc785 \uc804 \uc900\ube44 \uc11c\ub958 ${docs.length ? `(${docs.length}\uac74)` : '\u2014 \uccb4\ud06c\ud558\uba74 \uc790\ub3d9\uc73c\ub85c \uc815\ub9ac\ub429\ub2c8\ub2e4'}</div>
         ${docs.length
-          ? `<ul>${docs.map((d) => `<li><span>${esc(d)}</span></li>`).join('')}</ul>`
-          : '<p class="empty">3개월·1년·2년·5년 항목을 탭해 체크하면 필요한 서류가 여기에 바로 나옵니다.</p>'}
+          ? `<ul>${docs.map((x) => `<li><span>${esc(x.title)}</span></li>`).join('')}</ul>`
+          : '<p class="empty">3\uac1c\uc6d4\u00b71\ub144\u00b72\ub144\u00b75\ub144 \ud56d\ubaa9\uc744 \ud0ed\ud574 \uccb4\ud06c\ud558\uba74 \ud544\uc694\ud55c \uc11c\ub958\uac00 \uc5ec\uae30\uc5d0 \ubc14\ub85c \ub098\uc635\ub2c8\ub2e4.</p>'}
       </div>
       <div class="disc-actions">
-        <button type="button" class="da-copy" id="disc-copy">결과·서류 카톡 복사</button>
-        <button type="button" id="disc-reset">체크 비우기</button>
+        <button type="button" class="da-copy" id="disc-copy">\uacb0\uacfc\u00b7\uc11c\ub958 \uce74\ud1a1 \ubcf5\uc0ac</button>
+        <button type="button" id="disc-reset">\uccb4\ud06c \ube44\uc6b0\uae30</button>
       </div>
-      <p class="fc-src">근거 · 보험업감독업무시행세칙 별표14 · 금융감독원 「주요 분쟁사례로 알아본 소비자 유의사항 — 간편보험편」(2024.6.13) · 상법 제651조(해지권: 안 날부터 1개월, 계약일부터 3년). 최종 판단은 상품별 청약서 문항과 인수 심사가 기준입니다.</p>
+      <p class="fc-src">\uadfc\uac70 \u00b7 \ubcf4\ud5d8\uc5c5\uac10\ub3c5\uc5c5\ubb34\uc2dc\ud589\uc138\uce59 \ubcc4\ud45c14 \u00b7 \uae08\uc735\uac10\ub3c5\uc6d0 \u300c\uc8fc\uc694 \ubd84\uc7c1\uc0ac\ub840\ub85c \uc54c\uc544\ubcf8 \uc18c\ube44\uc790 \uc720\uc758\uc0ac\ud56d \u2014 \uac04\ud3b8\ubcf4\ud5d8\ud3b8\u300d(2024.7.2) \u00b7 \uc0c1\ubc95 \uc81c651\uc870(\ud574\uc9c0\uad8c: \uc548 \ub0a0\ubd80\ud130 1\uac1c\uc6d4, \uacc4\uc57d\uc77c\ubd80\ud130 3\ub144). \ucd5c\uc885 \ud310\ub2e8\uc740 \uc0c1\ud488\ubcc4 \uccad\uc57d\uc11c \ubb38\ud56d\uacfc \uc778\uc218 \uc2ec\uc0ac\uac00 \uae30\uc900\uc785\ub2c8\ub2e4.</p>
     `;
     $$('[data-disc-period]', host).forEach((b) => b.addEventListener('click', () => {
       discPeriod = b.dataset.discPeriod;
       renderDisclosureTool();
     }));
     $$('[data-disc]', host).forEach((b) => b.addEventListener('click', () => {
-      const k = b.dataset.disc;
-      const nextVal = !disc[k];
-      disc[k] = nextVal;
-      /* 3개월 이력은 2년·5년 문항에도 함께 걸립니다 */
-      if (M3.indexOf(k) >= 0) {
-        ['y2adm', 'y2op', 'y3', 'y5adm', 'y5op'].forEach((x) => { disc[x] = nextVal; });
-      }
-      if (['y2adm', 'y2op'].indexOf(k) >= 0 && nextVal) { disc.y3 = true; }
+      toggleDisc(b.dataset.disc);
       renderDisclosureTool();
     }));
     const cp = $('#disc-copy', host);
-    if (cp) cp.addEventListener('click', () => copy(disclosureText(), '고지 체크 결과를 복사했습니다'));
+    if (cp) cp.addEventListener('click', () => copy(disclosureText(), '\uace0\uc9c0 \uccb4\ud06c \uacb0\uacfc\ub97c \ubcf5\uc0ac\ud588\uc2b5\ub2c8\ub2e4'));
     const rs = $('#disc-reset', host);
     if (rs) rs.addEventListener('click', () => {
-      Object.keys(disc).forEach((k) => { delete disc[k]; });
+      const d2 = discBox();
+      Object.keys(d2).forEach((k) => { delete d2[k]; });
+      if (root.BojangApp && root.BojangApp.discTouched) root.BojangApp.discTouched();
       renderDisclosureTool();
-      toast('체크를 비웠습니다');
+      toast('\uccb4\ud06c\ub97c \ube44\uc6e0\uc2b5\ub2c8\ub2e4');
     });
   }
 

@@ -235,13 +235,9 @@ def main():
             check("02p 진단비 분해 라벨", all(k in joined for k in ["암 진단비", "암 치료비 5종", "뇌·심장 진단비", "수술비 6축", "합계"]), [k for k in ["암 진단비", "암 치료비 5종", "뇌·심장 진단비", "수술비 6축"] if k not in joined])
             dx_acc = page.evaluate("""() => {
               const b = BojangReport.build('detail', BojangApp.state);
-              const st = b.m.state, dd = b.m.dx;
-              const cancer = Number(st.cov.cancer.general || 0) + Number(st.cov.cancer.similar || 0);
-              const treat = BojangModel.treatSum(st);
-              const neuro = Number(dd.brain.core || 0) + Number(dd.heart.core || 0);
-              const sg = st.cov.surgery;
-              const surg = ['disease','disease15','diseaseNdae','diseaseNonPay','injury','injury15'].reduce((a,k)=>a+Number(sg[k]||0),0);
-              return { sum: cancer + treat + neuro + surg, total: b.m.totalSum };
+              const x = b.m.sums || {};
+              const sum = (x.cancerDx||0)+(x.cancerTreat||0)+(x.brainDx||0)+(x.heartDx||0)+(x.brainTreat||0)+(x.heartTreat||0)+(x.surgery||0)+(x.customDx||0);
+              return { sum: sum, total: b.m.totalSum };
             }""")
             check("진단비 분해 합 = 총합", dx_acc["sum"] == dx_acc["total"], dx_acc)
             check("월 보험료 적정성 안내(소득 7~10%)", "세후 월 소득의 7~10%" in joined or "세후 월 소득 약" in joined, "세후 월 소득 약" in joined)
@@ -250,8 +246,8 @@ def main():
             check("05p 표적·면역항암 근거", "표적항암제" in joined and "면역항암제" in joined, (표적 := "표적항암제" in joined, "면역항암제" in joined))
             check("05p 연 수천만 원대 표기", "연 수천만" in joined, "연 수천만" in joined)
             check("06p 뇌경색 입원 62.7일·2,562만원", "62.7일" in joined and "2,562만원" in joined, ("62.7일" in joined, "2,562만원" in joined))
-            check("07p 간병 일당 12~15만원", "12~15만원" in joined, "12~15만원" in joined)
-            check("07p 월 360~450만원", "360~450만원" in joined, "360~450만원" in joined)
+            check("07p 간병 일당 10~17만원(2026.7 v2)", "10~17만원" in joined, "10~17만원" in joined)
+            check("07p 월 300~500만원(2026.7 v2)", "300~500만원" in joined, "300~500만원" in joined)
             check("07p 2026년 7월 8시간 기준", "하루 8시간" in joined and "2026.7" in joined, ("하루 8시간" in joined, "2026.7" in joined))
 
             # 리모델링 자동 연동 (조정안 없음 → 권장 시뮬레이션)

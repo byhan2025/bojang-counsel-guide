@@ -56,16 +56,21 @@ create table if not exists public.qr_challenges (
   issued_at     timestamptz not null default now(),
   expires_at    timestamptz not null,                -- issued_at + 180초
   status        text not null default 'pending'
-                check (status in ('pending', 'approved', 'rejected', 'expired', 'replaced')),
+                check (status in ('pending', 'approved', 'rejected', 'expired', 'replaced', 'discarded')),
   user_id       uuid references auth.users(id) on delete set null,
   device_id     text,
   phone_pub     jsonb,                               -- 폰 임시 ECDH 공개키
   enc           jsonb,                               -- { iv, ct } AES-GCM 암문 (서버 복호화 불가)
-  approve_sig   text,
+  approve_sig   text,                                -- 폰 기기 서명(양측 공개키·IV·암호문 해시 포함)
   session_token text,
   consumed_at   timestamptz,                         -- 단회 소비 표식
   created_at    timestamptz not null default now()
 );
+
+-- v6.1 — 이미 적용된 설치에도 'discarded'(시도 초과 폐기) 상태를 허용
+alter table public.qr_challenges drop constraint if exists qr_challenges_status_check;
+alter table public.qr_challenges add constraint qr_challenges_status_check
+  check (status in ('pending', 'approved', 'rejected', 'expired', 'replaced', 'discarded'));
 
 comment on table public.qr_challenges is
   '1회용 PC 로그인 챌린지. status=pending + expires_at>now() 에서만 승인되며 consumed_at 은 한 번만 채워집니다.';
@@ -106,8 +111,9 @@ alter table public.qr_challenges enable row level security;
 alter table public.pc_sessions enable row level security;
 
 drop policy if exists devices_own on public.registered_devices;
-create policy devices_own on public.registered_devices
-  for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+/* v6.1 — 인증 사용자 직접 쓰기 정책을 제거합니다. 쓰기는 Edge Function(service_role) 단일 경로만. */
+create policy devices_own_read on public.registered_devices
+  for select using (user_id = auth.uid());
 
 drop policy if exists challenges_anon_insert on public.qr_challenges;
 create policy challenges_anon_insert on public.qr_challenges
@@ -118,11 +124,14 @@ create policy challenges_own_read on public.qr_challenges
   for select using (user_id = auth.uid());
 
 drop policy if exists sessions_own on public.pc_sessions;
-create policy sessions_own on public.pc_sessions
-  for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+/* v6.1 — PC 세션 쓰기도 Edge Function 만. 사용자는 자기 세션을 조회만 합니다. */
+create policy sessions_own_read on public.pc_sessions
+  for select using (user_id = auth.uid());
 
-grant select, insert, update, delete on public.registered_devices to authenticated;
-grant select, insert, update, delete on public.pc_sessions to authenticated;
+grant select on public.registered_devices to authenticated;
+grant select on public.pc_sessions to authenticated;
+revoke insert, update, delete on public.registered_devices from anon, authenticated;
+revoke insert, update, delete on public.pc_sessions from anon, authenticated;
 grant insert on public.qr_challenges to anon, authenticated;
 grant select on public.qr_challenges to authenticated;
 grant all on public.registered_devices, public.qr_challenges, public.pc_sessions to service_role;

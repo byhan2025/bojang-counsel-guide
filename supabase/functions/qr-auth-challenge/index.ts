@@ -23,6 +23,9 @@ import { admin, audit } from "../_shared/supabase.ts";
 const TTL_SECONDS = 180;
 const RATE_LIMIT_PER_MIN = 8;
 const CODE_TTL_GUARD_MS = 1_000;
+/* v6.1 — 6자리 코드 추측 방어 */
+const PEEK_LIMIT_PER_MIN = 12;
+const PEEK_FAIL_LIMIT_10MIN = 25;
 
 type Jwk = { kty: string; crv: string; x: string; y: string };
 
@@ -90,6 +93,35 @@ async function rateLimited(req: Request): Promise<boolean> {
   return (count ?? 0) >= RATE_LIMIT_PER_MIN;
 }
 
+/** v6.1 — 코드 조회(peek) 시도 제한. 실패가 일정 수를 넘으면 대기 중인 챌린지를 모두 폐기합니다. */
+async function peekGuard(req: Request): Promise<{ blocked: boolean; discarded: number }> {
+  const ip = clientIp(req);
+  if (!ip) return { blocked: false, discarded: 0 };
+  const ipHash = await sha256Hex("qr-peek|" + ip);
+  const minuteAgo = new Date(Date.now() - 60_000).toISOString();
+  const tenAgo = new Date(Date.now() - 10 * 60_000).toISOString();
+  const [minute, ten] = await Promise.all([
+    admin().from("audit_logs").select("id", { count: "exact", head: true })
+      .eq("action", "smartkey.peek").eq("ip_hash", ipHash).gte("created_at", minuteAgo),
+    admin().from("audit_logs").select("id", { count: "exact", head: true })
+      .eq("action", "smartkey.peek_fail").eq("ip_hash", ipHash).gte("created_at", tenAgo),
+  ]);
+  if ((minute.count ?? 0) >= PEEK_LIMIT_PER_MIN) {
+    return { blocked: true, discarded: 0 };
+  }
+  if ((ten.count ?? 0) >= PEEK_FAIL_LIMIT_10MIN) {
+    /* 추측 공격으로 판단 — 10분 내 대기 중인 챌린지를 전부 폐기 */
+    const { data } = await admin()
+      .from("qr_challenges")
+      .update({ status: "discarded" })
+      .eq("status", "pending")
+      .gte("issued_at", tenAgo)
+      .select("id");
+    return { blocked: true, discarded: Array.isArray(data) ? data.length : 0 };
+  }
+  return { blocked: false, discarded: 0 };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return preflight();
   if (req.method !== "POST") return fail("method_not_allowed", 405);
@@ -108,6 +140,13 @@ Deno.serve(async (req: Request) => {
     if (action === "peek") {
       const code6 = String(body.code6 ?? "").replace(/\D/g, "");
       if (code6.length !== 6) return fail("bad-request", 400, "6자리 코드가 아닙니다.");
+      const ipHash = await sha256Hex("qr-peek|" + (clientIp(req) ?? ""));
+      const guard = await peekGuard(req);
+      await audit({
+        actor: "system", action: "smartkey.peek", target: code6.slice(0, 2) + "****",
+        detail: { blocked: guard.blocked, discarded: guard.discarded }, ipHash,
+      });
+      if (guard.blocked) return fail("rate-limit", 429, "시도가 너무 많습니다. 새 코드를 받아 주세요.");
       const { data, error } = await admin()
         .from("qr_challenges")
         .select("id, code6, code2, pc_pub_hash, pc_name, pc_platform, pc_host, issued_at, expires_at, status")
@@ -118,7 +157,10 @@ Deno.serve(async (req: Request) => {
         .limit(1)
         .maybeSingle();
       if (error) return fail("server_error", 500, error.message);
-      if (!data) return fail("not-found", 404, "코드를 찾을 수 없거나 만료되었습니다.");
+      if (!data) {
+        await audit({ actor: "system", action: "smartkey.peek_fail", target: code6.slice(0, 2) + "****", detail: {}, ipHash });
+        return fail("not-found", 404, "코드를 찾을 수 없거나 만료되었습니다.");
+      }
       return json({ ok: true, challenge: data });
     }
 

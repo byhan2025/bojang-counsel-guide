@@ -43,7 +43,7 @@ os.makedirs(OUT, exist_ok=True)
 os.makedirs(SHOTS, exist_ok=True)
 
 SEC_NOTICE = ("이름·주민등록번호 등 민감정보는 가리고 담보표만 촬영해 주세요. "
-              "촬영된 사진은 기기·서버 어디에도 저장되지 않고 분석 직후 메모리에서 즉시 파기됩니다.")
+              "촬영된 사진은 기기와 자체 Supabase DB에 저장되지 않고 브라우저 메모리에서 즉시 파기됩니다.")
 BADGE = "앱·자체 서버 미저장 · 메모리 파기 완료 ✓"
 BETA_NOTE_KEYS = ["정적 베타", "95% 이상", "PDF 파일 올리기", "텍스트 붙여넣기"]
 

@@ -17,7 +17,7 @@
 //   ⑤ pc_pub_hash · code2 일치 — 릴레이 치환 방어
 //   상담 데이터(enc)는 폰이 PC 공개키로 암호화한 암문이라 서버는 내용을 볼 수 없습니다.
 // =====================================================================
-import { fail, json, preflight } from "../_shared/http.ts";
+import { fail, json, preflight, sha256Hex } from "../_shared/http.ts";
 import { admin, audit, requireUser } from "../_shared/supabase.ts";
 
 type Jwk = { kty: string; crv: string; x: string; y: string };
@@ -71,9 +71,11 @@ function approveTranscript(ch: {
   code2: string;
   pc_pub_hash: string;
   issued_at: string;
-}, deviceId: string): string {
-  return ["SMK1", "approve", ch.id, ch.code2, ch.pc_pub_hash, deviceId, String(Date.parse(ch.issued_at))]
-    .join("|");
+}, deviceId: string, phonePubHash: string, iv: string, ctHash: string): string {
+  /* v6.1 — 양측 공개키 지문 · IV · 암호문 해시를 서명 범위에 넣어
+     중간에서 암호문만 바꿔치기하는 릴레이를 막습니다. */
+  return ["SMK1", "approve2", ch.id, ch.code2, ch.pc_pub_hash, deviceId, String(Date.parse(ch.issued_at)),
+    phonePubHash, iv, ctHash].join("|");
 }
 
 Deno.serve(async (req: Request) => {
@@ -140,20 +142,21 @@ Deno.serve(async (req: Request) => {
       return fail("code-mismatch", 409, "확인 숫자가 일치하지 않습니다.");
     }
     const signature = String(body.signature ?? "");
+    const phonePub = body.phone_pub;
+    const enc = body.enc as { iv?: string; ct?: string } | null;
+    if (!isJwk(phonePub) || !enc || !enc.iv || !enc.ct) {
+      return fail("bad-request", 400, "암호화된 상담 데이터가 없습니다.");
+    }
+    const phonePubHash = (await sha256Hex(JSON.stringify([phonePub.x, phonePub.y]))).slice(0, 16);
+    const ctHash = (await sha256Hex(String(enc.ct))).slice(0, 16);
     const okSig = signature &&
       await verifyDeviceSignature(dev.pub_ecdsa, signature, approveTranscript({
         id: ch.id,
         code2: ch.code2,
         pc_pub_hash: ch.pc_pub_hash,
         issued_at: ch.issued_at,
-      }, deviceId));
+      }, deviceId, phonePubHash, String(enc.iv), ctHash));
     if (!okSig) return fail("bad-signature", 401, "기기 서명 검증에 실패했습니다.");
-
-    const phonePub = body.phone_pub;
-    const enc = body.enc as { iv?: string; ct?: string } | null;
-    if (!isJwk(phonePub) || !enc || !enc.iv || !enc.ct) {
-      return fail("bad-request", 400, "암호화된 상담 데이터가 없습니다.");
-    }
 
     const sessionToken = randomToken("pcs_");
 

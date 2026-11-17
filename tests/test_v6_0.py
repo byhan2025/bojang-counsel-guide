@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""보장분석 라이프 리포트 v6.0 — 스마트키 · 계정 잠금 · 서버 보안 최종 검증.
+"""보장분석 라이프 리포트 v6.1 — 스마트키 · 계정 잠금 · 서버 보안 최종 검증.
 
 실행: python3 tests/test_v6_0.py
 
 검증 축
-  A. 버전 v6.0 통일 (version.js · sw.js · manifest · index.html · README · 단일 HTML · 보호 빌드)
+  A. 버전 v6.1 통일 (version.js · sw.js · manifest · index.html · README · 단일 HTML · 보호 빌드)
   B. PC 스마트키 — RAM 전용 키쌍 · 1회용 챌린지(6자리·2자리·180초) · QR 렌더 · 새 코드 교체
   C. 폰 스마트키 — 카메라 스캔(순수 JS) · 6자리 코드 폴백 · 승인 화면(기기명·시각·도메인·숫자·동일 크기 버튼)
   D. 승인 E2E — PIN/WebAuthn 분기 · 암호화 상담 데이터 전달 · 단회 소비 · PC 세션
@@ -116,7 +116,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         path = path[len("/mock"):]
         STORE["requests"].append(("GET", path))
         if path == "/auth/v1/health":
-            return self._json(200, {"name": "mock", "version": "v6.0"})
+            return self._json(200, {"name": "mock", "version": "v6.1"})
         if path in ("/rest/v1/subscriptions", "/rest/v1/brand_settings", "/rest/v1/clients"):
             return self._json(200, [])
         if path == "/rest/v1/consultations":
@@ -208,36 +208,36 @@ def main():
                                         args=["--no-sandbox", "--disable-dev-shm-usage"])
 
             # =========================================================
-            # A. 버전 v6.0 · 파일
+            # A. 버전 v6.1 · 파일
             # =========================================================
             ctx, pg, errors = new_page(browser, base)
             pg.evaluate(SET_CLIENT)
             ver_src = read(os.path.join(ROOT, "version.js"))
             decls = re.findall(r"const APP_VERSION = '([^']+)'", ver_src)
-            check("version.js — APP_VERSION 단일 선언 v6.0", decls == ["v6.0"], decls)
-            check("window.APP_VERSION = v6.0", pg.evaluate("() => window.APP_VERSION") == "v6.0", pg.evaluate("() => window.APP_VERSION"))
-            check("BojangVersion.value = v6.0", pg.evaluate("() => BojangVersion.value") == "v6.0", pg.evaluate("() => BojangVersion.value"))
-            check("헤더 eyebrow V6.0", pg.inner_text(".hh-eyebrow").strip() == "LIFE REPORT · BETA V6.0", pg.inner_text(".hh-eyebrow"))
-            check("헤더 버전 표기 v6.0", pg.inner_text(".hh-ver").strip().startswith("v6.0"), pg.inner_text(".hh-ver"))
-            check("타이틀 v6.0", "v6.0" in pg.title(), pg.title())
+            check("version.js — APP_VERSION 단일 선언 v6.1", decls == ["v6.1"], decls)
+            check("window.APP_VERSION = v6.1", pg.evaluate("() => window.APP_VERSION") == "v6.1", pg.evaluate("() => window.APP_VERSION"))
+            check("BojangVersion.value = v6.1", pg.evaluate("() => BojangVersion.value") == "v6.1", pg.evaluate("() => BojangVersion.value"))
+            check("헤더 eyebrow V6.1", pg.inner_text(".hh-eyebrow").strip() == "LIFE REPORT · BETA V6.1", pg.inner_text(".hh-eyebrow"))
+            check("헤더 버전 표기 v6.1", pg.inner_text(".hh-ver").strip().startswith("v6.1"), pg.inner_text(".hh-ver"))
+            check("타이틀 v6.1", "v6.1" in pg.title(), pg.title())
             pg.evaluate("() => BojangApp.switchView('analysis')")
             pg.wait_for_timeout(250)
-            check("입력 영역 eyebrow V6.0", "V6.0" in pg.inner_text("#view-analysis .intro-eyebrow"), pg.inner_text("#view-analysis .intro-eyebrow"))
+            check("입력 영역 eyebrow V6.1", "V6.1" in pg.inner_text("#view-analysis .intro-eyebrow"), pg.inner_text("#view-analysis .intro-eyebrow"))
             pg.evaluate("() => BojangPlan.openBetaModal('plan')")
             pg.wait_for_timeout(350)
-            check("모달 eyebrow V6.0", "V6.0" in pg.inner_text("#beta-modal .bm-eyebrow"), pg.inner_text("#beta-modal .bm-eyebrow"))
+            check("모달 eyebrow V6.1", "V6.1" in pg.inner_text("#beta-modal .bm-eyebrow"), pg.inner_text("#beta-modal .bm-eyebrow"))
             pg.evaluate("() => { const m = document.getElementById('beta-modal'); if (m) m.hidden = true; }")
 
             sw = read(os.path.join(ROOT, "sw.js"))
-            check("서비스워커 캐시 bojang-guide-v6.0", "const CACHE = 'bojang-guide-v6.0';" in sw, sw.splitlines()[2])
+            check("서비스워커 캐시 bojang-guide-v6.1", "const CACHE = 'bojang-guide-v6.1';" in sw, sw.splitlines()[2])
             check("서비스워커 자산 — smartkey.js · qrscan.js", "./smartkey.js" in sw and "./qrscan.js" in sw, "sw.js")
             man = json.loads(read(os.path.join(ROOT, "manifest.json")))
-            check("manifest v6.0", "v6.0" in man.get("name", ""), man.get("name"))
+            check("manifest v6.1", "v6.1" in man.get("name", ""), man.get("name"))
             check("manifest — 스마트키·원격 잠금·가림 설명", all(k in man.get("description", "") for k in ("스마트키", "원격 잠금", "가림")), man.get("description", "")[:70])
             html = read(os.path.join(ROOT, "index.html"))
             check("index.html — 스마트키 스크립트 로드", "./smartkey.js" in html and "./qrscan.js" in html, "index.html")
             check("index.html — v5.9 표기 잔재 0", "v5.9" not in html, "index.html")
-            check("README — v6.0 절", "## v6.0에서 달라진 것" in read(os.path.join(ROOT, "README.md")), "README.md")
+            check("README — v6.1 절", "## v6.1에서 달라진 것" in read(os.path.join(ROOT, "README.md")), "README.md")
             build_src = read(os.path.join(ROOT, "build_single.py"))
             check("build_single — 스마트키 자산 포함", "smartkey.js" in build_src and "qrscan.js" in build_src, "build")
             check("build_single — 보호 패스 함수", "def protect_js" in build_src and "REGEX_PREV" in build_src, "protect_js")
@@ -421,14 +421,17 @@ def main():
                 pc_name: 'Relay PC', pc_platform: 'x', pc_host: 'evil.example', issued_at: at, pc_sig: sig
               });
               const dev = BojangSmartKey.phone.device();
-              const priv = await C.importEcdsaPriv(dev.priv);
-              const transcript = ['SMK1','approve',out.challenge.id,out.challenge.code2,hash,dev.id,String(at)].join('|');
-              const goodSig = await C.signText(priv, transcript);
-              const wrongSig = await C.signText(priv, transcript + '|x');
+              const priv = await BojangSmartKey._internals.devicePriv(dev);
               const phoneKeys = await C.genEcdh();
               const phonePub = await C.exportPubJwk(phoneKeys.publicKey);
+              const enc = { iv: 'AAAA', ct: 'BBBB' };
+              const transcript = await BojangSmartKey._internals.transcriptApprove(
+                { id: out.challenge.id, code2: out.challenge.code2, pc_pub_hash: hash, issued_at: out.challenge.issued_at || at },
+                { device_id: dev.id }, phonePub, enc);
+              const goodSig = await C.signText(priv, transcript);
+              const wrongSig = await C.signText(priv, transcript + '|x');
               const base = { challenge_id: out.challenge.id, device_id: dev.id, code2: out.challenge.code2,
-                             pc_pub_hash: hash, phone_pub: phonePub, enc: { iv: 'AAAA', ct: 'BBBB' } };
+                             pc_pub_hash: hash, phone_pub: phonePub, enc };
               const badSigRes = await BojangSmartKey.server.approve(Object.assign({}, base, { signature: wrongSig }));
               const relayRes = await BojangSmartKey.server.approve(Object.assign({}, base, { signature: goodSig, pc_pub_hash: 'ffffffffffffffff' }));
               const codeRes = await BojangSmartKey.server.approve(Object.assign({}, base, { signature: goodSig, code2: '99' }));
@@ -460,12 +463,16 @@ def main():
               const poll = await BojangSmartKey.server.poll(ch.id);
               const dev = BojangSmartKey.phone.device();
               const C = BojangSmartKey.crypto;
-              const priv = await C.importEcdsaPriv(dev.priv);
+              const priv = await BojangSmartKey._internals.devicePriv(dev);
               const phoneKeys = await C.genEcdh();
               const phonePub = await C.exportPubJwk(phoneKeys.publicKey);
-              const sig = await C.signText(priv, ['SMK1','approve',ch.id,ch.code2,ch.pc_pub_hash,dev.id,String(ch.issued_at)].join('|'));
+              const enc = { iv: 'AAAA', ct: 'BBBB' };
+              const t = await BojangSmartKey._internals.transcriptApprove(
+                { id: ch.id, code2: ch.code2, pc_pub_hash: ch.pc_pub_hash, issued_at: ch.issued_at },
+                { device_id: dev.id }, phonePub, enc);
+              const sig = await C.signText(priv, t);
               const res = await BojangSmartKey.server.approve({ challenge_id: ch.id, device_id: dev.id, code2: ch.code2,
-                pc_pub_hash: ch.pc_pub_hash, phone_pub: phonePub, enc: { iv: 'AAAA', ct: 'BBBB' }, signature: sig });
+                pc_pub_hash: ch.pc_pub_hash, phone_pub: phonePub, enc, signature: sig });
               return { status: poll.status, err: res.error };
             }""")
             check("180초 만료 — 폴링이 expired", expired["status"] == "expired", expired["status"])
@@ -755,8 +762,8 @@ def main():
               out.push(['damage4', BojangQRScan.decodeGray(d.W, d.H, d.g) === t]);
               const s = render(t, 2.5, 4, 0, 0, 0);
               out.push(['small', BojangQRScan.decodeGray(s.W, s.H, s.g) === t]);
-              const kr = render('보장분석 스마트키 v6.0 테스트', 5, 4, 6, 0, 0);
-              out.push(['korean', BojangQRScan.decodeGray(kr.W, kr.H, kr.g) === '보장분석 스마트키 v6.0 테스트']);
+              const kr = render('보장분석 스마트키 v6.1 테스트', 5, 4, 6, 0, 0);
+              out.push(['korean', BojangQRScan.decodeGray(kr.W, kr.H, kr.g) === '보장분석 스마트키 v6.1 테스트']);
               return out;
             }""")
             for name, ok in qr:
@@ -811,7 +818,7 @@ def main():
             plain = read(os.path.join(ROOT, "dist", "bojang-guide.single.html"))
             subprocess.run([sys.executable, os.path.join(ROOT, "build_single.py")], check=True, capture_output=True)
             prot = read(os.path.join(ROOT, "dist", "bojang-guide.single.html"))
-            check("단일 HTML — v6.0 표기", "v6.0" in prot, len(prot) // 1024)
+            check("단일 HTML — v6.1 표기", "v6.1" in prot, len(prot) // 1024)
             check("단일 HTML — 외부 참조 0", not re.findall(r'(?:src|href)="\./', prot), re.findall(r'(?:src|href)="\./', prot))
             check("보호 빌드 — 주석 제거로 더 작음", len(prot) < len(plain), (len(plain), len(prot)))
             check("보호 빌드 — 스마트키 헤더 주석 제거", "smartkey.js)" not in prot, "comment stripped")
@@ -870,7 +877,7 @@ def main():
             check("backend — 비전 호출에 스마트키 세션 헤더", "x-smartkey-session" in backend, "")
 
             deploy = read(os.path.join(ROOT, "supabase", "DEPLOY.md"))
-            check("DEPLOY 문서 — v6.0 함수 안내", "qr-auth-challenge" in deploy and "qr-auth-approve" in deploy and "device-manage" in deploy, "")
+            check("DEPLOY 문서 — v6.1 함수 안내", "qr-auth-challenge" in deploy and "qr-auth-approve" in deploy and "device-manage" in deploy, "")
 
             # 정직한 표기
             check("README — 실서버 DDL 미배포 명시", "실서버 DDL·Edge Function 은 이번 배포에 포함되지 않았습니다" in read(os.path.join(ROOT, "README.md")), "")
@@ -888,7 +895,7 @@ def main():
 
     total = len(results)
     passed = sum(1 for _, ok, _ in results if ok)
-    print("\n=== v6.0 테스트 %d/%d 통과 ===" % (passed, total))
+    print("\n=== v6.1 테스트 %d/%d 통과 ===" % (passed, total))
     fails = [r for r in results if not r[1]]
     if fails:
         print("실패 항목:")

@@ -161,7 +161,7 @@
     return subtle().importKey('jwk', Object.assign({ ext: true }, jwk), { name: 'ECDH', namedCurve: 'P-256' }, false, []);
   }
   async function importEcdsaPriv(jwk) {
-    return subtle().importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
+    return subtle().importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
   }
   async function importEcdhPriv(jwk) {
     return subtle().importKey('jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveKey', 'deriveBits']);
@@ -194,16 +194,19 @@
   }
 
   async function hashPin(pin, saltB64) {
-    if (!subtle()) return 'plain:' + pin;
+    if (!subtle()) return null;
     const salt = saltB64 ? unb64u(saltB64) : rndBytes(16);
     const base = await subtle().importKey('raw', new TextEncoder().encode(String(pin)), 'PBKDF2', false, ['deriveBits']);
     const bits = await subtle().deriveBits({ name: 'PBKDF2', salt, iterations: 120000, hash: 'SHA-256' }, base, 256);
+    /* v6.1 — WebCrypto 가 없는 환경(file://)에는 PIN 을 저장하지 않습니다(평문 금지) */
     return { salt: b64u(salt), hash: b64u(bits) };
   }
   async function checkPin(pin, rec) {
     if (!rec) return false;
-    if (String(rec.hash).indexOf('plain:') === 0) return String(rec.hash).slice(6) === String(pin);
+    /* v6.1 — 예전 plain: 기록은 더 이상 인정하지 않습니다(평문 PIN 폐기) */
+    if (String(rec.hash).indexOf('plain:') === 0) return false;
     const out = await hashPin(pin, rec.salt);
+    if (!out) return false;
     return out.hash === rec.hash;
   }
 
@@ -211,8 +214,79 @@
   function transcriptChallenge(ch) {
     return ['SMK1', 'challenge', ch.id, ch.pc_pub_hash, String(ch.issued_at)].join('|');
   }
-  function transcriptApprove(ch, body) {
-    return ['SMK1', 'approve', ch.id, ch.code2, ch.pc_pub_hash, body.device_id, String(ch.issued_at)].join('|');
+  /* v6.1 — 승인 서명에 양측 공개키·IV·암호문 해시를 함께 묶어,
+     중간에서 암호문만 바꿔치기하는 릴레이를 막습니다. */
+  async function transcriptApprove(ch, body, phonePub, enc) {
+    const phoneHash = phonePub ? (await sha256Hex(JSON.stringify([phonePub.x, phonePub.y]))).slice(0, 16) : '';
+    const ctHash = (enc && enc.ct) ? (await sha256Hex(String(enc.ct))).slice(0, 16) : '';
+    return ['SMK1', 'approve2', ch.id, ch.code2, ch.pc_pub_hash, body.device_id, String(ch.issued_at),
+      phoneHash, (enc && enc.iv) || '', ctHash].join('|');
+  }
+
+  /* ---------- v6.1 — 기기 개인키를 비추출(non-extractable) 키로 보관 ----------
+     localStorage 에는 공개키·지문만 남기고, 서명 키는 IndexedDB 에 CryptoKey 객체로 저장합니다.
+     IndexedDB 를 쓸 수 없는 환경에서는 세션 메모리에만 두고(새로고침 시 재등록) 평문 JWK 저장을 중단합니다. */
+  const memKeys = {};
+  const KEYDB = 'bojang-smartkey';
+  let keyDbPromise = null;
+  function keyDb() {
+    if (keyDbPromise) return keyDbPromise;
+    keyDbPromise = new Promise((resolve) => {
+      let factory = null;
+      try { factory = root.indexedDB || null; } catch (e) { factory = null; }
+      if (!factory) return resolve(null);
+      let req;
+      try { req = factory.open(KEYDB, 1); } catch (e) { return resolve(null); }
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('keys')) db.createObjectStore('keys', { keyPath: 'id' });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+      setTimeout(() => resolve(null), 2500);
+    });
+    return keyDbPromise;
+  }
+  async function keyIdbPut(id, key) {
+    const db = await keyDb();
+    if (!db) return false;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction('keys', 'readwrite');
+        tx.objectStore('keys').put({ id, key, at: now() });
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+        tx.onabort = () => resolve(false);
+      } catch (e) { resolve(false); }
+    });
+  }
+  async function keyIdbGet(id) {
+    const db = await keyDb();
+    if (!db) return null;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction('keys', 'readonly');
+        const rq = tx.objectStore('keys').get(id);
+        rq.onsuccess = () => resolve((rq.result && rq.result.key) || null);
+        rq.onerror = () => resolve(null);
+      } catch (e) { resolve(null); }
+    });
+  }
+  async function storeDevicePriv(dev, keyObj) {
+    const ok = await keyIdbPut(dev.id, keyObj);
+    if (!ok) memKeys[dev.id] = keyObj;
+  }
+  async function devicePriv(dev) {
+    let key = await keyIdbGet(dev.id);
+    if (!key) key = memKeys[dev.id] || null;
+    if (!key && dev && dev.priv) {
+      /* v6.0 이전 평문 JWK → 비추출 키로 이관하고 localStorage 에서 지움 */
+      key = await importEcdsaPriv(dev.priv);
+      await storeDevicePriv(dev, key);
+      delete dev.priv;
+      lsSet(K.phone, dev);
+    }
+    return key || null;
   }
 
   /* ---------- 미리보기 ---------- */
@@ -302,7 +376,7 @@
       const dev = st.devices[body.device_id];
       if (!dev) return { ok: false, error: 'unregistered-device', message: '등록된 마스터 기기가 아닙니다.' };
       if (!dev.master) return { ok: false, error: 'not-master', message: '마스터 휴대폰에서만 승인할 수 있습니다.' };
-      const sigOk = await verifyText(dev.pub_ecdsa, body.signature, transcriptApprove(c, body));
+      const sigOk = await verifyText(dev.pub_ecdsa, body.signature, await transcriptApprove(c, body, body.phone_pub, body.enc));
       if (!sigOk) return { ok: false, error: 'bad-signature', message: '기기 서명 검증에 실패했습니다.' };
       c.status = 'approved';
       c.consumed_at = now();
@@ -450,9 +524,32 @@
 
     mode() { return this.remote === 'ok' ? 'server' : 'local'; },
     statusText() {
-      return this.remote === 'ok'
-        ? '실서버 검증 (Supabase Edge Function)'
-        : '이 브라우저 안 모의 검증 · 실서버 함수 미배포';
+      if (this.remote === 'ok') return '실서버 검증 (Supabase Edge Function)';
+      if (this.configured() && !this.demo()) return '스마트키 서버 오류 — 모의 전환 차단(fail-closed)';
+      return '이 브라우저 안 모의 검증 · 실서버 함수 미배포';
+    },
+    /* v6.1 — 모의 릴레이는 명시적 데모 모드에서만 허용합니다.
+       운영(configured)에서 서버가 오류·미응답이면 자동으로 모의 검증으로 넘어가지 않습니다(fail-closed). */
+    demo() {
+      try {
+        if (root.BOJANG_SMARTKEY_DEMO === true) return true;
+        const ls = root.localStorage;
+        if (ls && ls.getItem('bojang.smartkey.demo') === '1') return true;
+        const host = String((root.location && root.location.hostname) || '');
+        if (!host || host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
+        return false;
+      } catch (e) { return false; }
+    },
+    configured() { return !!this.endpoint('qr-auth-challenge'); },
+    failClosed() {
+      return { ok: false, error: 'server-unavailable', demoBlocked: true,
+        message: '스마트키 서버에 연결할 수 없습니다. 운영 모드에서는 모의 검증으로 자동 전환하지 않습니다. 잠시 후 다시 시도해 주세요.' };
+    },
+    async viaServer(name, payload, localFn) {
+      const out = await this.call(name, payload);
+      if (out) return out;
+      if (this.demo() || !this.configured()) return localFn();
+      return this.failClosed();
     },
     endpoint(name) {
       const B = root.BojangBackend;
@@ -491,83 +588,39 @@
     },
 
     async createChallenge(body) {
-      if (this.remote !== 'unavailable') {
-        const out = await this.call('qr-auth-challenge', body);
-        if (out) return out;
-      }
-      return local.create(body);
+      return this.viaServer('qr-auth-challenge', body, () => local.create(body));
     },
     async getChallenge(id) { return local.get(id); },
     async peekByCode(code6) {
-      if (this.remote === 'ok') {
-        const out = await this.call('qr-auth-challenge', { action: 'peek', code6 });
-        if (out) return out;
-      }
-      return local.byCode(code6);
+      return this.viaServer('qr-auth-challenge', { action: 'peek', code6 }, () => local.byCode(code6));
     },
     async approve(body) {
-      if (this.remote === 'ok') {
-        const out = await this.call('qr-auth-approve', body);
-        if (out) return out;
-      }
-      return local.approve(body);
+      return this.viaServer('qr-auth-approve', body, () => local.approve(body));
     },
     async cancel(payload) {
       const p = typeof payload === 'string' ? { id: payload } : (payload || {});
-      if (this.remote === 'ok') {
-        const out = await this.call('qr-auth-challenge', { action: 'cancel', challenge_id: p.id, cancel_sig: p.sig || '' });
-        if (out) return out;
-      }
-      return local.cancel(p);
+      return this.viaServer('qr-auth-challenge', { action: 'cancel', challenge_id: p.id, cancel_sig: p.sig || '' }, () => local.cancel(p));
     },
     async reject(body) {
-      if (this.remote === 'ok') {
-        const out = await this.call('qr-auth-approve', { action: 'reject', challenge_id: body.challenge_id });
-        if (out) return out;
-      }
-      return local.reject(body);
+      return this.viaServer('qr-auth-approve', { action: 'reject', challenge_id: body.challenge_id }, () => local.reject(body));
     },
     async poll(id) {
-      if (this.remote === 'ok') {
-        const out = await this.call('qr-auth-challenge', { action: 'poll', challenge_id: id });
-        if (out) return out;
-      }
-      return local.poll(id);
+      return this.viaServer('qr-auth-challenge', { action: 'poll', challenge_id: id }, () => local.poll(id));
     },
     async session(token) {
-      if (this.remote === 'ok') {
-        const out = await this.call('device-manage', { action: 'session', token });
-        if (out) return out;
-      }
-      return local.session(token);
+      return this.viaServer('device-manage', { action: 'session', token }, () => local.session(token));
     },
     async devices() {
-      if (this.remote === 'ok') {
-        const out = await this.call('device-manage', { action: 'list' });
-        if (out && out.devices) return out;
-      }
-      return local.devices();
+      return this.viaServer('device-manage', { action: 'list' }, () => local.devices());
     },
     async bind(body) {
-      if (this.remote === 'ok') {
-        const out = await this.call('device-manage', Object.assign({ action: 'bind' }, body));
-        if (out) return out;
-      }
-      return local.bind(body);
+      return this.viaServer('device-manage', Object.assign({ action: 'bind' }, body), () => local.bind(body));
     },
     async evict(deviceId) {
-      if (this.remote === 'ok') {
-        const out = await this.call('device-manage', { action: 'evict', device_id: deviceId });
-        if (out) return out;
-      }
-      return local.evict(deviceId);
+      return this.viaServer('device-manage', { action: 'evict', device_id: deviceId }, () => local.evict(deviceId));
     },
     async revoke(token) {
-      if (this.remote === 'ok') {
-        const out = await this.call('device-manage', { action: 'revoke', token });
-        if (out) return out;
-      }
-      return local.revoke(token);
+      return this.viaServer('device-manage', { action: 'revoke', token }, () => local.revoke(token));
     },
     _local: local
   };
@@ -936,8 +989,9 @@
 
     device() {
       const saved = lsGet(K.phone, null);
-      if (saved && saved.id && saved.priv && saved.pub_ecdsa) return saved;
-      return null;
+      if (!saved || !saved.id || !saved.pub_ecdsa) return null;
+      /* v6.1 — 개인키는 localStorage 에 두지 않습니다. 비추출 키(IndexedDB) 또는 세션 메모리에 보관. */
+      return saved;
     },
 
     async ensureDevice() {
@@ -945,16 +999,22 @@
       if (dev) return dev;
       const pair = await genEcdsa();
       const pub = await exportPubJwk(pair.publicKey);
-      const priv = await exportKeyJwk(pair.privateKey);
       const hash = (await sha256Hex(JSON.stringify([pub.x, pub.y]))).slice(0, 16);
+      /* v6.1 — 개인키는 비추출 키로 바꿔 IndexedDB 에만 저장(평문 JWK 저장 금지) */
+      let keyObj = null;
+      try {
+        const jwk = await exportKeyJwk(pair.privateKey);
+        keyObj = await importEcdsaPriv(jwk);
+      } catch (e) { keyObj = pair.privateKey; }
       dev = {
         id: randId('ph_', 6),
         name: deviceLabel('phone'),
         pub_ecdsa: pub,
-        priv,
         pub_hash: hash,
+        key_store: 'idb',
         created_at: now()
       };
+      if (keyObj) await storeDevicePriv(dev, keyObj);
       lsSet(K.phone, dev);
       await server.bind({ id: dev.id, kind: 'phone', name: dev.name, pub_ecdsa: pub, pub_hash: hash });
       return dev;
@@ -1062,11 +1122,19 @@
     },
 
     async approveWithPin(pin) {
+      if (!subtle()) return this.fail('이 환경(file://)에서는 PIN 승인을 사용할 수 없습니다. https 로 열어 주세요.');
       const digits = String(pin || '').replace(/\D/g, '');
       if (digits.length < 4 || digits.length > 6) return this.fail('PIN은 4~6자리입니다.');
+      /* v6.1 — 승인 화면에도 5회/30초 제한을 둡니다(추측 방어) */
+      const t = now();
+      this._pinTries = (this._pinTries || []).filter((x) => t - x < 30000);
+      if (this._pinTries.length >= 5) return this.fail('PIN 시도가 너무 많습니다. 30초 후 다시 시도해 주세요.');
       let rec = lsGet(K.pin, null);
       if (!rec) { rec = await hashPin(digits); lsSet(K.pin, rec); }
-      else if (!(await checkPin(digits, rec))) return this.fail('PIN이 맞지 않습니다.');
+      else if (!(await checkPin(digits, rec))) {
+        this._pinTries.push(t);
+        return this.fail('PIN이 맞지 않습니다.');
+      }
       return this.finishApprove();
     },
 
@@ -1091,13 +1159,14 @@
       if (err) err.hidden = true;
       try {
         const dev = await this.ensureDevice();
-        const priv = await importEcdsaPriv(dev.priv);
-        const sig = await signText(priv, transcriptApprove(ch, { device_id: dev.id }));
+        const priv = await devicePriv(dev);
+        if (!priv) return this.fail('기기 서명 키를 찾을 수 없습니다. 기기를 다시 등록해 주세요.');
         const phoneKeys = await genEcdh();
         const phonePub = await exportPubJwk(phoneKeys.publicKey);
         const aes = await deriveAes(phoneKeys.privateKey, ch.pc_pub_ecdh);
         const payload = consultationPayload();
         const enc = await aesEncrypt(aes, payload);
+        const sig = await signText(priv, await transcriptApprove(ch, { device_id: dev.id }, phonePub, enc));
         const B = root.BojangBackend;
         const jwt = B && B.sessionToken ? B.sessionToken() : '';
         const out = await server.approve({
@@ -1457,10 +1526,15 @@
 
     refresh() {
       const on = this.enabled();
-      const targets = ['#cs-name', '#deck-stage', '#client-banner', '#home-client'];
-      targets.forEach((sel) => {
-        const host = $(sel);
-        if (!host) return;
+      /* v6.1 — 고객 화면 카드만이 아니라 라이브 대본·요약·상단 서식 등
+         고객 실명이 보이는 모든 영역을 마스킹합니다(4호 봇 적발 결함). */
+      const targets = ['#deck', '#view-live', '#live-body', '#cs-name', '#client-banner', '#home-client',
+        '#view-analysis', '#view-home', '#view-toolkit', '#summary', '#client-strip', '#kakao-preview',
+        '#deck-stage', '#view-guide', '#view-quick'];
+      const hosts = [];
+      targets.forEach((sel) => { const h = $(sel); if (h && hosts.indexOf(h) < 0) hosts.push(h); });
+      if (!hosts.length) hosts.push(document.body);
+      hosts.forEach((host) => {
         this.walk(host, (node) => {
           if (!this.originals) return;
           if (on) {
@@ -1474,6 +1548,14 @@
           }
         });
       });
+      /* 어느 영역에도 남지 않도록 본문 전체를 한 번 더 확인(중복은 WeakMap으로 방지) */
+      if (on && hosts.indexOf(document.body) < 0) {
+        this.walk(document.body, (node) => {
+          if (!this.originals.has(node)) this.originals.set(node, node.nodeValue);
+          const masked = this.maskText(this.originals.get(node));
+          if (node.nodeValue !== masked) node.nodeValue = masked;
+        });
+      }
       const chip = $('#sk-privacy-chip');
       if (chip) {
         chip.classList.toggle('is-on', on);
@@ -1490,7 +1572,7 @@
         this._busy = true;
         root.requestAnimationFrame(() => { this._busy = false; this.refresh(); });
       });
-      const target = $('#deck-stage') || document.body;
+      const target = document.body;
       obs.observe(target, { childList: true, subtree: true, characterData: true });
       this._obs = obs;
     }
@@ -1669,6 +1751,23 @@
     return '<button type="button" class="sk-lock-fab" id="sk-lock-fab" aria-label="화면 잠금">🔒</button>';
   }
 
+  /* v6.1 — 최초 PIN 은 한 번 더 확인한 뒤 등록합니다(입력값이 그대로 저장되던 결함). */
+  function submitPin() {
+    const inp = $('#sk-pin');
+    const val = inp ? inp.value : '';
+    if (!lsGet(K.pin, null)) {
+      if (phone._pendingPin !== val) {
+        phone._pendingPin = val;
+        const note = $('#sk-auth-note');
+        if (note) note.textContent = 'PIN을 이 값으로 설정합니다. 같은 번호를 한 번 더 입력하고 승인을 누르세요.';
+        if (inp) inp.value = '';
+        return;
+      }
+    }
+    phone._pendingPin = null;
+    phone.approveWithPin(val);
+  }
+
   let bound = false;
   function bindOnce() {
     if (bound) return;
@@ -1684,10 +1783,10 @@
     on('#sk-approve-btn', 'click', () => {
       const method = phone.authMethod();
       if (method === 'webauthn') phone.approveWithBiometric();
-      else phone.approveWithPin($('#sk-pin').value);
+      else submitPin();
     });
     on('#sk-auth-bio', 'click', () => phone.approveWithBiometric());
-    on('#sk-pin', 'keydown', (e) => { if (e.key === 'Enter') phone.approveWithPin($('#sk-pin').value); });
+    on('#sk-pin', 'keydown', (e) => { if (e.key === 'Enter') submitPin(); });
     on('#sk-reject', 'click', () => phone.reject());
     on('#sk-dev-x', 'click', () => devices.close());
     on('#sk-pref-privacy', 'change', (e) => privacy.setEnabled(e.target.checked));
@@ -1830,7 +1929,7 @@
     prefs: {
       get: () => prefsGet(), set: (p) => prefsSet(p)
     },
-    _internals: { local, transcriptChallenge, transcriptApprove, pubHashOf, TTL, ensureModal }
+    _internals: { local, transcriptChallenge, transcriptApprove, pubHashOf, devicePriv, TTL, ensureModal }
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { init(); });

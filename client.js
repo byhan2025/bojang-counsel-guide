@@ -12,6 +12,10 @@
   const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
   const TONE = { ok: '#0e9c86', need: '#d9821b', gap: '#d9382f', warn: '#d9821b', info: '#1264b0' };
   const LEVEL = { enough: '충분', check: '점검', short: '부족', none: '없음' };
+  /* v6.1 — 직접 기재 담보를 포함한 실포값. 모델과 같은 정의를 씁니다. */
+  const effOf = (s) => Number(s && (s.eff != null ? s.eff : s.val)) || 0;
+  const effSumOf = (p) => (p && p.subs && p.subs.length) ? p.subs.reduce((a, s) => a + effOf(s), 0) : Number((p && p.val) || 0) || 0;
+  const effCntOf = (p) => (p && p.subs && p.subs.length) ? p.subs.filter((s) => effOf(s) > 0).length : (Number(p && p.val) > 0 ? 1 : 0);
 
   const GROUPS = [
     { key: 'all', label: '전체', from: 1 },
@@ -197,6 +201,16 @@
 
   function src(text) { return `<p class="sl-src">출처 · ${esc(text)}</p>`; }
 
+  /* v6.1 — 5세대 vs 1~4세대 실손 시뮬레이터 결과 카드 */
+  function silSimHTML(c) {
+    return `<div class="ss-total"><span>연간 비급여 사용액</span><b>${won(c.cost.total)}<em>만원</em></b></div>
+      <div class="ss-cols">
+        <div class="ss-col"><span>1~4세대 자기부담</span><b>${won(c.old.self)}만원</b><em>보장 ${won(c.old.paid)}만원</em></div>
+        <div class="ss-col is-five"><span>5세대 자기부담</span><b>${won(c.five.self)}만원</b><em>보장 ${won(c.five.paid)}만원</em></div>
+      </div>
+      <p class="ss-gap">5세대에서 새로 비는 금액 <b>${won(c.gap)}만원</b> — 도수·주사 ${won(c.five.excluded)}만원은 <b>보장 0원</b>입니다.</p>`;
+  }
+
   /* =========================================================
      슬라이드 정의
      ========================================================= */
@@ -214,7 +228,7 @@
     const rowOf = (key) => m.rows.find((r) => r.item.key === key);
     /* v4.2: 세부 항목은 위치가 아니라 키로 찾습니다 (수술·간병 축이 늘어나 위치가 바뀜) */
     const PK = (row, key) => (row && row.r.parts.find((p) => p.key === key)) || { val: 0, rec: 0, fill: 0, subs: [], pct: 0, option: null };
-    const subN = (p) => (p.subs || []).filter((s) => s.val > 0).length;
+    const subN = (p) => (p.subs || []).filter((s) => effOf(s) > 0).length;
     const tierBox = (tiers, now, label) => tiers ? `
       <div class="tier-mini">
         <div class="tm-head"><span>${label}</span><b>${now != null ? won(now) + '만원' : ''}</b></div>
@@ -259,6 +273,7 @@
           <span>보장분석</span><i></i><span>맞춤설계</span><i></i><span>가족보장</span><i></i><span>든든한미래</span>
         </div>
         <div class="cover-foot">이 리포트는 상담 참고용이며, 실제 지급 여부와 금액은 가입한 상품의 약관과 증권이 기준입니다.</div>
+        ${m.state && m.state.sample ? '<div class="cover-sample" role="note">샘플 데이터 · 실제 고객 증권 값이 아닙니다</div>' : ''}
       </div>`, {});
 
     /* ---------- 02 종합 등급 ---------- */
@@ -289,7 +304,7 @@
         </ul>
       </div>
       <div class="tile-grid three">
-        ${statTile('주요 진단비 합계', `${won(m.totalSum)}<em>만원</em>`)}
+        ${statTile('진단비·치료비·수술비 합계', `${won(m.totalSum)}<em>만원</em>`)}
         ${statTile('월 보험료', `${won(m.premium)}<em>만원</em>`, `연 ${won(m.annual)}만원`)}
         ${statTile('연 보험료 대비', m.ratio ? `${m.ratio.toFixed(1)}<em>배</em>` : '—', '12배 이상이면 균형', m.ratio && m.ratio < 12 ? 'warn' : 'ok')}
       </div>`, {});
@@ -312,8 +327,9 @@
           </div>`).join('')}
       </div>
       ${m.first
-        ? `<div class="first-call"><span>먼저 채울 곳</span><b>${m.first.item.rank}순위 ${esc(m.first.item.name)}</b>
-           <em>${m.first.pct}% · ${esc(m.first.label)}${m.first.gaps.length ? ` · ${won(m.first.gaps[0].need)}만원 부족` : ''}</em></div>`
+        ? `<div class="first-call"><span>1순위 보강</span><b>${m.first.item.rank}순위 ${esc(m.first.item.name)}</b>
+           <em>${m.first.pct}% · ${esc(m.first.label)}${m.first.gaps.length ? ` · ${won(m.first.gaps[0].need)}만원 부족` : ''}</em></div>
+           ${m.thinnest && m.thinnest.item.key !== m.first.item.key ? `<p class="sl-src thin-line">충족도가 가장 낮은 축은 <b>${esc(m.thinnest.item.name)} ${m.thinnest.pct}%</b>입니다 — 순위와 다른 숫자일 수 있습니다.</p>` : ''}`
         : noteBox('5대 담보가 기준선을 넘었습니다. 이제는 금액 조정과 갱신 대비가 남은 과제입니다.', 'ok')}`, {});
 
     /* ---------- 04 보유 계약 ---------- */
@@ -349,6 +365,8 @@
         : noteBox('계약을 입력하면 이 장이 포트폴리오 표로 채워집니다. 증권의 보험사·상품명·월 보험료·납입상태·만기를 함께 적습니다.', 'info')}`, {});
 
     /* ---------- 05 월 보험료 배분 ---------- */
+    /* v6.1 — 고객 데이터와 무관한 고정값을 '고객의 배분'으로 오인하지 않도록 제목·라벨·근거를 명시합니다.
+       (계약별 담보 구분 입력이 없어 실제 배분 비중을 계산할 수 없습니다.) */
     const alloc = [
       { label: '진단비', v: 45, color: '#0b2545' },
       { label: '치료·수술', v: 20, color: '#1264b0' },
@@ -356,8 +374,8 @@
       { label: '간병·기타', v: 10, color: '#0fb093' }
     ];
     add(5, 'summary', null, `
-      <div class="sl-head"><span class="k">04 · 배분</span><h2>월 보험료 배분</h2>
-        <p>같은 보험료라도 어디에 얼마가 들어가는지가 보장의 두께를 바꿉니다.</p></div>
+      <div class="sl-head"><span class="k">04 · 배분</span><h2>업계 통상 권장 배분 (예시)</h2>
+        <p><b>이 고객의 현재 배분이 아닙니다.</b> 증권 항목을 진단비·치료·실손·간병으로 나누어 본 통상 비율입니다.</p></div>
       <div class="alloc-wrap">
         <div class="alloc-bar">
           ${alloc.map((a) => `<i style="width:${a.v}%;background:${a.color}">${a.v}%</i>`).join('')}
@@ -370,7 +388,7 @@
         ${statTile('현재 월 보험료', `${won(m.premium)}<em>만원</em>`, `연 ${won(m.annual)}만원`)}
         ${statTile('계약 합계', cs.count ? `${won(cs.total)}<em>만원</em>` : '—', cs.count ? `계약 ${cs.count}건` : '계약 미입력')}
       </div>
-      ${noteBox('위 배분은 상품·연령에 따라 달라지는 <b>권장 예시</b>입니다. 배분을 바꾸는 방법은 해지가 아니라 특약 정리(배서)이고, 아낀 보험료는 가장 비어 있는 칸으로 옮깁니다.', 'info')}`, {});
+      ${noteBox('위 배분은 상품·연령에 따라 달라지는 <b>권장 예시</b>입니다(진단비 중심 설계 관행). 실제 이 고객의 배분은 계약별 담보 구분을 입력해야 계산됩니다. 배분을 바꾸는 방법은 해지가 아니라 특약 정리(배서)이고, 아낀 보험료는 가장 비어 있는 칸으로 옮깁니다.', 'info')}`, {});
 
     /* ---------- 06 4축 레이더 ---------- */
     const axis = (key) => {
@@ -396,7 +414,9 @@
     const cr = rowOf('cancer');
     const treat = PK(cr, 'treatment');
     const tsubs = treat.subs || [];
-    const treatHave = tsubs.filter((s) => s.val > 0).length;
+    const treatHave = tsubs.filter((s) => effOf(s) > 0).length;
+    const treatEff = effSumOf(treat);
+    const treatCustom = tsubs.reduce((a, s) => a + Number(s.custom || 0) + Number(s.cross || 0), 0);
     add(7, 'cancer', 'cancer', `
       <div class="sl-head"><span class="k">1순위 · 암</span><h2>암 보장, 지금 vs 권장</h2>
         <p>진단비(목돈)와 치료비(장기)를 나눠서 봅니다. 치료비는 5종으로 쪼개서 빈 칸을 찾습니다.</p></div>
@@ -420,12 +440,12 @@
         </div>
       </div>
       <div class="t5">
-        <div class="t5-head"><b>암 주요치료비 5종</b><span>합계 ${won(treat.val)}만원 / 권장 ${won(treat.rec)}만원 · ${treatHave}/5종 보유</span></div>
+        <div class="t5-head"><b>암 주요치료비 5종</b><span>합계 ${won(treatEff)}만원 / 권장 ${won(treat.rec)}만원 · ${treatHave}/5종 보유${treatCustom > 0 ? ` · 직접 기재 ${won(treatCustom)} 포함` : ''}</span></div>
         <div class="t5-rows">
           ${tsubs.map((s) => `
-            <div class="t5-row${s.val > 0 ? '' : ' is-off'}">
-              <span class="t5-l">${esc(s.label)}</span>
-              <span class="t5-v">${s.val > 0 ? `${won(s.val)}만원` : '없음'}</span>
+            <div class="t5-row${effOf(s) > 0 ? '' : ' is-off'}">
+              <span class="t5-l">${esc(s.label)}${Number(s.custom || 0) + Number(s.cross || 0) > 0 ? '<em class="t5-tag">직접 기재</em>' : ''}</span>
+              <span class="t5-v">${effOf(s) > 0 ? `${won(effOf(s))}만원` : '없음'}</span>
               <div class="t5-bar"><i style="width:${Math.max(2, Math.min(100, s.pct))}%;background:${s.pct >= 100 ? '#12A594' : s.pct > 0 ? '#E8952E' : '#E05B52'}"></i></div>
               <b class="t5-p" style="color:${s.pct >= 100 ? '#0a6b57' : s.pct > 0 ? '#a5620f' : '#b3261e'}">${s.pct}%</b>
             </div>`).join('')}
@@ -497,10 +517,22 @@
         <p>한 번에 다 채우지 않습니다. 지금 비어 있는 칸부터 순서대로.</p></div>
       <ol class="steps-list">
         <li><b>① 유사암 칸</b><p>갑상선·제자리·경계성은 일반암에서 빠집니다. 별도 담보가 없으면 0원입니다.</p><em>${PK(cr, 'similar').val ? `현재 ${won(PK(cr, 'similar').val)}만원` : '현재 없음'} → 권장 ${won(PK(cr, 'similar').rec)}만원</em></li>
-        <li><b>② 치료비 5종</b><p>표적·면역항암 시대에는 진단비만으로 부족합니다. 암수술·항암약물·항암방사선·중환자실·비급여를 따로 봅니다.</p><em>5종 중 ${treatHave}종 · ${won(treat.val)}만원 → 권장 ${won(treat.rec)}만원</em></li>
+        <li><b>② 치료비 5종</b><p>표적·면역항암 시대에는 진단비만으로 부족합니다. 암수술·항암약물·항암방사선·중환자실·비급여를 따로 봅니다.</p><em>5종 중 ${treatHave}종 · ${won(treatEff)}만원 → 권장 ${won(treat.rec)}만원</em></li>
         <li><b>③ 재진단 칸</b><p>1회한 담보는 재발·전이 때 다시 나오지 않습니다. 두 번째 진단을 따로 준비합니다.</p><em>${PK(cr, 'recur').val ? '보유' : '없음'} → 보유 권장</em></li>
       </ol>
-      ${treatHave < 5 ? noteBox(`비어 있는 치료비 — ${tsubs.filter((s) => !(s.val > 0)).map((s) => s.label).join(' · ')}`, 'warn') : noteBox('치료비 5종이 모두 채워졌습니다. 이제는 지급 횟수(1회한·재진단)와 가입 시점을 확인합니다.', 'ok')}
+      ${treatHave < 5 ? noteBox(`비어 있는 치료비 — ${tsubs.filter((s) => !(effOf(s) > 0)).map((s) => s.label).join(' · ')}`, 'warn') : noteBox('치료비 5종이 모두 채워졌습니다. 이제는 지급 횟수(1회한·재진단)와 가입 시점을 확인합니다.', 'ok')}
+      ${(() => {
+        const tl = BojangModel.oneTimeTimeline(m.state);
+        return `<div class="t5 one-time">
+          <div class="t5-head"><b>1회한 vs 연 1회한 — 10년 누적</b><span>${won(tl.amount)}만원 기준${tl.assumed ? ' (예시)' : ''}</span></div>
+          <div class="ot-strip">
+            <span>1회한 <b>${won(tl.totals.once)}</b></span>
+            <span>연 1회한(최대 10년) <b class="ot-hot">${won(tl.totals.annual)}</b></span>
+            <span>재진단 3년 주기 <b>${won(tl.totals.rejoin)}</b></span>
+          </div>
+          <p class="ot-note">10년 누적은 연 1회한이 ${tl.ratio}배 · 재진단이 ${tl.rejoinRatio}배입니다. 내 담보가 1회한인지 증권에서 먼저 확인하세요.</p>
+        </div>`;
+      })()}
       ${noteBox('가입 직후 90일은 보장이 시작되지 않고, 1년 안에 진단되면 절반만 지급되는 상품이 많습니다. 시작 시점을 함께 확인합니다.', 'warn')}
       ${src('권장 금액은 상담 보조용 예시이며, 실제 인수 조건과 보험료는 상품별로 다릅니다.')}`, { need: needOf('cancer') });
 
@@ -538,7 +570,7 @@
         <div class="conc-side">
           <div class="side-card"><span>핵심 범위 뇌혈관질환</span><b>${won(bDxCore.val)}만원</b><p>권장 2,000만원 · 뇌졸중 ${won((bDxSubs[1] || {}).val || 0)} · 뇌출혈 ${won((bDxSubs[2] || {}).val || 0)}만원</p></div>
           <div class="side-card"><span>권장 범위</span><b>뇌혈관질환 I60~I69</b><p>가장 흔한 뇌경색과 후유증까지 담는 범위입니다.</p></div>
-          <div class="side-card"><span>충족도</span><b>${br.pct}%</b>${bar(br.r.fill, br.level)}</div>
+
         </div>
       </div>
       <div class="t5">
@@ -548,8 +580,8 @@
       </div>
       <div class="sl-treatline">
         <b>뇌 주요치료비 3종</b>
-        <span>${subN(bT)}/3종 · ${won(bT.val)}만원 <em>/ 권장 ${won(bT.rec)}만원</em></span>
-        <i>${bTs.filter((s) => !(s.val > 0)).map((s) => esc(s.label)).join(' · ') || '3종 모두 보유'}</i>
+        <span>${subN(bT)}/3종 · ${won(effSumOf(bT))}만원 <em>/ 권장 ${won(bT.rec)}만원</em>${Number(bT.customVal || 0) + Number(bT.crossVal || 0) > 0 ? ` · 직접 기재 ${won(Number(bT.customVal || 0) + Number(bT.crossVal || 0))} 포함` : ''}</span>
+        <i>${bTs.filter((s) => !(effOf(s) > 0)).map((s) => esc(s.label)).join(' · ') || '3종 모두 보유'}</i>
       </div>
       ${bDx.gapWarn ? noteBox(`⚠ 범위 공백 — 뇌혈관질환 진단비가 0원입니다. 뇌경색(I63)은 뇌졸중 금액만 받고, 뇌혈관 후유증(I69)은 지급되지 않습니다.`, 'warn') : noteBox('진단 금액은 범위별 합산 — 뇌경색(I63)은 뇌혈관+뇌졸중, 뇌출혈(I61)은 세 담보. 혈전용해제(tPA)·기계적 혈전제거술은 별도 담보입니다.', 'info')}`, { need: needOf('brain') });
 
@@ -595,7 +627,7 @@
         <p>금액보다 범위가 먼저입니다. 좁은 담보를 넓히는 것이 출발점입니다.</p></div>
       <ol class="steps-list">
         <li><b>① 범위 정렬</b><p>뇌출혈 → 뇌졸중 → 뇌혈관질환 순으로 넓힙니다. 같은 보험료에서 범위를 바꾸는 방법이 있습니다.</p><em>뇌혈관 ${won(bDxCore.val)}만원 → 권장 뇌혈관질환 2,000만원 (I60~I69)</em></li>
-        <li><b>② 치료비 축</b><p>혈전용해술·스텐트는 약관상 "수술"이 아니어서 수술비가 안 나올 수 있습니다. 혈전용해제·수술·중환자실 3종을 따로 봅니다.</p><em>3종 중 ${subN(bT)}종 · ${won(bT.val)}만원 → 권장 ${won(bT.rec)}만원</em></li>
+        <li><b>② 치료비 축</b><p>혈전용해술·스텐트는 약관상 "수술"이 아니어서 수술비가 안 나올 수 있습니다. 혈전용해제·수술·중환자실 3종을 따로 봅니다.</p><em>3종 중 ${subN(bT)}종 · ${won(effSumOf(bT))}만원 → 권장 ${won(bT.rec)}만원</em></li>
         <li><b>③ 회복 구간</b><p>살아남아도 장해가 남으면 후유장해 담보로 지급률을 평가합니다. 재활·간병은 5순위와 연결됩니다.</p><em>후유장해·간병 담보 함께 확인</em></li>
       </ol>
       ${m.family.indexOf('brain') >= 0 ? noteBox('가족력에 뇌혈관이 있습니다. 생활 요인(혈압·혈당)과 함께 범위를 넓게 잡는 편이 안전합니다.', 'warn') : noteBox('가족력이 없어도 고혈압·당뇨·흡연으로 발생합니다. 지금 건강할 때 범위를 정리하는 것이 순서입니다.', 'info')}`, { need: needOf('brain') });
@@ -627,7 +659,7 @@
         <div class="conc-side">
           <div class="side-card"><span>핵심 범위 허혈성심장</span><b>${won(hDxCore.val)}만원</b><p>권장 2,000만원 · 급성심근경색 ${won((hDxSubs[1] || {}).val || 0)}만원</p></div>
           <div class="side-card"><span>권장 범위</span><b>허혈성심장질환 I20~I25</b><p>스텐트 시술이 이뤄지는 협심증 단계까지 담습니다.</p></div>
-          <div class="side-card"><span>충족도</span><b>${hr.pct}%</b>${bar(hr.r.fill, hr.level)}</div>
+
         </div>
       </div>
       <div class="t5">
@@ -636,18 +668,18 @@
         <div class="dx-scen-inline">${(hDx.scenarios || []).map((sc) => `<span><em>${esc(sc.label)}</em>${won(sc.sum)}만원</span>`).join('')}</div>
       </div>
       <div class="t5">
-        <div class="t5-head"><b>심장 주요치료비 3종</b><span>합계 ${won(hT.val)}만원 / 권장 ${won(hT.rec)}만원 · ${subN(hT)}/3종</span></div>
+        <div class="t5-head"><b>심장 주요치료비 3종</b><span>합계 ${won(effSumOf(hT))}만원 / 권장 ${won(hT.rec)}만원 · ${subN(hT)}/3종${Number(hT.customVal || 0) + Number(hT.crossVal || 0) > 0 ? ` · 직접 기재 ${won(Number(hT.customVal || 0) + Number(hT.crossVal || 0))} 포함` : ''}</span></div>
         <div class="t5-rows">
           ${hTs.map((s) => `
-            <div class="t5-row${s.val > 0 ? '' : ' is-off'}">
-              <span class="t5-l">${esc(s.label)}</span>
-              <span class="t5-v">${s.val > 0 ? `${won(s.val)}만원` : '없음'}</span>
+            <div class="t5-row${effOf(s) > 0 ? '' : ' is-off'}">
+              <span class="t5-l">${esc(s.label)}${Number(s.custom || 0) + Number(s.cross || 0) > 0 ? '<em class="t5-tag">직접 기재</em>' : ''}</span>
+              <span class="t5-v">${effOf(s) > 0 ? `${won(effOf(s))}만원` : '없음'}</span>
               <div class="t5-bar"><i style="width:${Math.max(2, Math.min(100, s.pct))}%;background:${s.pct >= 100 ? '#12A594' : s.pct > 0 ? '#E8952E' : '#E05B52'}"></i></div>
               <b class="t5-p" style="color:${s.pct >= 100 ? '#0a6b57' : s.pct > 0 ? '#a5620f' : '#b3261e'}">${s.pct}%</b>
             </div>`).join('')}
         </div>
       </div>
-      ${hDx.gapWarn ? noteBox(`⚠ 범위 공백 — 허혈성심장질환 진단비가 0원입니다. 협심증(I20)과 스텐트 시술 구간이 지급되지 않고, 급성심근경색만 이 담보에서 나옵니다.`, 'warn') : noteBox('협심증(I20)은 허혈성심장 담보에서만, 급성심근경색(I21)은 두 담보가 합산됩니다. 스텐트·우회로는 수술비 담보에서 확인하고 1년 미만 50% 감액 여부도 함께 보세요.', 'warn')}`, { need: needOf('heart') });
+      ${hDx.gapWarn ? noteBox(`⚠ 범위 공백 — 허혈성심장질환 진단비가 0원입니다. 협심증(I20)과 스텐트 시술 구간이 지급되지 않고, 급성심근경색만 이 담보에서 나옵니다.`, 'warn') : noteBox('협심증(I20)은 허혈성심장에서만, 급성심근경색(I21)은 두 담보가 합산됩니다. 스텐트·우회로는 수술비 담보와 1년 미만 50% 감액을 함께 확인하세요.', 'warn')}`, { need: needOf('heart') });
 
     /* ---------- 17 심장 위험요인 ---------- */
     add(17, 'heart', 'heart', `
@@ -671,7 +703,7 @@
         <p>범위를 넓히는 것이 먼저, 금액은 그다음입니다.</p></div>
       <ol class="steps-list">
         <li><b>① 범위</b><p>급성심근경색 → 허혈성심장질환(I20~I25)으로 넓힙니다. 같은 보험료 안에서 조정되는 경우가 많습니다.</p><em>허혈성 ${won(hDxCore.val)}만원 → 권장 허혈성 I20~I25 2,000만원</em></li>
-        <li><b>② 수술비</b><p>스텐트·관상동맥우회술이 수술비 지급 대상인지 약관의 수술 분류표로 확인합니다.</p><em>3종 중 ${subN(hT)}종 · ${won(hT.val)}만원 → 권장 ${won(hT.rec)}만원</em></li>
+        <li><b>② 수술비</b><p>스텐트·관상동맥우회술이 수술비 지급 대상인지 약관의 수술 분류표로 확인합니다.</p><em>3종 중 ${subN(hT)}종 · ${won(effSumOf(hT))}만원 → 권장 ${won(hT.rec)}만원</em></li>
         <li><b>③ 약값·관리</b><p>한 번 막히면 항혈전제를 오래 복용합니다. 진단비·수술비·약값을 함께 봅니다.</p><em>부정맥·판막·심부전 담보도 확인</em></li>
       </ol>
       ${m.family.indexOf('heart') >= 0 ? noteBox('가족력에 심장 질환이 있습니다. 스텐트 시술 구간이 담보에 들어 있는지가 핵심입니다.', 'warn') : noteBox('지금은 괜찮더라도, 괜찮을 때 넣어야 조건이 좋습니다. 범위만 넓히고 금액은 낮게 시작할 수 있습니다.', 'info')}
@@ -703,7 +735,7 @@
         <p>질병 4축(일반·1~5종·N대·비급여)과 상해 2축(일반·1~5종)을 각각 봅니다. 서로 다른 계약입니다.</p></div>
       <div class="venn-wrap">
         <div class="venn">
-          <div class="v-circle left"><b>1~5종</b><span>침습도 분류</span><em>1종 고액 ~ 5종 소액</em></div>
+          <div class="v-circle left"><b>1~5종</b><span>침습도 분류</span><em>1종 소액 ~ 5종 고액</em></div>
           <div class="v-circle right"><b>N대</b><span>질환별 한도</span><em>21·22·30대 등</em></div>
           <div class="v-overlap">중복<br>청구</div>
         </div>
@@ -743,7 +775,7 @@
     /* ---------- 23 간병 3갈래 ---------- */
     const car = rowOf('care');
     add(23, 'care', 'care', `
-      <div class="sl-head"><span class="k">5순위 · 간병</span><h2>간병비, 여섯 칸으로 본다</h2>
+      <div class="sl-head"><span class="k">5순위 · 간병</span><h2>간병비, 매일 나가는 여섯 칸</h2>
         <p>진단비는 한 번 나오는 돈, 간병비는 매일 나가는 돈입니다. 일반병원·요양병원과 지급 요건을 나눠 봅니다.</p></div>
       <div class="care-grid">
         ${[
@@ -802,25 +834,43 @@
 
     /* ---------- 26 실손 세대 ---------- */
     const sil = m.state.silson;
+    const sil2 = m.state.silson2 || 'unknown';
+    const FIN = (typeof SILSON_FIVE !== 'undefined') ? SILSON_FIVE : { fiveExcluded: [], fourGenRejoin: null, withdraw: [] };
     add(26, 'steady', null, `
       <div class="sl-head"><span class="k">실손·노후</span><h2>실손 1~5세대 비교</h2>
         <p>실손은 쓴 만큼 돌려받는 기본 의료비 축입니다. 세대에 따라 보장 폭과 보험료가 다릅니다.</p></div>
       <div class="sil-now">
         <span>이 고객의 실손</span>
         <b>${sil === 'none' ? '없음' : `${sil}세대`}</b>
-        <p>${sil === 'none' ? '입원·통원 기본부터 막혀 있습니다. 진단비보다 실손이 먼저입니다.' : sil === '1' || sil === '2' ? '2026년 11월 제도 대상일 가능성이 큽니다. 가입 시기와 재가입 조건을 확인합니다.' : '유지가 답인 경우가 많습니다. 구조와 한도를 확인합니다.'}</p>
+        <p>${sil === 'none' ? '입원·통원 기본부터 막혀 있습니다. 진단비보다 실손이 먼저입니다.' : sil === '1' ? '2026.11 선택형 할인(40%대) 또는 5세대 전환(3년 50%·6개월 한시). 2026.7부터 도수는 관리급여(본인부담 95%)입니다.' : sil === '2' ? (sil2 === 'early' ? '2013.3 이전 초기 2세대 — 2026.11 할인 대상입니다.' : sil2 === 'late' ? '2013.4~2017.3 후기 2세대 — 2026.11 할인 대상이 아닙니다.' : '2세대 — 가입 시기(2013.3 이전/이후)를 먼저 확인해야 대상 여부가 갈립니다.') : sil === '4' ? '2026.7.1부터 5년 재가입이 도래합니다. 재가입 시점에 5세대 보장으로 바뀍니다.' : '유지가 답인 경우가 많습니다. 구조와 한도를 확인합니다.'}</p>
       </div>
       <div class="sil-table">
         <div class="ct-head"><span>구분</span><span>1·2세대</span><span>3·4세대</span><span>5세대</span></div>
         ${[
           ['급여', '구분 없이 넓게', '80%', '입원 20%·통원 20% 내외'],
           ['비급여', '폭넓게 보장', '70%', '중증 5천만·비중증 1천만'],
-          ['자기부담', '0~20%', '20~30%', '비중증 50%'],
+          ['자기부담', '0~20%', '20~30%', '비중증 50% · 제외 4항목 0원'],
           ['재가입', '없음(2013.3 이전)', '5~15년', '5년']
         ].map((r) => `<div class="ct-line"><b>${r[0]}</b><span>${r[1]}</span><span>${r[2]}</span><span>${r[3]}</span></div>`).join('')}
       </div>
-      ${(sil === '1' || sil === '2') ? noteBox('1·2세대라면 두 갈래가 있습니다. <b>A 선택형 할인 특약</b>(기존 유지·전부 선택 시 약 30~40% 할인) / <b>B 5세대 전환</b>(3년간 50% 할인·6개월 한시). 전환은 "보험료를 아끼는 결정"이지 "보장이 좋아지는 결정"이 아닙니다.', 'warn') : noteBox('세대별로 비급여 한도와 자기부담이 다릅니다. 지금 쓰는 의료(도수·주사·MRI)를 기준으로 유지 여부를 판단합니다.', 'info')}
-      ${src('금융위원회 보도자료(2026.5.6) · 2026년 11월 시행 안내 · 상품별 약관 우선')}`, {});
+      ${sil === '2' ? noteBox('<b>2세대 두 갈래</b> — 2013.3 이전(초기)만 2026.11 대상, 2013.4~2017.3(후기)은 대상 아님.', 'warn') : ''}
+      ${(sil === '4' && FIN.fourGenRejoin) ? noteBox(`<b>${FIN.fourGenRejoin.title}</b> ${FIN.fourGenRejoin.body}`, 'warn') : ''}
+      ${sil === '5' ? `<div class="sil-excl-box">
+        <b>5세대 비중증(특약2) — 50%가 아니라 0원</b>
+        <p>보장 제외: 도수치료 · 체외충격파 · 비급여 주사(항암·항생·희귀 제외) · 미등재 신의료기술. MRI 등 일반 비중증만 연 1,000만원·자기부담 50%(MRI 연 200만)입니다.</p>
+      </div>` : ''}
+      ${(sil === '1' || sil === '2') ? noteBox('<b>A 선택형 할인</b>(30~40%) / <b>B 5세대 전환</b>(3년 50%·6개월 한시). 철회는 6개월 이내, 3개월 이내는 보험금이 나도 복귀·3~6개월은 무사고 시 복귀입니다. 전환은 보험료를 아끼는 결정입니다.', 'warn') : ''}
+      <div class="sil-sim">
+        <div class="sim-head"><b>내 비급여, 5세대와 1~4세대 중 어느 쪽이 돌려받나</b><span>연간·만원</span></div>
+        <div class="ss-fields">
+          <label><em>도수</em><input type="number" id="ss-dose" value="12" min="0" max="300" inputmode="numeric"><span>회×</span><input type="number" id="ss-dose-price" value="15" min="0" max="300" inputmode="numeric"><span>만</span></label>
+          <label><em>주사</em><input type="number" id="ss-shot" value="6" min="0" max="300" inputmode="numeric"><span>회×</span><input type="number" id="ss-shot-price" value="20" min="0" max="300" inputmode="numeric"><span>만</span></label>
+          <label><em>MRI</em><input type="number" id="ss-mri" value="2" min="0" max="100" inputmode="numeric"><span>회×</span><input type="number" id="ss-mri-price" value="60" min="0" max="300" inputmode="numeric"><span>만</span></label>
+        </div>
+        <div class="ss-out" id="ss-out">${silSimHTML(BojangModel.silsonCompare({ dose: 12, dosePrice: 15, shot: 6, shotPrice: 20, mri: 2, mriPrice: 60 }))}</div>
+        <p class="ss-src">1~4세대 비급여 80% 보장 가정 · 5세대 도수·주사 0원 · MRI 연 200만·50%</p>
+      </div>
+      `, {});
 
     /* ---------- 27 갱신형 vs 비갱신형 ---------- */
     add(27, 'steady', null, `
@@ -899,9 +949,14 @@
         </button>
       </div>
       ${warnCard('remodel')}
+      <div class="today-one">
+        <span class="to-tag">오늘 정할 것 1개</span>
+        <b>${m.thinnest ? `${esc(m.thinnest.item.name)} 한 칸` : '금액 조정'}</b>
+        <p>${m.thinnest ? `${esc(m.thinnest.item.name)} 충족도 ${m.thinnest.pct}% — 5대 중 가장 얇은 축입니다. 나머지는 오늘 정하지 않습니다. 이 한 칸의 범위와 금액만 정하고 나가시면 됩니다.` : '5대 담보가 기준선을 넘었습니다. 오늘은 추가 가입 없이 갱신·만기·중복만 점검합니다.'}</p>
+      </div>
       <div class="last-note">
         <b>${esc(m.client.name)}님 · ${m.letter} ${m.score}점</b>
-        <p>${m.first ? `가장 먼저 채울 곳은 ${m.first.item.rank}순위 ${esc(m.first.item.name)}입니다.` : '5대 담보가 기준선을 넘었습니다. 금액 조정과 갱신 대비가 남은 과제입니다.'}</p>
+        <p>${m.first ? `우선순위 1순위는 ${esc(m.first.item.name)}(${m.first.pct}%)입니다. 오늘은 가장 얇은 한 칸만 정합니다.` : '5대 담보가 기준선을 넘었습니다. 금액 조정과 갱신 대비가 남은 과제입니다.'}</p>
         <span>${esc(m.client.consultant)} · ${esc(m.dateLabel || '')}</span>
       </div>
       <p class="sl-src">이 리포트의 점수·권장선은 상담 보조용 자체 산식입니다. 통계는 통계청 2024 · 중앙암등록본부 2023 · 중앙심뇌혈관질환센터 2023 · 건보공단 2025 공표 수치이며, 실제 지급 여부·금액은 약관과 증권이 기준입니다.</p>`, {});
@@ -1086,8 +1141,28 @@
     });
   }
 
+  function bindSilSim() {
+    const out = $('#ss-out');
+    if (!out || !root.BojangModel || !root.BojangModel.silsonCompare) return;
+    const ids = ['ss-dose', 'ss-dose-price', 'ss-shot', 'ss-shot-price', 'ss-mri', 'ss-mri-price'];
+    const get = (id) => { const el = document.getElementById(id); return el ? Number(el.value || 0) : 0; };
+    const paint = () => {
+      const c = root.BojangModel.silsonCompare({
+        dose: get('ss-dose'), dosePrice: get('ss-dose-price'),
+        shot: get('ss-shot'), shotPrice: get('ss-shot-price'),
+        mri: get('ss-mri'), mriPrice: get('ss-mri-price')
+      });
+      out.innerHTML = silSimHTML(c);
+    };
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', paint);
+    });
+  }
+
   function bindSlideActions() {
     bindSim();
+    bindSilSim();
     $$('[data-deck-upgrade]').forEach((b) => b.addEventListener('click', askUpgrade));
     $$('[data-deck-pdf]').forEach((b) => {
       b.addEventListener('click', () => {

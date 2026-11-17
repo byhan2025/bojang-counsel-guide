@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v6.0 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
-<meta name="app-version" content="v6.0">
+<title>보장분석 라이프 리포트 v6.1 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<meta name="app-version" content="v6.1">
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
 
@@ -3726,8 +3726,181 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 .app-foot-details[open] summary:before{content:"▾";}
 .app-foot-details .app-foot{margin-top:6px;}
 
+/* =========================================================
+   v6.1 — 고객 화면 가독성(본문·보조 12~13px) + 신규 카드
+   · 9~11.5px로 읽기 어렵던 고객 화면 본문을 12px 이상으로 올립니다.
+   · 360px에서 넘침이 없도록 시뮬레이터·타임라인은 1열로 접힙니다.
+   ========================================================= */
+#deck .sl-note{font-size:13px;line-height:1.55;}
+#deck .sl-src{font-size:12px;}
+#deck .sl-tile .st-label{font-size:12px;}
+#deck .sl-tile .st-sub{font-size:12px;}
+#deck .sl-tile .st-value em{font-size:12px;}
+#deck .pri-sum,#deck .pri-sub,#deck .pri-badge{font-size:12px;}
+#deck .t5-l,#deck .t5-v{font-size:12px;}
+#deck .t5-p,#deck .t5-head span{font-size:12px;}
+#deck .cmp-card .cc-label,#deck .cmp-card .cc-values span,#deck .cc-pct{font-size:12px;}
+#deck .side-card p,#deck .flow li p,#deck .steps-list p,#deck .steps-list em{font-size:12px;line-height:1.5;}
+#deck .steps-list b{font-size:13.5px;}
+#deck .care-card .cc-note,#deck .aux-card p,#deck .risk-card b{font-size:12px;}
+#deck .sil-now p,#deck .alloc-legend li{font-size:12px;}
+#deck .tm-note{font-size:12px;}
+#deck .dk-ct-prod,#deck .dk-ct-meta{font-size:12px;}
+#deck .dk-ct-renew{font-size:11px;}
+#deck .cover-foot,#deck .cover-meta dt{font-size:12px;}
+#deck .sl-nextline b{font-size:12px;}
+#deck .cheung p,#deck .cheung span{font-size:12px;}
+#deck .code-table .ct-line span,#deck .code-table .ct-line b,#deck .code-table .ct-line code{font-size:12px;}
+#deck .claim-card p,#deck .aux-card span,#deck .ratio-hero .rb span{font-size:12px;}
+#deck .last-note p{font-size:13px;}
+#deck .road li p{font-size:12px;}
+#deck .sil-table .ct-line b{font-size:12px;}
+
+.cover-sample{margin-top:10px;background:rgba(246,183,60,.96);color:#3b2600;font-weight:800;font-size:12px;padding:6px 10px;border-radius:10px;text-align:center;letter-spacing:0;}
+.thin-line{margin-top:6px;}
+.t5-tag{font-style:normal;font-size:10.5px;font-weight:800;color:#0a6b57;background:#e7f7f1;border-radius:6px;padding:1px 5px;margin-left:5px;}
+
+.one-time{margin-top:8px;}
+.one-time .ot-grid{display:grid;grid-template-columns:1.1fr .9fr 1.25fr 1.1fr;gap:4px 6px;font-size:12px;align-items:center;}
+.one-time .ot-h{font-weight:800;color:#5f7590;font-size:12px;}
+.one-time .ot-y{color:#40597a;font-weight:700;font-size:12px;}
+.one-time .ot-grid b{text-align:right;font-weight:800;color:var(--navy-800);font-variant-numeric:tabular-nums;}
+.one-time .ot-hot{color:#0a6b57;}
+.ot-note{font-size:12px;color:#5f7590;line-height:1.5;margin-top:6px;}
+
+.sil-excl{display:grid;gap:5px;}
+.sil-excl .se-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;border-bottom:1px dashed #e5edf6;padding:4px 0;}
+.sil-excl .se-row b{color:#b3261e;font-weight:800;white-space:nowrap;}
+
+.sil-sim{margin-top:6px;border:1px solid #e3ecf6;border-radius:14px;padding:12px;background:#f8fbff;display:grid;gap:8px;}
+.sil-sim .sim-head{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap;}
+.sil-sim .sim-head b{font-size:13px;font-weight:800;color:var(--navy-800);}
+.sil-sim .sim-head span{font-size:12px;color:var(--muted);font-weight:700;}
+.ss-fields{display:grid;gap:8px;}
+.ss-fields label{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;font-weight:700;color:#40597a;}
+.ss-fields input{width:66px;padding:6px 8px;border:1px solid #d9e4f1;border-radius:8px;font-size:13px;font-weight:800;text-align:right;background:#fff;color:var(--navy-800);}
+.ss-out{display:grid;gap:8px;}
+.ss-total{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:700;color:#40597a;}
+.ss-total b{font-size:15px;color:var(--navy-800);}
+.ss-total em{font-style:normal;font-size:12px;color:var(--muted);margin-left:1px;}
+.ss-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ss-col{background:#fff;border:1px solid #e5edf6;border-radius:10px;padding:8px 10px;display:grid;gap:2px;}
+.ss-col span{font-size:12px;color:#5f7590;font-weight:700;}
+.ss-col b{font-size:15px;font-weight:800;color:var(--navy-800);}
+.ss-col em{font-style:normal;font-size:12px;color:#7f93a8;}
+.ss-col.is-five b{color:#b3261e;}
+.ss-gap{font-size:12px;line-height:1.5;color:#8f2b23;background:#fdeeed;border-radius:8px;padding:7px 9px;margin:0;}
+.ss-src{font-size:11.5px;color:#8a9bb0;line-height:1.45;margin:0;}
+
+.today-one{border:2px solid #0fb093;border-radius:14px;padding:12px;background:#effaf6;display:grid;gap:4px;}
+.today-one .to-tag{font-size:12px;font-weight:800;color:#0a6b57;letter-spacing:.04em;}
+.today-one b{font-size:16px;font-weight:800;color:var(--navy-800);}
+.today-one p{font-size:12.5px;line-height:1.5;color:#145c4c;margin:0;}
+
+.silson2-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center;}
+.silson2-wrap[hidden]{display:none!important;}
+.s2-label{font-size:12px;font-weight:800;color:var(--muted);}
+.s2-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;color:#41597a;}
+.s2-btn.is-on{background:#0b2545;color:#fff;border-color:transparent;}
+
+.dc-major{margin-top:8px;border-top:1px dashed #e3ecf6;padding-top:8px;display:grid;gap:6px;}
+.dc-major-head{font-size:12px;font-weight:800;color:#0f2b4d;}
+.dc-major-chips,.dm-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.dc-chip,.dm-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:700;color:#41597a;}
+.dc-chip.is-on,.dm-chip.is-on{background:#0a6b57;color:#fff;border-color:#0a6b57;}
+.disc-major{margin-top:8px;border-top:1px dashed #e3ecf6;padding-top:8px;}
+.dm-head{font-size:12px;font-weight:800;color:#0f2b4d;margin-bottom:6px;}
+
+@media (max-width:380px){
+  #deck .sl-inner{padding:16px 13px 18px;}
+  .ss-cols{grid-template-columns:1fr;}
+  .one-time .ot-grid{grid-template-columns:1fr 1fr;font-size:11.5px;}
+  .one-time .ot-grid b{text-align:left;}
+  .today-one b{font-size:15px;}
+}
+/* v6.1 — 1회한 타임라인 컴팩트 스트립(30장 슬라이드 높이 유지) */
+.one-time .ot-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.one-time .ot-strip span{background:#fff;border:1px solid #e5edf6;border-radius:9px;padding:6px 8px;font-size:11.5px;font-weight:700;color:#5f7590;line-height:1.3;}
+.one-time .ot-strip b{display:block;font-size:14px;font-weight:800;color:var(--navy-800);font-variant-numeric:tabular-nums;}
+.one-time .ot-strip b.ot-hot{color:#0a6b57;}
+/* v6.1 — 고객 화면(30장) 높이 압축: 글씨는 키우고 여백을 줄여 스크롤 없이 한 장에 담습니다 */
+#deck .sl-inner{gap:10px;}
+#deck .t5{padding:9px 10px;gap:6px;}
+#deck .t5-rows{gap:3px;}
+#deck .t5-head span{font-size:11.5px;}
+#deck .steps-list li{padding:9px 10px;}
+#deck .steps-list{gap:7px;}
+#deck .concentric-wrap .sl-concentric{max-width:206px;}
+#deck .sl-treatline{padding:7px 10px;}
+#deck .one-time{margin-top:4px;}
+@media (min-width:620px){
+  #deck .concentric-wrap .sl-concentric{max-width:300px;}
+}
+/* v6.1 — 26p 실손 슬라이드 압축 */
+.sil-excl-box{border:1px solid #f1e2c8;background:#fdf7ec;border-radius:12px;padding:9px 11px;display:grid;gap:3px;}
+.sil-excl-box b{font-size:12.5px;font-weight:800;color:#8a5a0c;}
+.sil-excl-box p{margin:0;font-size:12px;line-height:1.45;color:#7d540f;}
+#deck .sil-table .ct-line{padding:5px 8px;}
+#deck .ss-fields{grid-template-columns:1fr;}
+#deck .ss-fields label{font-size:11.5px;}
+#deck .ss-fields input{width:52px;padding:5px 6px;font-size:12px;}
+#deck .sil-sim{padding:9px 10px;gap:6px;}
+#deck .ss-col{padding:6px 8px;}
+#deck .ss-col b{font-size:13.5px;}
+#deck .ss-gap{padding:6px 8px;font-size:11.5px;}
+#deck .today-one{padding:10px;}
+/* v6.1 — 26p 시뮬레이터 컴팩트(3열·한 줄 입력) */
+#deck .ss-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;}
+#deck .ss-fields label{display:grid;grid-template-columns:auto 1fr auto 1fr;align-items:center;gap:2px;font-size:11px;background:#fff;border:1px solid #e3ecf6;border-radius:8px;padding:3px 4px;}
+#deck .ss-fields label em{font-style:normal;font-weight:800;color:#40597a;font-size:11px;}
+#deck .ss-fields label span{font-size:10.5px;color:#7f93a8;}
+#deck .ss-fields input{width:100%;min-width:0;padding:3px 2px;font-size:12px;border:0;background:transparent;text-align:right;}
+#deck .ss-src{display:none;}
+#deck .sil-now{padding:10px 12px;}
+#deck .sil-now b{font-size:22px;}
+#deck .sil-now p{font-size:11.5px;}
+#deck #ss-out{gap:5px;}
+/* v6.1 — 16/26/30 슬라이드 높이 압축 */
+#deck .slide[data-no="16"] .concentric-wrap .sl-concentric{max-width:176px;}
+#deck .slide[data-no="12"] .concentric-wrap .sl-concentric{max-width:176px;}
+#deck .sil-table .ct-line{padding:4px 6px;font-size:11.5px;}
+#deck .sil-table .ct-head span{font-size:11.5px;}
+#deck .slide[data-no="26"] .sl-src{font-size:11px;padding-top:0;}
+#deck .slide[data-no="26"] .sil-sim .sim-head b{font-size:12px;}
+#deck .slide[data-no="26"] .sl-head p{font-size:11.8px;}
+#deck .slide[data-no="30"] .today-one{padding:8px 10px;gap:2px;}
+#deck .slide[data-no="30"] .today-one p{font-size:11.8px;}
+#deck .slide[data-no="30"] .road li p{font-size:11.5px;}
+/* v6.1 — 슬라이드 높이 2차 압축 */
+#deck .slide[data-no="16"] .concentric-wrap,
+#deck .slide[data-no="12"] .concentric-wrap{grid-template-columns:1fr 1fr;align-items:center;gap:8px;}
+#deck .slide[data-no="16"] .concentric-wrap .sl-concentric,
+#deck .slide[data-no="12"] .concentric-wrap .sl-concentric{max-width:100%;}
+#deck .slide[data-no="16"] .conc-side,#deck .slide[data-no="12"] .conc-side{gap:6px;}
+#deck .slide[data-no="16"] .side-card p,#deck .slide[data-no="12"] .side-card p{font-size:11.5px;line-height:1.35;}
+#deck .slide[data-no="16"] .side-card b{font-size:13px;}
+#deck .cmp-grid{gap:8px;}
+#deck .cmp-card{padding:9px;}
+#deck .slide[data-no="7"] .cmp-grid{gap:6px;}
+#deck .sil-table .ct-line{padding:2px 6px;font-size:11px;}
+#deck .sil-table .ct-head span{font-size:11px;}
+#deck .slide[data-no="26"] .sil-now p{font-size:11px;line-height:1.4;}
+/* v6.1 — 최소 12px 보장(시뮬레이터·오늘 카드) */
+#deck .ss-gap{font-size:12px;}
+#deck .ss-col span,#deck .ss-col em,#deck .ss-total{font-size:12px;}
+#deck .slide[data-no="30"] .today-one p{font-size:12px;}
+#deck .slide[data-no="30"] .road li p{font-size:12px;}
+#deck .slide[data-no="26"] .sil-now p{font-size:12px;}
+#deck .slide[data-no="26"] .sl-head p{font-size:12px;}
+/* v6.1 — 26p 최종 압축(세로 배율 1.12 이하) */
+#deck .slide[data-no="26"] .sil-sim .sim-head b{font-size:11.5px;}
+#deck .slide[data-no="26"] .ss-total b{font-size:14px;}
+#deck .slide[data-no="26"] .sil-now{padding:8px 11px;}
+#deck .slide[data-no="26"] .sil-table .ct-line{padding:1px 6px;font-size:11px;}
+#deck .slide[data-no="26"] .sl-note{padding:8px 10px;}
+
 </style>
-<!-- build 9e4a2b25a48e · protected=true -->
+<!-- build 9e89ce0532d7 · protected=true -->
 </head>
 <body>
 
@@ -3812,13 +3985,13 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
       </div>
       <div class="hh-top">
         <span class="hh-eyebrow" data-app-version-eyebrow>LIFE REPORT · BETA V6.0</span>
-        <span class="hh-ver" data-app-version-label>v6.0 · 2026.11</span>
+        <span class="hh-ver" data-app-version-label>v6.1 · 2026.11</span>
       </div>
       <h2>무엇을 하시겠어요?</h2>
       <p>상담 전 과정을 한 화면에서 시작합니다. 입력·계산과 PDF는 <b>이 기기에서</b> 하고, 로그인해 클라우드 동기화를 켜면 상담 스냅샷(이름·생년월일·연령대·성별·보험료·담보·계약·고지 체크)만 <b>Supabase(서울)</b>에 저장됩니다.</p>
       <div class="hh-client" id="home-client"></div>
       <div class="hh-plan" id="home-plan-banner"></div>
-      <!-- ============ v6.0 첫 화면 3버튼 ============ -->
+      <!-- ============ v6.1 첫 화면 3버튼 ============ -->
       <div class="hh-actions hh-actions-v59" id="home-three">
         <button type="button" class="hh-btn primary hh-three" id="btn-start-consult" data-inputhub="1">
           <span class="hb-no" aria-hidden="true">1</span>
@@ -3976,7 +4149,7 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 
     <details class="app-foot-details">
       <summary>기준일 · 반영 기능 자세히 보기</summary>
-      <p class="app-foot">기준일 2026-11-16 · v6.0 베타 기준점(첫 화면 3버튼 · IndexedDB 상담 이력 · 정식 이용약관·개인정보처리방침 · 공식 도메인 잠금 · PDF 발급 워터마크 · 클라우드 상담 동기화 · 고지의무 3·1·5 / 간편 3·2·5 체크 · 카톡 요약 1탭 복사 · 사진 AI 직접 기재 담보 인식 · 명함 QR 46pt · 핸드폰 마스터 스마트키(QR·6자리 코드) · 계정 잠금·원격 잠금 · 고객 앞 가림 모드 · 암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 특정순환계질환(3~5종) 주요치료비 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리 · 시니어 큰 글씨 · 불완전판매 경고 · 20년 갱신 차트 · 4단계 가이드) 반영 · 상품별 약관 우선</p>
+      <p class="app-foot">기준일 2026-11-17 · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
     </details>
   </section>
 
@@ -4723,7 +4896,7 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
   </div>
 </div>
 
-<!-- ================= v6.0 정식 이용약관 · 개인정보처리방침 ================= -->
+<!-- ================= v6.1 정식 이용약관 · 개인정보처리방침 ================= -->
 <div class="modal legal-modal" id="legal-modal" hidden>
   <div class="modal-card legal-card" role="dialog" aria-modal="true" aria-labelledby="legal-title">
     <button type="button" class="pw-x" id="legal-x" aria-label="닫기">×</button>
@@ -4743,7 +4916,7 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 
 <footer class="app-legal no-print" id="app-legal">
   <div class="al-brand">
-    <b>보장분석 라이프 리포트 <em data-app-version>v6.0</em></b>
+    <b>보장분석 라이프 리포트 <em data-app-version>v6.1</em></b>
     <span>상담 보조 도구 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다</span>
   </div>
   <div class="al-links">
@@ -4756,7 +4929,7 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 (function (root) {
   'use strict';
 
-  const APP_VERSION = 'v6.0';
+  const APP_VERSION = 'v6.1';
   const APP_VERSION_NUM = APP_VERSION.replace(/^v/, '');
   const APP_VERSION_MONTH = '2026.11';
   const APP_TAGLINE = '고객 맞춤형 보장 점검 · 리모델링 상담 가이드';
@@ -5342,7 +5515,7 @@ const STATS = [
     id: 'death',
     title: '사망원인 비중',
     source: '통계청 2024년 사망원인통계',
-    headline: '3대 중증질환 합산',
+    headline: '암·심장·뇌혈관 합산',
     headlineValue: '41.1%',
     max: 25,
     rows: [
@@ -5444,7 +5617,8 @@ const GUIDES = {
       '담보명에 <b>"유사암 제외"</b>가 적혀 있는지 확인. 제외 문구가 있으면 그 담보로는 유사암 청구가 안 됩니다.',
       '<b>1회한 담보의 중복</b> — 증권이 여러 개여도 각 담보는 1회씩. 총액이 두꺼워 보여도 재진단은 안 됩니다.',
       '진단비만 있고 <b>항암치료비(표적·면역·방사선)</b> 담보가 없으면 장기 치료에서 공백이 생깁니다.',
-      '갑상선암이 림프절로 전이된 경우 <b>원발부위 기준 조항</b>이 있으면 갑상선암으로 분류됩니다. 이 조항의 설명 여부가 다퉈진 지점입니다(대법원 2025.3.13. 선고 2023다250746).',
+      '갑상선암이 림프절로 전이된 경우 <b>원발부위 기준 조항</b>이 있으면 갑상선암으로 분류됩니다. 대법원 2025.3.13. 선고 2023다250746은 이 조항의 <b>설명의무</b>를 인정했고, 설명이 없으면 일반암 기준으로 지급한 뒤 갑상선암 지급분과의 <b>차액</b>을 지급하라고 판시했습니다. 증권에 이 조항이 있는지, 설명을 받았는지가 갈림길입니다.',
+      '<b>1회한 vs 연 1회한</b> — 같은 5,000만원이라도 1회한은 10년간 1회, 재진단·연 1회한은 3년 주기로 3회까지 받습니다. 10년 누적이 3배 차이납니다.',
       '<b>갱신형</b>은 갱신 시점에 보험료가 크게 오르고, 재가입 심사에서 가입이 막힐 수 있습니다.',
       '<b>재진단·전이암</b> 담보가 따로 있는지 확인하세요. 일반암 1회한만 있으면 재발·전이 때 추가 지급이 없습니다.'
     ],
@@ -5453,7 +5627,7 @@ const GUIDES = {
       '1년 미만 진단은 <b>50% 감액</b>이 흔합니다(상품별 10~50%).',
       '진단확정 서류는 <b>진단서 + 조직검사(병리) 결과지</b>. 최종 병리 결과가 기준입니다.',
       '유사암은 "각각 최초 1회한" 또는 "연간 1회한" — 증권 문구를 직접 확인하세요.',
-      '청구 소멸시효는 진단일부터 3년입니다.'
+      '청구 소멸시효는 <b>상법 제662조</b> — "청구할 수 있게 된 날"(진단확정일)부터 3년입니다. 병원 방문일이나 보험사 통지일이 아닙니다.'
     ]
   },
 
@@ -5477,14 +5651,15 @@ const GUIDES = {
       '<b>뇌출혈만 보유 → 뇌경색 공백.</b> 가장 흔한 구멍이고, 뇌졸중 중 뇌경색 비중이 가장 큽니다.',
       '뇌졸중 진단비와 뇌혈관질환 진단비를 같은 것으로 착각 — 뇌졸중은 I60~I63·I65~I66, 뇌혈관은 <b>후유증(I69)</b>까지 포함합니다.',
       '<b>범위별 금액을 합쳐서 착각</b> — 뇌경색(I63) 진단 시 뇌혈관 + 뇌졸중이 합산되지만, 뇌출혈 담보는 0원입니다. 넓은 범위 금액이 0원이면 가장 흔한 뇌경색이 비어 있습니다.',
-      '<b>혈전용해술·스텐트 삽입</b>은 약관상 "수술"이 아닌 "처치"로 분류되는 경우가 많아 수술비 청구가 안 될 수 있습니다.',
+      '<b>혈전용해술·스텐트 삽입</b>은 약관상 "수술"이 아닌 "처치"로 분류되는 경우가 많아 수술비 청구가 안 될 수 있습니다. 혈전용해제(tPA) 투여와 기계적 혈전제거술(카테터법)은 서로 다른 담보입니다.',
+      '<b>I67(기타 뇌혈관질환)·I69(후유증)</b>는 뇌혈관질환 담보에만 들어갑니다. 뇌동맥류(비파열)·모야모야병(I67)과 후유증(I69)이 뇌졸중 담보에서 빠지는 대표 코드입니다. 통계(I60~I64)와 약관(I64 제외)의 뇌졸중 범위도 다릅니다.',
       '뇌혈관 <b>수술비</b>·재활치료비 담보가 따로 있는지 확인하세요.',
       '1회한 여부와 갱신형 여부 — 갱신 시 보험료 인상과 재가입 심사를 봅니다.'
     ],
     claim: [
       '진단서 + <b>영상검사(MRI/CT) 판독지</b>가 핵심입니다.',
-      'I64(상세불명 뇌졸중)는 코드만으로 확정이 어려워 추가 서류를 요구하는 경우가 있습니다.',
-      '90일 면책과 1년 미만 감액 여부를 확인하세요.',
+      'I64(상세불명 뇌졸중)는 표준 뇌졸중 분류표(I60~I63·I65~I66)에서 빠져 있어 뇌혈관질환 담보로만 지급되는 경우가 많습니다. 진단서에 I64만 적혀 있으면 MRI·CT 판독지로 출혈·경색을 재확인하세요.',
+      '뇌는 90일 면책이 없습니다 — 계약일부터 즉시 보장이 시작되고, 계약일부터 1년 미만 진단은 50%만 지급하는 상품이 흔합니다.',
       '뇌졸중 후유장해는 별도 <b>후유장해 담보</b>로 장해지급률을 평가합니다.',
       '재활·간병이 길어지면 간병비 담보와 장기요양을 함께 검토합니다.'
     ]
@@ -5507,7 +5682,7 @@ const GUIDES = {
       '"심장은 한 번 막히면 항혈전제를 오래 먹어요. 그래서 진단비 하나만 보지 말고 수술비와 약값까지 같이 봐야 합니다."'
     ],
     traps: [
-      '<b>급성심근경색만 있고 허혈성심장질환 담보가 없음</b> → 협심증(I20) 공백.',
+      '<b>급성심근경색만 있고 허혈성심장질환 담보가 없음</b> → 협심증(I20) 공백. <b>변이형 협심증(I20.1)</b>도 허혈성심장 범위에 들어가는지 확인하세요.',
       '<b>스텐트·혈관성형술</b>이 수술비 지급 대상인지 상품마다 다릅니다. 약관의 "수술" 정의를 확인하세요.',
       '<b>부정맥·판막·심부전</b>은 별도 담보가 없으면 미보장입니다.',
       '심장 수술비 담보를 아예 안 가진 경우가 많습니다.',
@@ -5517,8 +5692,8 @@ const GUIDES = {
     ],
     claim: [
       '심전도 · 심근효소(트로포닌) · <b>관상동맥조영술</b> 결과가 I21 진단의 핵심 근거입니다.',
-      'I20(협심증)과 I21(급성심근경색) 구분이 지급액을 가릅니다.',
-      '90일 면책 · 1년 미만 감액 여부 확인.',
+      'I20(협심증)과 I21(급성심근경색) 구분이 지급액을 가릅니다. 변이형 협심증(I20.1)도 허혈성심장 범위입니다.',
+      '심장은 90일 면책이 없습니다 — 계약일부터 보장이 시작되고, 1년 미만 진단은 50% 감액이 흔합니다.',
       '시술 후 재협착·합병증은 별도 진단이 있어야 청구됩니다.',
       '수술비 청구 시 수술확인서의 수술명이 약관 분류표와 맞아야 합니다.'
     ]
@@ -5531,14 +5706,14 @@ const GUIDES = {
     diagram: 'surgery',
     diagramNote: '지급 여부와 중복 가능 범위는 상품 약관의 수술 분류표·지급 조건으로 확인합니다.',
     structures: [
-      { label: '1~5종 수술비', tag: '기본', desc: '1종(관혈적·개복 등)일수록 고액, 5종(내시경·카테터)일수록 소액. 질병/상해 구분 여부 확인.' },
+      { label: '1~5종 수술비', tag: '기본', desc: '1종(내시경·카테터 등 소액)에서 5종(개두·개흉·개복 등 대수술)으로 갈수록 금액이 커집니다. 질병/상해 구분 여부 확인.' },
       { label: 'N대 수술비', tag: '질환별', desc: '21·22·30·33대 등 질환을 묶어 한도를 따로 설정. 같은 수술도 어느 담보에서 나오는지에 따라 금액이 달라짐.' },
       { label: '정액형', tag: '단순', desc: '종수 구분 없이 1회 정액. 계산은 쉽지만 큰 수술에서 금액이 부족할 수 있음.' },
       { label: '비급여 수술비', tag: '5세대', desc: '비급여 1~5종·비급여 N대. 5세대 실손 비중증(연 1,000만원·자기부담 50%)을 넘는 구간을 정액으로 막음.' },
       { label: '상해 축', tag: '사고', desc: '일반 상해수술비 + 상해 1~5종. 질병 수술비만 있으면 사고 수술은 0원.' }
     ],
     talk: [
-      '"수술비는 수술 한 번에 얼마 나오냐예요. 1종은 배를 여는 큰 수술, 5종은 내시경·카테터처럼 몸에 부담이 적은 수술. 종수가 높아질수록 금액은 작아요."',
+      '"수술비는 수술 한 번에 얼마 나오냐예요. 1종은 내시경·카테터처럼 부담이 적은 수술로 금액이 작고, 5종은 개두·개흉·개복처럼 큰 수술로 금액이 큽니다. 종수가 높아질수록 금액이 커져요."',
       '"N대 수술비는 질환별로 한도가 따로 있어요. 그래서 같은 수술이라도 어느 담보에서 나오는지에 따라 받는 금액이 달라집니다."',
       '"요즘은 수술비보다 진단비·치료비가 중심이에요. 수술비는 보조로 두고, 큰 그림은 진단비로 잡는 게 맞습니다."'
     ],
@@ -5550,7 +5725,8 @@ const GUIDES = {
       '횟수 제한(연간 1회한, 1회한)과 갱신형 여부를 확인하세요.',
       '<b>1년 미만 50% 감액</b> — 수술비 담보는 계약일부터 1년이 안 됐으면 절반만 지급되는 상품이 흔합니다.',
       '<b>비급여 수술비가 없는 경우</b> — 5세대 실손은 비중증 비급여가 연 1,000만원·자기부담 50%로 줄어 비급여 수술에서 공백이 생깁니다.',
-      '회사별 <b>질환 묶음 차이</b> — 같은 N대라도 용종·체외충격파·백내장 포함 여부가 달라 실제 지급이 갈립니다.'
+      '회사별 <b>질환 묶음 차이</b> — 같은 N대라도 용종·체외충격파·백내장 포함 여부가 달라 실제 지급이 갈립니다.',
+      '<b>상해 직업급수 변경</b> — 직업이 바뀌었는데 보험사에 알리지 않으면 사고 때 직업급수 차이만큼 <b>비례보상으로 삭감</b>됩니다. 이직·부업·현장 이동이 있으면 반드시 통지하세요.'
     ],
     claim: [
       '수술확인서(수술명·수술일·수술방법) + 진단서가 기본입니다.',
@@ -5594,6 +5770,8 @@ const GUIDES = {
     claim: [
       '간병인 이용확인서 · 계약서 · 영수증, 요양보호사 자격 확인서를 준비합니다.',
       '간호간병통합은 진료비 영수증의 <b>병동 구분</b>으로 확인됩니다.',
+      '2026.7 이후 상품은 <b>하루 8시간 이상</b> 기준입니다. 일부 상품은 6시간 · 금액제는 8만원 미만이면 50% 감액됩니다.',
+      '<b>사설 간병비는 실손 청구가 불가</b>합니다. 간호·간병통합병동 입원료만 실손 대상(본인부담 80~90%)입니다.',
       '장기요양은 인정서(등급판정서) + 급여이용내역서가 필요합니다.',
       '요양비는 급여 종류(방문요양·방문간호·복지용구)별로 한도가 다릅니다.',
       '입원일수와 실제 간병 사용일이 일치해야 하므로 사용일지를 남겨 두세요.'
@@ -5646,7 +5824,7 @@ const SALE_WARNINGS = {
     label: '리모델링·신규', title: '해지·신규 가입 전 확인',
     items: [
       '해지 전 해지환급금·재가입 조건 확인',
-      '신규 담보 90일 면책·1년 미만 감액',
+      '90일 면책은 암에만 적용 — 뇌·심장은 계약일부터 즉시 개시',
       '상령일 이후 보험료 인상 — 가입 시점 판단'
     ]
   }
@@ -5660,27 +5838,57 @@ const FAMILY_HISTORY = [
   { key: 'none', label: '해당 없음', note: '가족력 없음' }
 ];
 
+const DISCLOSURE_MAJOR10 = [
+  { key: 'y5m_cancer', label: '암' },
+  { key: 'y5m_leuk', label: '백혈병' },
+  { key: 'y5m_htn', label: '고혈압' },
+  { key: 'y5m_angina', label: '협심증' },
+  { key: 'y5m_mi', label: '심근경색' },
+  { key: 'y5m_valve', label: '심장판막증' },
+  { key: 'y5m_cirr', label: '간경화증' },
+  { key: 'y5m_stroke', label: '뇌졸중' },
+  { key: 'y5m_dm', label: '당뇨병' },
+  { key: 'y5m_aids', label: '에이즈(HIV)' }
+];
+
+const DISCLOSURE_MAJOR5 = [
+  { key: 'y5m_cancer', label: '암' },
+  { key: 'y5m_cirr', label: '간경화증' },
+  { key: 'y5m_ckd', label: '돌석 중인 만성신장질환' },
+  { key: 'y5m_park', label: '파킨슨병' },
+  { key: 'y5m_als', label: '루게릭병' }
+];
+
 const DISCLOSURE_ITEMS = [
-  { key: 'd3_dx', period: '3개월', label: '질병 확정진단 · 의심소견' },
-  { key: 'd3_in', period: '3개월', label: '입원' },
-  { key: 'd3_op', period: '3개월', label: '수술(제왕절개 포함)' },
-  { key: 'y1_test', period: '1년', label: '추가검사(재검사) 필요소견' },
-  { key: 'y5_inop', period: '5년', label: '입원 · 수술' },
-  { key: 'y5_care', period: '5년', label: '계속 7일 이상 치료' },
-  { key: 'y5_major', period: '5년', label: '중대질병 진단·치료 (암·간경화·투석 중 만성신장질환·파킨슨·루게릭)' }
+  { key: 'm3_dx', period: '3개월', label: '질병 확정진단 · 의심소견 · 치료 진단서 발부', hint: '의사가 진단서·소견서·진료의뢰서 등 서면으로 교부한 경우' },
+  { key: 'm3_in', period: '3개월', label: '입원', hint: '응급실·당일입원·MRI 위한 입원도 포함' },
+  { key: 'm3_op', period: '3개월', label: '수술 (제왕절개 포함)', hint: '내시경 절제·용종 제거도 수술 문항' },
+  { key: 'm3_med', period: '3개월', label: '투약 (처방 받은 경우)', hint: '약을 사지 않아도 처방 행위만으로 해당' },
+  { key: 'm3_daily', period: '3개월', label: '상시 복용 — 혈압강하제·신경안정제·수면제·진통제 등', hint: '기간을 정하지 않고 계속 먹는 약' },
+  { key: 'y1_test', period: '1년', label: '추가검사(재검사) 필요소견', hint: '이상 소견 확인용. 정기검사·추적관찰만이면 제외' },
+  { key: 'y2_inop', period: '2년', label: '입원 · 수술 (간편 3·2·5 판정용)', hint: '3·2·5 상품에만 물어보는 문항' },
+  { key: 'y5_inop', period: '5년', label: '입원 · 수술 (제왕절개 포함)', hint: '건강검진 중 용종 제거도 포함' },
+  { key: 'y5_care7', period: '5년', label: '계속 7일 이상 치료', hint: '입원 아닌 통원치료 7일 이상' },
+  { key: 'y5_med30', period: '5년', label: '계속 30일 이상 투약', hint: '같은 질병으로 30일 연속 처방' },
+  { key: 'y5_major', period: '5년', label: '10대 질병 진단·치료·입원·수술·투약', hint: '아래 10개 중 해당 항목', major: true }
 ];
 
 const DISCLOSURE_GENERAL = [
-  { period: '3개월', items: ['질병 확정진단 · 의심소견', '치료 · 입원 · 수술(제왕절개 포함)', '투약', '혈압강하제·신경안정제·수면제 등 상시 복용'] },
+  { period: '3개월', items: ['질병별 확정진단 · 의심소견 · 치료 진단서 발부', '입원', '수술(제왕절개 포함)', '투약', '혈압강하제·신경안정제·수면제·각성제·진통제 등 상시 복용'] },
   { period: '1년', items: ['추가검사(재검사) 필요소견'] },
-  { period: '5년', items: ['입원 · 수술', '계속 7일 이상 치료', '계속 30일 이상 투약', '10대 질병 확정진단·치료·입원·수술·투약'] }
+  { period: '5년', items: ['입원 · 수술', '계속 7일 이상 치료', '계속 30일 이상 투약', '10대 질병(암·백혈병·고혈압·협심증·심근경색·심장판막증·간경화증·뇌졸중·당뇨병·에이즈) 확정진단·치료·입원·수술·투약'] }
 ];
 
-const DISCLOSURE_SIMPLE = [
-  { period: '3개월', items: ['입원 필요소견 · 수술 필요소견', '추가검사(재검사) 필요소견'] },
-  { period: '2년', items: ['입원 · 수술(제왕절개 포함)'] },
-  { period: '5년', items: ['암 · 간경화증 · 투석 중인 만성신장질환 · 파킨슨병 · 루게릭병', '위 질병으로 인한 진단 · 입원 · 수술'] }
+const DISCLOSURE_PRODUCTS = [
+  { key: 'sim325', label: '간편심사 3·2·5', items: ['3개월 입원·수술·추가검사 필요소견', '2년 입원·수술', '5년 5대 중대질병(암·간경화·돌석 중 만성신장·파킨슨·루게릭)'] },
+  { key: 'sim355', label: '간편심사 3·5·5', items: ['3개월 입원·수술', '5년 입원·수술', '5년 5대 중대질병'] },
+  { key: 'ultra', label: '초간편심사(3개월·5년 암)', items: ['3개월 입원·수술 필요소견', '5년 암 진단·치료'] }
 ];
+
+const DISCLOSURE_ALIAS = {
+  d3_dx: 'm3_dx', d3_in: 'm3_in', d3_op: 'm3_op',
+  y1_test: 'y1_test', y5_inop: 'y5_inop', y5_care: 'y5_care7', y5_major: 'y5_major'
+};
 
 const SILSON_GENERATIONS = [
   {
@@ -5690,7 +5898,7 @@ const SILSON_GENERATIONS = [
       '비급여': '구분 없이 폭넓게 보장',
       '자기부담': '손보 0% · 생보 일부 20%',
       '재가입': '없음(2013.3 이전 계약)',
-      '특징': '도수치료·비급여 주사·MRI도 기본 보장. 보험료 부담 최대'
+      '특징': '도수·비급여 주사·MRI도 기본 보장(2026.7부터 도수는 관리급여 — 본인부담 95%). 보험료 부담 최대'
     }
   },
   {
@@ -5700,7 +5908,7 @@ const SILSON_GENERATIONS = [
       '비급여': '80%',
       '자기부담': '10~20%',
       '재가입': '없음(2013.3 이전) / 15년',
-      '특징': '1세대보다 좁지만 여전히 넓음. 11월 개편 대상'
+      '특징': '2013.3 이전 초기 2세대(재가입 조건 없음)만 2026.11 할인 대상. 2013.4~2017.3 후기 2세대는 대상 아님'
     }
   },
   {
@@ -5720,7 +5928,7 @@ const SILSON_GENERATIONS = [
       '비급여': '70% (통원 Max[30%, 3만])',
       '자기부담': '20~30%',
       '재가입': '5년',
-      '특징': '비급여 특약 분리·한도 설정. 할인·할증 적용'
+      '특징': '비급여 특약 분리·한도 설정. 할인·할증 적용. 2021.7 가입자부터 2026.7.1 재가입 도래 → 5세대로 재가입(별도 심사 없음)'
     }
   },
   {
@@ -5730,7 +5938,7 @@ const SILSON_GENERATIONS = [
       '비급여': '중증(특약1) 5천만·30% / 비중증(특약2) 1천만·50%',
       '자기부담': '중증 상종·종병 입원 연 500만 상한',
       '재가입': '5년',
-      '특징': '임신·출산·발달장애 신규 보장. 4세대 대비 약 30%, 1·2세대 대비 50% 이상 저렴'
+      '특징': '임신·출산·발달장애 신규 보장. 4세대 대비 약 30%, 1·2세대 대비 50% 이상 저렴. 비중증 보장 제외 4항목(도수·체외충격파·비급여 주사·미등재 신의료기술)은 자기부담 50%가 아니라 0원'
     }
   }
 ];
@@ -5738,7 +5946,7 @@ const SILSON_GENERATIONS = [
 const OBJECTIONS = [
   {
     trigger: '"여유 생기면 할게요"',
-    empathy: '맞아요. 지금 나가는 돈이 만만치 않으시죠. 저도 같은 자리면 그렇게 말씀하셨어요.',
+    empathy: '맞아요. 지금 나가는 돈이 만만치 않으시죠. 많은 분들이 똑같이 말씀하세요.',
     awaken: '다만 보험은 여유가 생겼을 때보다 여유가 없어질 때를 대비하는 거예요. 나이가 들면 같은 보장도 보험료가 올라가고, 병력이 생기면 가입 자체가 막힙니다.',
     alternative: '그래서 오늘 다 결정하실 필요는 없어요. 지금 증권에서 새는 돈부터 정리해서, 그 돈으로 가장 비어 있는 한 곳만 채우는 것부터 시작하시죠.'
   },
@@ -5765,8 +5973,71 @@ const OBJECTIONS = [
     empathy: '자녀분 믿음이 있으시니 마음이 든든하시겠어요.',
     awaken: '다만 자식에게 가장 미안한 게 돈 때문에 치료를 고민하게 되는 상황이에요. 간병비는 한 달에 300만원이 넘어가서 자녀분들도 부담이 커집니다.',
     alternative: '큰 돈 아니어도 돼요. 수술·간병 쪽만 얇게 준비해 두면 자녀분께 부담이 가지 않습니다. 그 부분만 따로 계산해 드릴게요.'
+  },
+  {
+    trigger: '"회사 단체보험 있어요"',
+    empathy: '단체보험 있으시면 기본 의료비는 든든합니다.',
+    awaken: '단체보험은 퇴직·이직하면 끝나고, 암·뇌·심장 진단비와 가족 보장은 별도입니다. 퇴직 후 같은 보장을 다시 들 수 있는 나이인지가 핵심입니다.',
+    alternative: '단체보험은 있는 그대로 두고, 퇴직 이후에도 남는 진단비 한 칸만 따로 비교해 드리겠습니다.'
+  },
+  {
+    trigger: '"인터넷이 더 싸요"',
+    empathy: '맞습니다. 같은 담보라면 다이렉트가 보험료가 낮은 경우가 많습니다.',
+    awaken: '다이렉트는 설계·청구·리모델링을 직접 하셔야 합니다. 청구 때 서류와 수술 분류표를 대조하고 이의신청하는 비용은 보험료에 안 적혀 있습니다.',
+    alternative: '보험료 차이가 얼마인지 같은 표에 놓고, 청구 대행과 갱신 점검을 포함하면 어느 쪽이 유리한지 계산해 드리겠습니다.'
+  },
+  {
+    trigger: '"지인 설계사가 있어요"',
+    empathy: '그분과의 관계가 가장 중요합니다. 제가 끼어들 일은 아닙니다.',
+    awaken: '다만 지금 증권에서 빈 칸이 어디인지는 관계와 별개로 확인해 두시는 게 좋습니다.',
+    alternative: '증권만 보고 빈 칸을 표시한 표를 드리겠습니다. 그 표를 그분께 그대로 보여주셔도 됩니다. 저는 비교하지 않고 빈 칸만 정리하겠습니다.'
+  },
+  {
+    trigger: '"해지하고 다시 들면 되죠"',
+    empathy: '그렇게 생각하시는 분이 많습니다.',
+    awaken: '해지하면 해지환급금이 납입보험료보다 작고, 재가입은 그때 나이와 병력으로 다시 심사합니다. 가입 1년 미만 감액과 90일 면책도 다시 시작됩니다(뇌·심장은 즉시 개시).',
+    alternative: '해지하지 않고 배서(특약 조정)로 같은 보험료 안에서 배분을 바꾸는 방법부터 계산해 드리겠습니다.'
   }
 ];
+
+const SELL_LESS = {
+  threshold: 90,
+  headline: '지금은 채울 곳이 없습니다 — 추가 가입을 권하지 않습니다',
+  script: '"5대 담보가 기준선의 90%를 넘었습니다. 지금 더 넣으면 과보장이 되고, 같은 돈을 다른 곳에 쓰시는 게 낫습니다. 오늘은 추가 가입 대신 갱신 시점·만기·중복만 점검하고 마치겠습니다."',
+  next: ['갱신 예정일과 예상 보험료 표를 드립니다.', '만기(80·90세) 계약이 있으면 노후 공백만 표시합니다.', '가족·부모님 보장으로 화제를 옮깁니다(추가 영업이 아니라 점검).']
+};
+
+const OVER_COVERAGE = [
+  { key: 'doubleDx', label: '일반암 진단비가 권장의 2배 이상', action: '초과분을 치료비·간병으로 옮기는 배서를 검토. 해지 아님.' },
+  { key: 'dupRider', label: '동일 담보 중복 (1회한 여러 개)', action: '실제로 두 번 지급되는지 약관 확인. 중복이면 하나는 사실상 미사용.' },
+  { key: 'shortMaturity', label: '만기 80·90세 계약 보유', action: '노후 공백 구간을 간병·요양 담보로 대체.' },
+  { key: 'renewHeavy', label: '갱신형 비중 60% 이상', action: '갱신 시점 예상 보험료 표를 고객에게 보여주고 비갱신 한 칸을 같이 둡니다.' },
+  { key: 'savingsRider', label: '적립(저축)성 특약 비중 큼', action: '보장 대비 저축 비중을 확인해 보장으로 재배분.' }
+];
+
+const CARE_RATES = {
+  asOf: '2026.7',
+  market: [
+    { label: '24시간 1:1 간병', v: '10만~17만원', note: '중증(석션·비위관·와상) 16만~17만원' },
+    { label: '일반 병동 간병', v: '14만~15만원', note: '주말·식대 포함 시 월 400만~500만원' },
+    { label: '요양병원 간병', v: '5만~6만원대', note: '대부분 상품 요양병원 제외 — 별도 담보' }
+  ],
+  limit: [
+    { label: '2026.7 이전 금액제', v: '하루 7~8만원 이상 지급', note: '8만원 미만은 50% 감액' },
+    { label: '2026.7 이후 시간제', v: '하루 8시간 이상', note: '일부 상품 6시간 · 8시간 미달은 감액·미지급' }
+  ],
+  hospital: [
+    { label: '일반병동(사설 간병 포함)', v: '하루 14만 6,292원', note: '사설 간병비는 실손 청구 불가' },
+    { label: '간호·간병통합병동', v: '하루 2만 3,620원', note: '83.9% 낮음 · 통합병동 입원료는 실손 청구 가능(본인부담 80~90%)' },
+    { label: '1인실', v: '전액 비급여', note: '입원관리료·간호간병료 비급여 — 상급병실료는 실손 특약 필요' }
+  ],
+  notes: [
+    '일당 20만원 상품은 한시입니다 — 현대 20→15만, 한화 20→10만으로 줄었습니다. 권장 15만·상한 20만(재고 소진 시 종료)으로 표기합니다.',
+    '간병도우미료는 2018년 이후 +55.9% (같은 기간 소비자물가 +21.2%).',
+    '가족 간병은 업체 등록·결제·간병일지 3종이 맞아야 인정됩니다. 현금 전달은 인정이 어렵습니다.',
+    '장기요양 인정자 123만 5,045명 · 1인당 월평균 급여 154만 280원 · 3~5등급·인지지원 87.4%.'
+  ]
+};
 
 const FC_CODES = [
 
@@ -5793,13 +6064,14 @@ const FC_CODES = [
   { code: 'I61', name: '뇌내출혈', group: '뇌', tags: '뇌출혈 뇌내출혈 I61', pays: '뇌출혈·뇌졸중·뇌혈관질환 진단비 모두 해당', check: '고혈압성 출혈이 대표. 세 담보가 모두 있으면 합산 지급', note: '뇌경색(I63)보다 환자 수는 적지만 사망·중증도가 높음' },
   { code: 'I62', name: '기타 비외상성 두개내출혈', group: '뇌', tags: '뇌출혈 I62', pays: '뇌출혈·뇌졸중·뇌혈관질환 진단비', check: '외상성 출혈(S06)은 상해 담보 영역 — 원인 구분 확인', note: '외상이면 질병 담보가 아닌 상해 담보로 청구' },
   { code: 'I63', name: '뇌경색증', group: '뇌', tags: '뇌경색 뇌졸중 I63', pays: '뇌졸중·뇌혈관질환 진단비. 뇌출혈 담보에서는 지급 없음', check: '가장 흔한 뇌혈관 사고 — 뇌출혈 담보만 있으면 공백', note: '혈전용해제(tPA) 치료비 담보 대상. 기계적 혈전제거술은 별도 담보' },
-  { code: 'I64', name: '상세불명의 뇌졸중', group: '뇌', tags: '뇌졸중 상세불명 I64', pays: '뇌졸중·뇌혈관질환 진단비 (약관 문구 확인)', check: '영상검사로 출혈·경색 구분이 안 된 경우. 추가 서류를 요구받을 수 있음', note: 'I64만으로 청구하면 심사가 길어짐 — MRI/CT 판독지 함께 제출' },
+  { code: 'I64', name: '상세불명의 뇌졸중', group: '뇌', tags: '뇌졸중 상세불명 I64', pays: '뇌혈관질환 진단비만 (표준 뇌졸중 분류표 I60~I63·I65~I66에서 I64 제외)', check: '일반 뇌졸중 지급으로 오인 금지 — 분쟁 빈발. 진단서에 I64만 적혀 있으면 출혈·경색 구분 서류 재확인', note: 'I64만으로 청구하면 심사가 길어짐 — MRI/CT 판독지 함께 제출. 뇌졸중 담보 청구 전 약관 코드 범위 확인' },
   { code: 'I65~I66', name: '뇌동맥의 폐색 및 협착(뇌경색 미발생)', group: '뇌', tags: '경동맥 협착 뇌혈관 I65 I66', pays: '뇌혈관질환 진단비 (뇌졸중 담보는 상품별)', check: '뇌경색이 발생하지 않은 협착은 뇌졸중 담보에서 제외되는 경우가 많음', note: '스텐트 삽입술은 "수술" 분류 여부 확인' },
   { code: 'I67', name: '기타 뇌혈관질환', group: '뇌', tags: '뇌혈관 I67', pays: '뇌혈관질환 진단비', check: '뇌동맥류(비파열)·모야모야병 등이 포함', note: '뇌졸중 담보에서는 제외 — 범위 차이가 드러나는 코드' },
   { code: 'I69', name: '뇌혈관질환의 후유증', group: '뇌', tags: '후유증 뇌혈관 I69', pays: '뇌혈관질환 진단비 (일부 상품)', check: '뇌졸중을 앓은 뒤 후유증으로 진단되는 경우 — 최초 진단과 중복 여부 확인', note: '뇌혈관질환 담보와 뇌졸중 담보를 가르는 대표 코드' },
   { code: 'G45', name: '일과성 뇌허혈발작(TIA)', group: '뇌', tags: 'TIA 일과성허혈 G45', pays: '뇌혈관질환 진단비 (상품별 포함 여부 다름)', check: '뇌졸중 담보에서는 대체로 제외. 24시간 내 회복되는 허혈발작', note: '고지의무 대상 진단 — 3개월·5년 문항 확인' },
 
   { code: 'I20', name: '협심증', group: '심장', tags: '협심증 스텐트 I20', pays: '허혈성심장질환 진단비. 급성심근경색 담보에서는 지급 없음', check: '스텐트 시술이 가장 많은 단계 — 범위 공백이 생기는 지점', note: '스텐트·혈관성형술은 약관상 "수술"이 아닌 처치로 분류될 수 있음' },
+  { code: 'I20.1', name: '변이형 협심증', group: '심장', tags: '변이형 협심증 이형협심증 I20.1', pays: '허혈성심장질환 진단비 (I20~I25 범위)', check: '관상동맥 경련으로 생기는 협심증 — I20 코드 체계에 포함. 담보명이 I20~I25면 지급 대상', note: '급성심근경색 담보에서는 지급 없음 — 허혈성심장 담보 유무가 핵심' },
   { code: 'I21', name: '급성심근경색증', group: '심장', tags: '급성심근경색 심근경색 I21', pays: '급성심근경색·허혈성심장질환 진단비 모두 해당 (합산)', check: '트로포닌·심전도·관상동맥조영술 결과가 진단 근거', note: '혈전용해제 치료비 담보 대상. 1년 미만 50% 감액 확인' },
   { code: 'I22', name: '재발성 심근경색증', group: '심장', tags: '재발 심근경색 I22', pays: '급성심근경색·허혈성심장질환 진단비 (1회한 여부 확인)', check: '1회한 담보는 첫 지급 후 재지급 없음 — 재진단 담보 필요', note: '재발은 별도 담보가 없으면 지급되지 않는다는 점을 설명' },
   { code: 'I23', name: '급성심근경색증 후발 합병증', group: '심장', tags: '심근경색 합병증 I23', pays: '급성심근경색 진단비 (약관 문구 확인)', check: '급성심근경색 이후 발생한 합병증 — 코드 범위 포함 여부 확인', note: '상품에 따라 I21~I22만 담아 I23이 빠지는 경우가 있음' },
@@ -5809,14 +6081,14 @@ const FC_CODES = [
 
   { code: 'M51', name: '기타 추간판장애(디스크)', group: '수술', tags: '디스크 추간판 M51 허리', pays: '질병수술비(관혈)·1~5종·N대. 도수·주사는 실손', check: '관혈적 수술(유합술)만 수술비 해당. 신경차단술·도수는 시술', note: '5종 분류표에서 내시경 감압술이 몇 종인지 회사별 확인' },
   { code: 'M50', name: '경추 추간판장애', group: '수술', tags: '목 디스크 경추 M50', pays: '질병수술비 · 1~5종', check: '목 디스크 수술은 1~2종(관혈)에 해당하는 경우가 많음', note: '비급여 인공디스크는 실손 한도와 별도 정액 담보 확인' },
-  { code: 'M48', name: '기타 척추병증(척추관협착)', group: '수술', tags: '협착 척추관 M48', pays: '질병수술비 · 1~5종 · N대', check: '척추 유합술은 1종 고액 구간 — 금액 차이가 큼', note: '비급여 나사·케이지 사용 시 비급여 수술비 담보 유무 확인' },
+  { code: 'M48', name: '기타 척추병증(척추관협착)', group: '수술', tags: '협착 척추관 M48', pays: '질병수술비 · 1~5종 · N대', check: '척추 유합술은 5종(대수술) 고액 구간 — 1~5종 분류표에서 종수를 확인', note: '비급여 나사·케이지 사용 시 비급여 수술비 담보 유무 확인' },
   { code: 'K63.5', name: '대장의 용종(양성신생물)', group: '수술', tags: '용종 대장용종 K63.5 건강검진', pays: '수술비: 내시경 절제는 시술로 보아 제외되는 상품이 많음', check: '건강검진 중 용종 제거도 고지의무상 "수술" 대상 — 5년 문항 확인', note: '용종 제거는 청구보다 고지가 문제되는 대표 사례' },
   { code: 'D12', name: '대장의 양성신생물', group: '수술', tags: '대장 양성종양 D12 용종', pays: '수술비(상품별) · 실손', check: '조직검사상 양성으로 확정되면 암 담보 지급 대상 아님', note: '용종 절제 후 암 진단이 나오면 암보장개시일(90일) 확인' },
   { code: 'K35', name: '급성 충수염', group: '수술', tags: '맹장 충수염 K35', pays: '질병수술비 · 1~5종 (복강경은 종수 확인)', check: '복강경 충수절제술의 종수는 회사별 3~5종으로 갈림', note: '응급 수술이라 1년 미만 50% 감액 확인' },
   { code: 'K80', name: '담석증', group: '수술', tags: '담석 담낭 K80', pays: '질병수술비 · N대', check: '복강경 담낭절제술 종수 확인. 내시경 결석 제거는 시술', note: '수술명이 분류표 문구와 일치해야 인정' },
   { code: 'N20', name: '요로의 결석', group: '수술', tags: '요로결석 신장결석 N20 체외충격파', pays: '수술비: 체외충격파 쇄석술은 "시술"로 제외되는 상품이 많음', check: 'N대 수술비에 체외충격파 포함 여부가 회사별로 다름', note: '같은 시술도 상품에 따라 지급 — 약관 확인이 답' },
   { code: 'H25', name: '노년성 백내장', group: '수술', tags: '백내장 H25 눈', pays: '수술비(상품별) · 실손(비급여 한도)', check: '다초점·난시교정 렌즈는 비급여 — 5세대 실손 비중증 한도 확인', note: '1~5종 분류표에서 백내장 수술 종수 확인' },
-  { code: 'M17', name: '무릎관절증', group: '수술', tags: '무릎 관절 인공관절 M17', pays: '질병수술비 · 1종(관혈)', check: '인공관절 치환술은 1종 고액 구간', note: '비급여 인공관절은 정액 비급여 수술비 담보 확인' },
+  { code: 'M17', name: '무릎관절증', group: '수술', tags: '무릎 관절 인공관절 M17', pays: '질병수술비 · 1~5종(5종 고액)', check: '인공관절 치환술은 5종(대수술) 고액 구간 — 회사별 분류표 확인', note: '비급여 인공관절은 정액 비급여 수술비 담보 확인' },
   { code: 'I10', name: '본태성(원발성) 고혈압', group: '기타', tags: '고혈압 I10 고지', pays: '진단비 지급 대상 아님 — 고지·인수 판단 항목', check: '3개월 이내 진단·상시 복용은 고지 대상', note: '혈압약 복용은 간편심사 3개월 문항(투약) 확인' },
   { code: 'N18', name: '만성 신장병', group: '기타', tags: '만성신부전 투석 N18 신장', pays: '중대질병 고지 항목 — 간편심사 5년 문항', check: '투석 중인 만성신장질환은 5년 이내 고지 대상', note: '일반심사에서는 인수 거절·할증이 흔함' },
   { code: 'K74', name: '간의 섬유증 및 경화', group: '기타', tags: '간경화 K74 간', pays: '중대질병 고지 항목', check: '간경화는 간편심사에서도 5년 문항에 포함', note: 'B·C형 간염 보유자는 별도 문항 확인' },
@@ -5844,7 +6116,7 @@ const CLAIM_DOCS = {
     title: '심장', color: 'rose',
     must: ['진단서 (급성심근경색 I21 / 협심증 I20 구분)', '심전도·심근효소(트로포닌) 검사 결과', '관상동맥조영술 결과지'],
     extra: ['수술확인서 (스텐트·우회로 수술)', '중환자실 입실 기록', '약제 처방내역 (항혈전제)'],
-    tips: ['I20(협심증)과 I21(급성심근경색) 구분이 지급액을 가릅니다.', '스텐트 시술이 수술비 지급 대상인지 약관 분류표로 확인합니다.', '협심증은 허혈성심장질환 담보에서만 지급됩니다.', '90일 면책·1년 미만 감액 여부를 확인합니다.']
+    tips: ['I20(협심증)과 I21(급성심근경색) 구분이 지급액을 가릅니다. 변이형 협심증(I20.1)도 허혈성심장 범위입니다.', '스텐트 시술이 수술비 지급 대상인지 약관 분류표로 확인합니다.', '협심증은 허혈성심장질환 담보에서만 지급됩니다.', '심장은 90일 면책이 없습니다. 1년 미만 진단 감액(50%) 여부만 확인합니다.']
   },
   surgery: {
     title: '수술비', color: 'blush',
@@ -5862,7 +6134,7 @@ const CLAIM_DOCS = {
     title: '실손', color: 'blush',
     must: ['진료비 영수증', '진료비 세부내역서', '처방전 또는 약제비 영수증'],
     extra: ['진단서·소견서 (비급여 항목 사유 확인)', '영상검사 판독지 (MRI·MRA)', '입·퇴원 확인서 (입원)'],
-    tips: ['영수증만으로는 비급여 항목이 확인되지 않아 세부내역서가 필요합니다.', '5세대는 중증(특약1)과 비중증(특약2)이 분리돼 청구 경로가 다릅니다.', '비중증 비급여는 연 1,000만원 한도·자기부담 50%입니다.', '청구 소멸시효는 진료일부터 3년입니다.']
+    tips: ['영수증만으로는 비급여 항목이 확인되지 않아 세부내역서가 필요합니다.', '5세대는 중증(특약1)과 비중증(특약2)이 분리돼 청구 경로가 다릅니다.', '비중증 비급여는 연 1,000만원 한도·자기부담 50%이며, 도수·체외충격파·비급여 주사·미등재 신의료기술은 보장 제외(0원)입니다.', '청구 소멸시효는 상법 제662조 — "청구할 수 있게 된 날"(진료일)부터 3년입니다.']
   }
 };
 
@@ -5880,10 +6152,28 @@ const SILSON_FIVE = {
   ],
   fiveGen: [
     '중증(특약1)과 비중증(특약2)이 분리 — 청구 경로가 다릅니다.',
-    '비중증 비급여: 연 1,000만원 한도 · 자기부담 50%.',
-    '중증 입원: 상급종합·종합병원 연 500만원 상한 구조.',
+    '비중증 비급여: 연 1,000만원 한도 · 자기부담 50%. MRI는 연 200만원입니다.',
+    '중증 비급여: 연 5,000만원 · 자기부담 30%. 상급·종합병원 입원은 연 자기부담 상한 500만원.',
     '급여: 입원 20% · 통원은 건보 본인부담률과 20% 중 낮은 쪽(최소 1~2만원).',
     '임신·출산·발달장애 관련 보장이 신설됐습니다.'
+  ],
+
+  fiveExcluded: [
+    { label: '도수치료·근골격계 물리치료', note: '보장 제외 0원' },
+    { label: '체외충격파 치료', note: '보장 제외 0원' },
+    { label: '비급여 주사제 (항암·항생·희귀질환 제외)', note: '보장 제외 0원' },
+    { label: '미등재 신의료기술 (첨단재생의료 등)', note: '보장 제외 0원' },
+    { label: 'MRI·MRA 등 일반 비중증', note: '연 1,000만원·자기부담 50% · MRI 연 200만' }
+  ],
+  fourGenRejoin: {
+    title: '4세대 재가입 도래 (2026.7.1~)',
+    body: '2021.7 가입자부터 5년 재가입이 돌아옵니다. 재가입 시점에 5세대 보장으로 바뀌며 별도 심사는 없습니다. "4세대는 그대로 유지된다"가 아니라 "재가입할 때 보장이 바뀐다"가 상담의 첫 질문입니다.'
+  },
+  withdraw: [
+    '철회는 전환 후 6개월 이내 가능합니다.',
+    '3개월 이내는 보험금이 발생해도 복귀됩니다.',
+    '3~6개월은 무사고여야 복귀되고, 보험료 차액을 정산합니다.',
+    '전환은 1회만 가능하고 재전환은 제한됩니다.'
   ]
 };
 
@@ -6029,7 +6319,7 @@ const PLAYBOOK = {
     key: 'surgery', rank: 4, name: '수술비', minutes: '9분',
     why: '수술비는 "한 번의 수술에 얼마"입니다. 1~5종은 침습도로 금액을 정하고, N대 수술비는 질환별 한도를 따로 둡니다. 두 담보는 별개 계약이라 같은 수술에 각각 청구되는 구조입니다.',
     facts: [
-      '1종(관혈·개복)일수록 고액, 5종(내시경·카테터)일수록 소액',
+      '1종(내시경·카테터)일수록 소액, 5종(개두·개흉·개복)일수록 고액',
       '질병 수술비와 상해 수술비는 지급 사유가 다름',
       '수술명이 약관 분류표 문구와 일치해야 인정 (수술확인서 기준)'
     ],
@@ -6039,7 +6329,7 @@ const PLAYBOOK = {
       { q: '사고로 다쳐서 수술하면 보험금이 나오나요?', why: '상해수술비 공백을 확인합니다.', expect: '"산재로 되죠" → 산재와 상해보험의 차이 설명.' }
     ],
     talk: [
-      '수술비는 수술 한 번에 얼마 나오냐입니다. 1종은 배를 여는 큰 수술, 5종은 내시경·카테터처럼 몸에 부담이 적은 수술입니다. 종수가 높아질수록 금액은 작아집니다.',
+      '수술비는 수술 한 번에 얼마 나오냐입니다. 1종은 내시경·카테터처럼 몸에 부담이 적은 수술로 금액이 작고, 5종은 개두·개흉·개복처럼 큰 수술로 금액이 큽니다. 종수가 높아질수록 금액이 커집니다.',
       'N대 수술비는 질환별로 한도가 따로 있습니다. 같은 수술이라도 어느 담보에서 나오는지에 따라 받는 금액이 달라집니다.',
       '요즘은 수술비보다 진단비·치료비가 중심입니다. 수술비는 보조로 두고 큰 그림은 진단비로 잡습니다.'
     ],
@@ -6051,7 +6341,7 @@ const PLAYBOOK = {
       { title: '횟수·갱신 조건', watch: '연간 1회한·1회한, 갱신형 여부', script: '"한도와 갱신 조건을 같이 봐야 실제 지급액이 보입니다."' }
     ],
     codes: [
-      { label: '1~5종 수술비', code: '침습도 분류', note: '1종 고액 ~ 5종 소액' },
+      { label: '1~5종 수술비', code: '침습도 분류', note: '1종 소액 ~ 5종 고액' },
       { label: 'N대 수술비', code: '21·22·30·33대', note: '질환별 한도' },
       { label: '상해수술비', code: '재해', note: '질병과 별도 지급' }
     ],
@@ -6179,7 +6469,7 @@ const PLAN_CLOSE = {
 };
 
 const REBUTTALS = [
-  { trigger: '"여유 생기면 할게요"', empathy: '지금 나가는 돈이 만만치 않으시죠. 저도 같은 자리면 그렇게 말씀하셨어요.', awaken: '보험은 여유가 생겼을 때보다 여유가 없어질 때를 대비하는 겁니다. 나이가 들면 같은 보장도 보험료가 오르고, 병력이 생기면 가입이 막힙니다.', alternative: '오늘 다 결정하실 필요 없습니다. 지금 증권에서 새는 돈부터 정리해서, 그 돈으로 가장 비어 있는 한 곳만 채우는 것부터 시작하시죠.', close: '그 한 곳이 어디인지 지금 표시해 드리겠습니다.' },
+  { trigger: '"여유 생기면 할게요"', empathy: '지금 나가는 돈이 만만치 않으시죠. 많은 분들이 그렇게 말씀하세요.', awaken: '보험은 여유가 생겼을 때보다 여유가 없어질 때를 대비하는 겁니다. 나이가 들면 같은 보장도 보험료가 오르고, 병력이 생기면 가입이 막힙니다.', alternative: '오늘 다 결정하실 필요 없습니다. 지금 증권에서 새는 돈부터 정리해서, 그 돈으로 가장 비어 있는 한 곳만 채우는 것부터 시작하시죠.', close: '그 한 곳이 어디인지 지금 표시해 드리겠습니다.' },
   { trigger: '"이미 실비 있어요"', empathy: '실비 있으시면 기본은 되세요. 병원비 걱정은 덜하시겠어요.', awaken: '실비는 쓴 만큼 돌려받는 돈이고, 진단비는 진단받으면 목돈이 나오는 돈입니다. 치료비는 실비로 되지만, 일을 못 해서 생기는 소득 공백은 실비가 못 메웁니다.', alternative: '실비 세대부터 확인해 볼게요. 1·2세대면 11월부터 선택형 할인 특약으로 보험료를 줄일 수 있습니다. 아낀 돈으로 진단비 한 칸을 채우는 게 순서입니다.', close: '실손 세대부터 같이 확인하시죠.' },
   { trigger: '"보험료가 부담돼요"', empathy: '매달 나가는 돈이라 부담되시는 게 당연합니다.', awaken: '지금 내는 보험료 중에 실제 보장으로 안 가는 돈이 있을 수 있습니다. 적립보험료, 중복 특약, 한 번도 안 쓴 특약이 대표적입니다.', alternative: '해지가 아니라 재배치입니다. 같은 보험료 안에서 보장을 다시 배분하면 추가 부담 없이 두꺼워지는 경우가 많습니다.', close: '증권 보여주시면 항목별로 짚어드리겠습니다.' },
   { trigger: '"나중에 알아볼게요"', empathy: '급하게 결정하실 일은 아니에요.', awaken: '다만 보험은 지금 건강할 때가 가장 쌉니다. 1년만 늦어도 같은 보장에 보험료가 오르고, 그 사이 병력이 생기면 인수 조건이 달라집니다.', alternative: '오늘은 진단 결과만 정리해서 카톡으로 보내드릴게요. 결정은 그거 보시고 천천히 하셔도 됩니다.', close: '대신 다음 통화 날짜만 정해두시죠. 10분이면 됩니다.' },
@@ -6347,6 +6637,19 @@ const PLAN_FRONT = {
     '중복 특약(같은 이름 2개 이상)을 찾았습니다',
     '이미 소진된 1회한 담보가 있는지 확인했습니다',
     '갱신 예정일과 예상 보험료를 표로 보여줬습니다'
+  ],
+
+  sellLess: {
+    title: '팔지 않는 상담 — 5대 담보가 90% 이상일 때',
+    script: '"5대 담보가 기준선의 90%를 넘었습니다. 지금 더 넣으면 과보장이 됩니다. 오늘은 추가 가입 대신 갱신 시점·만기·중복만 점검하고 마치겠습니다. 대신 주변에 보장이 비어 있는 분이 있으면 제가 그분만 따로 봐드리겠습니다."',
+    after: ['갱신 예정일·예상 보험료 표 출력', '만기 80·90세 계약 표시', '가족·부모님 보장 점검으로 전환(추가 영업 아님)']
+  },
+  overCoverage: [
+    { t: '일반암 진단비 권장의 2배 이상', d: '초과분을 치료비·간병으로 옮기는 배서를 검토합니다. 해지가 아닙니다.' },
+    { t: '동일 담보 중복(1회한 여러 개)', d: '실제로 두 번 지급되는지 약관을 확인합니다. 중복이면 하나는 사실상 미사용입니다.' },
+    { t: '만기 80·90세 계약', d: '노후에 보장이 먼저 끊기는 구간을 간병·요양으로 대비합니다.' },
+    { t: '갱신형 비중 60% 이상', d: '갱신 시점 예상 보험료 표를 보여주고 비갱신 한 칸을 같이 둡니다.' },
+    { t: '적립(저축)성 특약 비중 큼', d: '보장 대비 저축 비중을 확인해 보장으로 재배분합니다.' }
   ]
 };
 
@@ -6454,6 +6757,9 @@ const PLAN_FRONT = {
   };
   const CUSTOM_DX_RE = /진단비|진단/;
 
+  const CUSTOM_SHARED_RE = /특정순환계|3\s*[~\-–]\s*5\s*종|순환계\s*주요치료비/;
+  function isSharedRider(name) { return CUSTOM_SHARED_RE.test(String(name || '')); }
+
   function sanitizeCustom(it, key, i) {
     const src = (it && typeof it === 'object') ? it : {};
     const name = String(src.name == null ? '' : src.name).replace(/\s+/g, ' ').trim().slice(0, 40);
@@ -6489,14 +6795,17 @@ const PLAN_FRONT = {
     return out;
   }
 
-  function customCredits(state, key, subs) {
+  function customCredits(state, key, subs, opts) {
+    opts = opts || {};
     const items = customList(state, key);
     const map = CUSTOM_MAP[key] || [];
     const list = subs || [];
     const byKey = {};
-    list.forEach((s) => { byKey[s.key] = 0; });
+    const crossByKey = {};
+    list.forEach((s) => { byKey[s.key] = 0; crossByKey[s.key] = 0; });
     const recSum = list.reduce((a, s) => a + (Number(s.rec) || 0), 0);
     const rows = [];
+    const ownShared = items.some((x) => isSharedRider(x.name) && x.amount > 0);
     items.forEach((x) => {
       let target = null;
       let skip = CUSTOM_DX_RE.test(x.name);
@@ -6516,8 +6825,19 @@ const PLAN_FRONT = {
       }
       rows.push({ id: x.id, name: x.name, amount: x.amount, mode: x.mode, sub: target, skip });
     });
-    Object.keys(byKey).forEach((k) => { byKey[k] = Math.round(byKey[k]); });
-    return { byKey, rows, sum: items.reduce((a, x) => a + x.amount, 0), count: items.length };
+
+    if ((key === 'brain' || key === 'heart') && opts.sibling) {
+      const ownHas = items.some((x) => isSharedRider(x.name) && x.amount > 0 && !CUSTOM_DX_RE.test(x.name));
+      if (!ownHas) {
+        customList(state, opts.sibling).filter((x) => isSharedRider(x.name) && x.amount > 0 && !CUSTOM_DX_RE.test(x.name)).forEach((x) => {
+          const mains = list.filter((s) => s.key === 'lysis' || s.key === 'surgery');
+          const msum = mains.reduce((a, s) => a + (Number(s.rec) || 0), 0);
+          if (msum > 0) mains.forEach((s) => { crossByKey[s.key] += (x.amount * (Number(s.rec) || 0)) / msum; });
+        });
+      }
+    }
+    Object.keys(byKey).forEach((k) => { byKey[k] = Math.round(byKey[k]); crossByKey[k] = Math.round(crossByKey[k] || 0); });
+    return { byKey, crossByKey, rows, sum: items.reduce((a, x) => a + x.amount, 0), count: items.length, sharedRider: ownShared };
   }
 
   const TREAT_MIN = 500, TREAT_MAX = 3000;
@@ -6574,6 +6894,44 @@ const PLAN_FRONT = {
   function neuroMissing(state, key) {
     const t = groupObj(state, key, 'treat') || {};
     return NEURO_SUBS.filter((s) => !(Number(t[s.key] || 0) > 0)).map((s) => s.label);
+  }
+
+  function subEff(s) { return Number(s && (s.eff != null ? s.eff : s.val)) || 0; }
+  function subOwn(s) { return Number(s && (s.own != null ? s.own : (s.eff != null ? s.eff : s.val))) || 0; }
+
+  function effSum(part) {
+    if (!part) return 0;
+    if (part.subs && part.subs.length) return part.subs.reduce((a, s) => a + subOwn(s), 0);
+    return Number(part.val || 0) || 0;
+  }
+
+  function fillSum(part) {
+    if (!part) return 0;
+    if (part.subs && part.subs.length) return part.subs.reduce((a, s) => a + subEff(s), 0);
+    return Number(part.val || 0) || 0;
+  }
+  function effCnt(part) {
+    if (!part) return 0;
+    if (part.subs && part.subs.length) return part.subs.filter((s) => subEff(s) > 0).length;
+    return Number(part.val || 0) > 0 ? 1 : 0;
+  }
+  function gapOf(part) {
+    if (!part) return { val: 0, rec: 0, need: 0, pct: 0, gap: false };
+    const core = part.dx && part.dx.core;
+    const val = part.type === 'dxset' && core ? Number(core.val || 0) : fillSum(part);
+    const rec = part.type === 'dxset' && core ? Number(core.rec || part.rec || 0) : Number(part.rec || 0);
+    const need = Math.max(0, rec - Math.min(val, rec));
+    return { val, rec, need, pct: rec > 0 ? Math.round(clamp(val / rec, 0, 1) * 100) : 0, gap: need > 0 };
+  }
+
+  function primaryEmpty(part) {
+    if (!part) return true;
+    if (part.type === 'dxset') return !(part.dx && part.dx.core && Number(part.dx.core.val) > 0);
+    if (part.type === 'group') return !(part.subs || []).some((s) => subEff(s) > 0);
+    if (part.type === 'amount') return !(Number(part.val) > 0);
+    if (part.type === 'bool') return !part.val;
+    if (part.type === 'scale') return !part.option || !(Number(part.option.score) > 0.5);
+    return false;
   }
 
   function clampAmounts(state) {
@@ -6770,16 +7128,18 @@ const PLAN_FRONT = {
         const src = (raw && typeof raw === 'object') ? raw : {};
         const list = (p.subs || TREAT_SUBS);
 
-        const cred = customCredits(state, item.key, list.map((sp) => ({ key: sp.key, rec: subRec(baseRec, sp, p) })));
+        const sib = item.key === 'brain' ? 'heart' : item.key === 'heart' ? 'brain' : null;
+        const cred = customCredits(state, item.key, list.map((sp) => ({ key: sp.key, rec: subRec(baseRec, sp, p) })), { sibling: sib });
         customInfo = cred;
         subs = list.map((sp) => {
           const srec = subRec(baseRec, sp, p);
           const sval = Number(src[sp.key] || 0) || 0;
           const scred = Number(cred.byKey[sp.key] || 0) || 0;
-          const eff = sval + scred;
+          const scross = Number((cred.crossByKey || {})[sp.key] || 0) || 0;
+          const eff = sval + scred + scross;
           const sfill = srec > 0 ? clamp(eff / srec, 0, 1) : 0;
           return {
-            key: sp.key, label: sp.label, hint: sp.hint, rec: srec, val: sval, custom: scred, eff, fill: sfill,
+            key: sp.key, label: sp.label, hint: sp.hint, rec: srec, val: sval, custom: scred, cross: scross, own: sval + scred, eff, fill: sfill,
             pct: Math.round(sfill * 100), level: partLevel(sfill, eff), part: sp,
             min: p.min || 500, max: p.max || 3000
           };
@@ -6831,17 +7191,24 @@ const PLAN_FRONT = {
       }
       return { key: p.key, label: p.label, type: p.type, weight: p.weight, fill, rec, val, option, part: p, subs, stage, tiers, dx,
         customVal: customInfo ? subs.reduce((a, s) => a + Number(s.custom || 0), 0) : 0,
+        crossVal: customInfo ? subs.reduce((a, s) => a + Number(s.cross || 0), 0) : 0,
+        sharedRider: customInfo ? !!customInfo.sharedRider : false,
         customSum: customInfo ? customInfo.sum : 0,
         customCount: customInfo ? customInfo.count : 0,
         customRows: customInfo ? customInfo.rows : null };
     });
-    const fill = parts.reduce((a, p) => a + p.weight * p.fill, 0);
+    let fill = parts.reduce((a, p) => a + p.weight * p.fill, 0);
+
+    const careBasisUnknown = item.key === 'care' && (!state.cov.care || !state.cov.care.basis || state.cov.care.basis === 'unknown');
+    if (careBasisUnknown) fill = Math.min(fill, 0.7);
     const primary = parts[0].fill;
+
+    const primaryGap = primaryEmpty(parts[0]);
     let level, label;
-    if (primary <= 0 && !(parts[1] && parts[1].fill > 0)) { level = 'gap'; label = '공백 위험'; }
+    if (primaryGap) { level = 'gap'; label = '공백 위험'; }
     else if (fill >= 0.9) { level = 'ok'; label = '적정'; }
     else { level = 'need'; label = '보강 필요'; }
-    return { item, baseRec, parts, fill, level, label, primary, tiers: item.tiers || null };
+    return { item, baseRec, parts, fill, level, label, primary, primaryGap, careCapped: careBasisUnknown, tiers: item.tiers || null };
   }
 
   function summaryOf(state, item, r) {
@@ -6865,7 +7232,7 @@ const PLAN_FRONT = {
       const gSubs = g.subs || [];
       const n = gSubs.filter((s) => Number(s.eff != null ? s.eff : s.val) > 0).length;
       const gEff = gSubs.length ? gSubs.reduce((a, s) => a + Number(s.eff != null ? s.eff : s.val), 0) : (g.val || 0);
-      const gAdd = g.customVal > 0 ? ` (직접 기재 ${won(g.customVal)} 포함)` : '';
+      const gAdd = g.customVal > 0 ? ` (직접 기재 ${won(g.customVal)} 포함${g.crossVal > 0 ? ' · 뇌·심장 공유 반영' : ''})` : (g.crossVal > 0 ? ' (뇌·심장 공유 담보 반영)' : '');
       const d = p.dx || {};
       const core = d.core;
       const narrow = (p.subs || []).filter((s) => !s.isCore && s.val > 0).map((s) => `${dxShort(s.label)} ${won(s.val)}`);
@@ -6917,10 +7284,9 @@ const PLAN_FRONT = {
 
   function gradeLetter(score) {
     if (score >= 88) return 'A+';
-    if (score >= 78) return 'A';
-    if (score >= 68) return 'B+';
-    if (score >= 58) return 'B';
-    if (score >= 46) return 'C+';
+    if (score >= 72) return 'A';
+    if (score >= 56) return 'B+';
+    if (score >= 38) return 'B';
     return 'C';
   }
 
@@ -6928,7 +7294,10 @@ const PLAN_FRONT = {
     if (!s) return null;
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s));
     if (!m) return null;
-    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    const y = Number(m[1]), mo = Number(m[2]), day = Number(m[3]);
+
+    const last = new Date(y, mo, 0).getDate();
+    const d = new Date(y, mo - 1, Math.min(day, last));
     return isNaN(d.getTime()) ? null : d;
   }
 
@@ -6948,12 +7317,18 @@ const PLAN_FRONT = {
   function nextAgeDay(birth, ref) {
     const b = parseDate(birth);
     if (!b) return null;
+
+    const raw = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(birth));
+    const bm = raw ? Number(raw[2]) - 1 : b.getMonth();
+    const bd = raw ? Number(raw[3]) : b.getDate();
     const now = ref || new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const mk = (y) => {
-      const d = new Date(y, b.getMonth(), b.getDate());
-      d.setMonth(d.getMonth() + 6);
-      return d;
+      const mTotal = bm + 6;
+      const yy = y + Math.floor(mTotal / 12);
+      const mm = ((mTotal % 12) + 12) % 12;
+      const last = new Date(yy, mm + 1, 0).getDate();
+      return new Date(yy, mm, Math.min(bd, last));
     };
     let target = mk(today.getFullYear());
     if (target < today) target = mk(today.getFullYear() + 1);
@@ -7017,43 +7392,102 @@ const PLAN_FRONT = {
     return familyList(state).map((k) => ({ key: k, label: FAMILY_NOTE[k].title, body: FAMILY_NOTE[k].body }));
   }
 
+  function normalizeDisc(d) {
+    const out = {};
+    const src = (d && typeof d === 'object') ? d : {};
+    const alias = (typeof DISCLOSURE_ALIAS !== 'undefined') ? DISCLOSURE_ALIAS : {};
+    Object.keys(src).forEach((k) => {
+      if (!src[k]) return;
+      out[alias[k] || k] = true;
+    });
+    return out;
+  }
+
   function disclosureJudge(state) {
-    const d = state.disc || {};
+    const d = normalizeDisc(state && state.disc);
     const on = (k) => !!d[k];
-    const had3m = on('d3_dx') || on('d3_in') || on('d3_op');
-    const had1y = on('y1_test');
-    const had5yInOp = on('y5_inop') || on('y5_care');
-    const hadMajor = on('y5_major');
+    const labels = (keys) => keys.filter(on);
+    const itemLabel = (k) => {
+      if (typeof DISCLOSURE_ITEMS !== 'undefined') {
+        const it = DISCLOSURE_ITEMS.find((x) => x.key === k);
+        if (it) return `${it.period} ${it.label.split(' (')[0]}`;
+      }
+      const major = [].concat(
+        typeof DISCLOSURE_MAJOR10 !== 'undefined' ? DISCLOSURE_MAJOR10 : [],
+        typeof DISCLOSURE_MAJOR5 !== 'undefined' ? DISCLOSURE_MAJOR5 : []
+      ).find((x) => x.key === k);
+      return major ? `5년 10대질병 ${major.label}` : k;
+    };
+
+    const m3All = labels(['m3_dx', 'm3_in', 'm3_op', 'm3_med', 'm3_daily']);
+    const m3Io = labels(['m3_in', 'm3_op']);
+    const m3Simple = labels(['m3_in', 'm3_op', 'm3_dx']);
+    const y1 = on('y1_test');
+    const y2 = on('y2_inop');
+    const y5Io = on('y5_inop');
+    const y5Care = on('y5_care7');
+    const y5Med = on('y5_med30');
+    const majorAll = [].concat(
+      typeof DISCLOSURE_MAJOR10 !== 'undefined' ? DISCLOSURE_MAJOR10 : [],
+      typeof DISCLOSURE_MAJOR5 !== 'undefined' ? DISCLOSURE_MAJOR5 : []
+    );
+    const majorChecked = majorAll.filter((m) => on(m.key)).map((m) => m.label);
+    const majorAny = on('y5_major') || majorChecked.length > 0;
+    const m5Keys = ['y5m_cancer', 'y5m_cirr', 'y5m_ckd', 'y5m_park', 'y5m_als'];
+    const major5 = on('y5_major') || m5Keys.some(on) || (on('y5m_leuk') && on('y5m_cancer'));
+
+    const matrix = {
+      general: !!(m3All.length || y1 || y5Io || y5Care || y5Med || majorAny),
+      sim325: !!(m3Simple.length || y2 || major5),
+      sim355: !!(m3Io.length || y5Io || major5),
+      ultra: !!(m3Io.length || on('y5m_cancer'))
+    };
+
     const reasons = [];
-    if (had3m) reasons.push('최근 3개월 이내 진단·입원·수술 이력');
-    if (had1y) reasons.push('최근 1년 이내 추가검사 필요소견');
-    if (on('y5_inop')) reasons.push('최근 5년 이내 입원·수술 이력');
-    if (on('y5_care')) reasons.push('최근 5년 이내 7일 이상 계속 치료');
-    if (hadMajor) reasons.push('최근 5년 이내 중대질병 진단·치료');
+    if (m3All.length) reasons.push(`최근 3개월 — ${m3All.map(itemLabel).join(' · ')}`);
+    if (y1) reasons.push('최근 1년 — 추가검사(재검사) 필요소견');
+    if (y2) reasons.push('최근 2년 — 입원·수술');
+    if (y5Io) reasons.push('최근 5년 — 입원·수술');
+    if (y5Care) reasons.push('최근 5년 — 계속 7일 이상 치료');
+    if (y5Med) reasons.push('최근 5년 — 계속 30일 이상 투약');
+    if (majorAny) reasons.push(`최근 5년 — 10대 질병${majorChecked.length ? ` (${majorChecked.join('·')})` : ''}`);
 
     let code, label, tone, headline, advice;
-    if (had3m) {
+    if (m3Io.length) {
       code = 'hold'; label = '3개월 경과 후 재검토'; tone = 'warn';
-      headline = '간편심사도 3개월 문항을 똑같이 묻습니다';
-      advice = '치료·검사가 마무리된 날부터 3개월이 지난 뒤가 가장 넓은 선택지입니다. 그 전에는 인수 조건이 제한될 수 있어 청약 일정을 조정합니다.';
-    } else if (hadMajor) {
-      code = 'review'; label = '인수 심사 필요'; tone = 'gap';
-      headline = '5년 이내 중대질병은 간편심사에서도 고지 대상입니다';
-      advice = '암·간경화·투석 중 만성신장질환·파킨슨·루게릭은 3·2·5와 3·5·5 모두 5년 문항에 들어갑니다. 일반심사 할증 인수나 상품별 인수 기준을 먼저 확인합니다.';
-    } else if (had5yInOp) {
+      headline = '3개월 문항은 일반·간편·초간편 모두 똑같이 묻습니다';
+      advice = '치료·수술이 마무리된 날부터 3개월이 지난 뒤가 가장 넓은 선택지입니다. 그 전에는 인수 조건이 제한되거나 거절될 수 있어 청약 일정을 조정합니다.';
+    } else if (m3All.length) {
+      code = 'simple325'; label = '간편심사 3·2·5 검토 (3개월 진단·투약)'; tone = 'need';
+      headline = '3개월 진단·투약은 일반심사 문항 — 간편심사는 이력을 묻지 않습니다';
+      advice = '간편심사 3·2·5는 3개월 입원·수술만 묻기 때문에 지금 이력으로 통과할 수 있습니다. 보험료가 1.2~2배이고 가입금액·특약이 제한되므로, 3개월이 지나면 일반심사(표준체)를 다시 확인하는 것이 순서입니다.';
+    } else if (y2) {
+      code = 'review'; label = '3·2·5 불가 — 초간편·할증 인수'; tone = 'gap';
+      headline = '2년 이내 입원·수술은 3·2·5도 3·5·5도 막힙니다';
+      advice = '3·5·5(5년 문항)가 3·2·5(2년 문항)보다 넓기 때문에, 2년 이력이면 두 상품 모두 고지 대상입니다. 2년이 지나면 3·2·5가 열립니다. 그 전에는 초간편심사나 일반심사 할증 인수를 함께 놓고 비교합니다.';
+    } else if (major5) {
+      code = 'review'; label = '인수 심사 필요 — 간편 5년 중대질병'; tone = 'gap';
+      headline = '5년 이내 중대질병은 모든 간편심사에서 고지 대상입니다';
+      advice = '3·2·5와 3·5·5 모두 5년 문항에 들어갑니다. 일반심사 할증 인수나 상품별 인수 기준을 먼저 확인하고, 고지 후 부담보·할증 조건을 고객에게 서면으로 설명합니다.';
+    } else if (y5Io) {
       code = 'simple325'; label = '간편심사 3·2·5 검토'; tone = 'need';
-      headline = '5년 이내 입원·수술은 3·5·5 문항에 걸립니다';
-      advice = '2년보다 오래된 이력이면 3·2·5로 통과할 수 있습니다. 2년 이내라면 3·2·5도 걸리므로 초간편 상품이나 일반심사 할증 인수를 함께 봅니다.';
-    } else if (had1y) {
-      code = 'simple355'; label = '간편심사 3·5·5 검토'; tone = 'info';
-      headline = '5년 입원·수술이 없으면 3·5·5가 가장 저렴합니다';
-      advice = '1년 이내 추가검사 소견은 일반심사(3·1·5)의 1년 문항에 해당합니다. 간편심사 3·5·5는 3개월·5년·5년만 묻기 때문에 이 이력으로는 걸리지 않습니다. 검사 결과가 정리되면 일반심사 가능 여부를 다시 확인합니다.';
+      headline = '5년 입원·수술은 3·5·5 문항에만 걸립니다';
+      advice = '3·2·5의 5년 문항은 중대질병만입니다. 2년을 넘긴 입원·수술이면 3·2·5로 통과할 수 있고, 3·5·5는 이력 때문에 막힙니다. 둘을 같은 표에 놓고 보험료를 비교합니다.';
+    } else if (majorAny) {
+      code = 'simple325'; label = '간편심사 3·2·5 — 10대 질병은 일반심사 문항'; tone = 'info';
+      headline = '5년 이내 10대 질병(고혈압·당뇨 등)은 일반심사 문항입니다';
+      advice = '간편심사 3·2·5·3·5·5의 5년 문항은 5대 중대질병(암·간경화·투석 중 만성신장·파킨슨·루게릭)만 묻습니다. 그래서 고혈압·당뇨 이력은 간편심사에서 통과할 수 있습니다. 다만 일반심사에서는 고지 대상이므로 청약서에 사실대로 적고, 인수 조건(할증·부담보)을 서면으로 확인합니다.';
+    } else if (y1 || y5Care || y5Med) {
+      code = 'simple325'; label = '간편심사 3·2·5 — 일반심사 문항만 걸립니다'; tone = 'info';
+      headline = '1년 재검사·5년 7일 치료·5년 30일 투약은 일반심사 문항입니다';
+      advice = '간편심사 3·2·5·3·5·5는 이 세 문항을 묻지 않습니다. 가장 비컵 상품은 3·2·5이므로 3·5·5를 먼저 권하지 않습니다. 다만 보험료가 1.2~2배이므로 일반심사 재심사 가능성도함께 확인합니다.';
     } else {
-      code = 'standard'; label = '표준체 권장'; tone = 'ok';
-      headline = '일반심사(표준체)로 가입 가능한 상태입니다';
-      advice = '간편심사는 보험료가 1.2~2배 수준으로 높고 보장이 제한될 수 있습니다. 표준체로 먼저 심사하는 것이 순서입니다.';
+      code = 'standard'; label = '표준체 권장 — 입력 기준 고지 대상 없음'; tone = 'ok';
+      headline = '입력된 항목 기준으로는 고지 대상이 없습니다';
+      advice = '이 판정은 입력한 항목 기준입니다. 청약서 5문항(3개월 투약·상시복용, 5년 30일 투약, 10대 질병 포함)을 고객과 직접 대조한 뒤 서면으로 기재하세요. 간편심사는 보험료가 1.2~2배입니다.';
     }
-    return { code, label, tone, headline, advice, reasons, items: d, checked: reasons.length };
+    const checked = reasons.length;
+    return { code, label, tone, headline, advice, reasons, items: d, checked, matrix, majorChecked };
   }
 
   const MATURITY = ['80세', '90세', '100세', '종신'];
@@ -7096,12 +7530,19 @@ const PLAN_FRONT = {
     const effMissing = (list) => list.filter((s) => !(s.eff > 0)).map((s) => s.label);
     if (state.silson === 'none') {
       cps.push({ level: 'danger', title: '실손 공백', body: '입원·통원 기본부터 막혀 있습니다. 진단비보다 실손이 먼저입니다.' });
-    } else if (state.silson === '1' || state.silson === '2') {
-      cps.push({ level: 'info', title: '실손 1·2세대 — 보험료를 줄일 두 갈래', body: '2026년 11월부터 ①선택형 할인 특약(30~40% 할인) ②5세대 전환(3년간 50% 추가 할인, 6개월 한시) 중 선택할 수 있습니다. 5세대는 비중증 비급여 한도 1,000만원·자기부담 50%로 줄고 5년 재가입이 생깁니다.' });
-    } else if (state.silson === '3' || state.silson === '4') {
-      cps.push({ level: 'ok', title: `실손 ${state.silson}세대 — 유지 판단`, body: '비급여 한도·자기부담 구조가 5세대보다 넓습니다. 의료 이용이 적다면 보험료 차이를 비교해 볼 수 있지만 서두를 이유는 없습니다.' });
+    } else if (state.silson === '1') {
+      cps.push({ level: 'info', title: '실손 1세대 — 2026.11 두 갈래', body: '①선택형 할인 특약(전부 선택 시 40%대 할인) ②5세대 전환(3년간 50% 할인, 6개월 한시) 중 선택합니다. 단 2026.7부터 도수치료는 관리급여(본인부담 95%)로 바뀌어 예전처럼 전액 보장되지 않습니다.' });
+    } else if (state.silson === '2') {
+      const early = (state.silson2 || 'unknown') === 'early';
+      const known = (state.silson2 || 'unknown') !== 'unknown';
+      cps.push({ level: 'info', title: early ? '실손 2세대 초기(2013.3 이전) — 2026.11 대상' : known ? '실손 2세대 후기(2013.4~2017.3) — 2026.11 대상 아님' : '실손 2세대 — 가입 시기 확인 필요',
+        body: '2026년 11월 할인 제도는 <b>2013.3 이전 가입 + 재가입 조건 없음</b>(약 1,600만~1,700만 명)만 대상입니다. 2013.4~2017.3 가입은 2세대지만 대상이 아닙니다. 증권 가입일을 먼저 확인하세요.' + (early ? ' 대상이면 선택형 할인(30%대)과 5세대 전환(3년 50%·6개월 한시)을 같은 표에 놓고 비교합니다.' : '') });
+    } else if (state.silson === '3') {
+      cps.push({ level: 'ok', title: '실손 3세대 — 유지 판단', body: '비급여 70%·자기부담 20~30%로 5세대보다 넓습니다. 5세대 전환 이득은 보험료 차이로만 판단하고, 비중증 제외 4항목(도수·체외충격파·비급여 주사·미등재 신의료기술)을 실제로 쓰는지 확인합니다.' });
+    } else if (state.silson === '4') {
+      cps.push({ level: 'warn', title: '실손 4세대 — 2026.7.1부터 5년 재가입 도래', body: '2021.7 가입자부터 재가입이 돌아옵니다. 재가입 시점에 5세대 보장으로 바뀌고 별도 심사는 없습니다. "4세대는 그대로 유지"가 아니라 "재가입할 때 보장이 바뀐다"는 점을 첫 질문으로 확인하세요.' });
     } else {
-      cps.push({ level: 'ok', title: '실손 5세대 — 구조 확인', body: '중증(특약1)과 비중증(특약2)이 분리돼 있습니다. 특약2는 연 1,000만원·자기부담 50%이므로 도수·비급여 주사는 사실상 자기부담입니다. 비중증이 줄어든 만큼 정액 수술비·비급여 수술비의 역할이 커집니다.' });
+      cps.push({ level: 'ok', title: '실손 5세대 — 구조 확인', body: '중증(특약1)과 비중증(특약2)이 분리돼 있습니다. 특약2는 연 1,000만원·자기부담 50%이고, <b>도수치료·체외충격파·비급여 주사제(항암·항생·희귀 제외)·미등재 신의료기술은 보장 제외(0원)</b>입니다. MRI는 연 200만원·50%. 비중증이 줄어든 만큼 정액 수술비·비급여 수술비의 역할이 커집니다.' });
     }
 
     const cg = Number(cov.cancer.general || 0);
@@ -7151,7 +7592,7 @@ const PLAN_FRONT = {
 
     const sg = cov.surgery;
     if (!(sg.disease > 0)) cps.push({ level: 'info', title: '질병수술비(일반·매회) 없음', body: '수술 1회당 정액으로 나오는 가장 기본 축입니다. 1~5종·N대와 별개 계약입니다.' });
-    if (!(sg.disease15 > 0)) cps.push({ level: 'info', title: '질병 1~5종 수술비 없음', body: '1종(관혈)부터 5종(내시경·카테터)까지 침습도로 금액이 갈립니다. 회사별 분류표가 달라 같은 수술도 종수가 다릅니다.' });
+    if (!(sg.disease15 > 0)) cps.push({ level: 'info', title: '질병 1~5종 수술비 없음', body: '1종(내시경·카테터 등 소액)부터 5종(개두·개흉·개복 등 대수술 고액)까지 침습도로 금액이 갈립니다. 회사별 분류표가 달라 같은 수술도 종수가 다릅니다.' });
     if (!(sg.diseaseNdae > 0)) cps.push({ level: 'info', title: '질병 N대 수술비 없음', body: '1~5종만 있으면 큰 수술에서 금액이 부족합니다. N대는 질환 묶음(21·22·30·33대 등)별 한도를 따로 둡니다. 회사별로 용종·체외충격파 포함 여부가 다릅니다.' });
     if (!(sg.diseaseNonPay > 0)) cps.push({ level: 'info', title: '비급여 질병 수술비 없음', body: '5세대 실손은 비중증 비급여 한도가 연 1,000만원·자기부담 50%입니다. 비급여 수술은 실손으로 다 메워지지 않아 정액 비급여 수술비가 보완합니다.' });
     if (!(sg.injury > 0) && !(sg.injury15 > 0)) cps.push({ level: 'warn', title: '상해 수술비 없음', body: '질병 수술비만 있으면 사고로 다쳐 수술해도 지급되지 않습니다. 일반 상해수술비와 상해 1~5종은 다른 축입니다.' });
@@ -7189,6 +7630,24 @@ const PLAN_FRONT = {
     if (annual > 0 && totalSum / annual < 12) cps.push({ level: 'warn', title: '보험료 대비 진단비가 얇습니다', body: `연 보험료 ${won(annual)}만원에 주요 진단비 합계 ${won(totalSum)}만원입니다. 적립·중복을 덜어 진단비로 옮기는 재배치를 검토하세요.` });
     if (Number(state.age) >= 60 && (cr.daily || 0) < 10) cps.push({ level: 'danger', title: '60대 이상 — 간병이 최대 리스크', body: '이 연령대에서 실제로 돈이 새는 곳은 간병입니다. 장기요양등급과 간병 일당(요양병원 포함)을 함께 확인하세요.' });
 
+    const avgFill = (rows || []).length ? (rows || []).reduce((a, x) => a + x.r.fill, 0) / rows.length : 0;
+    if (rows && rows.length && avgFill >= ((typeof SELL_LESS !== 'undefined' ? SELL_LESS.threshold : 90) / 100)) {
+      cps.push({ level: 'ok', title: (typeof SELL_LESS !== 'undefined' ? SELL_LESS.headline : '추가 가입 비권장'),
+        body: (typeof SELL_LESS !== 'undefined' ? `${SELL_LESS.script} ${SELL_LESS.next.join(' ')}` : '5대 담보가 기준선을 넘었습니다. 추가 가입보다 갱신·만기·중복 점검이 남은 과제입니다.') });
+    }
+    const overHits = [];
+    if (typeof OVER_COVERAGE !== 'undefined') {
+      if (cg >= cTier.rec * 2) overHits.push(OVER_COVERAGE[0]);
+      if (state.flags && state.flags.manyRiders) overHits.push(OVER_COVERAGE[1]);
+      if (cs.shortMaturityCount) overHits.push(OVER_COVERAGE[2]);
+      if (cs.renewShare >= 60 && cs.count) overHits.push(OVER_COVERAGE[3]);
+      if (state.flags && state.flags.savings) overHits.push(OVER_COVERAGE[4]);
+    }
+    if (overHits.length) {
+      cps.push({ level: 'warn', title: `과보장 점검 ${overHits.length}가지 — 해지가 아니라 배서`,
+        body: overHits.map((o) => `· ${o.label} → ${o.action}`).join(' ') });
+    }
+
     if (!cps.length) cps.push({ level: 'ok', title: '구조적 구멍 없음', body: '5대 담보와 실손 구성이 기준선을 넘습니다. 이제는 금액 조정과 갱신 대비가 남은 과제입니다.' });
     return cps;
   }
@@ -7214,8 +7673,12 @@ const PLAN_FRONT = {
         if (p.type === 'dxset') {
           const core = p.dx && p.dx.core;
           if (core && core.rec > 0 && core.val < core.rec) gaps.push({ label: core.label, val: core.val, rec: core.rec, need: core.rec - core.val, pct: Math.round(core.fill * 100), code: core.codes });
-        } else if ((p.type === 'amount' || p.type === 'group') && p.rec > 0 && p.val < p.rec) {
+        } else if (p.type === 'amount' && p.rec > 0 && p.val < p.rec) {
           gaps.push({ label: p.label, val: p.val, rec: p.rec, need: p.rec - p.val, pct: Math.round(p.fill * 100) });
+        } else if (p.type === 'group') {
+
+          const g = gapOf(p);
+          if (g.gap) gaps.push({ label: p.label, val: g.val, rec: g.rec, need: g.need, pct: g.pct, custom: p.customVal, cross: p.crossVal });
         }
       });
       const pct = Math.round(clamp(r.fill, 0, 1) * 100);
@@ -7224,13 +7687,29 @@ const PLAN_FRONT = {
     const parts = partRows(state, rows);
     const sc = computeScore(state, rows);
     const sg = state.cov.surgery;
-    const totalSum = Number(state.cov.cancer.general || 0) + Number(state.cov.cancer.similar || 0) + treatSum(state)
-      + dxCoreVal(state, 'brain') + dxCoreVal(state, 'heart')
-      + ['disease', 'disease15', 'diseaseNdae', 'diseaseNonPay', 'injury', 'injury15'].reduce((a, k) => a + Number(sg[k] || 0), 0);
+
+    const partOf = (key, pk) => {
+      const row = rows.find((x) => x.item.key === key);
+      return row ? row.r.parts.find((p) => p.key === pk) : null;
+    };
+    const customDxSum = customAll(state).filter((x) => CUSTOM_DX_RE.test(x.name)).reduce((a, x) => a + Number(x.amount || 0), 0);
+    const sums = {
+      cancerDx: Number(state.cov.cancer.general || 0) + Number(state.cov.cancer.similar || 0),
+      cancerTreat: effSum(partOf('cancer', 'treatment')),
+      brainDx: dxTotal(state, 'brain'),
+      heartDx: dxTotal(state, 'heart'),
+      brainTreat: effSum(partOf('brain', 'treat')),
+      heartTreat: effSum(partOf('heart', 'treat')),
+      surgery: ['disease', 'disease15', 'diseaseNdae', 'diseaseNonPay', 'injury', 'injury15'].reduce((a, k) => a + Number(sg[k] || 0), 0),
+      customDx: customDxSum
+    };
+    const totalSum = sums.cancerDx + sums.cancerTreat + sums.brainDx + sums.heartDx + sums.brainTreat + sums.heartTreat + sums.surgery + sums.customDx;
     const annual = Number(state.premium || 0) * 12;
     const cps = checkpoints(state, rows, totalSum, annual);
     const st = steps(state, rows);
     const needList = rows.filter((x) => x.r.level !== 'ok');
+
+    const thinnest = rows.slice().sort((a, b) => a.r.fill - b.r.fill)[0] || null;
     const contractTotal = (state.contracts || []).reduce((a, c) => a + Number(c.premium || 0), 0);
     const cstats = contractStats(state.contracts);
     const family = familyList(state);
@@ -7248,7 +7727,8 @@ const PLAN_FRONT = {
       const g = row.r.parts.find((p) => p.key === 'treat');
       const dd = row.r.parts.find((p) => p.key === 'dx');
       return {
-        subs: g.subs || [], sum: g.val, rec: g.rec, count: (g.subs || []).filter((s) => s.val > 0).length, missing: neuroMissing(state, row.item.key),
+        subs: g.subs || [], sum: effSum(g), sumRaw: g.val, cross: g.crossVal || 0, custom: g.customVal || 0,
+        rec: g.rec, count: effCnt(g), missing: (g.subs || []).filter((s) => subEff(s) <= 0).map((s) => s.label),
         dx: dd ? {
           subs: dd.subs || [], core: dd.dx.core, gapWarn: dd.dx.gapWarn, scenarios: dd.dx.scenarios,
           total: dd.dx.total, coreVal: dd.dx.core ? dd.dx.core.val : 0, rec: dd.rec, fill: dd.fill, pct: Math.round(dd.fill * 100)
@@ -7259,13 +7739,15 @@ const PLAN_FRONT = {
       state, rows, parts, score: sc.score, grade: sc.grade, letter: gradeLetter(sc.score),
       weights: sc.w, penalty: sc.penalty,
       counts: counts(parts, state.silson),
-      totalSum, annual, premium: Number(state.premium || 0), ratio: annual > 0 ? totalSum / annual : 0,
-      checkpoints: cps, steps: st, needList, first: needList[0] || null,
+      totalSum, sums, totalSumLabel: '진단비·치료비·수술비 합계', annual, premium: Number(state.premium || 0), ratio: annual > 0 ? totalSum / annual : 0,
+      checkpoints: cps, steps: st, needList, first: needList[0] || null, thinnest,
+      sellLess: rows.length ? (rows.reduce((a, x) => a + x.r.fill, 0) / rows.length) >= ((typeof SELL_LESS !== 'undefined' ? SELL_LESS.threshold : 90) / 100) : false,
+      overCoverage: (typeof OVER_COVERAGE !== 'undefined' ? OVER_COVERAGE : []),
       contracts: state.contracts || [], contractTotal, contractStats: cstats,
       family, familyLabels: family.map((k) => FAMILY_NOTE[k].title), familyNotes: familyNotes(state),
       disclosure: disc, MATURITY,
       tiers: { cancer: PRIORITY[0].tiers, brain: PRIORITY[1].tiers, heart: PRIORITY[2].tiers, care: PRIORITY[4].tiers },
-      brainTreat: { subs: (cancerTreatPart && cancerTreatPart.subs) || [], sum: treatSum(state), rec: (cancerTreatPart && cancerTreatPart.rec) || 0, count: treatCount(state), missing: treatMissing(state), legacy: state.cov.cancer.treatmentLegacy || 0 },
+      brainTreat: { subs: (cancerTreatPart && cancerTreatPart.subs) || [], sum: effSum(cancerTreatPart), rec: (cancerTreatPart && cancerTreatPart.rec) || 0, count: effCnt(cancerTreatPart), missing: (cancerTreatPart ? (cancerTreatPart.subs || []).filter((s) => subEff(s) <= 0).map((s) => s.label) : treatMissing(state)), legacy: state.cov.cancer.treatmentLegacy || 0 },
       neuro: { brain: neuroOf(brainRow), heart: neuroOf(heartRow) },
       dx: {
         brain: { subs: DX_SUBS.brain, values: dxObj(state, 'brain'), core: dxCoreVal(state, 'brain'), total: dxTotal(state, 'brain'), scenarios: dxScenarios(state, 'brain') },
@@ -7365,6 +7847,51 @@ const PLAN_FRONT = {
     };
   }
 
+  function oneTimeTimeline(state, opts) {
+    opts = opts || {};
+    const st = state || {};
+    const amt = Number(opts.amount) || Number((st.cov && st.cov.cancer && st.cov.cancer.general) || 0) || 5000;
+    const years = Number(opts.years) || 10;
+    const rows = [];
+    let onceCum = 0, annualCum = 0, rejoinCum = 0;
+    for (let y = 1; y <= years; y += 1) {
+      const once = y === 1 ? amt : 0;
+      const annual = amt;
+      const rejoin = (y - 1) % 3 === 0 ? amt : 0;
+      onceCum += once; annualCum += annual; rejoinCum += rejoin;
+      rows.push({ year: y, once, annual, rejoin, onceCum, annualCum, rejoinCum });
+    }
+    return {
+      amount: amt, years, rows,
+      totals: { once: onceCum, annual: annualCum, rejoin: rejoinCum },
+      ratio: onceCum ? Math.round((annualCum / onceCum) * 10) / 10 : 0,
+      rejoinRatio: onceCum ? Math.round((rejoinCum / onceCum) * 10) / 10 : 0,
+      assumed: !(st.cov && st.cov.cancer && st.cov.cancer.general > 0)
+    };
+  }
+
+  function silsonCompare(input) {
+    const i = input || {};
+    const n = (v) => Math.max(0, Number(v) || 0);
+    const dose = n(i.dose), dosePrice = n(i.dosePrice) || 15;
+    const shot = n(i.shot), shotPrice = n(i.shotPrice) || 20;
+    const mri = n(i.mri), mriPrice = n(i.mriPrice) || 60;
+    const doseCost = dose * dosePrice, shotCost = shot * shotPrice, mriCost = mri * mriPrice;
+    const total = doseCost + shotCost + mriCost;
+    const oldSelf = Math.round(total * 0.2);
+    const mriCap = Math.min(mriCost, 200);
+    const fiveMriPaid = Math.round(mriCap * 0.5);
+    const fiveSelf = Math.round((doseCost + shotCost) + (mriCost - fiveMriPaid));
+    return {
+      input: { dose, dosePrice, shot, shotPrice, mri, mriPrice },
+      cost: { dose: doseCost, shot: shotCost, mri: mriCost, total },
+      old: { paid: total - oldSelf, self: oldSelf },
+      five: { paid: total - fiveSelf, self: fiveSelf, excluded: doseCost + shotCost },
+      gap: Math.max(0, fiveSelf - oldSelf),
+      basis: '연간 기준·만원 · 1~4세대 비급여 80% 보장 가정 · 5세대 MRI 한도 200만'
+    };
+  }
+
   function oneLine(state, m) {
     if (!m.needList.length) return '5대 담보가 기준선을 넘었습니다. 금액 조정과 갱신 대비가 남은 과제입니다.';
     const x = m.needList[0];
@@ -7383,6 +7910,8 @@ const PLAN_FRONT = {
     dxObj, dxTotal, dxCoreVal, dxScenarios, dxShort, DX_SUBS, DX_MAX, simulate,
     CUSTOM_KEYS, CUSTOM_AREA_LABEL, CUSTOM_MODE_LABEL, CUSTOM_MAP,
     customList, customTotal, customAll, customCredits, sanitizeCustom,
+    effSum, fillSum, effCnt, subEff, subOwn, gapOf, primaryEmpty,
+    oneTimeTimeline, silsonCompare, normalizeDisc,
     renewTrend, RENEW_TREND
   };
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -9241,7 +9770,7 @@ const PLAN_FRONT = {
   function shortSummary(row) {
     const k = row.item.key;
     if (k === 'cancer') {
-      return `일반암 ${won(PK(row, 'general').val)} · 치료비 ${subHave(PK(row, 'treatment'))}/5`;
+      return `일반암 ${won(PK(row, 'general').val)}만원 · 치료비 ${subHave(PK(row, 'treatment'))}/5`;
     }
     if (k === 'brain' || k === 'heart') {
       const dxp = PK(row, 'dx');
@@ -9327,13 +9856,21 @@ const PLAN_FRONT = {
   }
 
   function dxBreakdown(m) {
+    const sums = m.sums || {};
+    if (sums.cancerDx != null) {
+      return {
+        cancerDx: sums.cancerDx, treat: sums.cancerTreat, neuroDx: (sums.brainDx || 0) + (sums.heartDx || 0),
+        neuroTreat: (sums.brainTreat || 0) + (sums.heartTreat || 0), surgery: sums.surgery || 0, customDx: sums.customDx || 0,
+        total: m.totalSum
+      };
+    }
     const c = (m.state && m.state.cov && m.state.cov.cancer) || {};
     const sg = (m.state && m.state.cov && m.state.cov.surgery) || {};
     const cancerDx = Number(c.general || 0) + Number(c.similar || 0);
-    const treat = BK.treatSum(m.state);
+    const treat = effVal(PK(m.rows[0], 'treatment'));
     const neuroDx = (m.dx && m.dx.brain ? Number(m.dx.brain.core || 0) : 0) + (m.dx && m.dx.heart ? Number(m.dx.heart.core || 0) : 0);
     const surgery = ['disease', 'disease15', 'diseaseNdae', 'diseaseNonPay', 'injury', 'injury15'].reduce((a, k) => a + Number(sg[k] || 0), 0);
-    return { cancerDx, treat, neuroDx, surgery, total: cancerDx + treat + neuroDx + surgery };
+    return { cancerDx, treat, neuroDx, neuroTreat: 0, customDx: 0, surgery, total: cancerDx + treat + neuroDx + surgery };
   }
 
   function premiumGuide(m) {
@@ -9937,7 +10474,7 @@ const PLAN_FRONT = {
     o = o || {};
     const w = s.CW;
     const rows = m.contracts.length ? m.contracts : [];
-    const headH = 16, rowH = 22;
+    const headH = 16, rowH = o.rowH || 22;
     s.rect(s.ML, y, w, headH, { fill: C.navy });
     const cols = [['보험사 · 상품명', 0.46, 'left'], ['월 보험료', 0.16, 'right'], ['납입', 0.15, 'center'], ['만기 · 구조', 0.23, 'center']];
     let cx = s.ML;
@@ -9955,15 +10492,26 @@ const PLAN_FRONT = {
     }
     rows.slice(0, o.max || 8).forEach((c, i) => {
       s.rect(s.ML, cy, w, rowH, { fill: i % 2 ? C.sky2 : '#fff' });
-      s.text(c.insurer || '—', s.ML + 7, cy + 3.5, { size: 6.4, weight: 700, color: C.navy });
-      s.text(c.product || '—', s.ML + 7, cy + 12, { size: 5.8, weight: 500, color: C.ink2 });
-      s.text(`${won(c.premium)}만원`, s.ML + w * 0.62 - 7, cy + 7, { size: 6.4, weight: 700, color: C.navy, align: 'right' });
+      const twoLine = rowH >= 18;
+      s.text(c.insurer || '—', s.ML + 7, cy + (twoLine ? 3.5 : 4.4), { size: 6.4, weight: 700, color: C.navy });
+      if (twoLine) s.text(c.product || '—', s.ML + 7, cy + 12, { size: 5.8, weight: 500, color: C.ink2 });
+      else {
+        const ix = s.ML + 10 + s.measure(c.insurer || '—', 6.4, 700);
+        s.text(cutName(c.product || '—', 20), ix, cy + 4.4, { size: 5.6, weight: 500, color: C.ink2 });
+      }
+      s.text(`${won(c.premium)}만원`, s.ML + w * 0.62 - 7, cy + (twoLine ? 7 : 4.4), { size: 6.4, weight: 700, color: C.navy, align: 'right' });
       const paid = (c.pay || '납입중') === '납입완료';
-      s.text(paid ? '납입완료' : '납입중', s.ML + w * 0.62 + (w * 0.15) / 2, cy + 7, { size: 5.9, weight: 700, color: paid ? C.muted : C.mint, align: 'center' });
-      s.text(`${c.maturity && c.maturity !== '미입력' ? c.maturity : '만기 미입력'} · ${c.renew ? '갱신형' : '비갱신'}`, s.ML + w * 0.77 + (w * 0.23) / 2, cy + 7, { size: 5.8, weight: 600, color: c.renew ? C.orange : C.mint, align: 'center' });
+      s.text(paid ? '납입완료' : '납입중', s.ML + w * 0.62 + (w * 0.15) / 2, cy + (twoLine ? 7 : 4.4), { size: 5.9, weight: 700, color: paid ? C.muted : C.mint, align: 'center' });
+      s.text(`${c.maturity && c.maturity !== '미입력' ? c.maturity : '만기 미입력'} · ${c.renew ? '갱신형' : '비갱신'}`, s.ML + w * 0.77 + (w * 0.23) / 2, cy + (twoLine ? 7 : 4.4), { size: 5.8, weight: 600, color: c.renew ? C.orange : C.mint, align: 'center' });
       s.line(s.ML, cy + rowH, s.ML + w, cy + rowH, { color: C.line2 });
       cy += rowH;
     });
+    if (rows.length > (o.max || 8)) {
+
+      s.rect(s.ML, cy, w, 12, { fill: C.orangeSoft });
+      s.text(`외 ${rows.length - (o.max || 8)}건 — 앱 입력 화면·30장 플랜북 2p에서 전수 확인`, s.ML + 7, cy + 2.6, { size: 5.8, weight: 700, color: C.orange });
+      cy += 12;
+    }
     if (rows.length) {
       const cs = m.contractStats || BK.contractStats(m.contracts);
       s.rect(s.ML, cy, w, 16, { fill: C.tint });
@@ -10008,10 +10556,10 @@ const PLAN_FRONT = {
         widths: [86, 128, 128, 96, 77], size: 6.8, rowH: 16.5, align: ['left', 'left', 'left', 'center', 'right']
       });
       const sT = PK(m.rows[0], 'treatment');
-      const tLine = `암 주요치료비 5종 — ${(sT.subs || []).map((x) => `${TREAT_SHORT[x.key] || x.label} ${x.val ? won(x.val) : '없음'}`).join(' · ')} (합계 ${won(sT.val)} / 권장 ${won(sT.rec)}만원)`;
+      const tLine = `암 주요치료비 5종 — ${(sT.subs || []).map((x) => `${TREAT_SHORT[x.key] || x.label} ${subEff(x) ? won(subEff(x)) : '없음'}`).join(' · ')} (합계 ${won(effVal(sT))} / 권장 ${won(sT.rec)}만원${sT.customVal + (sT.crossVal || 0) > 0 ? ' · 직접 기재 포함' : ''})`;
       s.rect(s.ML, y + 4, s.CW, 12, { fill: C.tint2, r: 3, stroke: C.tintLine });
       s.rect(s.ML, y + 4, 2, 12, { fill: C.blue, r: 1 });
-      s.text(tLine, s.ML + 8, y + 8, { size: 5.7, weight: 600, color: C.ink2 });
+      s.text(tLine, s.ML + 8, y + 8, { size: 5.3, weight: 600, color: C.ink2 });
       y += 17;
       const bdxS = PK(m.rows[1], 'dx').dx || {};
       const hdxS = PK(m.rows[2], 'dx').dx || {};
@@ -10195,7 +10743,7 @@ const PLAN_FRONT = {
       const pg = premiumGuide(m);
       const kpis = [
         { label: '종합 보장등급', value: m.letter, sub: `${m.score}점 · ${m.grade.label}`, color: C.blue },
-        { label: '주요 진단비 합계', value: `${won(m.totalSum)}만원`, sub: `암 ${won(dxb.cancerDx)} · 뇌·심장 ${won(dxb.neuroDx)} · 수술 ${won(dxb.surgery)}`, color: C.navy },
+        { label: '진단비·치료비·수술비 합계', value: `${won(m.totalSum)}만원`, sub: `암 ${won(dxb.cancerDx)} · 치료 ${won(dxb.treat)} · 뇌·심장 ${won(dxb.neuroDx + dxb.neuroTreat)} · 수술 ${won(dxb.surgery)}`, color: C.navy },
         { label: '월 보험료', value: `${won(m.premium)}만원`, sub: `연 ${won(m.annual)}만원 · 소득의 ${pg.recPct}% 기준`, color: C.navy },
         { label: '연 보험료 대비 진단비', value: m.ratio ? `${m.ratio.toFixed(1)}배` : '—', sub: '12배 이상이면 균형', color: m.ratio && m.ratio < 12 ? C.orange : C.mint }
       ];
@@ -10219,7 +10767,7 @@ const PLAN_FRONT = {
       y += 178;
       y = s.sectionHead(s.ML, y, s.CW, '01', '핵심 진단 3가지', '이 세 문장이 상담의 뼈대입니다');
       const diag = [];
-      if (m.first) diag.push({ t: `${m.first.item.rank}순위 ${m.first.item.name}이 가장 비어 있습니다`, d: `${m.first.label} · ${m.first.summary}${m.first.gaps.length ? ` — ${m.first.gaps[0].label} 기준 ${won(m.first.gaps[0].need)}만원 부족` : ''}`, tone: 'gap' });
+      if (m.thinnest) diag.push({ t: `${m.thinnest.item.rank}순위 ${m.thinnest.item.name}이 충족도 ${m.thinnest.pct}%로 가장 얇습니다`, d: `${m.thinnest.label} · ${m.thinnest.summary}${m.thinnest.gaps.length ? ` — ${m.thinnest.gaps[0].label} 기준 ${won(m.thinnest.gaps[0].need)}만원 부족` : ''}`, tone: 'gap' });
       diag.push({ t: `보완이 필요한 항목 ${m.needList.length}개`, d: m.needList.length ? m.needList.map((x) => `${x.item.name}(${x.pct}%)`).join(' · ') : '없음 — 금액 조정 단계로 넘어갑니다', tone: 'need' });
       diag.push({ t: m.state.silson === 'none' ? '실손 공백 — 의료비 기본축이 비어 있습니다' : `실손 ${m.state.silson === '5' ? '5' : m.state.silson}세대 · 갱신형 ${m.state.flags.renew ? '중심' : '없음'}`, d: m.state.silson === 'none' ? '진단비보다 실손을 먼저 세워야 합니다.' : (m.state.silson === '1' || m.state.silson === '2' ? '2026년 11월 선택형 할인 특약·5세대 전환 두 갈래를 같은 표에 놓고 비교합니다.' : '구조와 한도를 확인하고 유지 여부를 판단합니다.'), tone: m.state.silson === 'none' ? 'gap' : 'info' });
       const dw = (s.CW - 16) / 3;
@@ -10234,7 +10782,7 @@ const PLAN_FRONT = {
 
       y = s.sectionHead(s.ML, y, s.CW, '02', '월 보험료 배분 점검', '권장 배분 예시와 현재 상태를 비교합니다');
       s.rect(s.ML, y, s.CW, 54, { fill: '#fff', r: 5, stroke: C.line });
-      s.text('권장 배분 예시 (상담 보조)', s.ML + 10, y + 8, { size: 6.2, weight: 700, color: C.muted });
+      s.text('권장 배분 예시 (상담 보조 · 이 고객의 현재 배분이 아님)', s.ML + 10, y + 8, { size: 6.2, weight: 700, color: C.muted });
       const alloc = [
         { label: '진단비', v: 45, color: C.navy },
         { label: '치료·수술', v: 20, color: C.blue },
@@ -10270,7 +10818,7 @@ const PLAN_FRONT = {
     P.push(function (s) {
       let y = H(s, 3, '보장 포트폴리오 현황', '보유 계약과 세부 담보를 항목별로 점검합니다. 표의 상태 배지가 다음 상담의 순서를 정합니다.');
       y = s.sectionHead(s.ML, y, s.CW, '01', '보유 계약 목록', m.contracts.length ? `${m.contracts.length}건 · 월 ${won(m.contractTotal)}만원` : '앱에서 계약을 추가할 수 있습니다');
-      y = contractTable(s, m, y + 2, { max: 5 });
+      y = contractTable(s, m, y + 2, { max: 5, rowH: m.contracts.length > 5 ? 15 : 22 });
 
       y = s.sectionHead(s.ML, y + 10, s.CW, '02', '가족력 · 간편고지 판정', '청약 전에 확인하는 두 가지');
       const half = (s.CW - 8) / 2;
@@ -10393,7 +10941,7 @@ const PLAN_FRONT = {
         ['일반암 진단비', `${won(m.state.cov.cancer.general)}만원`, `${won(PK(cr, 'general').rec)}만원`, PK(cr, 'general').fill],
         ['유사암 진단비', m.state.cov.cancer.similar ? `${won(m.state.cov.cancer.similar)}만원` : '없음', `${won(PK(cr, 'similar').rec)}만원`, PK(cr, 'similar').fill],
         ['암 주요치료비 5종 합계', `${won(effVal(tparts))}만원`, `${won(tparts.rec)}만원`, tparts.fill]
-      ].concat(tsubs.map((sp) => [`　· ${sp.label}`, sp.val ? `${won(sp.val)}만원` : '없음', `${won(sp.rec)}만원`, sp.fill]))
+      ].concat(tsubs.map((sp) => [`　· ${sp.label}`, subEff(sp) ? `${won(subEff(sp))}만원${Number(sp.custom || 0) + Number(sp.cross || 0) > 0 ? ' (직접 기재)' : ''}` : '없음', `${won(sp.rec)}만원`, sp.fill]))
         .concat([['재진단·전이', m.state.cov.cancer.recur ? '보유' : '없음', '보유 권장', m.state.cov.cancer.recur ? 1 : 0]]);
       y = s.table(s.ML, y + 2, s.CW, ['항목', '현재', '권장 기준', '충족도'], recs.map((r) => [
         { text: r[0], weight: 700, color: C.navy }, r[1], { text: r[2], color: C.ink2 },
@@ -10540,11 +11088,11 @@ const PLAN_FRONT = {
       y = s.sectionHead(s.ML, y + 2, s.CW, '03', '장기요양 등급 분포 — 왜 1~2등급만 준비하면 안 되는가', '출처: 건보공단 2025 노인장기요양보험 통계연보');
       statCard(s, s.ML, y, s.CW, 86, statById('ltc'));
       y += 90;
-      y = costStrip(s, s.ML, y, s.CW, '간병은 매달 나가는 돈 — 일당이 곱해지는 구조', [
-        ['간병인 일당', '12~15만원', '업체·지역별 차이'],
-        ['한 달(30일)', '360~450만원', '입원이 길어지면'],
+      y = costStrip(s, s.ML, y, s.CW, '간병은 매달 나가는 돈 — 일당이 곱해지는 구조 (2026.7 실단가)', [
+        ['간병인 일당', '10~17만원', '24시간 1:1 기준'],
+        ['한 달(30일)', '300~500만원', '주말·식대 포함'],
         ['지급 기준', '하루 8시간', '2026.7 전환']
-      ], { accent: C.mint, h: 44 });
+      ], { accent: C.mint, h: 40 });
       y = s.sectionHead(s.ML, y + 2, s.CW, '04', '정리 — 담당자 소견', '실손·간병·수술의 순서');
       y = ownerNote(s, m, y, careNote(m), { accent: C.mint });
 
@@ -10553,7 +11101,7 @@ const PLAN_FRONT = {
         customOf(m, 'care').map((x) => Object.assign({}, x, { area: '간병' }))
       );
       if (cusSCbox.length) y = customBox(s, y + 4, cusSCbox, { accent: C.mint, title: '증권 직접 기재 담보 — 수술·간병 (증권 담보명 그대로)', withArea: true, gap: 2 });
-      y = noteStrip(s, y + (cusSCbox.length ? 2 : 4), '장기요양은 등급 판정이 전제이고 65세 미만도 노인성 질병이면 신청할 수 있습니다.', { size: 5.8 });
+      y = noteStrip(s, y + (cusSCbox.length ? 2 : 4), '장기요양은 등급 판정이 전제이고 65세 미만도 노인성 질병이면 신청할 수 있습니다. 일반병동 14만6,292원 vs 간호간병통합 2만3,620원(83.9%↓) — 사설 간병비는 실손 청구 불가, 통합병동 입원료만 실손 대상입니다. 일당 20만원 상품은 한시(현대 20→15·한화 20→10)입니다.', { size: 5.5 });
 
       y = warnStrip(s, y + 2, 'care');
       s.footer({ left: `${m.client.name}님 · 수술·간병`, right: '07 / 10' });
@@ -11094,7 +11642,7 @@ const PLAN_FRONT = {
       const rx = s.ML + 188, rw = s.CW - 188;
       s.rect(rx, y, rw, 118, { fill: C.hero, r: 6 });
       s.text('한 문장으로 말하면', rx + 12, y + 10, { size: 6.2, weight: 700, color: C.heroInk });
-      s.para(`${m.client.name}님은 지금 ${m.letter} 등급이고, ${m.first ? `${m.first.item.rank}순위 ${m.first.item.name}이 ${m.first.pct}%로 가장 비어 있습니다.` : '5대 담보가 모두 기준선을 넘었습니다.'} 나머지는 유지하면서 이 한 칸부터 채우면 됩니다.`, rx + 12, y + 22, rw - 24, { size: 9, weight: 600, color: '#fff', lh: 1.5 });
+      s.para(`${m.client.name}님은 지금 ${m.letter} 등급이고, ${m.thinnest ? `${m.thinnest.item.rank}순위 ${m.thinnest.item.name}이 ${m.thinnest.pct}%로 가장 얇습니다.` : '5대 담보가 모두 기준선을 넘었습니다.'} ${m.first && m.thinnest && m.first.item.key !== m.thinnest.item.key ? `우선순위 1순위는 ${m.first.item.name}(${m.first.pct}%)입니다. ` : ''}나머지는 유지하면서 이 한 칸부터 채우면 됩니다.`, rx + 12, y + 22, rw - 24, { size: 9, weight: 600, color: '#fff', lh: 1.5 });
       s.text(`${m.needList.length}개 항목 보완 필요 · 월 ${won(m.premium)}만원`, rx + 12, y + 96, { size: 6.6, weight: 600, color: C.heroOk });
       y += 130;
 
@@ -11201,7 +11749,7 @@ const PLAN_FRONT = {
       y = secLabel(s, y, '60초 판독 멘트 (그대로 읽어도 됩니다)');
       y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반암 진단비가 ${won(m.state.cov.cancer.general)}만원입니다. 기준으로 보면 ${Math.round(PK(cr, 'general').fill * 100)}% 수준이고, ${m.state.cov.cancer.similar ? `유사암은 ${won(m.state.cov.cancer.similar)}만원으로` : '유사암 담보는 없어서 갑상선암 같은 경우 0원이 될 수 있고,'} ${tN >= 5 ? `치료비는 5종이 모두 채워져 합계 ${won(effVal(tP))}만원입니다` : `치료비는 5종 중 ${tN}종만 채워져 합계 ${won(effVal(tP))}만원입니다`}. 제가 보기엔 ${cr.gaps.length ? `${cr.gaps[0].label}가 가장 먼저 손댈 곳입니다` : '금액은 충분하니 재진단 조건을 확인할 차례입니다'}."` });
       y += 6;
-      y = s.bullets(s.ML, y, s.CW, [`치료비 5종 세부 — ${tS.map((x) => `${x.label} ${x.val ? won(x.val) + '만원' : '없음'}`).join(' · ')} (권장 ${won(tP.rec)}만원)`], { size: 6.6 });
+      y = s.bullets(s.ML, y, s.CW, [`치료비 5종 세부 — ${tS.map((x) => `${x.label} ${subEff(x) ? won(subEff(x)) + '만원' : '없음'}`).join(' · ')} (권장 ${won(tP.rec)}만원)`], { size: 6.6 });
       y += 8;
       y = secLabel(s, y, '왜 이렇게 말하는가');
       y = s.bullets(s.ML, y, s.CW, [
@@ -11214,6 +11762,16 @@ const PLAN_FRONT = {
       y = questionCard(s, y, PLAYBOOK.cancer.questions[0], '이 페이지에서 쓸 질문 하나');
 
       y = customBox(s, y + 6, customOf(m, 'cancer'), { accent: C.blue, title: '증권 직접 기재 담보 — 암 (고객 증권 그대로)' });
+
+      const tl = BK.oneTimeTimeline(m.state);
+      y = blockTitle(s, y + 8, '1회한 vs 연 1회한 — 10년 실제 수령액', `${won(tl.amount)}만원 기준 예시`);
+      y = s.table(s.ML, y, s.CW, ['기간', '1회한', '연 1회한(최대 10년)', '재진단 3년 주기'], [1, 3, 5, 10].map((yy) => [
+        { text: `${yy}년 누적`, weight: 700, color: C.navy },
+        { text: `${won(tl.rows[yy - 1].onceCum)}만원`, align: 'right' },
+        { text: `${won(tl.rows[yy - 1].annualCum)}만원`, weight: 800, color: C.mint, align: 'right' },
+        { text: `${won(tl.rows[yy - 1].rejoinCum)}만원`, color: C.ink2, align: 'right' }
+      ]), { widths: [110, 110, 170, 125], size: 6.6, rowH: 14, align: ['left', 'right', 'right', 'right'] });
+      y = noteStrip(s, y + 4, `같은 금액이라도 10년 누적은 연 1회한이 ${tl.ratio}배·재진단이 ${tl.rejoinRatio}배입니다. 내 담보가 1회한인지 증권에서 먼저 확인하는 것이 이 상담의 첫 단계입니다.`, { size: 6.2 });
       foot(s, 7, '1순위 암 · 판독');
     });
 
@@ -11739,7 +12297,7 @@ const PLAN_FRONT = {
       s.rect(s.ML, y, s.CW, 46, { fill: C.hero, r: 6 });
       s.text('이 고객의 실손', s.ML + 12, y + 8, { size: 6, weight: 700, color: C.heroInk });
       s.text(sil === 'none' ? '없음 — 실손부터' : `${sil}세대`, s.ML + 12, y + 17, { size: 16, weight: 800, color: '#fff' });
-      s.para(sil === '1' || sil === '2' ? '2026년 11월 제도 대상일 가능성이 큽니다. 가입 시기와 재가입 조건을 확인하세요.' : sil === 'none' ? '진단비보다 실손이 먼저입니다. 입원·통원 기본축이 비어 있습니다.' : '선택형 할인·전환 대상이 아닐 수 있습니다. 유지 판단이 먼저입니다.', s.ML + 130, y + 10, s.CW - 150, { size: 6.8, color: C.heroInk2, lh: 1.4 });
+      s.para(sil === '1' ? '2026년 11월 제도 대상입니다. 도수는 2026.7부터 관리급여(본인부담 95%)로 바뀌었습니다.' : sil === '2' ? ((m.state.silson2 || 'unknown') === 'early' ? '2013.3 이전 초기 2세대 — 2026.11 할인 대상입니다.' : (m.state.silson2 || 'unknown') === 'late' ? '2013.4~2017.3 후기 2세대 — 2026.11 할인 대상이 아닙니다.' : '2세대 — 가입 시기(2013.3 이전/이후)를 확인해야 대상 여부가 갈립니다.') : sil === '4' ? '2026.7.1부터 5년 재가입이 도래합니다. 재가입 시점에 5세대 보장으로 바뀝니다.' : sil === 'none' ? '진단비보다 실손이 먼저입니다. 입원·통원 기본축이 비어 있습니다.' : '선택형 할인·전환 대상이 아닐 수 있습니다. 유지 판단이 먼저입니다.', s.ML + 130, y + 10, s.CW - 150, { size: 6.8, color: C.heroInk2, lh: 1.4 });
       y += 58;
       y = s.sectionHead(s.ML, y, s.CW, '01', '판단 5단계', null);
       SILSON_DECISION.steps.forEach((st, i) => {
@@ -11759,7 +12317,25 @@ const PLAN_FRONT = {
         ['보험료', '전부 선택 시 약 30~40% 할인', '3년간 50% 할인 (6개월 한시)'],
         ['보장', '선택한 항목만 면책·자기부담 증가', '비중증 비급여 연 1,000만·자기부담 50%'],
         ['되돌림', '특약 해지로 원상 가능', '5년 재가입 · 철회 시 재가입 제한']
-      ], { widths: [56, 232, 227], size: 6.3, rowH: 16, align: ['left', 'left', 'left'] });
+      ], { widths: [56, 232, 227], size: 6.1, rowH: 13, align: ['left', 'left', 'left'] });
+
+      y = blockTitle(s, y + 8, '5세대 비중증(특약2) — 50%가 아니라 0원', '자기부담 50%와 보장 제외를 구분합니다');
+      y = s.table(s.ML, y, s.CW, ['항목', '5세대 처리'], [
+        ['도수치료 · 근골격계 물리치료', '보장 제외 0원'],
+        ['체외충격파 치료', '보장 제외 0원'],
+        ['비급여 주사제 (항암·항생·희귀질환 제외)', '보장 제외 0원'],
+        ['미등재 신의료기술 (첨단재생의료 등)', '보장 제외 0원'],
+        ['MRI · MRA 등 일반 비중증', '연 1,000만원 · 자기부담 50% (MRI 연 200만)']
+      ], { widths: [340, 175], size: 6.2, rowH: 12, align: ['left', 'left'] });
+      y = noteStrip(s, y + 5, '4세대 재가입 2026.7.1~ — 2021.7 가입자부터 5년 재가입 도래, 재가입 시 5세대 보장으로 변경(별도 심사 없음). 철회는 6개월 이내(3개월 이내 보험금 발생해도 복귀·3~6개월 무사고)·1회 한정.', { size: 6.1, fill: C.orangeSoft, accent: C.orange });
+
+      const sc = BK.silsonCompare({ dose: 12, dosePrice: 15, shot: 6, shotPrice: 20, mri: 2, mriPrice: 60 });
+      y = blockTitle(s, y + 4, '내 비급여는 어느 쪽이 돌려받나 — 시뮬레이터 예시', '도수 12회·주사 6회·MRI 2회 · 연간·만원');
+      y = s.table(s.ML, y, s.CW, ['항목', '1~4세대', '5세대'], [
+        ['자기부담 (사용액 ' + `${won(sc.cost.total)}만원)`, `${won(sc.old.self)}만원`, `${won(sc.five.self)}만원`],
+        ['보장(돌려받는 금액)', `${won(sc.old.paid)}만원`, `${won(sc.five.paid)}만원`],
+        ['5세대에서 새로 비는 금액', '—', `${won(sc.gap)}만원 (도수·주사 ${won(sc.five.excluded)}만원 0원)`]
+      ], { widths: [140, 150, 225], size: 6.1, rowH: 11.5, align: ['left', 'right', 'right'] });
       foot(s, 26, '실손 매뉴얼');
     });
 
@@ -11912,6 +12488,10 @@ const PLAN_FRONT = {
   const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
   const TONE = { ok: '#0e9c86', need: '#d9821b', gap: '#d9382f', warn: '#d9821b', info: '#1264b0' };
   const LEVEL = { enough: '충분', check: '점검', short: '부족', none: '없음' };
+
+  const effOf = (s) => Number(s && (s.eff != null ? s.eff : s.val)) || 0;
+  const effSumOf = (p) => (p && p.subs && p.subs.length) ? p.subs.reduce((a, s) => a + effOf(s), 0) : Number((p && p.val) || 0) || 0;
+  const effCntOf = (p) => (p && p.subs && p.subs.length) ? p.subs.filter((s) => effOf(s) > 0).length : (Number(p && p.val) > 0 ? 1 : 0);
 
   const GROUPS = [
     { key: 'all', label: '전체', from: 1 },
@@ -12091,6 +12671,15 @@ const PLAN_FRONT = {
 
   function src(text) { return `<p class="sl-src">출처 · ${esc(text)}</p>`; }
 
+  function silSimHTML(c) {
+    return `<div class="ss-total"><span>연간 비급여 사용액</span><b>${won(c.cost.total)}<em>만원</em></b></div>
+      <div class="ss-cols">
+        <div class="ss-col"><span>1~4세대 자기부담</span><b>${won(c.old.self)}만원</b><em>보장 ${won(c.old.paid)}만원</em></div>
+        <div class="ss-col is-five"><span>5세대 자기부담</span><b>${won(c.five.self)}만원</b><em>보장 ${won(c.five.paid)}만원</em></div>
+      </div>
+      <p class="ss-gap">5세대에서 새로 비는 금액 <b>${won(c.gap)}만원</b> — 도수·주사 ${won(c.five.excluded)}만원은 <b>보장 0원</b>입니다.</p>`;
+  }
+
   function buildSlides(m) {
     const out = [];
     const P = PRIORITY;
@@ -12105,7 +12694,7 @@ const PLAN_FRONT = {
     const rowOf = (key) => m.rows.find((r) => r.item.key === key);
 
     const PK = (row, key) => (row && row.r.parts.find((p) => p.key === key)) || { val: 0, rec: 0, fill: 0, subs: [], pct: 0, option: null };
-    const subN = (p) => (p.subs || []).filter((s) => s.val > 0).length;
+    const subN = (p) => (p.subs || []).filter((s) => effOf(s) > 0).length;
     const tierBox = (tiers, now, label) => tiers ? `
       <div class="tier-mini">
         <div class="tm-head"><span>${label}</span><b>${now != null ? won(now) + '만원' : ''}</b></div>
@@ -12149,6 +12738,7 @@ const PLAN_FRONT = {
           <span>보장분석</span><i></i><span>맞춤설계</span><i></i><span>가족보장</span><i></i><span>든든한미래</span>
         </div>
         <div class="cover-foot">이 리포트는 상담 참고용이며, 실제 지급 여부와 금액은 가입한 상품의 약관과 증권이 기준입니다.</div>
+        ${m.state && m.state.sample ? '<div class="cover-sample" role="note">샘플 데이터 · 실제 고객 증권 값이 아닙니다</div>' : ''}
       </div>`, {});
 
     const dn = m.counts;
@@ -12178,7 +12768,7 @@ const PLAN_FRONT = {
         </ul>
       </div>
       <div class="tile-grid three">
-        ${statTile('주요 진단비 합계', `${won(m.totalSum)}<em>만원</em>`)}
+        ${statTile('진단비·치료비·수술비 합계', `${won(m.totalSum)}<em>만원</em>`)}
         ${statTile('월 보험료', `${won(m.premium)}<em>만원</em>`, `연 ${won(m.annual)}만원`)}
         ${statTile('연 보험료 대비', m.ratio ? `${m.ratio.toFixed(1)}<em>배</em>` : '—', '12배 이상이면 균형', m.ratio && m.ratio < 12 ? 'warn' : 'ok')}
       </div>`, {});
@@ -12201,8 +12791,9 @@ const PLAN_FRONT = {
           </div>`).join('')}
       </div>
       ${m.first
-        ? `<div class="first-call"><span>먼저 채울 곳</span><b>${m.first.item.rank}순위 ${esc(m.first.item.name)}</b>
-           <em>${m.first.pct}% · ${esc(m.first.label)}${m.first.gaps.length ? ` · ${won(m.first.gaps[0].need)}만원 부족` : ''}</em></div>`
+        ? `<div class="first-call"><span>1순위 보강</span><b>${m.first.item.rank}순위 ${esc(m.first.item.name)}</b>
+           <em>${m.first.pct}% · ${esc(m.first.label)}${m.first.gaps.length ? ` · ${won(m.first.gaps[0].need)}만원 부족` : ''}</em></div>
+           ${m.thinnest && m.thinnest.item.key !== m.first.item.key ? `<p class="sl-src thin-line">충족도가 가장 낮은 축은 <b>${esc(m.thinnest.item.name)} ${m.thinnest.pct}%</b>입니다 — 순위와 다른 숫자일 수 있습니다.</p>` : ''}`
         : noteBox('5대 담보가 기준선을 넘었습니다. 이제는 금액 조정과 갱신 대비가 남은 과제입니다.', 'ok')}`, {});
 
     /* ---------- 04 보유 계약 ---------- */
@@ -12238,6 +12829,8 @@ const PLAN_FRONT = {
         : noteBox('계약을 입력하면 이 장이 포트폴리오 표로 채워집니다. 증권의 보험사·상품명·월 보험료·납입상태·만기를 함께 적습니다.', 'info')}`, {});
 
     /* ---------- 05 월 보험료 배분 ---------- */
+    /* v6.1 — 고객 데이터와 무관한 고정값을 '고객의 배분'으로 오인하지 않도록 제목·라벨·근거를 명시합니다.
+       (계약별 담보 구분 입력이 없어 실제 배분 비중을 계산할 수 없습니다.) */
     const alloc = [
       { label: '진단비', v: 45, color: '#0b2545' },
       { label: '치료·수술', v: 20, color: '#1264b0' },
@@ -12245,8 +12838,8 @@ const PLAN_FRONT = {
       { label: '간병·기타', v: 10, color: '#0fb093' }
     ];
     add(5, 'summary', null, `
-      <div class="sl-head"><span class="k">04 · 배분</span><h2>월 보험료 배분</h2>
-        <p>같은 보험료라도 어디에 얼마가 들어가는지가 보장의 두께를 바꿉니다.</p></div>
+      <div class="sl-head"><span class="k">04 · 배분</span><h2>업계 통상 권장 배분 (예시)</h2>
+        <p><b>이 고객의 현재 배분이 아닙니다.</b> 증권 항목을 진단비·치료·실손·간병으로 나누어 본 통상 비율입니다.</p></div>
       <div class="alloc-wrap">
         <div class="alloc-bar">
           ${alloc.map((a) => `<i style="width:${a.v}%;background:${a.color}">${a.v}%</i>`).join('')}
@@ -12259,9 +12852,8 @@ const PLAN_FRONT = {
         ${statTile('현재 월 보험료', `${won(m.premium)}<em>만원</em>`, `연 ${won(m.annual)}만원`)}
         ${statTile('계약 합계', cs.count ? `${won(cs.total)}<em>만원</em>` : '—', cs.count ? `계약 ${cs.count}건` : '계약 미입력')}
       </div>
-      ${noteBox('위 배분은 상품·연령에 따라 달라지는 <b>권장 예시</b>입니다. 배분을 바꾸는 방법은 해지가 아니라 특약 정리(배서)이고, 아낀 보험료는 가장 비어 있는 칸으로 옮깁니다.', 'info')}`, {});
+      ${noteBox('위 배분은 상품·연령에 따라 달라지는 <b>권장 예시</b>입니다(진단비 중심 설계 관행). 실제 이 고객의 배분은 계약별 담보 구분을 입력해야 계산됩니다. 배분을 바꾸는 방법은 해지가 아니라 특약 정리(배서)이고, 아낀 보험료는 가장 비어 있는 칸으로 옮깁니다.', 'info')}`, {});
 
-    /* ---------- 06 4축 레이더 ---------- */
     const axis = (key) => {
       const r = rowOf(key);
       return r ? r.r.fill : 0;
@@ -12281,10 +12873,13 @@ const PLAN_FRONT = {
       </ul>
       ${noteBox(`${axes4.slice().sort((a, b) => a.value - b.value)[0].label} 축이 가장 얇습니다. 이 축부터 한 칸 채우면 전체 균형이 가장 빠르게 좋아집니다.`, 'info')}`, {});
 
+    /* ---------- 07 암 현재 vs 권장 ---------- */
     const cr = rowOf('cancer');
     const treat = PK(cr, 'treatment');
     const tsubs = treat.subs || [];
-    const treatHave = tsubs.filter((s) => s.val > 0).length;
+    const treatHave = tsubs.filter((s) => effOf(s) > 0).length;
+    const treatEff = effSumOf(treat);
+    const treatCustom = tsubs.reduce((a, s) => a + Number(s.custom || 0) + Number(s.cross || 0), 0);
     add(7, 'cancer', 'cancer', `
       <div class="sl-head"><span class="k">1순위 · 암</span><h2>암 보장, 지금 vs 권장</h2>
         <p>진단비(목돈)와 치료비(장기)를 나눠서 봅니다. 치료비는 5종으로 쪼개서 빈 칸을 찾습니다.</p></div>
@@ -12308,12 +12903,12 @@ const PLAN_FRONT = {
         </div>
       </div>
       <div class="t5">
-        <div class="t5-head"><b>암 주요치료비 5종</b><span>합계 ${won(treat.val)}만원 / 권장 ${won(treat.rec)}만원 · ${treatHave}/5종 보유</span></div>
+        <div class="t5-head"><b>암 주요치료비 5종</b><span>합계 ${won(treatEff)}만원 / 권장 ${won(treat.rec)}만원 · ${treatHave}/5종 보유${treatCustom > 0 ? ` · 직접 기재 ${won(treatCustom)} 포함` : ''}</span></div>
         <div class="t5-rows">
           ${tsubs.map((s) => `
-            <div class="t5-row${s.val > 0 ? '' : ' is-off'}">
-              <span class="t5-l">${esc(s.label)}</span>
-              <span class="t5-v">${s.val > 0 ? `${won(s.val)}만원` : '없음'}</span>
+            <div class="t5-row${effOf(s) > 0 ? '' : ' is-off'}">
+              <span class="t5-l">${esc(s.label)}${Number(s.custom || 0) + Number(s.cross || 0) > 0 ? '<em class="t5-tag">직접 기재</em>' : ''}</span>
+              <span class="t5-v">${effOf(s) > 0 ? `${won(effOf(s))}만원` : '없음'}</span>
               <div class="t5-bar"><i style="width:${Math.max(2, Math.min(100, s.pct))}%;background:${s.pct >= 100 ? '#12A594' : s.pct > 0 ? '#E8952E' : '#E05B52'}"></i></div>
               <b class="t5-p" style="color:${s.pct >= 100 ? '#0a6b57' : s.pct > 0 ? '#a5620f' : '#b3261e'}">${s.pct}%</b>
             </div>`).join('')}
@@ -12321,7 +12916,6 @@ const PLAN_FRONT = {
       </div>
       ${cr.gaps.length ? noteBox(`부족분 — ${cr.gaps.map((g) => `${g.label} ${won(g.need)}만원`).join(' · ')}`, 'warn') : noteBox('주요 금액은 기준선을 넘었습니다. 다음은 재진단·지급 횟수 점검입니다.', 'ok')}`, { need: needOf('cancer') });
 
-    /* ---------- 08 암 보장 구조 ---------- */
     add(8, 'cancer', 'cancer', `
       <div class="sl-head"><span class="k">1순위 · 암</span><h2>일반암 · 유사암 · 치료비 구조</h2>
         <p>같은 "암"이라도 담보가 다릅니다. 어디에 들어가는 암인지에 따라 지급액이 달라집니다.</p></div>
@@ -12345,7 +12939,6 @@ const PLAN_FRONT = {
       </div>
       ${warnCard('cancer')}`, { need: needOf('cancer') });
 
-    /* ---------- 09 국가암등록통계 ---------- */
     add(9, 'cancer', 'cancer', `
       <div class="sl-head"><span class="k">1순위 · 암</span><h2>숫자로 보는 암</h2>
         <p>암은 "짧게 끝나는 병"이 아니라 진단 후 오래 관리하는 병입니다.</p></div>
@@ -12364,7 +12957,6 @@ const PLAN_FRONT = {
       </div>
       ${src('보건복지부·중앙암등록본부 2023 국가암등록통계 · 통계청 2024 사망원인통계')}`, { need: needOf('cancer') });
 
-    /* ---------- 10 암 치료비·소득 공백 ---------- */
     add(10, 'cancer', 'cancer', `
       <div class="sl-head"><span class="k">1순위 · 암</span><h2>치료비와 소득 공백</h2>
         <p>병원비는 실손이 일부 막아줍니다. 하지만 일을 못 해서 생기는 돈은 실손이 메우지 못합니다.</p></div>
@@ -12379,20 +12971,30 @@ const PLAN_FRONT = {
       </div>
       ${noteBox('5세대 실손은 비중증 비급여가 연 1,000만원·자기부담 50%입니다. 치료가 길어지면 이 한도가 먼저 걸립니다.', 'info')}`, { need: needOf('cancer') });
 
-    /* ---------- 11 암 보완 방향 ---------- */
     add(11, 'cancer', 'cancer', `
       <div class="sl-head"><span class="k">1순위 · 암</span><h2>암 보완 방향</h2>
         <p>한 번에 다 채우지 않습니다. 지금 비어 있는 칸부터 순서대로.</p></div>
       <ol class="steps-list">
         <li><b>① 유사암 칸</b><p>갑상선·제자리·경계성은 일반암에서 빠집니다. 별도 담보가 없으면 0원입니다.</p><em>${PK(cr, 'similar').val ? `현재 ${won(PK(cr, 'similar').val)}만원` : '현재 없음'} → 권장 ${won(PK(cr, 'similar').rec)}만원</em></li>
-        <li><b>② 치료비 5종</b><p>표적·면역항암 시대에는 진단비만으로 부족합니다. 암수술·항암약물·항암방사선·중환자실·비급여를 따로 봅니다.</p><em>5종 중 ${treatHave}종 · ${won(treat.val)}만원 → 권장 ${won(treat.rec)}만원</em></li>
+        <li><b>② 치료비 5종</b><p>표적·면역항암 시대에는 진단비만으로 부족합니다. 암수술·항암약물·항암방사선·중환자실·비급여를 따로 봅니다.</p><em>5종 중 ${treatHave}종 · ${won(treatEff)}만원 → 권장 ${won(treat.rec)}만원</em></li>
         <li><b>③ 재진단 칸</b><p>1회한 담보는 재발·전이 때 다시 나오지 않습니다. 두 번째 진단을 따로 준비합니다.</p><em>${PK(cr, 'recur').val ? '보유' : '없음'} → 보유 권장</em></li>
       </ol>
-      ${treatHave < 5 ? noteBox(`비어 있는 치료비 — ${tsubs.filter((s) => !(s.val > 0)).map((s) => s.label).join(' · ')}`, 'warn') : noteBox('치료비 5종이 모두 채워졌습니다. 이제는 지급 횟수(1회한·재진단)와 가입 시점을 확인합니다.', 'ok')}
+      ${treatHave < 5 ? noteBox(`비어 있는 치료비 — ${tsubs.filter((s) => !(effOf(s) > 0)).map((s) => s.label).join(' · ')}`, 'warn') : noteBox('치료비 5종이 모두 채워졌습니다. 이제는 지급 횟수(1회한·재진단)와 가입 시점을 확인합니다.', 'ok')}
+      ${(() => {
+        const tl = BojangModel.oneTimeTimeline(m.state);
+        return `<div class="t5 one-time">
+          <div class="t5-head"><b>1회한 vs 연 1회한 — 10년 누적</b><span>${won(tl.amount)}만원 기준${tl.assumed ? ' (예시)' : ''}</span></div>
+          <div class="ot-strip">
+            <span>1회한 <b>${won(tl.totals.once)}</b></span>
+            <span>연 1회한(최대 10년) <b class="ot-hot">${won(tl.totals.annual)}</b></span>
+            <span>재진단 3년 주기 <b>${won(tl.totals.rejoin)}</b></span>
+          </div>
+          <p class="ot-note">10년 누적은 연 1회한이 ${tl.ratio}배 · 재진단이 ${tl.rejoinRatio}배입니다. 내 담보가 1회한인지 증권에서 먼저 확인하세요.</p>
+        </div>`;
+      })()}
       ${noteBox('가입 직후 90일은 보장이 시작되지 않고, 1년 안에 진단되면 절반만 지급되는 상품이 많습니다. 시작 시점을 함께 확인합니다.', 'warn')}
       ${src('권장 금액은 상담 보조용 예시이며, 실제 인수 조건과 보험료는 상품별로 다릅니다.')}`, { need: needOf('cancer') });
 
-    /* ---------- 12 뇌 현재 vs 권장 ---------- */
     const br = rowOf('brain');
     const bDxP = PK(br, 'dx');
     const bDx = bDxP.dx || { subs: [], core: null, scenarios: [] };
@@ -12426,7 +13028,7 @@ const PLAN_FRONT = {
         <div class="conc-side">
           <div class="side-card"><span>핵심 범위 뇌혈관질환</span><b>${won(bDxCore.val)}만원</b><p>권장 2,000만원 · 뇌졸중 ${won((bDxSubs[1] || {}).val || 0)} · 뇌출혈 ${won((bDxSubs[2] || {}).val || 0)}만원</p></div>
           <div class="side-card"><span>권장 범위</span><b>뇌혈관질환 I60~I69</b><p>가장 흔한 뇌경색과 후유증까지 담는 범위입니다.</p></div>
-          <div class="side-card"><span>충족도</span><b>${br.pct}%</b>${bar(br.r.fill, br.level)}</div>
+
         </div>
       </div>
       <div class="t5">
@@ -12436,12 +13038,11 @@ const PLAN_FRONT = {
       </div>
       <div class="sl-treatline">
         <b>뇌 주요치료비 3종</b>
-        <span>${subN(bT)}/3종 · ${won(bT.val)}만원 <em>/ 권장 ${won(bT.rec)}만원</em></span>
-        <i>${bTs.filter((s) => !(s.val > 0)).map((s) => esc(s.label)).join(' · ') || '3종 모두 보유'}</i>
+        <span>${subN(bT)}/3종 · ${won(effSumOf(bT))}만원 <em>/ 권장 ${won(bT.rec)}만원</em>${Number(bT.customVal || 0) + Number(bT.crossVal || 0) > 0 ? ` · 직접 기재 ${won(Number(bT.customVal || 0) + Number(bT.crossVal || 0))} 포함` : ''}</span>
+        <i>${bTs.filter((s) => !(effOf(s) > 0)).map((s) => esc(s.label)).join(' · ') || '3종 모두 보유'}</i>
       </div>
       ${bDx.gapWarn ? noteBox(`⚠ 범위 공백 — 뇌혈관질환 진단비가 0원입니다. 뇌경색(I63)은 뇌졸중 금액만 받고, 뇌혈관 후유증(I69)은 지급되지 않습니다.`, 'warn') : noteBox('진단 금액은 범위별 합산 — 뇌경색(I63)은 뇌혈관+뇌졸중, 뇌출혈(I61)은 세 담보. 혈전용해제(tPA)·기계적 혈전제거술은 별도 담보입니다.', 'info')}`, { need: needOf('brain') });
 
-    /* ---------- 13 뇌 코드 비교 ---------- */
     add(13, 'brain', 'brain', `
       <div class="sl-head"><span class="k">2순위 · 뇌</span><h2>질병코드로 비교하기</h2>
         <p>증권의 담보명 뒤에 붙은 코드를 보면 실제 지급 범위가 보입니다.</p></div>
@@ -12458,6 +13059,7 @@ const PLAN_FRONT = {
       ${warnCard('brain')}
       ${src('KCD 한국표준질병·사인분류 기준 · 상품별 담보명과 지급 조건은 약관 확인')}`, { need: needOf('brain') });
 
+    /* ---------- 14 심뇌 통계 ---------- */
     add(14, 'brain', 'brain', `
       <div class="sl-head"><span class="k">2순위 · 뇌</span><h2>막히는 쪽이 더 많습니다</h2>
         <p>가장 흔한 뇌혈관 사고는 출혈이 아니라 혈관이 막히는 뇌경색입니다.</p></div>
@@ -12476,16 +13078,18 @@ const PLAN_FRONT = {
       ${noteBox('입원이 길고 후유증이 남는 병입니다. 진단비 하나로는 회복 기간의 생활비를 감당하기 어렵습니다.', 'info')}
       ${src('중앙심뇌혈관질환센터·건강보험통계 2023')}`, { need: needOf('brain') });
 
+    /* ---------- 15 뇌 보완 방향 ---------- */
     add(15, 'brain', 'brain', `
       <div class="sl-head"><span class="k">2순위 · 뇌</span><h2>뇌 보완 방향</h2>
         <p>금액보다 범위가 먼저입니다. 좁은 담보를 넓히는 것이 출발점입니다.</p></div>
       <ol class="steps-list">
         <li><b>① 범위 정렬</b><p>뇌출혈 → 뇌졸중 → 뇌혈관질환 순으로 넓힙니다. 같은 보험료에서 범위를 바꾸는 방법이 있습니다.</p><em>뇌혈관 ${won(bDxCore.val)}만원 → 권장 뇌혈관질환 2,000만원 (I60~I69)</em></li>
-        <li><b>② 치료비 축</b><p>혈전용해술·스텐트는 약관상 "수술"이 아니어서 수술비가 안 나올 수 있습니다. 혈전용해제·수술·중환자실 3종을 따로 봅니다.</p><em>3종 중 ${subN(bT)}종 · ${won(bT.val)}만원 → 권장 ${won(bT.rec)}만원</em></li>
+        <li><b>② 치료비 축</b><p>혈전용해술·스텐트는 약관상 "수술"이 아니어서 수술비가 안 나올 수 있습니다. 혈전용해제·수술·중환자실 3종을 따로 봅니다.</p><em>3종 중 ${subN(bT)}종 · ${won(effSumOf(bT))}만원 → 권장 ${won(bT.rec)}만원</em></li>
         <li><b>③ 회복 구간</b><p>살아남아도 장해가 남으면 후유장해 담보로 지급률을 평가합니다. 재활·간병은 5순위와 연결됩니다.</p><em>후유장해·간병 담보 함께 확인</em></li>
       </ol>
       ${m.family.indexOf('brain') >= 0 ? noteBox('가족력에 뇌혈관이 있습니다. 생활 요인(혈압·혈당)과 함께 범위를 넓게 잡는 편이 안전합니다.', 'warn') : noteBox('가족력이 없어도 고혈압·당뇨·흡연으로 발생합니다. 지금 건강할 때 범위를 정리하는 것이 순서입니다.', 'info')}`, { need: needOf('brain') });
 
+    /* ---------- 16 심장 현재 vs 권장 ---------- */
     const hr = rowOf('heart');
     const hDxP = PK(hr, 'dx');
     const hDx = hDxP.dx || { subs: [], core: null, scenarios: [] };
@@ -12512,7 +13116,7 @@ const PLAN_FRONT = {
         <div class="conc-side">
           <div class="side-card"><span>핵심 범위 허혈성심장</span><b>${won(hDxCore.val)}만원</b><p>권장 2,000만원 · 급성심근경색 ${won((hDxSubs[1] || {}).val || 0)}만원</p></div>
           <div class="side-card"><span>권장 범위</span><b>허혈성심장질환 I20~I25</b><p>스텐트 시술이 이뤄지는 협심증 단계까지 담습니다.</p></div>
-          <div class="side-card"><span>충족도</span><b>${hr.pct}%</b>${bar(hr.r.fill, hr.level)}</div>
+
         </div>
       </div>
       <div class="t5">
@@ -12521,19 +13125,20 @@ const PLAN_FRONT = {
         <div class="dx-scen-inline">${(hDx.scenarios || []).map((sc) => `<span><em>${esc(sc.label)}</em>${won(sc.sum)}만원</span>`).join('')}</div>
       </div>
       <div class="t5">
-        <div class="t5-head"><b>심장 주요치료비 3종</b><span>합계 ${won(hT.val)}만원 / 권장 ${won(hT.rec)}만원 · ${subN(hT)}/3종</span></div>
+        <div class="t5-head"><b>심장 주요치료비 3종</b><span>합계 ${won(effSumOf(hT))}만원 / 권장 ${won(hT.rec)}만원 · ${subN(hT)}/3종${Number(hT.customVal || 0) + Number(hT.crossVal || 0) > 0 ? ` · 직접 기재 ${won(Number(hT.customVal || 0) + Number(hT.crossVal || 0))} 포함` : ''}</span></div>
         <div class="t5-rows">
           ${hTs.map((s) => `
-            <div class="t5-row${s.val > 0 ? '' : ' is-off'}">
-              <span class="t5-l">${esc(s.label)}</span>
-              <span class="t5-v">${s.val > 0 ? `${won(s.val)}만원` : '없음'}</span>
+            <div class="t5-row${effOf(s) > 0 ? '' : ' is-off'}">
+              <span class="t5-l">${esc(s.label)}${Number(s.custom || 0) + Number(s.cross || 0) > 0 ? '<em class="t5-tag">직접 기재</em>' : ''}</span>
+              <span class="t5-v">${effOf(s) > 0 ? `${won(effOf(s))}만원` : '없음'}</span>
               <div class="t5-bar"><i style="width:${Math.max(2, Math.min(100, s.pct))}%;background:${s.pct >= 100 ? '#12A594' : s.pct > 0 ? '#E8952E' : '#E05B52'}"></i></div>
               <b class="t5-p" style="color:${s.pct >= 100 ? '#0a6b57' : s.pct > 0 ? '#a5620f' : '#b3261e'}">${s.pct}%</b>
             </div>`).join('')}
         </div>
       </div>
-      ${hDx.gapWarn ? noteBox(`⚠ 범위 공백 — 허혈성심장질환 진단비가 0원입니다. 협심증(I20)과 스텐트 시술 구간이 지급되지 않고, 급성심근경색만 이 담보에서 나옵니다.`, 'warn') : noteBox('협심증(I20)은 허혈성심장 담보에서만, 급성심근경색(I21)은 두 담보가 합산됩니다. 스텐트·우회로는 수술비 담보에서 확인하고 1년 미만 50% 감액 여부도 함께 보세요.', 'warn')}`, { need: needOf('heart') });
+      ${hDx.gapWarn ? noteBox(`⚠ 범위 공백 — 허혈성심장질환 진단비가 0원입니다. 협심증(I20)과 스텐트 시술 구간이 지급되지 않고, 급성심근경색만 이 담보에서 나옵니다.`, 'warn') : noteBox('협심증(I20)은 허혈성심장에서만, 급성심근경색(I21)은 두 담보가 합산됩니다. 스텐트·우회로는 수술비 담보와 1년 미만 50% 감액을 함께 확인하세요.', 'warn')}`, { need: needOf('heart') });
 
+    /* ---------- 17 심장 위험요인 ---------- */
     add(17, 'heart', 'heart', `
       <div class="sl-head"><span class="k">3순위 · 심장</span><h2>심장 위험요인</h2>
         <p>심장질환은 사망원인 2위(9.4%)입니다. 위험요인은 대부분 관리 가능한 것들입니다.</p></div>
@@ -12555,7 +13160,7 @@ const PLAN_FRONT = {
         <p>범위를 넓히는 것이 먼저, 금액은 그다음입니다.</p></div>
       <ol class="steps-list">
         <li><b>① 범위</b><p>급성심근경색 → 허혈성심장질환(I20~I25)으로 넓힙니다. 같은 보험료 안에서 조정되는 경우가 많습니다.</p><em>허혈성 ${won(hDxCore.val)}만원 → 권장 허혈성 I20~I25 2,000만원</em></li>
-        <li><b>② 수술비</b><p>스텐트·관상동맥우회술이 수술비 지급 대상인지 약관의 수술 분류표로 확인합니다.</p><em>3종 중 ${subN(hT)}종 · ${won(hT.val)}만원 → 권장 ${won(hT.rec)}만원</em></li>
+        <li><b>② 수술비</b><p>스텐트·관상동맥우회술이 수술비 지급 대상인지 약관의 수술 분류표로 확인합니다.</p><em>3종 중 ${subN(hT)}종 · ${won(effSumOf(hT))}만원 → 권장 ${won(hT.rec)}만원</em></li>
         <li><b>③ 약값·관리</b><p>한 번 막히면 항혈전제를 오래 복용합니다. 진단비·수술비·약값을 함께 봅니다.</p><em>부정맥·판막·심부전 담보도 확인</em></li>
       </ol>
       ${m.family.indexOf('heart') >= 0 ? noteBox('가족력에 심장 질환이 있습니다. 스텐트 시술 구간이 담보에 들어 있는지가 핵심입니다.', 'warn') : noteBox('지금은 괜찮더라도, 괜찮을 때 넣어야 조건이 좋습니다. 범위만 넓히고 금액은 낮게 시작할 수 있습니다.', 'info')}
@@ -12580,13 +13185,14 @@ const PLAN_FRONT = {
       </div>
       ${src('통계청 2024 사망원인통계')}`, { need: needOf('heart') });
 
+    /* ---------- 20 수술비 현재 vs 권장 ---------- */
     const sr = rowOf('surgery');
     add(20, 'surgery', 'surgery', `
       <div class="sl-head"><span class="k">4순위 · 수술비</span><h2>수술비, 여섯 칸으로 본다</h2>
         <p>질병 4축(일반·1~5종·N대·비급여)과 상해 2축(일반·1~5종)을 각각 봅니다. 서로 다른 계약입니다.</p></div>
       <div class="venn-wrap">
         <div class="venn">
-          <div class="v-circle left"><b>1~5종</b><span>침습도 분류</span><em>1종 고액 ~ 5종 소액</em></div>
+          <div class="v-circle left"><b>1~5종</b><span>침습도 분류</span><em>1종 소액 ~ 5종 고액</em></div>
           <div class="v-circle right"><b>N대</b><span>질환별 한도</span><em>21·22·30대 등</em></div>
           <div class="v-overlap">중복<br>청구</div>
         </div>
@@ -12602,6 +13208,7 @@ const PLAN_FRONT = {
       </div>
       ${noteBox('5세대 실손은 비중증 비급여 한도가 연 1,000만원·자기부담 50%입니다. 비급여 수술은 실손으로 다 메워지지 않아 정액 비급여 수술비가 보완합니다. 수술비 담보는 1년 미만이면 50%만 지급되는 상품이 흔합니다.', 'info')}`, { need: needOf('surgery') });
 
+    /* ---------- 21 수술 사례 ---------- */
     add(21, 'surgery', 'surgery', `
       <div class="sl-head"><span class="k">4순위 · 수술비</span><h2>현장에서 자주 보는 수술</h2>
         <p>금액은 상품마다 다르므로 유형만 봅니다. 어떤 이름으로 청구되는지가 핵심입니다.</p></div>
@@ -12625,7 +13232,7 @@ const PLAN_FRONT = {
     /* ---------- 23 간병 3갈래 ---------- */
     const car = rowOf('care');
     add(23, 'care', 'care', `
-      <div class="sl-head"><span class="k">5순위 · 간병</span><h2>간병비, 여섯 칸으로 본다</h2>
+      <div class="sl-head"><span class="k">5순위 · 간병</span><h2>간병비, 매일 나가는 여섯 칸</h2>
         <p>진단비는 한 번 나오는 돈, 간병비는 매일 나가는 돈입니다. 일반병원·요양병원과 지급 요건을 나눠 봅니다.</p></div>
       <div class="care-grid">
         ${[
@@ -12684,26 +13291,45 @@ const PLAN_FRONT = {
 
     /* ---------- 26 실손 세대 ---------- */
     const sil = m.state.silson;
+    const sil2 = m.state.silson2 || 'unknown';
+    const FIN = (typeof SILSON_FIVE !== 'undefined') ? SILSON_FIVE : { fiveExcluded: [], fourGenRejoin: null, withdraw: [] };
     add(26, 'steady', null, `
       <div class="sl-head"><span class="k">실손·노후</span><h2>실손 1~5세대 비교</h2>
         <p>실손은 쓴 만큼 돌려받는 기본 의료비 축입니다. 세대에 따라 보장 폭과 보험료가 다릅니다.</p></div>
       <div class="sil-now">
         <span>이 고객의 실손</span>
         <b>${sil === 'none' ? '없음' : `${sil}세대`}</b>
-        <p>${sil === 'none' ? '입원·통원 기본부터 막혀 있습니다. 진단비보다 실손이 먼저입니다.' : sil === '1' || sil === '2' ? '2026년 11월 제도 대상일 가능성이 큽니다. 가입 시기와 재가입 조건을 확인합니다.' : '유지가 답인 경우가 많습니다. 구조와 한도를 확인합니다.'}</p>
+        <p>${sil === 'none' ? '입원·통원 기본부터 막혀 있습니다. 진단비보다 실손이 먼저입니다.' : sil === '1' ? '2026.11 선택형 할인(40%대) 또는 5세대 전환(3년 50%·6개월 한시). 2026.7부터 도수는 관리급여(본인부담 95%)입니다.' : sil === '2' ? (sil2 === 'early' ? '2013.3 이전 초기 2세대 — 2026.11 할인 대상입니다.' : sil2 === 'late' ? '2013.4~2017.3 후기 2세대 — 2026.11 할인 대상이 아닙니다.' : '2세대 — 가입 시기(2013.3 이전/이후)를 먼저 확인해야 대상 여부가 갈립니다.') : sil === '4' ? '2026.7.1부터 5년 재가입이 도래합니다. 재가입 시점에 5세대 보장으로 바뀍니다.' : '유지가 답인 경우가 많습니다. 구조와 한도를 확인합니다.'}</p>
       </div>
       <div class="sil-table">
         <div class="ct-head"><span>구분</span><span>1·2세대</span><span>3·4세대</span><span>5세대</span></div>
         ${[
           ['급여', '구분 없이 넓게', '80%', '입원 20%·통원 20% 내외'],
           ['비급여', '폭넓게 보장', '70%', '중증 5천만·비중증 1천만'],
-          ['자기부담', '0~20%', '20~30%', '비중증 50%'],
+          ['자기부담', '0~20%', '20~30%', '비중증 50% · 제외 4항목 0원'],
           ['재가입', '없음(2013.3 이전)', '5~15년', '5년']
         ].map((r) => `<div class="ct-line"><b>${r[0]}</b><span>${r[1]}</span><span>${r[2]}</span><span>${r[3]}</span></div>`).join('')}
       </div>
-      ${(sil === '1' || sil === '2') ? noteBox('1·2세대라면 두 갈래가 있습니다. <b>A 선택형 할인 특약</b>(기존 유지·전부 선택 시 약 30~40% 할인) / <b>B 5세대 전환</b>(3년간 50% 할인·6개월 한시). 전환은 "보험료를 아끼는 결정"이지 "보장이 좋아지는 결정"이 아닙니다.', 'warn') : noteBox('세대별로 비급여 한도와 자기부담이 다릅니다. 지금 쓰는 의료(도수·주사·MRI)를 기준으로 유지 여부를 판단합니다.', 'info')}
-      ${src('금융위원회 보도자료(2026.5.6) · 2026년 11월 시행 안내 · 상품별 약관 우선')}`, {});
+      ${sil === '2' ? noteBox('<b>2세대 두 갈래</b> — 2013.3 이전(초기)만 2026.11 대상, 2013.4~2017.3(후기)은 대상 아님.', 'warn') : ''}
+      ${(sil === '4' && FIN.fourGenRejoin) ? noteBox(`<b>${FIN.fourGenRejoin.title}</b> ${FIN.fourGenRejoin.body}`, 'warn') : ''}
+      ${sil === '5' ? `<div class="sil-excl-box">
+        <b>5세대 비중증(특약2) — 50%가 아니라 0원</b>
+        <p>보장 제외: 도수치료 · 체외충격파 · 비급여 주사(항암·항생·희귀 제외) · 미등재 신의료기술. MRI 등 일반 비중증만 연 1,000만원·자기부담 50%(MRI 연 200만)입니다.</p>
+      </div>` : ''}
+      ${(sil === '1' || sil === '2') ? noteBox('<b>A 선택형 할인</b>(30~40%) / <b>B 5세대 전환</b>(3년 50%·6개월 한시). 철회는 6개월 이내, 3개월 이내는 보험금이 나도 복귀·3~6개월은 무사고 시 복귀입니다. 전환은 보험료를 아끼는 결정입니다.', 'warn') : ''}
+      <div class="sil-sim">
+        <div class="sim-head"><b>내 비급여, 5세대와 1~4세대 중 어느 쪽이 돌려받나</b><span>연간·만원</span></div>
+        <div class="ss-fields">
+          <label><em>도수</em><input type="number" id="ss-dose" value="12" min="0" max="300" inputmode="numeric"><span>회×</span><input type="number" id="ss-dose-price" value="15" min="0" max="300" inputmode="numeric"><span>만</span></label>
+          <label><em>주사</em><input type="number" id="ss-shot" value="6" min="0" max="300" inputmode="numeric"><span>회×</span><input type="number" id="ss-shot-price" value="20" min="0" max="300" inputmode="numeric"><span>만</span></label>
+          <label><em>MRI</em><input type="number" id="ss-mri" value="2" min="0" max="100" inputmode="numeric"><span>회×</span><input type="number" id="ss-mri-price" value="60" min="0" max="300" inputmode="numeric"><span>만</span></label>
+        </div>
+        <div class="ss-out" id="ss-out">${silSimHTML(BojangModel.silsonCompare({ dose: 12, dosePrice: 15, shot: 6, shotPrice: 20, mri: 2, mriPrice: 60 }))}</div>
+        <p class="ss-src">1~4세대 비급여 80% 보장 가정 · 5세대 도수·주사 0원 · MRI 연 200만·50%</p>
+      </div>
+      `, {});
 
+    /* ---------- 27 갱신형 vs 비갱신형 ---------- */
     add(27, 'steady', null, `
       <div class="sl-head"><span class="k">실손·노후</span><h2>갱신형 vs 비갱신형</h2>
         <p>지금의 보험료가 앞으로도 같지는 않습니다. 구조를 알면 노후가 보입니다.</p></div>
@@ -12780,9 +13406,14 @@ const PLAN_FRONT = {
         </button>
       </div>
       ${warnCard('remodel')}
+      <div class="today-one">
+        <span class="to-tag">오늘 정할 것 1개</span>
+        <b>${m.thinnest ? `${esc(m.thinnest.item.name)} 한 칸` : '금액 조정'}</b>
+        <p>${m.thinnest ? `${esc(m.thinnest.item.name)} 충족도 ${m.thinnest.pct}% — 5대 중 가장 얇은 축입니다. 나머지는 오늘 정하지 않습니다. 이 한 칸의 범위와 금액만 정하고 나가시면 됩니다.` : '5대 담보가 기준선을 넘었습니다. 오늘은 추가 가입 없이 갱신·만기·중복만 점검합니다.'}</p>
+      </div>
       <div class="last-note">
         <b>${esc(m.client.name)}님 · ${m.letter} ${m.score}점</b>
-        <p>${m.first ? `가장 먼저 채울 곳은 ${m.first.item.rank}순위 ${esc(m.first.item.name)}입니다.` : '5대 담보가 기준선을 넘었습니다. 금액 조정과 갱신 대비가 남은 과제입니다.'}</p>
+        <p>${m.first ? `우선순위 1순위는 ${esc(m.first.item.name)}(${m.first.pct}%)입니다. 오늘은 가장 얇은 한 칸만 정합니다.` : '5대 담보가 기준선을 넘었습니다. 금액 조정과 갱신 대비가 남은 과제입니다.'}</p>
         <span>${esc(m.client.consultant)} · ${esc(m.dateLabel || '')}</span>
       </div>
       <p class="sl-src">이 리포트의 점수·권장선은 상담 보조용 자체 산식입니다. 통계는 통계청 2024 · 중앙암등록본부 2023 · 중앙심뇌혈관질환센터 2023 · 건보공단 2025 공표 수치이며, 실제 지급 여부·금액은 약관과 증권이 기준입니다.</p>`, {});
@@ -12967,8 +13598,28 @@ const PLAN_FRONT = {
     });
   }
 
+  function bindSilSim() {
+    const out = $('#ss-out');
+    if (!out || !root.BojangModel || !root.BojangModel.silsonCompare) return;
+    const ids = ['ss-dose', 'ss-dose-price', 'ss-shot', 'ss-shot-price', 'ss-mri', 'ss-mri-price'];
+    const get = (id) => { const el = document.getElementById(id); return el ? Number(el.value || 0) : 0; };
+    const paint = () => {
+      const c = root.BojangModel.silsonCompare({
+        dose: get('ss-dose'), dosePrice: get('ss-dose-price'),
+        shot: get('ss-shot'), shotPrice: get('ss-shot-price'),
+        mri: get('ss-mri'), mriPrice: get('ss-mri-price')
+      });
+      out.innerHTML = silSimHTML(c);
+    };
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', paint);
+    });
+  }
+
   function bindSlideActions() {
     bindSim();
+    bindSilSim();
     $$('[data-deck-upgrade]').forEach((b) => b.addEventListener('click', askUpgrade));
     $$('[data-deck-pdf]').forEach((b) => {
       b.addEventListener('click', () => {
@@ -13590,223 +14241,162 @@ const PLAN_FRONT = {
 
   /* =========================================================
      ③ 고지사항(알릴의무) 판정 + 청구 서류 1탭 복사
+     v6.1 — content.js DISCLOSURE_ITEMS 단일 스키마 + BojangModel.disclosureJudge 단일 엔진.
+     6단계 입력과 같은 저장소(state.disc)를 쓰므로 새로고침·PDF·요약에 그대로 반영됩니다.
      ========================================================= */
-  /* v5.8 — 고지의무 인터랙티브 체크 (일반 3·1·5 / 간편 3·2·5)
-     · 청약서 문항을 기간 탭(3개월·1년·2년·5년)으로 나눠 탭 한 번으로 체크합니다.
-     · 체크 즉시 ① 일반심사 고지 필요 여부 ② 간편심사 3·2·5 통과 가능 여부
-       ③ 가입 전 준비 서류 ④ 유병자 간편심사 전환 가이드를 다시 그립니다.
-     · 3개월 항목은 2·5년 문항에도 함께 걸리므로 자동으로 함께 켭니다(끄면 함께 꺼짐). */
-  const DISC_ITEMS = [
-    { key: 'm3dx', label: '진단(또는 의심 소견)을 받음', period: '3개월', q: '3개월 진단' },
-    { key: 'm3adm', label: '입원', period: '3개월', q: '3개월 입원' },
-    { key: 'm3op', label: '수술', period: '3개월', q: '3개월 수술' },
-    { key: 'y1', label: '추가검사(재검사) 필요 소견', period: '1년', q: '1년 재검사' },
-    { key: 'y2adm', label: '입원', period: '2년', q: '2년 입원' },
-    { key: 'y2op', label: '수술', period: '2년', q: '2년 수술' },
-    { key: 'y3', label: '3년 이내 입원·수술', period: '5년', q: '3년 입원·수술' },
-    { key: 'y5adm', label: '입원', period: '5년', q: '5년 입원' },
-    { key: 'y5op', label: '수술', period: '5년', q: '5년 수술' },
-    { key: 'y5tx', label: '7일 이상 통원치료', period: '5년', q: '5년 통원 7일' },
-    { key: 'major', label: '중대질병 — 암·간경화·투석 중 만성신장질환·파킨슨·루게릭', period: '5년', q: '5년 중대질병' }
-  ];
-  const DISC_PERIODS = ['3개월', '1년', '2년', '5년'];
+  const DISC_PERIODS = ['\u0033\uac1c\uc6d4', '1\ub144', '2\ub144', '5\ub144'];
   const DISC_PERIOD_NOTE = {
-    '3개월': '최근 3개월 이내 — 일반·간편 모두 첫 문항',
-    '1년': '최근 1년 이내 — 일반심사에만 있는 문항',
-    '2년': '최근 2년 이내 — 간편심사 3·2·5의 가운데 문항',
-    '5년': '최근 5년 이내 — 일반 5년 문항 · 간편은 중대질병만'
+    '\u0033\uac1c\uc6d4': '\ucd5c\uadfc 3\uac1c\uc6d4 \uc774\ub0b4 \u2014 \ubaa8\ub4e0 \uc2ec\uc0ac \uacf5\ud1b5 \ubb38\ud56d',
+    '1\ub144': '\ucd5c\uadfc 1\ub144 \uc774\ub0b4 \u2014 \uc77c\ubc18\uc2ec\uc0ac\uc5d0\ub9cc \uc788\ub294 \ubb38\ud56d',
+    '2\ub144': '\ucd5c\uadfc 2\ub144 \uc774\ub0b4 \u2014 \uac04\ud3b8 3\u00b72\u00b75 \uac00\uc6b4\ub370 \ubb38\ud56d',
+    '5\ub144': '\ucd5c\uadfc 5\ub144 \uc774\ub0b4 \u2014 \uc77c\ubc18 5\ub144 \ubb38\ud56d \u00b7 \uac04\ud3b8\uc740 \uc911\ub300\uc9c8\ubcc0'
   };
-  const disc = {};
-  let discPeriod = '3개월';
+  let discPeriod = '\u0033\uac1c\uc6d4';
 
-  const on = (k) => !!disc[k];
-  const anyOn = (keys) => keys.some((k) => disc[k]);
-  const M3 = ['m3dx', 'm3adm', 'm3op'];
-  const Y2 = ['y2adm', 'y2op'];
-  const Y5 = ['y3', 'y5adm', 'y5op', 'y5tx'];
-
-  /* 일반심사(3·1·5) 고지 여부 */
+  function discBox() {
+    const S = root.__bojangState || {};
+    if (!S.disc || typeof S.disc !== 'object') S.disc = {};
+    return S.disc;
+  }
+  const on = (k) => !!discBox()[k];
+  function toggleDisc(k) {
+    const d = discBox();
+    d[k] = !d[k];
+    if (root.BojangApp && root.BojangApp.discTouched) root.BojangApp.discTouched();
+  }
+  function judgeDisclosure() {
+    const S = root.__bojangState || { disc: {} };
+    if (root.BojangModel && root.BojangModel.disclosureJudge) return root.BojangModel.disclosureJudge(S);
+    return { code: 'standard', label: '\ud310\uc815 \ubd88\uac00', tone: 'info', headline: '', advice: '', reasons: [], matrix: {}, checked: 0 };
+  }
+  /* v6.1 — 예전 이름 호환(도구 탭·테스트). 판정은 model의 단일 엔진을 그대로 쓴다. */
   function generalJudge() {
-    const hit = [];
-    if (anyOn(M3)) hit.push('3개월 진단·입원·수술');
-    if (on('y1')) hit.push('1년 재검사 소견');
-    if (anyOn(Y2)) hit.push('2년 이내 입원·수술');
-    if (anyOn(Y5)) hit.push('5년 이내 입원·수술·통원');
-    if (on('major')) hit.push('5년 이내 중대질병');
-    return { need: hit.length > 0, hits: hit };
+    const j = judgeDisclosure();
+    return { need: !!(j.matrix && j.matrix.general), hits: (j.reasons || []) };
   }
-  /* 간편심사(3·2·5) — 3개월 진단·입원·수술 / 2년 입원·수술 / 5년 중대질병 */
   function simpleJudge() {
-    const hit = [];
-    if (anyOn(M3)) hit.push('3개월 진단·입원·수술');
-    if (anyOn(Y2)) hit.push('2년 이내 입원·수술');
-    if (on('major')) hit.push('5년 이내 중대질병');
-    return { need: hit.length > 0, hits: hit };
-  }
-  /* 간편심사 3·5·5 참고 */
-  function simple355Judge() {
-    const hit = [];
-    if (anyOn(M3)) hit.push('3개월');
-    if (anyOn(Y5)) hit.push('5년 이내 입원·수술');
-    if (on('major')) hit.push('5년 중대질병');
-    return { need: hit.length > 0, hits: hit };
+    const j = judgeDisclosure();
+    return { need: !!(j.matrix && j.matrix.sim325), hits: [] };
   }
 
   /* 가입 전 준비 서류 — 체크된 항목에서 역산 */
   function discDocs() {
     const docs = [];
-    const add = (s) => { if (!docs.some((d) => d.title === s)) docs.push(s); };
-    if (on('m3dx')) add('진단서 또는 진료확인서 (질병명·진단일 기재)');
-    if (on('m3adm') || anyOn(Y2) || on('y5adm')) add('입·퇴원확인서 (입원일·퇴원일·병명)');
-    if (on('m3op') || anyOn(Y2) || on('y5op') || on('y3')) add('수술확인서 (수술명·수술일·수술방법)');
-    if (on('y1')) add('검사 결과지·판독지 (재검사 소견 문구 확인)');
-    if (on('y5tx')) add('통원 진료확인서·진료비 영수증 (7일 이상 여부)');
-    if (on('major')) add('진단서·조직검사(병리) 결과지, 투석·복약 기록');
+    const add = (s) => { if (!docs.some((d) => d.title === s)) docs.push({ title: s }); };
+    if (on('m3_dx')) add('\uc9c4\ub2e8\uc11c \ub610\ub294 \uc9c4\ub8cc\ud655\uc778\uc11c (\uc9c8\ubcc0\uba85\u00b7\uc9c4\ub2e8\uc77c \uae30\uc7ac)');
+    if (on('m3_in') || on('y2_inop') || on('y5_inop')) add('\uc785\u00b7\ud1f4\uc6d0\ud655\uc778\uc11c (\uc785\uc6d0\uc77c\u00b7\ud1f4\uc6d0\uc77c\u00b7\ubcc0\uba85)');
+    if (on('m3_op') || on('y2_inop') || on('y5_inop')) add('\uc218\uc220\ud655\uc778\uc11c (\uc218\uc220\uba85\u00b7\uc218\uc220\uc77c\u00b7\uc218\uc220\ubc29\ubc95)');
+    if (on('m3_med') || on('m3_daily') || on('y5_med30')) add('\ucc98\ubc29\uc804\u00b7\ubcf5\uc57d\ub0b4\uc5ed (\uc57d\ud488\uba85\u00b7\ubcf5\uc6a9\uae30\uac04)');
+    if (on('y1_test')) add('\uac80\uc0ac \uacb0\uacfc\uc9c0\u00b7\ud310\ub3c5\uc9c0 (\uc7ac\uac80\uc0ac \uc18c\uacac \ubb38\uad6c \ud655\uc778)');
+    if (on('y5_care7')) add('\ud1b5\uc6d0 \uc9c4\ub8cc\ud655\uc778\uc11c\u00b7\uc9c4\ub8cc\ube44 \uc601\uc218\uc99d (7\uc77c \uc774\uc0c1 \uc5ec\ubd80)');
+    if (on('y5_major') || ['y5m_cancer', 'y5m_leuk', 'y5m_htn', 'y5m_angina', 'y5m_mi', 'y5m_valve', 'y5m_cirr', 'y5m_stroke', 'y5m_dm', 'y5m_aids', 'y5m_ckd', 'y5m_park', 'y5m_als'].some(on)) add('\uc9c4\ub2e8\uc11c\u00b7\uc870\uc9c1\uac80\uc0ac(\ubcc0\ub9ac) \uacb0\uacfc\uc9c0, \ud22c\uc11d\u00b7\ubcf5\uc57d \uae30\ub85d');
     if (docs.length) {
-      add('청약서 문항과 대조할 날짜 정리표 (마지막 입원·수술일)');
-      add('최근 1년 처방전·복약내역 (약물치료 문항 대비)');
+      add('\uccad\uc57d\uc11c \ubb38\ud56d\uacfc \ub300\uc870\ud560 \ub0a0\uc9dc \uc815\ub9ac\ud45c (\ub9c8\uc9c0\ub9c9 \uc785\uc6d0\u00b7\uc218\uc220\uc77c)');
+      add('\uc9c4\ub2e8\uc11c\uc0c1 \ucf54\ub4dc \ud655\uc778 (I64\u00b7I69 \ub4f1 \ubc94\uc704 \ubd84\ub9ac)');
     }
     return docs;
   }
 
-  /* 권장 심사 판정 */
-  function judgeDisclosure() {
-    const g = generalJudge(), s = simpleJudge(), s355 = simple355Judge();
-    if (anyOn(M3)) {
-      return {
-        code: 'hold', label: '3개월 경과 후 재검토', tone: 'warn', g, s, s355,
-        head: '간편심사도 3개월 문항은 똑같이 묻습니다',
-        body: '치료·검사가 끝난 날부터 3개월이 지난 뒤가 가장 넓은 선택지입니다. 그 전에는 인수 조건이 제한되거나 거절될 수 있어 청약 일정을 조정합니다.'
-      };
-    }
-    if (!g.need) {
-      return {
-        code: 'standard', label: '표준체 권장 — 고지 대상 없음', tone: 'ok', g, s, s355,
-        head: '일반심사(3·1·5)에서 고지할 항목이 없습니다',
-        body: '간편심사는 보험료가 1.2~2배 수준으로 높고 보장이 제한될 수 있습니다. 표준체를 먼저 심사하는 것이 순서입니다.'
-      };
-    }
-    if (!s.need) {
-      return {
-        code: 'simple325', label: '유병자 간편심사 3·2·5 전환 검토', tone: 'need', g, s, s355,
-        head: '일반심사에서는 고지 대상이지만 3·2·5 문항은 피해 갑니다',
-        body: '2년을 넘긴 입원·수술(또는 1년 재검사 소견)은 일반심사 5년·1년 문항에만 걸립니다. 간편심사 3·2·5는 3개월·2년·5년 중대질병만 묻기 때문에 통과 가능성이 있습니다. 다만 보험료가 1.2~2배, 가입 금액·특약 제한이 따릅니다.'
-      };
-    }
-    if (!s355.need) {
-      return {
-        code: 'simple355', label: '간편심사 3·5·5 · 초간편 검토', tone: 'need', g, s, s355,
-        head: '3·2·5는 어렵고 3·5·5까지 내려가야 합니다',
-        body: '2년 이내 입원·수술은 3·2·5의 가운데 문항에 걸립니다. 3·5·5(5년 문항) 또는 초간편심사 상품을 함께 놓고, 일반심사 할증 인수와 보험료를 비교합니다.'
-      };
-    }
-    if (on('major')) {
-      return {
-        code: 'review', label: '인수 심사 필요 — 중대질병 이력', tone: 'gap', g, s, s355,
-        head: '5년 이내 중대질병은 모든 간편심사에서 고지 대상입니다',
-        body: '3·2·5와 3·5·5 모두 5년 문항에 들어갑니다. 일반심사 할증 인수나 상품별 인수 기준을 먼저 확인하고, 고지 후 부담보·할증 조건을 고객에게 서면으로 설명합니다.'
-      };
-    }
-    return {
-      code: 's355c', label: '간편심사도 어려움 — 초간편·할증 인수 검토', tone: 'gap', g, s, s355,
-      head: '3·2·5와 3·5·5 문항에 모두 걸립니다',
-      body: '초간편심사 상품이나 일반심사 할증 인수를 함께 놓고 판단합니다. 고지 후 부담보·할증 조건은 서면으로 설명하고 고객 확인을 받습니다.'
-    };
-  }
-
   function disclosureText() {
     const j = judgeDisclosure();
+    const d = discBox();
+    const items = (typeof DISCLOSURE_ITEMS !== 'undefined' ? DISCLOSURE_ITEMS : []);
+    const picked = items.filter((x) => d[x.key]).map((x) => `${x.period} ${x.label.split(' (')[0]}`);
     const L = [];
-    L.push('[고지의무 체크 결과]');
-    L.push(`· 체크된 항목: ${DISC_ITEMS.filter((d) => disc[d.key]).map((d) => `${d.period} ${d.label}`).join(' / ') || '없음'}`);
-    L.push(`· 일반심사(3·1·5): ${j.g.need ? '고지 필요 — ' + j.g.hits.join(', ') : '고지 대상 없음'}`);
-    L.push(`· 간편심사(3·2·5): ${j.s.need ? '고지 필요 — ' + j.s.hits.join(', ') : '통과 가능'}`);
-    L.push(`· 권장: ${j.label}`);
-    L.push(`· ${j.head}`);
+    L.push('[\uace0\uc9c0\uc758\ubb34 \uccb4\ud06c \uacb0\uacfc]');
+    L.push(`\u00b7 \uccb4\ud06c\ub41c \ud56d\ubaa9: ${picked.join(' / ') || '\uc5c6\uc74c'}`);
+    L.push(`\u00b7 \uc77c\ubc18\uc2ec\uc0ac(3\u00b71\u00b75): ${j.matrix && j.matrix.general ? '\uace0\uc9c0 \ud544\uc694' : '\uace0\uc9c0 \ub300\uc0c1 \uc5c6\uc74c'}`);
+    L.push(`\u00b7 \uac04\ud3b8\uc2ec\uc0ac(3\u00b72\u00b75): ${j.matrix && j.matrix.sim325 ? '\uace0\uc9c0 \ud544\uc694' : '\ud1b5\uacfc \uac00\ub2a5'}`);
+    L.push(`\u00b7 \uac04\ud3b8\uc2ec\uc0ac(3\u00b75\u00b75): ${j.matrix && j.matrix.sim355 ? '\uace0\uc9c0 \ud544\uc694' : '\ud1b5\uacfc \uac00\ub2a5'}`);
+    L.push(`\u00b7 \ucd08\uac04\ud3b8: ${j.matrix && j.matrix.ultra ? '\uace0\uc9c0 \ud544\uc694' : '\ud1b5\uacfc \uac00\ub2a5'}`);
+    L.push(`\u00b7 \uad8c\uc7a5: ${j.label}`);
+    L.push(`\u00b7 ${j.headline}`);
     const docs = discDocs();
     if (docs.length) {
-      L.push('· 준비 서류');
-      docs.forEach((d, i) => L.push(`  ${i + 1}) ${d}`));
+      L.push('\u00b7 \uc900\ube44 \uc11c\ub958');
+      docs.forEach((x, i) => L.push(`  ${i + 1}) ${x.title}`));
     }
-    L.push('※ 최종 판단은 상품별 청약서 문항과 인수 심사가 기준입니다.');
+    L.push('\u203b \ucd5c\uc885 \ud310\ub2e8\uc740 \uc0c1\ud488\ubcc4 \uccad\uc57d\uc11c \ubb38\ud56d\uacfc \uc778\uc218 \uc2ec\uc0ac\uac00 \uae30\uc900\uc785\ub2c8\ub2e4.');
     return L.join('\n');
+  }
+
+  function verdictCard(label, ok, hits, passLabel) {
+    return `<div class="disc-verdict tone-${ok ? 'gap' : 'ok'}">
+      <span class="dv-label">${label}</span>
+      <b>${ok ? '\uace0\uc9c0 \ud544\uc694' : (passLabel || '\ud1b5\uacfc \uac00\ub2a5')}</b>
+      <p class="dv-head">${ok ? '\ubb38\ud56d\uc5d0 \uac78\ub9bd\ub2c8\ub2e4' : '\uc774 \uc0c1\ud488\uc758 \ubb38\ud56d\uc740 \ud53c\ud574\uac11\ub2c8\ub2e4'}</p>
+      <p class="dv-body">${esc(hits || '')}</p>
+    </div>`;
   }
 
   function renderDisclosureTool() {
     const host = $('#disc-tool');
     if (!host) return;
     const j = judgeDisclosure();
-    const items = DISC_ITEMS.filter((d) => d.period === discPeriod);
+    const d = discBox();
+    const items = (typeof DISCLOSURE_ITEMS !== 'undefined' ? DISCLOSURE_ITEMS : []).filter((x) => x.period === discPeriod);
+    const majors = (typeof DISCLOSURE_MAJOR10 !== 'undefined' ? DISCLOSURE_MAJOR10 : []).concat(typeof DISCLOSURE_MAJOR5 !== 'undefined' ? DISCLOSURE_MAJOR5.filter((m) => !DISCLOSURE_MAJOR10.some((x) => x.key === m.key)) : []);
     const docs = discDocs();
     const badge = (p) => {
-      const n = DISC_ITEMS.filter((d) => d.period === p && disc[d.key]).length;
+      const n = (typeof DISCLOSURE_ITEMS !== 'undefined' ? DISCLOSURE_ITEMS : []).filter((x) => x.period === p && d[x.key]).length;
       return `<em>${n}</em>`;
     };
     host.innerHTML = `
-      <div class="disc-tabs" role="tablist" aria-label="고지 문항 기간">
+      <div class="disc-tabs" role="tablist" aria-label="\uace0\uc9c0 \ubb38\ud56d \uae30\uac04">
         ${DISC_PERIODS.map((p) => `<button type="button" role="tab" aria-selected="${p === discPeriod}"
-            class="disc-tab${p === discPeriod ? ' is-on' : ''}${DISC_ITEMS.some((d) => d.period === p && disc[d.key]) ? ' has-on' : ''}"
+            class="disc-tab${p === discPeriod ? ' is-on' : ''}${(typeof DISCLOSURE_ITEMS !== 'undefined' ? DISCLOSURE_ITEMS : []).some((x) => x.period === p && d[x.key]) ? ' has-on' : ''}"
             data-disc-period="${p}">${p}${badge(p)}</button>`).join('')}
       </div>
       <div class="disc-panel">
-        <div class="dp-head">${discPeriod} 이내 항목<span>${DISC_PERIOD_NOTE[discPeriod]}</span></div>
-        ${items.map((d) => `<button type="button" class="dc-tick${disc[d.key] ? ' is-on' : ''}" data-disc="${d.key}" aria-pressed="${!!disc[d.key]}">
-          <span class="dc-box" aria-hidden="true"></span><span>${esc(d.label)}</span></button>`).join('')}
+        <div class="dp-head">${discPeriod} \uc774\ub0b4 \ud56d\ubaa9<span>${DISC_PERIOD_NOTE[discPeriod]}</span></div>
+        ${items.map((x) => `<button type="button" class="dc-tick${d[x.key] ? ' is-on' : ''}" data-disc="${x.key}" aria-pressed="${!!d[x.key]}" title="${esc(x.hint || '')}">
+          <span class="dc-box" aria-hidden="true"></span><span>${esc(x.label)}${x.hint ? `<em>${esc(x.hint)}</em>` : ''}</span></button>`).join('')}
+        ${discPeriod === '5년' ? `<div class="disc-major">
+          <div class="dm-head">10\ub300 \uc9c8\ubcc0 \u00b7 \uac04\ud3b8 \uc911\ub300\uc9c8\ubcc0 \u2014 \ud574\ub2f9 \uc9c8\ubcc0\ub9c8\ub2e4 \uace0\uc9c0</div>
+          <div class="dm-chips">${majors.map((m2) => `<button type="button" class="dm-chip${d[m2.key] ? ' is-on' : ''}" data-disc="${m2.key}">${esc(m2.label)}</button>`).join('')}</div>
+        </div>` : ''}
       </div>
       <div class="disc-judge">
-        <div class="disc-verdict tone-${j.g.need ? 'gap' : 'ok'}">
-          <span class="dv-label">일반심사 3·1·5</span>
-          <b>${j.g.need ? '고지 필요' : '고지 대상 없음'}</b>
-          <p class="dv-head">${j.g.need ? esc(j.g.hits.join(' · ')) : '3개월·1년·5년 문항 모두 해당 없음'}</p>
-          <p class="dv-body">${j.g.need ? '청약서 문항에 사실대로 적어야 합니다. 말로만 알린 것은 고지로 인정되지 않습니다.' : '표준체 심사를 먼저 진행합니다.'}</p>
-        </div>
-        <div class="disc-verdict tone-${j.s.need ? 'need' : 'ok'}">
-          <span class="dv-label">간편심사 3·2·5</span>
-          <b>${j.s.need ? '고지 필요' : '통과 가능'}</b>
-          <p class="dv-head">${j.s.need ? esc(j.s.hits.join(' · ')) : '3개월·2년·5년 중대질병 문항 해당 없음'}</p>
-          <p class="dv-body">${j.s.need ? '3·5·5(5년 문항) 또는 초간편심사로 내려가야 합니다.' : '유병자 간편심사로 전환하면 보험료는 1.2~2배, 가입 금액·특약은 제한됩니다.'}</p>
-        </div>
+        ${verdictCard('\uc77c\ubc18\uc2ec\uc0ac 3\u00b71\u00b75', !!(j.matrix && j.matrix.general), j.matrix && j.matrix.general ? (j.reasons || []).join(' \u00b7 ') : '3\uac1c\uc6d4\u00b71\ub144\u00b75\ub144 \ubb38\ud56d \ubaa8\ub450 \ud574\ub2f9 \uc5c6\uc74c', '\uace0\uc9c0 \ub300\uc0c1 \uc5c6\uc74c')}
+        ${verdictCard('\uac04\ud3b8\uc0ac 3\u00b72\u00b75', !!(j.matrix && j.matrix.sim325), j.matrix && j.matrix.sim325 ? '3\uac1c\uc6d4\u00b72\ub144\u00b75\ub144 \uc911\ub300\uc9c8\ubcc0 \ubb38\ud56d \ud574\ub2f9' : '3\u00b72\u00b75 \ubb38\ud56d\uc740 \ud53c\ud574\uac10')}
+        ${verdictCard('\uac04\ud3b8\uc0ac 3\u00b75\u00b75', !!(j.matrix && j.matrix.sim355), j.matrix && j.matrix.sim355 ? '5\ub144 \uc785\uc6d0\u00b7\uc218\uc220 \ub610\ub294 \uc911\ub300\uc9c8\ubcc0 \ubb38\ud56d \ud574\ub2f9' : '3\u00b75\u00b75 \ubb38\ud56d\uc740 \ud53c\ud574\uac10')}
+        ${verdictCard('\ucd08\uac04\ud3b8(3\uac1c\uc6d4\u00b75\ub144 \uc554)', !!(j.matrix && j.matrix.ultra), j.matrix && j.matrix.ultra ? '3\uac1c\uc6d4 \uc785\uc6d0\u00b7\uc218\uc220 \ub610\ub294 5\ub144 \uc554' : '\ucd08\uac04\ud3b8 \ubb38\ud56d\ub3c4 \ud53c\ud574\uac10')}
       </div>
       <div class="disc-verdict tone-${j.tone}" id="disc-verdict-main">
-        <span class="dv-label">권장 심사</span>
+        <span class="dv-label">\uad8c\uc7a5 \uc2ec\uc0ac</span>
         <b>${esc(j.label)}</b>
-        <p class="dv-head">${esc(j.head)}</p>
-        <p class="dv-body">${esc(j.body)}</p>
+        <p class="dv-head">${esc(j.headline)}</p>
+        <p class="dv-body">${esc(j.advice)}</p>
       </div>
       <div class="disc-docs">
-        <div class="dd-head">가입 전 준비 서류 ${docs.length ? `(${docs.length}건)` : '— 체크하면 자동으로 정리됩니다'}</div>
+        <div class="dd-head">\uac00\uc785 \uc804 \uc900\ube44 \uc11c\ub958 ${docs.length ? `(${docs.length}\uac74)` : '\u2014 \uccb4\ud06c\ud558\uba74 \uc790\ub3d9\uc73c\ub85c \uc815\ub9ac\ub429\ub2c8\ub2e4'}</div>
         ${docs.length
-          ? `<ul>${docs.map((d) => `<li><span>${esc(d)}</span></li>`).join('')}</ul>`
-          : '<p class="empty">3개월·1년·2년·5년 항목을 탭해 체크하면 필요한 서류가 여기에 바로 나옵니다.</p>'}
+          ? `<ul>${docs.map((x) => `<li><span>${esc(x.title)}</span></li>`).join('')}</ul>`
+          : '<p class="empty">3\uac1c\uc6d4\u00b71\ub144\u00b72\ub144\u00b75\ub144 \ud56d\ubaa9\uc744 \ud0ed\ud574 \uccb4\ud06c\ud558\uba74 \ud544\uc694\ud55c \uc11c\ub958\uac00 \uc5ec\uae30\uc5d0 \ubc14\ub85c \ub098\uc635\ub2c8\ub2e4.</p>'}
       </div>
       <div class="disc-actions">
-        <button type="button" class="da-copy" id="disc-copy">결과·서류 카톡 복사</button>
-        <button type="button" id="disc-reset">체크 비우기</button>
+        <button type="button" class="da-copy" id="disc-copy">\uacb0\uacfc\u00b7\uc11c\ub958 \uce74\ud1a1 \ubcf5\uc0ac</button>
+        <button type="button" id="disc-reset">\uccb4\ud06c \ube44\uc6b0\uae30</button>
       </div>
-      <p class="fc-src">근거 · 보험업감독업무시행세칙 별표14 · 금융감독원 「주요 분쟁사례로 알아본 소비자 유의사항 — 간편보험편」(2024.6.13) · 상법 제651조(해지권: 안 날부터 1개월, 계약일부터 3년). 최종 판단은 상품별 청약서 문항과 인수 심사가 기준입니다.</p>
+      <p class="fc-src">\uadfc\uac70 \u00b7 \ubcf4\ud5d8\uc5c5\uac10\ub3c5\uc5c5\ubb34\uc2dc\ud589\uc138\uce59 \ubcc4\ud45c14 \u00b7 \uae08\uc735\uac10\ub3c5\uc6d0 \u300c\uc8fc\uc694 \ubd84\uc7c1\uc0ac\ub840\ub85c \uc54c\uc544\ubcf8 \uc18c\ube44\uc790 \uc720\uc758\uc0ac\ud56d \u2014 \uac04\ud3b8\ubcf4\ud5d8\ud3b8\u300d(2024.7.2) \u00b7 \uc0c1\ubc95 \uc81c651\uc870(\ud574\uc9c0\uad8c: \uc548 \ub0a0\ubd80\ud130 1\uac1c\uc6d4, \uacc4\uc57d\uc77c\ubd80\ud130 3\ub144). \ucd5c\uc885 \ud310\ub2e8\uc740 \uc0c1\ud488\ubcc4 \uccad\uc57d\uc11c \ubb38\ud56d\uacfc \uc778\uc218 \uc2ec\uc0ac\uac00 \uae30\uc900\uc785\ub2c8\ub2e4.</p>
     `;
     $$('[data-disc-period]', host).forEach((b) => b.addEventListener('click', () => {
       discPeriod = b.dataset.discPeriod;
       renderDisclosureTool();
     }));
     $$('[data-disc]', host).forEach((b) => b.addEventListener('click', () => {
-      const k = b.dataset.disc;
-      const nextVal = !disc[k];
-      disc[k] = nextVal;
-
-      if (M3.indexOf(k) >= 0) {
-        ['y2adm', 'y2op', 'y3', 'y5adm', 'y5op'].forEach((x) => { disc[x] = nextVal; });
-      }
-      if (['y2adm', 'y2op'].indexOf(k) >= 0 && nextVal) { disc.y3 = true; }
+      toggleDisc(b.dataset.disc);
       renderDisclosureTool();
     }));
     const cp = $('#disc-copy', host);
-    if (cp) cp.addEventListener('click', () => copy(disclosureText(), '고지 체크 결과를 복사했습니다'));
+    if (cp) cp.addEventListener('click', () => copy(disclosureText(), '\uace0\uc9c0 \uccb4\ud06c \uacb0\uacfc\ub97c \ubcf5\uc0ac\ud588\uc2b5\ub2c8\ub2e4'));
     const rs = $('#disc-reset', host);
     if (rs) rs.addEventListener('click', () => {
-      Object.keys(disc).forEach((k) => { delete disc[k]; });
+      const d2 = discBox();
+      Object.keys(d2).forEach((k) => { delete d2[k]; });
+      if (root.BojangApp && root.BojangApp.discTouched) root.BojangApp.discTouched();
       renderDisclosureTool();
-      toast('체크를 비웠습니다');
+      toast('\uccb4\ud06c\ub97c \ube44\uc6e0\uc2b5\ub2c8\ub2e4');
     });
   }
 
@@ -13860,9 +14450,6 @@ const PLAN_FRONT = {
     });
   }
 
-  /* =========================================================
-     ④ 소득 대비 적정 보험료 · 리모델링 비교기
-     ========================================================= */
   function pct(n) { return Number.isFinite(n) ? n.toFixed(1).replace(/\.0$/, '') : '—'; }
 
   function renderPremiumTool() {
@@ -16369,7 +16956,7 @@ const PLAN_FRONT = {
     return subtle().importKey('jwk', Object.assign({ ext: true }, jwk), { name: 'ECDH', namedCurve: 'P-256' }, false, []);
   }
   async function importEcdsaPriv(jwk) {
-    return subtle().importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign']);
+    return subtle().importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
   }
   async function importEcdhPriv(jwk) {
     return subtle().importKey('jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveKey', 'deriveBits']);
@@ -16402,24 +16989,94 @@ const PLAN_FRONT = {
   }
 
   async function hashPin(pin, saltB64) {
-    if (!subtle()) return 'plain:' + pin;
+    if (!subtle()) return null;
     const salt = saltB64 ? unb64u(saltB64) : rndBytes(16);
     const base = await subtle().importKey('raw', new TextEncoder().encode(String(pin)), 'PBKDF2', false, ['deriveBits']);
     const bits = await subtle().deriveBits({ name: 'PBKDF2', salt, iterations: 120000, hash: 'SHA-256' }, base, 256);
+
     return { salt: b64u(salt), hash: b64u(bits) };
   }
   async function checkPin(pin, rec) {
     if (!rec) return false;
-    if (String(rec.hash).indexOf('plain:') === 0) return String(rec.hash).slice(6) === String(pin);
+
+    if (String(rec.hash).indexOf('plain:') === 0) return false;
     const out = await hashPin(pin, rec.salt);
+    if (!out) return false;
     return out.hash === rec.hash;
   }
 
   function transcriptChallenge(ch) {
     return ['SMK1', 'challenge', ch.id, ch.pc_pub_hash, String(ch.issued_at)].join('|');
   }
-  function transcriptApprove(ch, body) {
-    return ['SMK1', 'approve', ch.id, ch.code2, ch.pc_pub_hash, body.device_id, String(ch.issued_at)].join('|');
+
+  async function transcriptApprove(ch, body, phonePub, enc) {
+    const phoneHash = phonePub ? (await sha256Hex(JSON.stringify([phonePub.x, phonePub.y]))).slice(0, 16) : '';
+    const ctHash = (enc && enc.ct) ? (await sha256Hex(String(enc.ct))).slice(0, 16) : '';
+    return ['SMK1', 'approve2', ch.id, ch.code2, ch.pc_pub_hash, body.device_id, String(ch.issued_at),
+      phoneHash, (enc && enc.iv) || '', ctHash].join('|');
+  }
+
+  const memKeys = {};
+  const KEYDB = 'bojang-smartkey';
+  let keyDbPromise = null;
+  function keyDb() {
+    if (keyDbPromise) return keyDbPromise;
+    keyDbPromise = new Promise((resolve) => {
+      let factory = null;
+      try { factory = root.indexedDB || null; } catch (e) { factory = null; }
+      if (!factory) return resolve(null);
+      let req;
+      try { req = factory.open(KEYDB, 1); } catch (e) { return resolve(null); }
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('keys')) db.createObjectStore('keys', { keyPath: 'id' });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+      setTimeout(() => resolve(null), 2500);
+    });
+    return keyDbPromise;
+  }
+  async function keyIdbPut(id, key) {
+    const db = await keyDb();
+    if (!db) return false;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction('keys', 'readwrite');
+        tx.objectStore('keys').put({ id, key, at: now() });
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+        tx.onabort = () => resolve(false);
+      } catch (e) { resolve(false); }
+    });
+  }
+  async function keyIdbGet(id) {
+    const db = await keyDb();
+    if (!db) return null;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction('keys', 'readonly');
+        const rq = tx.objectStore('keys').get(id);
+        rq.onsuccess = () => resolve((rq.result && rq.result.key) || null);
+        rq.onerror = () => resolve(null);
+      } catch (e) { resolve(null); }
+    });
+  }
+  async function storeDevicePriv(dev, keyObj) {
+    const ok = await keyIdbPut(dev.id, keyObj);
+    if (!ok) memKeys[dev.id] = keyObj;
+  }
+  async function devicePriv(dev) {
+    let key = await keyIdbGet(dev.id);
+    if (!key) key = memKeys[dev.id] || null;
+    if (!key && dev && dev.priv) {
+
+      key = await importEcdsaPriv(dev.priv);
+      await storeDevicePriv(dev, key);
+      delete dev.priv;
+      lsSet(K.phone, dev);
+    }
+    return key || null;
   }
 
   function pubHashOf(ecdhJwk, ecdsaJwk) {
@@ -16504,7 +17161,7 @@ const PLAN_FRONT = {
       const dev = st.devices[body.device_id];
       if (!dev) return { ok: false, error: 'unregistered-device', message: '등록된 마스터 기기가 아닙니다.' };
       if (!dev.master) return { ok: false, error: 'not-master', message: '마스터 휴대폰에서만 승인할 수 있습니다.' };
-      const sigOk = await verifyText(dev.pub_ecdsa, body.signature, transcriptApprove(c, body));
+      const sigOk = await verifyText(dev.pub_ecdsa, body.signature, await transcriptApprove(c, body, body.phone_pub, body.enc));
       if (!sigOk) return { ok: false, error: 'bad-signature', message: '기기 서명 검증에 실패했습니다.' };
       c.status = 'approved';
       c.consumed_at = now();
@@ -16651,9 +17308,31 @@ const PLAN_FRONT = {
 
     mode() { return this.remote === 'ok' ? 'server' : 'local'; },
     statusText() {
-      return this.remote === 'ok'
-        ? '실서버 검증 (Supabase Edge Function)'
-        : '이 브라우저 안 모의 검증 · 실서버 함수 미배포';
+      if (this.remote === 'ok') return '실서버 검증 (Supabase Edge Function)';
+      if (this.configured() && !this.demo()) return '스마트키 서버 오류 — 모의 전환 차단(fail-closed)';
+      return '이 브라우저 안 모의 검증 · 실서버 함수 미배포';
+    },
+
+    demo() {
+      try {
+        if (root.BOJANG_SMARTKEY_DEMO === true) return true;
+        const ls = root.localStorage;
+        if (ls && ls.getItem('bojang.smartkey.demo') === '1') return true;
+        const host = String((root.location && root.location.hostname) || '');
+        if (!host || host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
+        return false;
+      } catch (e) { return false; }
+    },
+    configured() { return !!this.endpoint('qr-auth-challenge'); },
+    failClosed() {
+      return { ok: false, error: 'server-unavailable', demoBlocked: true,
+        message: '스마트키 서버에 연결할 수 없습니다. 운영 모드에서는 모의 검증으로 자동 전환하지 않습니다. 잠시 후 다시 시도해 주세요.' };
+    },
+    async viaServer(name, payload, localFn) {
+      const out = await this.call(name, payload);
+      if (out) return out;
+      if (this.demo() || !this.configured()) return localFn();
+      return this.failClosed();
     },
     endpoint(name) {
       const B = root.BojangBackend;
@@ -16692,83 +17371,39 @@ const PLAN_FRONT = {
     },
 
     async createChallenge(body) {
-      if (this.remote !== 'unavailable') {
-        const out = await this.call('qr-auth-challenge', body);
-        if (out) return out;
-      }
-      return local.create(body);
+      return this.viaServer('qr-auth-challenge', body, () => local.create(body));
     },
     async getChallenge(id) { return local.get(id); },
     async peekByCode(code6) {
-      if (this.remote === 'ok') {
-        const out = await this.call('qr-auth-challenge', { action: 'peek', code6 });
-        if (out) return out;
-      }
-      return local.byCode(code6);
+      return this.viaServer('qr-auth-challenge', { action: 'peek', code6 }, () => local.byCode(code6));
     },
     async approve(body) {
-      if (this.remote === 'ok') {
-        const out = await this.call('qr-auth-approve', body);
-        if (out) return out;
-      }
-      return local.approve(body);
+      return this.viaServer('qr-auth-approve', body, () => local.approve(body));
     },
     async cancel(payload) {
       const p = typeof payload === 'string' ? { id: payload } : (payload || {});
-      if (this.remote === 'ok') {
-        const out = await this.call('qr-auth-challenge', { action: 'cancel', challenge_id: p.id, cancel_sig: p.sig || '' });
-        if (out) return out;
-      }
-      return local.cancel(p);
+      return this.viaServer('qr-auth-challenge', { action: 'cancel', challenge_id: p.id, cancel_sig: p.sig || '' }, () => local.cancel(p));
     },
     async reject(body) {
-      if (this.remote === 'ok') {
-        const out = await this.call('qr-auth-approve', { action: 'reject', challenge_id: body.challenge_id });
-        if (out) return out;
-      }
-      return local.reject(body);
+      return this.viaServer('qr-auth-approve', { action: 'reject', challenge_id: body.challenge_id }, () => local.reject(body));
     },
     async poll(id) {
-      if (this.remote === 'ok') {
-        const out = await this.call('qr-auth-challenge', { action: 'poll', challenge_id: id });
-        if (out) return out;
-      }
-      return local.poll(id);
+      return this.viaServer('qr-auth-challenge', { action: 'poll', challenge_id: id }, () => local.poll(id));
     },
     async session(token) {
-      if (this.remote === 'ok') {
-        const out = await this.call('device-manage', { action: 'session', token });
-        if (out) return out;
-      }
-      return local.session(token);
+      return this.viaServer('device-manage', { action: 'session', token }, () => local.session(token));
     },
     async devices() {
-      if (this.remote === 'ok') {
-        const out = await this.call('device-manage', { action: 'list' });
-        if (out && out.devices) return out;
-      }
-      return local.devices();
+      return this.viaServer('device-manage', { action: 'list' }, () => local.devices());
     },
     async bind(body) {
-      if (this.remote === 'ok') {
-        const out = await this.call('device-manage', Object.assign({ action: 'bind' }, body));
-        if (out) return out;
-      }
-      return local.bind(body);
+      return this.viaServer('device-manage', Object.assign({ action: 'bind' }, body), () => local.bind(body));
     },
     async evict(deviceId) {
-      if (this.remote === 'ok') {
-        const out = await this.call('device-manage', { action: 'evict', device_id: deviceId });
-        if (out) return out;
-      }
-      return local.evict(deviceId);
+      return this.viaServer('device-manage', { action: 'evict', device_id: deviceId }, () => local.evict(deviceId));
     },
     async revoke(token) {
-      if (this.remote === 'ok') {
-        const out = await this.call('device-manage', { action: 'revoke', token });
-        if (out) return out;
-      }
-      return local.revoke(token);
+      return this.viaServer('device-manage', { action: 'revoke', token }, () => local.revoke(token));
     },
     _local: local
   };
@@ -17128,8 +17763,9 @@ const PLAN_FRONT = {
 
     device() {
       const saved = lsGet(K.phone, null);
-      if (saved && saved.id && saved.priv && saved.pub_ecdsa) return saved;
-      return null;
+      if (!saved || !saved.id || !saved.pub_ecdsa) return null;
+
+      return saved;
     },
 
     async ensureDevice() {
@@ -17137,16 +17773,22 @@ const PLAN_FRONT = {
       if (dev) return dev;
       const pair = await genEcdsa();
       const pub = await exportPubJwk(pair.publicKey);
-      const priv = await exportKeyJwk(pair.privateKey);
       const hash = (await sha256Hex(JSON.stringify([pub.x, pub.y]))).slice(0, 16);
+
+      let keyObj = null;
+      try {
+        const jwk = await exportKeyJwk(pair.privateKey);
+        keyObj = await importEcdsaPriv(jwk);
+      } catch (e) { keyObj = pair.privateKey; }
       dev = {
         id: randId('ph_', 6),
         name: deviceLabel('phone'),
         pub_ecdsa: pub,
-        priv,
         pub_hash: hash,
+        key_store: 'idb',
         created_at: now()
       };
+      if (keyObj) await storeDevicePriv(dev, keyObj);
       lsSet(K.phone, dev);
       await server.bind({ id: dev.id, kind: 'phone', name: dev.name, pub_ecdsa: pub, pub_hash: hash });
       return dev;
@@ -17254,11 +17896,19 @@ const PLAN_FRONT = {
     },
 
     async approveWithPin(pin) {
+      if (!subtle()) return this.fail('이 환경(file://)에서는 PIN 승인을 사용할 수 없습니다. https 로 열어 주세요.');
       const digits = String(pin || '').replace(/\D/g, '');
       if (digits.length < 4 || digits.length > 6) return this.fail('PIN은 4~6자리입니다.');
+
+      const t = now();
+      this._pinTries = (this._pinTries || []).filter((x) => t - x < 30000);
+      if (this._pinTries.length >= 5) return this.fail('PIN 시도가 너무 많습니다. 30초 후 다시 시도해 주세요.');
       let rec = lsGet(K.pin, null);
       if (!rec) { rec = await hashPin(digits); lsSet(K.pin, rec); }
-      else if (!(await checkPin(digits, rec))) return this.fail('PIN이 맞지 않습니다.');
+      else if (!(await checkPin(digits, rec))) {
+        this._pinTries.push(t);
+        return this.fail('PIN이 맞지 않습니다.');
+      }
       return this.finishApprove();
     },
 
@@ -17283,13 +17933,14 @@ const PLAN_FRONT = {
       if (err) err.hidden = true;
       try {
         const dev = await this.ensureDevice();
-        const priv = await importEcdsaPriv(dev.priv);
-        const sig = await signText(priv, transcriptApprove(ch, { device_id: dev.id }));
+        const priv = await devicePriv(dev);
+        if (!priv) return this.fail('기기 서명 키를 찾을 수 없습니다. 기기를 다시 등록해 주세요.');
         const phoneKeys = await genEcdh();
         const phonePub = await exportPubJwk(phoneKeys.publicKey);
         const aes = await deriveAes(phoneKeys.privateKey, ch.pc_pub_ecdh);
         const payload = consultationPayload();
         const enc = await aesEncrypt(aes, payload);
+        const sig = await signText(priv, await transcriptApprove(ch, { device_id: dev.id }, phonePub, enc));
         const B = root.BojangBackend;
         const jwt = B && B.sessionToken ? B.sessionToken() : '';
         const out = await server.approve({
@@ -17637,10 +18288,14 @@ const PLAN_FRONT = {
 
     refresh() {
       const on = this.enabled();
-      const targets = ['#cs-name', '#deck-stage', '#client-banner', '#home-client'];
-      targets.forEach((sel) => {
-        const host = $(sel);
-        if (!host) return;
+
+      const targets = ['#deck', '#view-live', '#live-body', '#cs-name', '#client-banner', '#home-client',
+        '#view-analysis', '#view-home', '#view-toolkit', '#summary', '#client-strip', '#kakao-preview',
+        '#deck-stage', '#view-guide', '#view-quick'];
+      const hosts = [];
+      targets.forEach((sel) => { const h = $(sel); if (h && hosts.indexOf(h) < 0) hosts.push(h); });
+      if (!hosts.length) hosts.push(document.body);
+      hosts.forEach((host) => {
         this.walk(host, (node) => {
           if (!this.originals) return;
           if (on) {
@@ -17654,6 +18309,14 @@ const PLAN_FRONT = {
           }
         });
       });
+
+      if (on && hosts.indexOf(document.body) < 0) {
+        this.walk(document.body, (node) => {
+          if (!this.originals.has(node)) this.originals.set(node, node.nodeValue);
+          const masked = this.maskText(this.originals.get(node));
+          if (node.nodeValue !== masked) node.nodeValue = masked;
+        });
+      }
       const chip = $('#sk-privacy-chip');
       if (chip) {
         chip.classList.toggle('is-on', on);
@@ -17670,7 +18333,7 @@ const PLAN_FRONT = {
         this._busy = true;
         root.requestAnimationFrame(() => { this._busy = false; this.refresh(); });
       });
-      const target = $('#deck-stage') || document.body;
+      const target = document.body;
       obs.observe(target, { childList: true, subtree: true, characterData: true });
       this._obs = obs;
     }
@@ -17845,6 +18508,22 @@ const PLAN_FRONT = {
     return '<button type="button" class="sk-lock-fab" id="sk-lock-fab" aria-label="화면 잠금">🔒</button>';
   }
 
+  function submitPin() {
+    const inp = $('#sk-pin');
+    const val = inp ? inp.value : '';
+    if (!lsGet(K.pin, null)) {
+      if (phone._pendingPin !== val) {
+        phone._pendingPin = val;
+        const note = $('#sk-auth-note');
+        if (note) note.textContent = 'PIN을 이 값으로 설정합니다. 같은 번호를 한 번 더 입력하고 승인을 누르세요.';
+        if (inp) inp.value = '';
+        return;
+      }
+    }
+    phone._pendingPin = null;
+    phone.approveWithPin(val);
+  }
+
   let bound = false;
   function bindOnce() {
     if (bound) return;
@@ -17860,10 +18539,10 @@ const PLAN_FRONT = {
     on('#sk-approve-btn', 'click', () => {
       const method = phone.authMethod();
       if (method === 'webauthn') phone.approveWithBiometric();
-      else phone.approveWithPin($('#sk-pin').value);
+      else submitPin();
     });
     on('#sk-auth-bio', 'click', () => phone.approveWithBiometric());
-    on('#sk-pin', 'keydown', (e) => { if (e.key === 'Enter') phone.approveWithPin($('#sk-pin').value); });
+    on('#sk-pin', 'keydown', (e) => { if (e.key === 'Enter') submitPin(); });
     on('#sk-reject', 'click', () => phone.reject());
     on('#sk-dev-x', 'click', () => devices.close());
     on('#sk-pref-privacy', 'change', (e) => privacy.setEnabled(e.target.checked));
@@ -18004,7 +18683,7 @@ const PLAN_FRONT = {
     prefs: {
       get: () => prefsGet(), set: (p) => prefsSet(p)
     },
-    _internals: { local, transcriptChallenge, transcriptApprove, pubHashOf, TTL, ensureModal }
+    _internals: { local, transcriptChallenge, transcriptApprove, pubHashOf, devicePriv, TTL, ensureModal }
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { init(); });
@@ -19489,8 +20168,8 @@ const PLAN_FRONT = {
   function saveSession() {
     lsSet(SKEY, {
       client: state.client, contracts: state.contracts, age: state.age, gender: state.gender,
-      job: state.job, silson: state.silson, premium: state.premium, cov: state.cov, flags: state.flags,
-      family: state.family, disc: state.disc
+      job: state.job, silson: state.silson, silson2: state.silson2 || 'unknown', premium: state.premium, cov: state.cov, flags: state.flags,
+      family: state.family, disc: state.disc, sample: !!state.sample, followUp: state.followUp || ''
     });
   }
   function loadSession() {
@@ -19500,7 +20179,7 @@ const PLAN_FRONT = {
     if (Array.isArray(s.contracts)) state.contracts = s.contracts;
     if (Array.isArray(s.family)) state.family = s.family.filter((k) => FAMILY_HISTORY.some((f) => f.key === k));
     if (s.disc && typeof s.disc === 'object') state.disc = s.disc;
-    ['age', 'gender', 'job', 'silson', 'premium'].forEach((k) => { if (s[k] != null) state[k] = s[k]; });
+    ['age', 'gender', 'job', 'silson', 'silson2', 'premium', 'sample', 'followUp'].forEach((k) => { if (s[k] != null) state[k] = s[k]; });
     if (s.cov) state.cov = Object.assign(state.cov, s.cov);
     if (s.flags) state.flags = Object.assign(state.flags, s.flags);
 
@@ -19542,12 +20221,36 @@ const PLAN_FRONT = {
       { value: 'none', label: '없음' }, { value: '1', label: '1세대' }, { value: '2', label: '2세대' },
       { value: '3', label: '3세대' }, { value: '4', label: '4세대' }, { value: '5', label: '5세대' }
     ], state.silson, (v) => {
-      state.silson = v; refreshAll(); saveSession();
+      state.silson = v; refreshAll(); saveSession(); renderSilson2();
     });
+    renderSilson2();
     $('#job-hint').textContent = JOB_HINTS[state.job];
     $('#premium').value = state.premium;
   }
 
+  function renderSilson2() {
+    const seg = $('#seg-silson');
+    if (!seg) return;
+    let wrap = $('#silson2-wrap');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'silson2-wrap';
+      wrap.className = 'silson2-wrap';
+      seg.parentNode.appendChild(wrap);
+    }
+    const show = state.silson === '2';
+    wrap.hidden = !show;
+    if (!show) return;
+    const cur = state.silson2 || 'unknown';
+    wrap.innerHTML = `<span class="s2-label">가입 시기</span>${[['early', '2013.3 이전 · 할인 대상'], ['late', '2013.4~2017.3 · 대상 아님'], ['unknown', '모름']].map(([v, l]) => `<button type="button" class="s2-btn${cur === v ? ' is-on' : ''}" data-silson2="${v}">${l}</button>`).join('')}`;
+    $$('[data-silson2]', wrap).forEach((b) => b.addEventListener('click', () => {
+      state.silson2 = b.dataset.silson2;
+      renderSilson2(); saveSession(); renderSummary();
+      if (state.analyzed) analyze();
+    }));
+  }
+
+  /* ================= 고객 정보 ================= */
   function renderClientFields() {
     $('#client-name').value = state.client.name === '홍길동' ? '' : state.client.name;
     $('#client-name').placeholder = '홍길동';
@@ -19608,6 +20311,7 @@ const PLAN_FRONT = {
     if (state.analyzed) analyze();
   }
 
+  /* ================= v4: 가족력 · 간편 고지 ================= */
   function renderFamilyChips() {
     const host = $('#family-chips');
     if (!host) return;
@@ -19648,20 +20352,28 @@ const PLAN_FRONT = {
   function renderDisclosure() {
     const host = $('#disclosure-checks');
     if (!host) return;
-    const groups = ['3개월', '1년', '5년'];
+    const groups = ['3개월', '1년', '2년', '5년'];
+    const periodNote = { '3개월': '최근 3개월 이내', '1년': '최근 1년 이내', '2년': '최근 2년 이내 · 간편 3·2·5', '5년': '최근 5년 이내' };
+    const majors = (typeof DISCLOSURE_MAJOR10 !== 'undefined' ? DISCLOSURE_MAJOR10 : []).concat(typeof DISCLOSURE_MAJOR5 !== 'undefined' ? DISCLOSURE_MAJOR5.filter((m) => !DISCLOSURE_MAJOR10.some((x) => x.key === m.key)) : []);
+    const majorHTML = `<div class="dc-major">
+      <div class="dc-major-head">10대 질병 · 간편 중대질병 — 해당 질병마다 진단·치료·입원·수술·투약</div>
+      <div class="dc-major-chips">${majors.map((m2) => `<button type="button" class="dc-chip${state.disc[m2.key] ? ' is-on' : ''}" data-disc="${m2.key}" aria-pressed="${state.disc[m2.key] ? 'true' : 'false'}">${m2.label}</button>`).join('')}</div>
+      <button type="button" class="dc-item${state.disc.y5_major ? ' is-on' : ''}" data-disc="y5_major" aria-pressed="${state.disc.y5_major ? 'true' : 'false'}"><span class="dc-box" aria-hidden="true"></span><span class="dc-label">10대 질병 중 하나라도 해당 (전체 체크)</span></button>
+    </div>`;
     host.innerHTML = groups.map((g) => {
-      const items = DISCLOSURE_ITEMS.filter((d) => d.period === g);
+      const items = DISCLOSURE_ITEMS.filter((d) => d.period === g && !d.major);
       return `<div class="dc-group">
-        <div class="dc-period">${g}<em>${g === '3개월' ? '최근 3개월 이내' : g === '1년' ? '최근 1년 이내' : '최근 5년 이내'}</em></div>
+        <div class="dc-period">${g}<em>${periodNote[g]}</em></div>
         ${items.map((d) => {
           const on = !!state.disc[d.key];
-          return `<button type="button" class="dc-item${on ? ' is-on' : ''}" data-disc="${d.key}" aria-pressed="${on}">
-            <span class="dc-box" aria-hidden="true"></span><span class="dc-label">${d.label}</span>
+          return `<button type="button" class="dc-item${on ? ' is-on' : ''}" data-disc="${d.key}" aria-pressed="${on}" title="${esc(d.hint || '')}">
+            <span class="dc-box" aria-hidden="true"></span><span class="dc-label">${d.label}${d.hint ? `<em>${esc(d.hint)}</em>` : ''}</span>
           </button>`;
         }).join('')}
+        ${g === '5년' ? majorHTML : ''}
       </div>`;
     }).join('');
-    $$('.dc-item', host).forEach((b) => {
+    $$('.dc-item, .dc-chip', host).forEach((b) => {
       b.addEventListener('click', () => {
         const k = b.dataset.disc;
         state.disc[k] = !state.disc[k];
@@ -19684,7 +20396,6 @@ const PLAN_FRONT = {
     }
   }
 
-  /* ================= 담보 입력 카드 ================= */
   function partBadge(stateKey, part) {
     const item = PRIORITY.find((p) => p.key === stateKey);
     const r = BojangModel.evalItem(state, item);
@@ -19694,7 +20405,6 @@ const PLAN_FRONT = {
     return `<span class="mini-badge tone-${tone}">${pct}%</span>`;
   }
 
-  /* v4.2: 최소 · 권장 · 충분 3단계 게이지 */
   function tierGaugeHTML(pr) {
     const t = pr.tiers;
     if (!t || !pr.stage) return '';
@@ -20460,10 +21170,19 @@ const PLAN_FRONT = {
       }).join(' · ')}`);
     } else L.push('· 지금 구조는 충분합니다 — 금액 배분만 점검');
     if (m.client.ageDay) L.push(`· 보험나이 ${m.client.insuranceAge}세 · 상령일 ${m.client.ageDay.label} (D-${m.client.ageDay.days})`);
+    L.push('· 증권 확인 — 담보명·1회한 여부·유사암 제외 문구');
+    L.push(`· 후속 상담 약속일 — ${state.followUp || defaultFollowUp()}`);
     const contact = [b.name, b.phone].filter(Boolean).join(' · ');
     L.push(`· 담당 ${contact || '상담 설계사'}${b.kakao ? ' · ' + b.kakao : ''}`);
     L.push('※ 상담 참고용 요약입니다. 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.');
     return L.join('\n');
+  }
+
+  function defaultFollowUp() {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    const p2 = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} (1주 뒤 · 협의 가능)`;
   }
 
   function openKakaoModal(text) {
@@ -20558,7 +21277,9 @@ const PLAN_FRONT = {
       newConsult: resetConsult, loadSample: loadSampleConsult, renderHistory, openMoreMenu,
       startNewConsult,
     legal: { open: openLegal, close: closeLegal, render: renderLegal }, guardNumberInput,
-    isSample: () => !!state.sample
+    isSample: () => !!state.sample,
+
+    discTouched: () => { saveSession(); renderDisclosure(); renderSummary(); if (state.analyzed) analyze(); }
   };
 
   function isoDate(label) {
@@ -21256,8 +21977,8 @@ const PLAN_FRONT = {
   function renderToolkit() {
     $('#disclosure-general').innerHTML = DISCLOSURE_GENERAL.map((d) => `
       <div class="disc-row"><div class="disc-period">${d.period}</div><ul>${d.items.map((i) => `<li>${i}</li>`).join('')}</ul></div>`).join('');
-    $('#disclosure-simple').innerHTML = DISCLOSURE_SIMPLE.map((d) => `
-      <div class="disc-row"><div class="disc-period">${d.period}</div><ul>${d.items.map((i) => `<li>${i}</li>`).join('')}</ul></div>`).join('');
+    $('#disclosure-simple').innerHTML = DISCLOSURE_PRODUCTS.map((d) => `
+      <div class="disc-row"><div class="disc-period">${d.label.replace('간편심사 ', '')}</div><ul>${d.items.map((i) => `<li>${i}</li>`).join('')}</ul></div>`).join('');
 
     const rowKeys = ['급여', '비급여', '자기부담', '재가입', '특징'];
     $('#silson-cards').innerHTML = SILSON_GENERATIONS.map((g) => `
@@ -21429,6 +22150,7 @@ const PLAN_FRONT = {
     syncSegments();
     renderFamilyChips();
     renderDisclosure();
+    renderSilson2();
     renderCoverageCards();
     renderFlags();
     renderContracts();

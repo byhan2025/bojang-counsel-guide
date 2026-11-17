@@ -3708,3 +3708,176 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 .app-foot-details summary:before{content:"▸";font-size:10px;color:var(--muted);}
 .app-foot-details[open] summary:before{content:"▾";}
 .app-foot-details .app-foot{margin-top:6px;}
+
+/* =========================================================
+   v6.1 — 고객 화면 가독성(본문·보조 12~13px) + 신규 카드
+   · 9~11.5px로 읽기 어렵던 고객 화면 본문을 12px 이상으로 올립니다.
+   · 360px에서 넘침이 없도록 시뮬레이터·타임라인은 1열로 접힙니다.
+   ========================================================= */
+#deck .sl-note{font-size:13px;line-height:1.55;}
+#deck .sl-src{font-size:12px;}
+#deck .sl-tile .st-label{font-size:12px;}
+#deck .sl-tile .st-sub{font-size:12px;}
+#deck .sl-tile .st-value em{font-size:12px;}
+#deck .pri-sum,#deck .pri-sub,#deck .pri-badge{font-size:12px;}
+#deck .t5-l,#deck .t5-v{font-size:12px;}
+#deck .t5-p,#deck .t5-head span{font-size:12px;}
+#deck .cmp-card .cc-label,#deck .cmp-card .cc-values span,#deck .cc-pct{font-size:12px;}
+#deck .side-card p,#deck .flow li p,#deck .steps-list p,#deck .steps-list em{font-size:12px;line-height:1.5;}
+#deck .steps-list b{font-size:13.5px;}
+#deck .care-card .cc-note,#deck .aux-card p,#deck .risk-card b{font-size:12px;}
+#deck .sil-now p,#deck .alloc-legend li{font-size:12px;}
+#deck .tm-note{font-size:12px;}
+#deck .dk-ct-prod,#deck .dk-ct-meta{font-size:12px;}
+#deck .dk-ct-renew{font-size:11px;}
+#deck .cover-foot,#deck .cover-meta dt{font-size:12px;}
+#deck .sl-nextline b{font-size:12px;}
+#deck .cheung p,#deck .cheung span{font-size:12px;}
+#deck .code-table .ct-line span,#deck .code-table .ct-line b,#deck .code-table .ct-line code{font-size:12px;}
+#deck .claim-card p,#deck .aux-card span,#deck .ratio-hero .rb span{font-size:12px;}
+#deck .last-note p{font-size:13px;}
+#deck .road li p{font-size:12px;}
+#deck .sil-table .ct-line b{font-size:12px;}
+
+.cover-sample{margin-top:10px;background:rgba(246,183,60,.96);color:#3b2600;font-weight:800;font-size:12px;padding:6px 10px;border-radius:10px;text-align:center;letter-spacing:0;}
+.thin-line{margin-top:6px;}
+.t5-tag{font-style:normal;font-size:10.5px;font-weight:800;color:#0a6b57;background:#e7f7f1;border-radius:6px;padding:1px 5px;margin-left:5px;}
+
+.one-time{margin-top:8px;}
+.one-time .ot-grid{display:grid;grid-template-columns:1.1fr .9fr 1.25fr 1.1fr;gap:4px 6px;font-size:12px;align-items:center;}
+.one-time .ot-h{font-weight:800;color:#5f7590;font-size:12px;}
+.one-time .ot-y{color:#40597a;font-weight:700;font-size:12px;}
+.one-time .ot-grid b{text-align:right;font-weight:800;color:var(--navy-800);font-variant-numeric:tabular-nums;}
+.one-time .ot-hot{color:#0a6b57;}
+.ot-note{font-size:12px;color:#5f7590;line-height:1.5;margin-top:6px;}
+
+.sil-excl{display:grid;gap:5px;}
+.sil-excl .se-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;border-bottom:1px dashed #e5edf6;padding:4px 0;}
+.sil-excl .se-row b{color:#b3261e;font-weight:800;white-space:nowrap;}
+
+.sil-sim{margin-top:6px;border:1px solid #e3ecf6;border-radius:14px;padding:12px;background:#f8fbff;display:grid;gap:8px;}
+.sil-sim .sim-head{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap;}
+.sil-sim .sim-head b{font-size:13px;font-weight:800;color:var(--navy-800);}
+.sil-sim .sim-head span{font-size:12px;color:var(--muted);font-weight:700;}
+.ss-fields{display:grid;gap:8px;}
+.ss-fields label{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;font-weight:700;color:#40597a;}
+.ss-fields input{width:66px;padding:6px 8px;border:1px solid #d9e4f1;border-radius:8px;font-size:13px;font-weight:800;text-align:right;background:#fff;color:var(--navy-800);}
+.ss-out{display:grid;gap:8px;}
+.ss-total{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:700;color:#40597a;}
+.ss-total b{font-size:15px;color:var(--navy-800);}
+.ss-total em{font-style:normal;font-size:12px;color:var(--muted);margin-left:1px;}
+.ss-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ss-col{background:#fff;border:1px solid #e5edf6;border-radius:10px;padding:8px 10px;display:grid;gap:2px;}
+.ss-col span{font-size:12px;color:#5f7590;font-weight:700;}
+.ss-col b{font-size:15px;font-weight:800;color:var(--navy-800);}
+.ss-col em{font-style:normal;font-size:12px;color:#7f93a8;}
+.ss-col.is-five b{color:#b3261e;}
+.ss-gap{font-size:12px;line-height:1.5;color:#8f2b23;background:#fdeeed;border-radius:8px;padding:7px 9px;margin:0;}
+.ss-src{font-size:11.5px;color:#8a9bb0;line-height:1.45;margin:0;}
+
+.today-one{border:2px solid #0fb093;border-radius:14px;padding:12px;background:#effaf6;display:grid;gap:4px;}
+.today-one .to-tag{font-size:12px;font-weight:800;color:#0a6b57;letter-spacing:.04em;}
+.today-one b{font-size:16px;font-weight:800;color:var(--navy-800);}
+.today-one p{font-size:12.5px;line-height:1.5;color:#145c4c;margin:0;}
+
+.silson2-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center;}
+.silson2-wrap[hidden]{display:none!important;}
+.s2-label{font-size:12px;font-weight:800;color:var(--muted);}
+.s2-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;color:#41597a;}
+.s2-btn.is-on{background:#0b2545;color:#fff;border-color:transparent;}
+
+.dc-major{margin-top:8px;border-top:1px dashed #e3ecf6;padding-top:8px;display:grid;gap:6px;}
+.dc-major-head{font-size:12px;font-weight:800;color:#0f2b4d;}
+.dc-major-chips,.dm-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.dc-chip,.dm-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:700;color:#41597a;}
+.dc-chip.is-on,.dm-chip.is-on{background:#0a6b57;color:#fff;border-color:#0a6b57;}
+.disc-major{margin-top:8px;border-top:1px dashed #e3ecf6;padding-top:8px;}
+.dm-head{font-size:12px;font-weight:800;color:#0f2b4d;margin-bottom:6px;}
+
+@media (max-width:380px){
+  #deck .sl-inner{padding:16px 13px 18px;}
+  .ss-cols{grid-template-columns:1fr;}
+  .one-time .ot-grid{grid-template-columns:1fr 1fr;font-size:11.5px;}
+  .one-time .ot-grid b{text-align:left;}
+  .today-one b{font-size:15px;}
+}
+/* v6.1 — 1회한 타임라인 컴팩트 스트립(30장 슬라이드 높이 유지) */
+.one-time .ot-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.one-time .ot-strip span{background:#fff;border:1px solid #e5edf6;border-radius:9px;padding:6px 8px;font-size:11.5px;font-weight:700;color:#5f7590;line-height:1.3;}
+.one-time .ot-strip b{display:block;font-size:14px;font-weight:800;color:var(--navy-800);font-variant-numeric:tabular-nums;}
+.one-time .ot-strip b.ot-hot{color:#0a6b57;}
+/* v6.1 — 고객 화면(30장) 높이 압축: 글씨는 키우고 여백을 줄여 스크롤 없이 한 장에 담습니다 */
+#deck .sl-inner{gap:10px;}
+#deck .t5{padding:9px 10px;gap:6px;}
+#deck .t5-rows{gap:3px;}
+#deck .t5-head span{font-size:11.5px;}
+#deck .steps-list li{padding:9px 10px;}
+#deck .steps-list{gap:7px;}
+#deck .concentric-wrap .sl-concentric{max-width:206px;}
+#deck .sl-treatline{padding:7px 10px;}
+#deck .one-time{margin-top:4px;}
+@media (min-width:620px){
+  #deck .concentric-wrap .sl-concentric{max-width:300px;}
+}
+/* v6.1 — 26p 실손 슬라이드 압축 */
+.sil-excl-box{border:1px solid #f1e2c8;background:#fdf7ec;border-radius:12px;padding:9px 11px;display:grid;gap:3px;}
+.sil-excl-box b{font-size:12.5px;font-weight:800;color:#8a5a0c;}
+.sil-excl-box p{margin:0;font-size:12px;line-height:1.45;color:#7d540f;}
+#deck .sil-table .ct-line{padding:5px 8px;}
+#deck .ss-fields{grid-template-columns:1fr;}
+#deck .ss-fields label{font-size:11.5px;}
+#deck .ss-fields input{width:52px;padding:5px 6px;font-size:12px;}
+#deck .sil-sim{padding:9px 10px;gap:6px;}
+#deck .ss-col{padding:6px 8px;}
+#deck .ss-col b{font-size:13.5px;}
+#deck .ss-gap{padding:6px 8px;font-size:11.5px;}
+#deck .today-one{padding:10px;}
+/* v6.1 — 26p 시뮬레이터 컴팩트(3열·한 줄 입력) */
+#deck .ss-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;}
+#deck .ss-fields label{display:grid;grid-template-columns:auto 1fr auto 1fr;align-items:center;gap:2px;font-size:11px;background:#fff;border:1px solid #e3ecf6;border-radius:8px;padding:3px 4px;}
+#deck .ss-fields label em{font-style:normal;font-weight:800;color:#40597a;font-size:11px;}
+#deck .ss-fields label span{font-size:10.5px;color:#7f93a8;}
+#deck .ss-fields input{width:100%;min-width:0;padding:3px 2px;font-size:12px;border:0;background:transparent;text-align:right;}
+#deck .ss-src{display:none;}
+#deck .sil-now{padding:10px 12px;}
+#deck .sil-now b{font-size:22px;}
+#deck .sil-now p{font-size:11.5px;}
+#deck #ss-out{gap:5px;}
+/* v6.1 — 16/26/30 슬라이드 높이 압축 */
+#deck .slide[data-no="16"] .concentric-wrap .sl-concentric{max-width:176px;}
+#deck .slide[data-no="12"] .concentric-wrap .sl-concentric{max-width:176px;}
+#deck .sil-table .ct-line{padding:4px 6px;font-size:11.5px;}
+#deck .sil-table .ct-head span{font-size:11.5px;}
+#deck .slide[data-no="26"] .sl-src{font-size:11px;padding-top:0;}
+#deck .slide[data-no="26"] .sil-sim .sim-head b{font-size:12px;}
+#deck .slide[data-no="26"] .sl-head p{font-size:11.8px;}
+#deck .slide[data-no="30"] .today-one{padding:8px 10px;gap:2px;}
+#deck .slide[data-no="30"] .today-one p{font-size:11.8px;}
+#deck .slide[data-no="30"] .road li p{font-size:11.5px;}
+/* v6.1 — 슬라이드 높이 2차 압축 */
+#deck .slide[data-no="16"] .concentric-wrap,
+#deck .slide[data-no="12"] .concentric-wrap{grid-template-columns:1fr 1fr;align-items:center;gap:8px;}
+#deck .slide[data-no="16"] .concentric-wrap .sl-concentric,
+#deck .slide[data-no="12"] .concentric-wrap .sl-concentric{max-width:100%;}
+#deck .slide[data-no="16"] .conc-side,#deck .slide[data-no="12"] .conc-side{gap:6px;}
+#deck .slide[data-no="16"] .side-card p,#deck .slide[data-no="12"] .side-card p{font-size:11.5px;line-height:1.35;}
+#deck .slide[data-no="16"] .side-card b{font-size:13px;}
+#deck .cmp-grid{gap:8px;}
+#deck .cmp-card{padding:9px;}
+#deck .slide[data-no="7"] .cmp-grid{gap:6px;}
+#deck .sil-table .ct-line{padding:2px 6px;font-size:11px;}
+#deck .sil-table .ct-head span{font-size:11px;}
+#deck .slide[data-no="26"] .sil-now p{font-size:11px;line-height:1.4;}
+/* v6.1 — 최소 12px 보장(시뮬레이터·오늘 카드) */
+#deck .ss-gap{font-size:12px;}
+#deck .ss-col span,#deck .ss-col em,#deck .ss-total{font-size:12px;}
+#deck .slide[data-no="30"] .today-one p{font-size:12px;}
+#deck .slide[data-no="30"] .road li p{font-size:12px;}
+#deck .slide[data-no="26"] .sil-now p{font-size:12px;}
+#deck .slide[data-no="26"] .sl-head p{font-size:12px;}
+/* v6.1 — 26p 최종 압축(세로 배율 1.12 이하) */
+#deck .slide[data-no="26"] .sil-sim .sim-head b{font-size:11.5px;}
+#deck .slide[data-no="26"] .ss-total b{font-size:14px;}
+#deck .slide[data-no="26"] .sil-now{padding:8px 11px;}
+#deck .slide[data-no="26"] .sil-table .ct-line{padding:1px 6px;font-size:11px;}
+#deck .slide[data-no="26"] .sl-note{padding:8px 10px;}

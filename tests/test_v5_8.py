@@ -477,9 +477,9 @@ def main():
             pg.wait_for_timeout(400)
             tabs = pg.eval_on_selector_all(".disc-tab", "els => els.map(e => e.textContent.replace(/\\s/g,''))")
             check("고지 — 기간 탭 4개", tabs == ["3개월0", "1년0", "2년0", "5년0"], tabs)
-            pg.click("[data-disc-period='3개월']")
+            pg.click("#disc-tool [data-disc-period='3개월']")
             pg.wait_for_timeout(200)
-            pg.click("[data-disc='m3dx']")
+            pg.click("#disc-tool [data-disc=\'m3_dx\']")
             pg.wait_for_timeout(300)
             after = pg.evaluate("""() => ({
               tabs: Array.from(document.querySelectorAll('.disc-tab')).map(e => e.textContent.replace(/\\s/g,'')),
@@ -488,11 +488,10 @@ def main():
               main: document.getElementById('disc-verdict-main').textContent,
               docs: Array.from(document.querySelectorAll('.disc-docs li')).map(e => e.textContent)
             })""")
-            check("3개월 체크 — 2·5년 문항 자동 연동", after["tabs"] == ["3개월1", "1년0", "2년2", "5년3"], after["tabs"])
+            check("3개월 체크 — 항목 수 반영(v6.1 자동 연동 제거)", after["tabs"] == ["3개월1", "1년0", "2년0", "5년0"], after["tabs"])
             check("3개월 체크 — 일반·간편 모두 고지 필요", after["general"] == "고지 필요" and after["simple"] == "고지 필요", [after["general"], after["simple"]])
-            check("3개월 체크 — 3개월 경과 후 재검토 권장", "3개월 경과 후 재검토" in after["main"], after["main"][:60])
-            check("준비 서류 — 진단서·입퇴원·수술확인서", any("진단서" in d for d in after["docs"]) and any("입·퇴원확인서" in d for d in after["docs"])
-                  and any("수술확인서" in d for d in after["docs"]), after["docs"][:3])
+            check("3개월 진단 — 3·2·5 검토 안내(v6.1)", "3·2·5" in after["main"], after["main"][:60])
+            check("준비 서류 — 진단서·대조표", any("진단서" in d for d in after["docs"]) and any("대조" in d for d in after["docs"]), after["docs"][:3])
             pg.screenshot(path=os.path.join(SHOTS, "ui-disclosure-check.png"), full_page=False)
             pg.click("#disc-copy")
             pg.wait_for_timeout(400)
@@ -503,23 +502,23 @@ def main():
             check("고지 — 체크 비우기", pg.eval_on_selector_all(".disc-tab", "els => els.map(e => e.textContent.replace(/\\s/g,''))") == ["3개월0", "1년0", "2년0", "5년0"], "")
 
             # 2년 이내 수술 → 3·2·5 도 걸림 / 3년 이내 → 3·2·5 통과 가능
-            pg.click("[data-disc-period='2년']")
+            pg.click("#disc-tool [data-disc-period='2년']")
             pg.wait_for_timeout(200)
-            pg.click("[data-disc='y2op']")
+            pg.click("#disc-tool [data-disc=\'y2_inop\']")
             pg.wait_for_timeout(300)
             v2 = pg.evaluate("() => ({ g: document.querySelectorAll('.disc-judge .disc-verdict b')[0].textContent, s: document.querySelectorAll('.disc-judge .disc-verdict b')[1].textContent })")
-            check("2년 수술 — 일반·간편 모두 고지", v2["g"] == "고지 필요" and v2["s"] == "고지 필요", v2)
+            check("2년 수술 — 일반 문항 아님 · 간편 3·2·5만 고지", v2["g"] == "고지 대상 없음" and v2["s"] == "고지 필요", v2)
             pg.click("#disc-reset")
             pg.wait_for_timeout(200)
-            pg.click("[data-disc-period='5년']")
+            pg.click("#disc-tool [data-disc-period='5년']")
             pg.wait_for_timeout(200)
-            pg.click("[data-disc='y3']")
+            pg.click("#disc-tool [data-disc=\'y5_inop\']")
             pg.wait_for_timeout(300)
             v3 = pg.evaluate("""() => ({ g: document.querySelectorAll('.disc-judge .disc-verdict b')[0].textContent,
                                         s: document.querySelectorAll('.disc-judge .disc-verdict b')[1].textContent,
                                         main: document.getElementById('disc-verdict-main').textContent })""")
-            check("3년 이내 — 일반 고지 필요 · 간편 3·2·5 통과", v3["g"] == "고지 필요" and v3["s"] == "통과 가능", v3)
-            check("3년 이내 — 3·2·5 전환 가이드", "3·2·5" in v3["main"] and "전환" in v3["main"], v3["main"][:70])
+            check("5년 입원·수술 — 일반 고지 필요 · 간편 3·2·5 통과", v3["g"] == "고지 필요" and v3["s"] == "통과 가능", v3)
+            check("5년 입원·수술 — 3·2·5 검토 가이드", "3·2·5" in v3["main"], v3["main"][:70])
 
             # =========================================================
             # 7. 카톡 요약 1탭 복사
@@ -535,7 +534,7 @@ def main():
                                             text: document.getElementById('kakao-preview').textContent })""")
             lines = [l for l in modal["text"].split("\n") if l.strip()]
             check("카톡 — 미리보기 시트 열림", modal["open"], modal["open"])
-            check("카톡 — 5~6줄 요약", 5 <= len(lines) <= 6, len(lines))
+            check("카톡 — 6~9줄 요약(v6.1 증권 확인·약속일 포함)", 6 <= len(lines) <= 9, len(lines))
             check("카톡 — 점수·등급", ("%d점" % scores["A"]) in modal["text"] and "종합 보장등급" in modal["text"], lines[1] if len(lines) > 1 else "")
             check("카톡 — 핵심 부족 1~2순위", "먼저 채울 곳" in modal["text"] and "1)" in modal["text"], lines[2] if len(lines) > 2 else "")
             check("카톡 — 담당자 연락처", "김한기" in modal["text"] and "010-4908-4175" in modal["text"], lines[-2] if len(lines) > 1 else "")
@@ -638,7 +637,7 @@ def main():
             check("360px — 가로 넘침 0 (홈·분석·고지·툴킷)", all(v <= 1 for v in over.values()), over)
             sp.evaluate("() => BojangApp.switchView('disclose')")
             sp.wait_for_timeout(300)
-            sp.click("[data-disc-period='5년']")
+            sp.click("#disc-tool [data-disc-period='5년']")
             sp.wait_for_timeout(300)
             over_disc = sp.evaluate("() => document.documentElement.scrollWidth - document.documentElement.clientWidth")
             check("360px — 고지 도구 넘침 0", over_disc <= 1, over_disc)

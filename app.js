@@ -92,8 +92,8 @@
   function saveSession() {
     lsSet(SKEY, {
       client: state.client, contracts: state.contracts, age: state.age, gender: state.gender,
-      job: state.job, silson: state.silson, premium: state.premium, cov: state.cov, flags: state.flags,
-      family: state.family, disc: state.disc
+      job: state.job, silson: state.silson, silson2: state.silson2 || 'unknown', premium: state.premium, cov: state.cov, flags: state.flags,
+      family: state.family, disc: state.disc, sample: !!state.sample, followUp: state.followUp || ''
     });
   }
   function loadSession() {
@@ -103,7 +103,7 @@
     if (Array.isArray(s.contracts)) state.contracts = s.contracts;
     if (Array.isArray(s.family)) state.family = s.family.filter((k) => FAMILY_HISTORY.some((f) => f.key === k));
     if (s.disc && typeof s.disc === 'object') state.disc = s.disc;
-    ['age', 'gender', 'job', 'silson', 'premium'].forEach((k) => { if (s[k] != null) state[k] = s[k]; });
+    ['age', 'gender', 'job', 'silson', 'silson2', 'premium', 'sample', 'followUp'].forEach((k) => { if (s[k] != null) state[k] = s[k]; });
     if (s.cov) state.cov = Object.assign(state.cov, s.cov);
     if (s.flags) state.flags = Object.assign(state.flags, s.flags);
     /* v4.2: 구버전 구조(단일 치료비·boolean 치료비·종수/N대·간병 일당)를 새 구조로 자동 변환 */
@@ -147,10 +147,34 @@
       { value: 'none', label: '없음' }, { value: '1', label: '1세대' }, { value: '2', label: '2세대' },
       { value: '3', label: '3세대' }, { value: '4', label: '4세대' }, { value: '5', label: '5세대' }
     ], state.silson, (v) => {
-      state.silson = v; refreshAll(); saveSession();
+      state.silson = v; refreshAll(); saveSession(); renderSilson2();
     });
+    renderSilson2();
     $('#job-hint').textContent = JOB_HINTS[state.job];
     $('#premium').value = state.premium;
+  }
+
+  /* v6.1 — 2세대 초기(2013.3 이전)/후기 구분 — 할인 대상 판정이 이 값으로만 갈립니다 */
+  function renderSilson2() {
+    const seg = $('#seg-silson');
+    if (!seg) return;
+    let wrap = $('#silson2-wrap');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'silson2-wrap';
+      wrap.className = 'silson2-wrap';
+      seg.parentNode.appendChild(wrap);
+    }
+    const show = state.silson === '2';
+    wrap.hidden = !show;
+    if (!show) return;
+    const cur = state.silson2 || 'unknown';
+    wrap.innerHTML = `<span class="s2-label">가입 시기</span>${[['early', '2013.3 이전 · 할인 대상'], ['late', '2013.4~2017.3 · 대상 아님'], ['unknown', '모름']].map(([v, l]) => `<button type="button" class="s2-btn${cur === v ? ' is-on' : ''}" data-silson2="${v}">${l}</button>`).join('')}`;
+    $$('[data-silson2]', wrap).forEach((b) => b.addEventListener('click', () => {
+      state.silson2 = b.dataset.silson2;
+      renderSilson2(); saveSession(); renderSummary();
+      if (state.analyzed) analyze();
+    }));
   }
 
   /* ================= 고객 정보 ================= */
@@ -255,20 +279,28 @@
   function renderDisclosure() {
     const host = $('#disclosure-checks');
     if (!host) return;
-    const groups = ['3개월', '1년', '5년'];
+    const groups = ['3개월', '1년', '2년', '5년'];
+    const periodNote = { '3개월': '최근 3개월 이내', '1년': '최근 1년 이내', '2년': '최근 2년 이내 · 간편 3·2·5', '5년': '최근 5년 이내' };
+    const majors = (typeof DISCLOSURE_MAJOR10 !== 'undefined' ? DISCLOSURE_MAJOR10 : []).concat(typeof DISCLOSURE_MAJOR5 !== 'undefined' ? DISCLOSURE_MAJOR5.filter((m) => !DISCLOSURE_MAJOR10.some((x) => x.key === m.key)) : []);
+    const majorHTML = `<div class="dc-major">
+      <div class="dc-major-head">10대 질병 · 간편 중대질병 — 해당 질병마다 진단·치료·입원·수술·투약</div>
+      <div class="dc-major-chips">${majors.map((m2) => `<button type="button" class="dc-chip${state.disc[m2.key] ? ' is-on' : ''}" data-disc="${m2.key}" aria-pressed="${state.disc[m2.key] ? 'true' : 'false'}">${m2.label}</button>`).join('')}</div>
+      <button type="button" class="dc-item${state.disc.y5_major ? ' is-on' : ''}" data-disc="y5_major" aria-pressed="${state.disc.y5_major ? 'true' : 'false'}"><span class="dc-box" aria-hidden="true"></span><span class="dc-label">10대 질병 중 하나라도 해당 (전체 체크)</span></button>
+    </div>`;
     host.innerHTML = groups.map((g) => {
-      const items = DISCLOSURE_ITEMS.filter((d) => d.period === g);
+      const items = DISCLOSURE_ITEMS.filter((d) => d.period === g && !d.major);
       return `<div class="dc-group">
-        <div class="dc-period">${g}<em>${g === '3개월' ? '최근 3개월 이내' : g === '1년' ? '최근 1년 이내' : '최근 5년 이내'}</em></div>
+        <div class="dc-period">${g}<em>${periodNote[g]}</em></div>
         ${items.map((d) => {
           const on = !!state.disc[d.key];
-          return `<button type="button" class="dc-item${on ? ' is-on' : ''}" data-disc="${d.key}" aria-pressed="${on}">
-            <span class="dc-box" aria-hidden="true"></span><span class="dc-label">${d.label}</span>
+          return `<button type="button" class="dc-item${on ? ' is-on' : ''}" data-disc="${d.key}" aria-pressed="${on}" title="${esc(d.hint || '')}">
+            <span class="dc-box" aria-hidden="true"></span><span class="dc-label">${d.label}${d.hint ? `<em>${esc(d.hint)}</em>` : ''}</span>
           </button>`;
         }).join('')}
+        ${g === '5년' ? majorHTML : ''}
       </div>`;
     }).join('');
-    $$('.dc-item', host).forEach((b) => {
+    $$('.dc-item, .dc-chip', host).forEach((b) => {
       b.addEventListener('click', () => {
         const k = b.dataset.disc;
         state.disc[k] = !state.disc[k];
@@ -1074,10 +1106,19 @@
       }).join(' · ')}`);
     } else L.push('· 지금 구조는 충분합니다 — 금액 배분만 점검');
     if (m.client.ageDay) L.push(`· 보험나이 ${m.client.insuranceAge}세 · 상령일 ${m.client.ageDay.label} (D-${m.client.ageDay.days})`);
+    L.push('· 증권 확인 — 담보명·1회한 여부·유사암 제외 문구');
+    L.push(`· 후속 상담 약속일 — ${state.followUp || defaultFollowUp()}`);
     const contact = [b.name, b.phone].filter(Boolean).join(' · ');
     L.push(`· 담당 ${contact || '상담 설계사'}${b.kakao ? ' · ' + b.kakao : ''}`);
     L.push('※ 상담 참고용 요약입니다. 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.');
     return L.join('\n');
+  }
+
+  function defaultFollowUp() {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    const p2 = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} (1주 뒤 · 협의 가능)`;
   }
 
   function openKakaoModal(text) {
@@ -1173,7 +1214,9 @@
     /* v5.9 */ newConsult: resetConsult, loadSample: loadSampleConsult, renderHistory, openMoreMenu,
     /* v6.0 */ startNewConsult,
     legal: { open: openLegal, close: closeLegal, render: renderLegal }, guardNumberInput,
-    isSample: () => !!state.sample
+    isSample: () => !!state.sample,
+    /* v6.1 — 도구 탭 고지 체크가 6단계 입력과 같은 state.disc를 쓰도록 */
+    discTouched: () => { saveSession(); renderDisclosure(); renderSummary(); if (state.analyzed) analyze(); }
   };
 
   function isoDate(label) {
@@ -1892,8 +1935,8 @@
   function renderToolkit() {
     $('#disclosure-general').innerHTML = DISCLOSURE_GENERAL.map((d) => `
       <div class="disc-row"><div class="disc-period">${d.period}</div><ul>${d.items.map((i) => `<li>${i}</li>`).join('')}</ul></div>`).join('');
-    $('#disclosure-simple').innerHTML = DISCLOSURE_SIMPLE.map((d) => `
-      <div class="disc-row"><div class="disc-period">${d.period}</div><ul>${d.items.map((i) => `<li>${i}</li>`).join('')}</ul></div>`).join('');
+    $('#disclosure-simple').innerHTML = DISCLOSURE_PRODUCTS.map((d) => `
+      <div class="disc-row"><div class="disc-period">${d.label.replace('간편심사 ', '')}</div><ul>${d.items.map((i) => `<li>${i}</li>`).join('')}</ul></div>`).join('');
 
     const rowKeys = ['급여', '비급여', '자기부담', '재가입', '특징'];
     $('#silson-cards').innerHTML = SILSON_GENERATIONS.map((g) => `
@@ -2067,6 +2110,7 @@
     syncSegments();
     renderFamilyChips();
     renderDisclosure();
+    renderSilson2();
     renderCoverageCards();
     renderFlags();
     renderContracts();

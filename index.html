@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v6.0 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
-<meta name="app-version" content="v6.0">
+<title>보장분석 라이프 리포트 v6.1 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<meta name="app-version" content="v6.1">
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
 <link rel="manifest" href="./manifest.json">
@@ -99,13 +99,13 @@
       </div>
       <div class="hh-top">
         <span class="hh-eyebrow" data-app-version-eyebrow>LIFE REPORT · BETA V6.0</span>
-        <span class="hh-ver" data-app-version-label>v6.0 · 2026.11</span>
+        <span class="hh-ver" data-app-version-label>v6.1 · 2026.11</span>
       </div>
       <h2>무엇을 하시겠어요?</h2>
       <p>상담 전 과정을 한 화면에서 시작합니다. 입력·계산과 PDF는 <b>이 기기에서</b> 하고, 로그인해 클라우드 동기화를 켜면 상담 스냅샷(이름·생년월일·연령대·성별·보험료·담보·계약·고지 체크)만 <b>Supabase(서울)</b>에 저장됩니다.</p>
       <div class="hh-client" id="home-client"></div>
       <div class="hh-plan" id="home-plan-banner"></div>
-      <!-- ============ v6.0 첫 화면 3버튼 ============ -->
+      <!-- ============ v6.1 첫 화면 3버튼 ============ -->
       <div class="hh-actions hh-actions-v59" id="home-three">
         <button type="button" class="hh-btn primary hh-three" id="btn-start-consult" data-inputhub="1">
           <span class="hb-no" aria-hidden="true">1</span>
@@ -263,7 +263,7 @@
 
     <details class="app-foot-details">
       <summary>기준일 · 반영 기능 자세히 보기</summary>
-      <p class="app-foot">기준일 2026-11-16 · v6.0 베타 기준점(첫 화면 3버튼 · IndexedDB 상담 이력 · 정식 이용약관·개인정보처리방침 · 공식 도메인 잠금 · PDF 발급 워터마크 · 클라우드 상담 동기화 · 고지의무 3·1·5 / 간편 3·2·5 체크 · 카톡 요약 1탭 복사 · 사진 AI 직접 기재 담보 인식 · 명함 QR 46pt · 핸드폰 마스터 스마트키(QR·6자리 코드) · 계정 잠금·원격 잠금 · 고객 앞 가림 모드 · 암 3,000/5,000/1억 · 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비 권장 2,000 + 특정순환계질환(3~5종) 주요치료비 · 수술 질병 4축/상해 2축 · 간병 일반·요양 분리 · 시니어 큰 글씨 · 불완전판매 경고 · 20년 갱신 차트 · 4단계 가이드) 반영 · 상품별 약관 우선</p>
+      <p class="app-foot">기준일 2026-11-17 · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
     </details>
   </section>
 
@@ -1010,7 +1010,7 @@
   </div>
 </div>
 
-<!-- ================= v6.0 정식 이용약관 · 개인정보처리방침 ================= -->
+<!-- ================= v6.1 정식 이용약관 · 개인정보처리방침 ================= -->
 <div class="modal legal-modal" id="legal-modal" hidden>
   <div class="modal-card legal-card" role="dialog" aria-modal="true" aria-labelledby="legal-title">
     <button type="button" class="pw-x" id="legal-x" aria-label="닫기">×</button>
@@ -1030,7 +1030,7 @@
 
 <footer class="app-legal no-print" id="app-legal">
   <div class="al-brand">
-    <b>보장분석 라이프 리포트 <em data-app-version>v6.0</em></b>
+    <b>보장분석 라이프 리포트 <em data-app-version>v6.1</em></b>
     <span>상담 보조 도구 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다</span>
   </div>
   <div class="al-links">

@@ -42,6 +42,18 @@ function uuid(): string {
 
 type SubRow = { id: string; status: string; current_period_end: string | null };
 
+/** v6.1 — 테스트 결제 우회는 명시적 non-prod 환경에서만 허용합니다(기본 차단).
+ *  운영에서 BILLING_TEST_MODE=true 만 켜져 있으면 무시되고, provider=test 요청은 403 으로 거부됩니다.
+ *  허용 조건: BILLING_TEST_MODE=true  그리고  APP_ENV(또는 ENVIRONMENT)가 development/dev/staging/local/test */
+function nonProdEnv(): boolean {
+  const appEnv = String(env("APP_ENV") ?? env("ENVIRONMENT") ?? "production").toLowerCase();
+  return ["development", "dev", "staging", "local", "test"].includes(appEnv);
+}
+function testModeAllowed(): boolean {
+  const flag = String(env("BILLING_TEST_MODE") ?? "").toLowerCase() === "true";
+  return flag && nonProdEnv();
+}
+
 async function liveSubscription(userId: string): Promise<SubRow | null> {
   const { data, error } = await admin()
     .from("subscriptions")
@@ -185,9 +197,20 @@ Deno.serve(async (req: Request) => {
   }
 
   const ipHash = await sha256Hex(req.headers.get("x-forwarded-for") ?? "unknown");
-  const testMode = env("BILLING_TEST_MODE") === "true" || String(body.test ?? "") === "true";
+  const testMode = testModeAllowed();
+  const wantsTest = String(body.test ?? "") === "true" || String(body.provider ?? "") === "test";
   const provider = (String(body.provider ?? "") || (testMode ? "test" : "toss")) as "toss" | "portone" | "test";
   const customerKey = String(body.customerKey ?? "") || uuid();
+
+  /* v6.1 — 운영에서는 test=true / provider=test 우회 경로를 차단합니다. */
+  if (!testMode && (provider === "test" || wantsTest)) {
+    await audit({
+      userId, actor: "user", action: "billing.blocked", target: "subscriptions",
+      detail: { cycle, price: priceKrw, reason: "test_bypass_blocked", provider: String(body.provider ?? ""), test: String(body.test ?? "") },
+      ipHash,
+    });
+    return fail("test_bypass_blocked", 403);
+  }
 
   let billingKey: string | null = String(body.billingKey ?? "") || null;
 
