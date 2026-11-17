@@ -17,6 +17,7 @@
   J. UX 가림 모드 전 영역 · 폰트 12px 이상 · 360px 넘침 0
   K. 보안 — billing test 우회 차단 · QR peek rate limit/폐기 · approve2 transcript · RLS 쓰기 제거 · fail-closed
   L. PDF 3종 넘침 0 · 스크린샷 저장
+  M. v6.1.1 — 수술비 종수 역전·3·3·5 잔재 · 가림 모드 입력창/PDF · 소멸시효 통일 · live 폰트 · QR 세션 한정 폐기 · 비추출 키
 """
 import json
 import os
@@ -303,7 +304,56 @@ def main():
             pg.wait_for_timeout(700)
             masked_live = pg.evaluate("() => document.querySelector('#view-live').innerText")
             check("I 가림 — 라이브 대본 실명 마스킹", "김민수" not in masked_live and "김*수" in masked_live, masked_live[:80])
-            pg.evaluate("() => BojangSmartKey.privacy.setEnabled(false)")
+
+            # v6.1.1 — 입력창(고객명 <input>)까지 가림
+            pg.evaluate("() => { BojangDeck.hide(); BojangApp.switchView('analysis'); }")
+            pg.wait_for_timeout(400)
+            masked_input = pg.evaluate("""() => {
+              BojangSmartKey.privacy.setEnabled(true);
+              BojangApp.renderAllInputs();
+              BojangSmartKey.privacy.refresh();
+              const el = document.querySelector('#client-name');
+              const q = document.querySelector('#q-name');
+              return { client: el ? el.value : null, quick: q ? q.value : null, state: BojangApp.state.client.name };
+            }""")
+            check("I 가림 — 고객명 입력창 마스킹", masked_input["client"] == "김*수" and masked_input["state"] == "김민수", masked_input)
+            check("I 가림 — 간편 입력창도 마스킹", masked_input["quick"] in ("김*수", ""), masked_input)
+            check("I 가림 — 원문 데이터 무손상", masked_input["state"] == "김민수", masked_input["state"])
+            focus_val = pg.evaluate("""() => {
+              const el = document.querySelector('#client-name');
+              el.scrollIntoView({block:'center'});
+              el.click(); el.focus(); const onFocus = el.value;
+              el.blur(); BojangSmartKey.privacy.syncInputs();
+              return { onFocus, onBlur: el.value };
+            }""")
+            check("I 가림 — 포커스 시 원문·블러 시 재마스킹", focus_val["onFocus"] == "김민수" and focus_val["onBlur"] == "김*수", focus_val)
+
+            # v6.1.1 — 가림 모드 ON이면 1·10·30장 PDF 본문·머리글·꼬리글도 마스킹
+            pdf_mask = pg.evaluate("""() => {
+              const out = {};
+              ['summary','detail','advisor'].forEach((k) => {
+                const b = BojangReport.build(k, BojangApp.state);
+                let txt = '';
+                b.pages.forEach((fn, i) => {
+                  const sh = new PDFKit.Sheet();
+                  const ot = sh.text.bind(sh), op = sh.para.bind(sh);
+                  sh.text = (t, ...a) => { txt += String(t) + ' '; return ot(t, ...a); };
+                  sh.para = (t, ...a) => { txt += String(t) + ' '; return op(t, ...a); };
+                  fn(sh, i + 1);
+                });
+                out[k] = { real: txt.indexOf('김민수') >= 0, masked: txt.indexOf('김*수') >= 0, pages: b.pages.length, model: b.m.client.name };
+              });
+              return out;
+            }""")
+            for k, v in pdf_mask.items():
+                check("I 가림 — %s PDF 실명 없음" % k, not v["real"] and v["masked"] and v["model"] == "김*수", v)
+            check("I 가림 — PDF 페이지 수 유지", [v["pages"] for v in pdf_mask.values()] == [1, 10, 30], [v["pages"] for v in pdf_mask.values()])
+
+            restored = pg.evaluate("""() => {
+              BojangSmartKey.privacy.setEnabled(false);
+              return { value: document.querySelector('#client-name').value, state: BojangApp.state.client.name };
+            }""")
+            check("I 가림 해제 — 입력창 원문 복원", restored["value"] == "김민수" and restored["state"] == "김민수", restored)
             fonts = pg.evaluate("""() => {
               BojangApp.switchView('client'); BojangDeck.show(BojangApp.state);
               const out = {};
@@ -358,10 +408,29 @@ def main():
             check("K RLS — discarded 상태", "discarded" in mig)
             sk = read(os.path.join(ROOT, "smartkey.js"))
             check("K fail-closed — 데모 모드만 모의", "failClosed()" in sk and "demo()" in sk and "viaServer" in sk)
-            check("K 개인키 — localStorage 평문 저장 없음", "priv: priv" not in sk and "key_store" in sk and "key_store: 'idb'" in sk and "devicePriv" in sk)
+            check("K 개인키 — localStorage 평문 저장 없음", "priv: priv" not in sk and "key_store" in sk and "'idb'" in sk and "devicePriv" in sk)
             check("K PIN — 생체/파일 차단", "이 환경(file://)에서는 PIN 승인을 사용할 수 없습니다" in sk)
             check("K PIN — 5회/30초 제한", "_pinTries" in sk)
             check("K PIN — 최초 확인 단계(UI)", "submitPin" in sk and "PIN을 이 값으로 설정합니다" in sk)
+
+            # =========================================================
+            # M. v6.1.1 — 회의실 지적 잔여 결함 4종
+            # =========================================================
+            pb = read(os.path.join(ROOT, "playbook.js"))
+            check("M 수술비 종수 — 복강경/개복 역전 제거", "5종 안팎" not in pb and "복강경은 3종 안팎" in pb and "개복으로 전환하면 5종" in pb)
+            check("M 수술비 종수 — 1종 소액·5종 고액 기준 유지", "1종(내시경·카테터)일수록 소액" in pb and "5종(개두·개흉·개복)일수록 고액" in pb)
+            check("M 수술비 종수 — 관혈=저종 역전 0", "관혈)에 해당하는 경우가 많음" not in prof and "관혈 수술 — 상해 1~2종" not in prof)
+            rd335 = [ln for ln in read(os.path.join(ROOT, "README.md")).splitlines() if "3·3·5" in ln]
+            check("M 3·3·5 표기 잔재 0", "3·3·5" not in html and all("잔재" in ln for ln in rd335), rd335)
+            check("M 간편심사 현행 표기(3·2·5 / 3·5·5)", "3·2·5" in html and "3·5·5" in html)
+            lv = read(os.path.join(ROOT, "live.js"))
+            check("M 라이브 대본 인라인 폰트 12px 이상", "font-size:10.5px" not in lv and "font-size:11.5px" not in lv and "font-size:12.5px" in lv)
+            check("M content 405 — 약관 수술 정의·분류표 맥락", '"수술"이 아닌 "처치"로 분류되는 경우가 많아' not in prof and "수술분류표" in prof)
+            check("M 소멸시효 기준 통일(상법 제662조)", "진단일부터 3년" not in prof and "수술일 기준으로 관리" not in prof and prof.count("상법 제662조") >= 4, prof.count("상법 제662조"))
+            check("M QR — 전역 폐기 제거·IP 세션 한정", 'eq("issued_at", tenAgo)' not in chal and '.in("id", ids)' in chal and "smartkey.challenge" in chal)
+            check("M QR — 차단은 요청 IP 단위", "qr-peek|" in chal and "PEEK_FAIL_LIMIT_10MIN" in chal)
+            check("M smartkey — 비추출 키 우선 생성", "genEcdsaNonextractable" in sk and "securityWarn" in sk and "mem-extractable" in sk)
+            check("M smartkey — 폴백 시 보안 경고 노출", "보안 경고" in sk and "securityWarnings" in sk)
 
             # =========================================================
             # L. PDF · 빌드

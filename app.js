@@ -185,6 +185,8 @@
     $('#consultant').value = state.client.consultant || '';
     updateBirthNote();
     renderClientStrip();
+    /* v6.1.1 — 가림 모드 중에는 방금 채운 고객명 입력창도 즉시 다시 가립니다 */
+    if (window.BojangSmartKey && BojangSmartKey.privacy) BojangSmartKey.privacy.syncInputs();
   }
 
   function updateBirthNote() {
@@ -1267,7 +1269,7 @@
       bShare.textContent = '공유하기 (파일 앱 · 문자 · 카톡)';
       bShare.addEventListener('click', async () => {
         try {
-          await navigator.share({ files: [file], title: filename, text: `${state.client.name}님 ${PDF_LABEL[kind]} 리포트` });
+          await navigator.share({ files: [file], title: filename, text: `${(out && out.model && out.model.client ? out.model.client.name : state.client.name)}님 ${PDF_LABEL[kind]} 리포트` });
           overlay(false);
           toast('공유했습니다');
         } catch (e) {
@@ -2234,6 +2236,7 @@
   function fillQuickHeader() {
     const n = $('#q-name');
     if (n) n.value = state.client.name === '홍길동' ? '' : state.client.name;
+    if (window.BojangSmartKey && BojangSmartKey.privacy) BojangSmartKey.privacy.syncInputs();
     const pr = $('#q-premium');
     if (pr) pr.value = state.premium;
     const qc = $('#quick-client');

@@ -93,7 +93,12 @@ async function rateLimited(req: Request): Promise<boolean> {
   return (count ?? 0) >= RATE_LIMIT_PER_MIN;
 }
 
-/** v6.1 — 코드 조회(peek) 시도 제한. 실패가 일정 수를 넘으면 대기 중인 챌린지를 모두 폐기합니다. */
+/** v6.1.1 — 코드 조회(peek) 시도 제한.
+ *  v6.1 까지는 실패 누적 시 “최근 10분 전체 pending 챌린지”를 폐기했습니다.
+ *  그러면 공격자가 아무 코드나 반복 입력하는 것만으로 다른 사용자의 정상 챌린지까지 날려버리는
+ *  DoS 가 됩니다. 그래서 전역 폐기를 없애고, (a) 차단은 이 요청 IP 단위로만 하고,
+ *  (b) 폐기는 같은 IP 가 발급한 챌린지(= 시도 중인 세션)로만 한정합니다.
+ *  특정 코드를 노리는 추측은 그 IP 가 스스로 만든 챌린지까지만 정리하므로 다른 사용자에게 가지 않습니다. */
 async function peekGuard(req: Request): Promise<{ blocked: boolean; discarded: number }> {
   const ip = clientIp(req);
   if (!ip) return { blocked: false, discarded: 0 };
@@ -110,14 +115,28 @@ async function peekGuard(req: Request): Promise<{ blocked: boolean; discarded: n
     return { blocked: true, discarded: 0 };
   }
   if ((ten.count ?? 0) >= PEEK_FAIL_LIMIT_10MIN) {
-    /* 추측 공격으로 판단 — 10분 내 대기 중인 챌린지를 전부 폐기 */
-    const { data } = await admin()
-      .from("qr_challenges")
-      .update({ status: "discarded" })
-      .eq("status", "pending")
-      .gte("issued_at", tenAgo)
-      .select("id");
-    return { blocked: true, discarded: Array.isArray(data) ? data.length : 0 };
+    /* 추측 공격으로 판단 — 이 IP 가 발급한 10분 내 챌린지만 폐기 (다른 사용자 챌린지는 유지) */
+    const { data: own } = await admin()
+      .from("audit_logs")
+      .select("target")
+      .eq("action", "smartkey.challenge")
+      .eq("ip_hash", await sha256Hex("qr-challenge|" + ip))
+      .gte("created_at", tenAgo)
+      .limit(50);
+    const ids = (Array.isArray(own) ? own : [])
+      .map((row) => String((row as { target?: string }).target ?? ""))
+      .filter((t) => t.startsWith("ch_"));
+    let discarded = 0;
+    if (ids.length) {
+      const { data } = await admin()
+        .from("qr_challenges")
+        .update({ status: "discarded" })
+        .in("id", ids)
+        .eq("status", "pending")
+        .select("id");
+      discarded = Array.isArray(data) ? data.length : 0;
+    }
+    return { blocked: true, discarded };
   }
   return { blocked: false, discarded: 0 };
 }

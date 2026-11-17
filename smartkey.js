@@ -147,6 +147,22 @@
     const pair = await subtle().generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
     return pair;
   }
+  /* v6.1.1 — 처음부터 비추출(non-extractable) 개인키로 생성합니다.
+     공개키는 스펙상 항상 추출 가능하므로 이 경로만 성공하면 개인키 JWK 는 어디에도 남지 않습니다. */
+  async function genEcdsaNonextractable() {
+    if (!subtle()) throw new Error('이 브라우저는 Web Crypto(ECDSA)를 지원하지 않습니다');
+    return subtle().generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign', 'verify']);
+  }
+  /* v6.1.1 — 보안 폴백은 조용히 넘어가지 않고 경고를 남깁니다 */
+  const SEC_WARNINGS = [];
+  function securityWarn(kind, message) {
+    const item = { kind, message, at: Date.now() };
+    SEC_WARNINGS.push(item);
+    try { console.warn('[SmartKey] 보안 경고 — ' + message); } catch (e) { /* 콘솔 없음 */ }
+    try { if (typeof toast === 'function') toast('⚠ ' + message); } catch (e) { /* 토스트 없음 */ }
+    return item;
+  }
+  function securityWarnings() { return SEC_WARNINGS.slice(); }
   async function exportPubJwk(key) {
     const jwk = await subtle().exportKey('jwk', key);
     return { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y };
@@ -273,8 +289,10 @@
     });
   }
   async function storeDevicePriv(dev, keyObj) {
+    /* v6.1.1 — 저장 위치(IndexedDB / 세션 메모리)를 호출자에게 알려 key_store 표기와 경고에 씁니다. */
     const ok = await keyIdbPut(dev.id, keyObj);
     if (!ok) memKeys[dev.id] = keyObj;
+    return !!ok;
   }
   async function devicePriv(dev) {
     let key = await keyIdbGet(dev.id);
@@ -997,24 +1015,43 @@
     async ensureDevice() {
       let dev = this.device();
       if (dev) return dev;
-      const pair = await genEcdsa();
+      /* v6.1.1 — 비추출 키 생성 → (실패 시) 추출 키 생성 후 비추출 재가져오기 → (그마저 실패) 세션 메모리 + 경고.
+         어느 경로로도 조용히 추출 가능 키를 상시 보관하지 않습니다. */
+      let pair = null;
+      let keyObj = null;
+      let keyStore = 'mem-extractable';
+      try {
+        pair = await genEcdsaNonextractable();
+        keyObj = pair.privateKey;
+        keyStore = 'idb';
+      } catch (e0) {
+        pair = await genEcdsa();
+        try {
+          const jwk = await exportKeyJwk(pair.privateKey);
+          keyObj = await importEcdsaPriv(jwk);
+          keyStore = 'idb';
+        } catch (e1) {
+          keyObj = pair.privateKey;
+          keyStore = 'mem-extractable';
+          securityWarn('nonextractable-key-fallback',
+            '이 브라우저가 비추출 개인키를 만들지 못해 추출 가능 키를 세션 메모리에만 보관합니다. 새로고침하면 기기를 다시 등록해야 하니, 가능하면 최신 브라우저에서 다시 등록하세요.');
+        }
+      }
       const pub = await exportPubJwk(pair.publicKey);
       const hash = (await sha256Hex(JSON.stringify([pub.x, pub.y]))).slice(0, 16);
-      /* v6.1 — 개인키는 비추출 키로 바꿔 IndexedDB 에만 저장(평문 JWK 저장 금지) */
-      let keyObj = null;
-      try {
-        const jwk = await exportKeyJwk(pair.privateKey);
-        keyObj = await importEcdsaPriv(jwk);
-      } catch (e) { keyObj = pair.privateKey; }
       dev = {
         id: randId('ph_', 6),
         name: deviceLabel('phone'),
         pub_ecdsa: pub,
         pub_hash: hash,
-        key_store: 'idb',
+        key_store: keyStore,
         created_at: now()
       };
-      if (keyObj) await storeDevicePriv(dev, keyObj);
+      const stored = keyObj ? await storeDevicePriv(dev, keyObj) : false;
+      if (!stored && keyStore === 'idb') {
+        dev.key_store = 'mem';
+        securityWarn('idb-unavailable', 'IndexedDB 를 쓸 수 없어 기기 개인키를 이번 세션 메모리에만 보관합니다.');
+      }
       lsSet(K.phone, dev);
       await server.bind({ id: dev.id, kind: 'phone', name: dev.name, pub_ecdsa: pub, pub_hash: hash });
       return dev;
@@ -1509,7 +1546,7 @@
       }
       const t = $('#sk-pref-privacy');
       if (t) t.checked = !!on;
-      toast(on ? '고객명을 가렸습니다 · 상담 화면은 그대로 유지됩니다' : '가림을 해제했습니다');
+      toast(on ? '고객명을 가렸습니다 · 화면·입력창·PDF 모두' : '가림을 해제했습니다');
       return p;
     },
 
@@ -1562,6 +1599,59 @@
         chip.textContent = on ? '🙈 가림 모드 ON' : '🙈 가림 모드 OFF';
         chip.setAttribute('aria-pressed', String(on));
       }
+      /* v6.1.1 — 입력창(고객명)도 같은 상태를 따릅니다 */
+      this.syncInputs();
+    },
+
+    /* v6.1.1 — 입력창(고객명 <input>)까지 가림.
+       · 표시값만 마스킹하고 state.client.name 원문은 절대 건드리지 않습니다.
+       · 포커스가 들어오면 원문을 되살려 편집하게 하고, 블러·비활성화·재렌더에서 다시 가립니다. */
+    realClientName() {
+      const S = root.BojangApp && root.BojangApp.state;
+      const n = S && S.client ? String(S.client.name || '').trim() : '';
+      return n === '홍길동' ? '' : n;
+    },
+
+    bindInputMask(el) {
+      if (!el || !el.dataset || el.dataset.skMaskBound === '1') return;
+      el.dataset.skMaskBound = '1';
+      const reveal = () => {
+        if (!this.enabled()) return;
+        if (el.dataset.skMasked !== '1') return;
+        const real = this.realClientName();
+        if (real) el.value = real;
+        el.dataset.skMasked = '0';
+      };
+      /* focus 만으로는 터치·프로그램 포커스에서 놓칠 수 있어 포인터 진입도 함께 처리합니다 */
+      el.addEventListener('focus', reveal);
+      el.addEventListener('pointerdown', reveal);
+      el.addEventListener('blur', () => { if (this.enabled()) this.syncInputs(); });
+    },
+
+    syncInputs() {
+      const on = this.enabled();
+      const real = this.realClientName();
+      let list = [];
+      try {
+        list = Array.prototype.slice.call(document.querySelectorAll('input[type="text"], input:not([type]), textarea'));
+      } catch (e) { list = []; }
+      list.forEach((el) => {
+        this.bindInputMask(el);
+        if (!on) {
+          if (el.dataset.skMasked === '1') {
+            el.value = real || '';
+            el.dataset.skMasked = '0';
+          }
+          return;
+        }
+        if (!real || real.length < 2) return;
+        /* 입력 중인 필드는 편집할 수 있어야 하므로 원문을 유지합니다 */
+        if (document.activeElement === el) return;
+        const masked = this.maskName(real);
+        const v = String(el.value || '').trim();
+        if (v === real) { el.value = masked; el.dataset.skMasked = '1'; }
+        else if (el.dataset.skMasked === '1' && v !== masked) { el.value = masked; }
+      });
     },
 
     installObserver() {
@@ -1700,7 +1790,7 @@
       '<p class="sk-status" id="sk-device-state"></p>\n' +
       '<div class="sk-device-list" id="sk-device-list"></div>\n' +
       '<div class="sk-prefs">\n' +
-      '<label class="sk-switch"><input type="checkbox" id="sk-pref-privacy"><span>고객 앞 가림 모드 <em>30장 화면의 고객명을 홍*동님으로</em></span></label>\n' +
+      '<label class="sk-switch"><input type="checkbox" id="sk-pref-privacy"><span>고객 앞 가림 모드 <em>화면·입력창·PDF 고객명을 홍*동·김*수로</em></span></label>\n' +
       '<label class="sk-row"><span>자동 잠금</span><select id="sk-pref-autolock">' +
       '<option value="0">사용 안 함</option><option value="1">1분</option><option value="3">3분</option><option value="5">5분</option><option value="10">10분</option>' +
       '</select></label>\n' +
@@ -1868,6 +1958,7 @@
   root.BojangSmartKey = {
     version: VERSION,
     init,
+    securityWarnings,
     crypto: {
       genEcdh, genEcdsa, exportPubJwk, exportKeyJwk, importEcdsaPriv, signText, verifyText,
       deriveAes, aesEncrypt, aesDecrypt, sha256Hex, hashPin, checkPin, b64u, unb64u, rndBytes, randDigits
@@ -1924,7 +2015,8 @@
     },
     privacy: {
       setEnabled: (v) => privacy.setEnabled(v), enabled: () => privacy.enabled(),
-      maskName: (n) => privacy.maskName(n), maskText: (t) => privacy.maskText(t), refresh: () => privacy.refresh()
+      maskName: (n) => privacy.maskName(n), maskText: (t) => privacy.maskText(t),
+      refresh: () => privacy.refresh(), syncInputs: () => privacy.syncInputs()
     },
     prefs: {
       get: () => prefsGet(), set: (p) => prefsSet(p)

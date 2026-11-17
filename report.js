@@ -1262,7 +1262,7 @@
         { text: r[0], weight: 700, color: C.navy }, r[1], { text: r[2], color: C.ink2 },
         { text: `${Math.round(r[3] * 100)}%`, weight: 700, color: r[3] >= 0.99 ? C.mint : r[3] > 0.4 ? C.orange : C.red, align: 'center' }
       ]), { widths: [140, 130, 150, 95], size: 6.3, rowH: 11.6, headH: 13, align: ['left', 'center', 'center', 'center'] });
-      y = noteStrip(s, y + 4, '유사암에 묶는 범위와 지급 비율은 상품마다 다릅니다. 원발부위 설명 여부가 다퉈진 판례(대법원 2025.3.13. 선고 2023다250746 — 설명이 없으면 일반암 기준 지급·차액)도 확인하고, 청구권 소멸시효는 상법 제662조에 따라 청구할 수 있게 된 날부터 3년임을 안내합니다.', { size: 5.8 });
+      y = noteStrip(s, y + 4, '유사암에 묶는 범위와 지급 비율은 상품마다 다릅니다. 원발부위 설명 여부가 다퉈진 판례(대법원 2025.3.13. 선고 2023다250746 — 설명이 없으면 일반암 기준 지급·차액)도 확인하고, 청구권 소멸시효는 상법 제662조에 따라 청구권을 행사할 수 있게 된 때부터 3년임을 안내합니다.', { size: 5.8 });
       /* v5.7 — 불완전판매 방지 경고 */
       y = warnStrip(s, y + 4, 'cancer');
       /* v5.6 — 증권 직접 기재 담보 (실제 특약명·금액 그대로) */
@@ -2509,7 +2509,7 @@
         '수술확인서(수술명·수술일·수술방법) + 진단서가 기본입니다.',
         '수술명이 약관 분류표 문구와 일치해야 인정됩니다. 병원에 수술명을 정확히 적어달라고 요청하세요.',
         '당일 시술·외래 시술은 수술비 대상이 아닌 경우가 많습니다.',
-        '청구 소멸시효는 3년입니다. 수술일 기준으로 관리합니다.'
+        '청구 소멸시효는 상법 제662조에 따라 청구권을 행사할 수 있게 된 때(수술일 등 보험사고 발생일)부터 3년입니다.'
       ], { size: 7, gap: 3 });
       y = s.sectionHead(s.ML, y + 4, s.CW, null, '고객에게 이렇게 말합니다', null);
       y = s.script(s.ML, y, s.CW, { title: '청구 안내', text: '"수술하시면 수술확인서와 진단서를 챙기시고 저에게 사진으로 보내주세요. 제가 분류표에 맞는지 먼저 확인하고 청구하겠습니다. 이게 안 맞으면 금액이 달라지니까요."' });
@@ -2520,7 +2520,7 @@
         '수술명이 약관 분류표와 다르게 적힘 — 병원에 분류표상 명칭으로 요청',
         '시술·처치로 분류되어 수술비 지급 대상이 아님',
         '고지의무 위반으로 계약이 해지된 경우',
-        '청구 소멸시효(3년) 경과'
+        '청구 소멸시효(3년 · 상법 제662조) 경과'
       ], { size: 6.8, gap: 2.5 });
       foot(s, 21, '4순위 수술 · 청구');
     });
@@ -2829,11 +2829,46 @@
   /* =========================================================
      공개 API
      ========================================================= */
+  /* =========================================================
+     v6.1.1 — 가림 모드 ON이면 PDF(1·10·30장) 본문·머리글·꼬리글의 고객명도 마스킹
+     · state 원본은 건드리지 않고, 모델 사본의 m.client.name 만 가립니다.
+     ========================================================= */
+  function privacyOn() {
+    try {
+      const SK = root.BojangSmartKey;
+      return !!(SK && SK.privacy && SK.privacy.enabled && SK.privacy.enabled());
+    } catch (e) { return false; }
+  }
+
+  function maskPersonName(name) {
+    const s = String(name == null ? '' : name).trim();
+    if (!s) return s;
+    try {
+      const SK = root.BojangSmartKey;
+      if (SK && SK.privacy && SK.privacy.maskName) return SK.privacy.maskName(s);
+    } catch (e) { /* 아래 기본 규칙으로 */ }
+    if (s.length === 1) return '*';
+    if (s.length === 2) return s[0] + '*';
+    return s[0] + '*'.repeat(Math.max(1, s.length - 2)) + s[s.length - 1];
+  }
+
+  function maskModelClient(m) {
+    if (!m || !m.client) return m;
+    const raw = String(m.client.name || '');
+    if (!raw) return m;
+    /* 모델의 client 객체를 새로 만들어 원본(state.client)을 건드리지 않습니다. */
+    m.client = Object.assign({}, m.client, { name: maskPersonName(raw) });
+    m.privacyMasked = true;
+    return m;
+  }
+
   function build(kind, state) {
     /* v5.5 — 페이지를 그리기 전에 브랜드 테마 팔레트를 맞춥니다(직접 호출 경로 포함) */
     try { K.syncPalette(); } catch (e) { /* 팔레트 동기화 실패는 기본 색으로 진행 */ }
     refreshToneColor();
     const m = BK.full(state);
+    /* v6.1.1 — 상담 중 가림 모드가 켜져 있으면 인쇄물에도 실명을 남기지 않습니다 */
+    if (privacyOn()) maskModelClient(m);
     if (kind === 'summary') return { pages: [summaryPage(m)], m };
     if (kind === 'detail') return { pages: detailPages(m), m };
     if (kind === 'advisor') return { pages: advisorPages(m), m };
@@ -2844,5 +2879,6 @@
     advisor: { memoMax: Infinity, memoLabels: ['고객이 한 말', '내가 약속한 것', '다음 할 일'] },
     detail: { memoMax: 200, memoLabels: ['궁금한 점', '다음 상담까지 확인할 것'] }
   };
-  root.BojangReport = { build, summaryPage, detailPages, advisorPages, MEMO, qrInfo, qrBlock, warnStrip, renewChart };
+  root.BojangReport = { build, summaryPage, detailPages, advisorPages, MEMO, qrInfo, qrBlock, warnStrip, renewChart,
+    privacy: { on: privacyOn, maskName: maskPersonName, maskModelClient } };
 })(typeof window !== 'undefined' ? window : globalThis);

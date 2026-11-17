@@ -795,7 +795,8 @@
       const t = new Date();
       return `${t.getFullYear()}${String(t.getMonth() + 1).padStart(2, '0')}${String(t.getDate()).padStart(2, '0')}`;
     })();
-    const who = (name || '고객').replace(/[\\/:*?"<>|\s]/g, '');
+    /* v6.1.1 — 가림 모드의 별표 마스크는 파일명에서 O 로 살려 "김*수" → "김O수" */
+    const who = (name || '고객').replace(/\*/g, 'O').replace(/[\\/:*?"<>|\s]/g, '');
     const label = kind === 'summary' ? '보장분석_1장요약' : kind === 'detail' ? '보장분석_10장상세' : '상담플랜_30장가이드';
     return `${who}_${label}_${d}.pdf`;
   }

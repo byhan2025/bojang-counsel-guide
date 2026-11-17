@@ -191,22 +191,22 @@
     // 질문
     h += `<div class="live-card"><h3>③ 이렇게 물어보세요</h3>
       ${pb.questions.map((q, i) => `<div class="live-script live-ask"><div class="ls-tag">질문 ${i + 1}</div><p>${q.q}</p>
-        <p style="font-size:10.5px;color:#5b7a74;margin-top:4px;">의도 — ${q.why}<br>기대 — ${q.expect}</p></div>`).join('')}
+        <p style="font-size:12.5px;color:#5b7a74;margin-top:4px;">의도 — ${q.why}<br>기대 — ${q.expect}</p></div>`).join('')}
     </div>`;
     // 함정
     h += `<div class="live-card"><h3>④ 증권에서 확인할 함정</h3>
       ${pb.traps.map((t, i) => `<div class="live-script live-warn"><div class="ls-tag">${i + 1}. ${t.title}</div>
-        <p style="font-size:11.5px;">확인 — ${t.watch}</p>
-        <p style="font-size:11.5px;color:#7a4f12;">말 — ${stripTags(t.script).replace(/^"|"$/g, '')}</p></div>`).join('')}
+        <p style="font-size:12.5px;">확인 — ${t.watch}</p>
+        <p style="font-size:12.5px;color:#7a4f12;">말 — ${stripTags(t.script).replace(/^"|"$/g, '')}</p></div>`).join('')}
     </div>`;
     // 설계
     h += `<div class="live-card"><h3>⑤ 설계 권장안</h3>${designTable(m, row)}</div>`;
     // 반론
     h += `<div class="live-card"><h3>⑥ 예상 반론</h3>
       ${pb.objections.map((o) => `<div class="live-script"><div class="ls-tag">${o.trigger}</div>
-        <p style="font-size:11.5px;"><b>공감</b> ${o.empathy}</p>
-        <p style="font-size:11.5px;"><b>환기</b> ${o.awaken}</p>
-        <p style="font-size:11.5px;"><b>대안</b> ${o.alternative}</p></div>`).join('')}
+        <p style="font-size:12.5px;"><b>공감</b> ${o.empathy}</p>
+        <p style="font-size:12.5px;"><b>환기</b> ${o.awaken}</p>
+        <p style="font-size:12.5px;"><b>대안</b> ${o.alternative}</p></div>`).join('')}
     </div>`;
     h += `<div class="live-note">다음 단계로 넘어가기 전 확인 — <b>${name}님이 "${row.item.name}이 비어 있다"는 것을 자기 말로 확인했는가.</b></div>`;
     return h;

@@ -434,7 +434,7 @@ def main():
                              pc_pub_hash: hash, phone_pub: phonePub, enc };
               const badSigRes = await BojangSmartKey.server.approve(Object.assign({}, base, { signature: wrongSig }));
               const relayRes = await BojangSmartKey.server.approve(Object.assign({}, base, { signature: goodSig, pc_pub_hash: 'ffffffffffffffff' }));
-              const codeRes = await BojangSmartKey.server.approve(Object.assign({}, base, { signature: goodSig, code2: '99' }));
+              const codeRes = await BojangSmartKey.server.approve(Object.assign({}, base, { signature: goodSig, code2: String((Number(out.challenge.code2) + 57) % 100).padStart(2, '0') }));
               const okRes = await BojangSmartKey.server.approve(Object.assign({}, base, { signature: goodSig }));
               return { badSig: badSigRes.error, relay: relayRes.error, code: codeRes.error, ok: okRes.ok, id: out.challenge.id };
             }""")
