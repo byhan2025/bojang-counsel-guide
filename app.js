@@ -1832,7 +1832,7 @@
       <text x="32" y="205" class="dg-l dark">같은 수술 · 두 담보에서 각각 청구</text>
       <text x="308" y="205" text-anchor="end" class="dg-s dark">약관 확인</text>
       <rect x="20" y="226" width="300" height="34" rx="10" fill="#0f2a49"/>
-      <text x="32" y="247" class="dg-l light">종수가 낮을수록 고액 · 1종 관혈 &gt; 5종 내시경</text>
+      <text x="32" y="247" class="dg-l light">종수가 높을수록 고액 · 1종 내시경 &lt; 5종 개두·개흉</text>
     </svg>`;
   }
 
