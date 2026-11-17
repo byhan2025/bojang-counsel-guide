@@ -3900,7 +3900,7 @@ html.is-sk-locked .beta-bar,html.is-sk-locked .client-banner{filter:blur(7px) sa
 #deck .slide[data-no="26"] .sl-note{padding:8px 10px;}
 
 </style>
-<!-- build 72e8fb3bd5c7 · protected=true -->
+<!-- build 9b82aa9b3252 · protected=true -->
 </head>
 <body>
 
@@ -5740,7 +5740,7 @@ const GUIDES = {
   care: {
     title: '5순위 · 간병비',
     head: '매일 나가는 돈, 세 가지 준비 방식',
-    lead: '진단비는 한 번 나오는 목돈이지만 간병비는 매일 나갑니다. 하루 10만~17만원, 한 달이면 300만~500만원을 넘습니다. 준비 방식은 세 갈래로 나뉩니다.',
+    lead: '진단비는 한 번 나오는 목돈이지만 간병비는 매일 나갑니다. 하루 10만~17만원, 한 달이면 300만~500만원이 듭니다. 준비 방식은 세 갈래로 나뉩니다.',
     diagram: 'care',
     diagramNote: '간병인 사용일당은 실제 고용 증빙이 필요하고, 장기요양은 등급 판정이 전제입니다. 상품별 조건 확인.',
     structures: [
@@ -5751,7 +5751,7 @@ const GUIDES = {
       { label: '장기요양 등급', tag: '노후', desc: '1~5등급·인지지원등급 판정 시 월 단위 요양비. 65세 미만도 노인성 질병이면 신청 가능.' }
     ],
     talk: [
-      '"간병비는 아플 때 누가 돌봐주는 비용이에요. 하루 10만~17만원, 한 달이면 300만~500만원이 넘어요. 진단비처럼 한 번 나오는 돈이 아니라 매일 나가는 돈입니다."',
+      '"간병비는 아플 때 누가 돌봐주는 비용이에요. 하루 10만~17만원, 한 달이면 300만~500만원이 들어요. 진단비처럼 한 번 나오는 돈이 아니라 매일 나가는 돈입니다."',
       '"그래서 준비 방식이 세 가지예요. 간병인을 직접 써서 일당 받기, 보호자 없는 병동 쓰기, 장기요양등급 받아 월 단위로 받기."',
       '"노후엔 세 번째가 핵심이에요. 등급은 한 번 받으면 계속 유지되고, 요양원·방문요양 어디서나 쓸 수 있거든요."'
     ],
@@ -6354,7 +6354,7 @@ const PLAYBOOK = {
 
   care: {
     key: 'care', rank: 5, name: '간병', minutes: '12분',
-    why: '진단비는 한 번 나오는 목돈이지만 간병비는 매일 나갑니다. 하루 10만~17만 원이면 한 달에 300만~500만 원을 넘습니다. 노후에는 이 지출이 가장 길게 갑니다.',
+    why: '진단비는 한 번 나오는 목돈이지만 간병비는 매일 나갑니다. 하루 10만~17만 원이면 한 달에 300만~500만 원이 듭니다. 노후에는 이 지출이 가장 길게 갑니다.',
     facts: [
       '장기요양 인정자 123만 5,045명 · 월평균 급여비 154만 원 (건보공단 2025)',
       '1~2등급 12.7% vs 3~5등급·인지지원 87.4% (건보공단 2025)',
@@ -7600,7 +7600,7 @@ const PLAN_FRONT = {
     if (sg.disease15 > 0 || sg.diseaseNdae > 0) cps.push({ level: 'info', title: '수술비 — 1년 미만 50% 감액 확인', body: '수술비 담보는 계약일부터 1년 미만이면 50%만 지급되는 상품이 흔합니다. 가입 시점과 청구 시점을 함께 봐야 합니다.' });
 
     const cr = cov.care;
-    if (!(cr.daily > 0) && !(cr.nDaily > 0)) cps.push({ level: 'warn', title: '간병비 담보 없음', body: '간병은 하루 10만~17만원, 한 달이면 300만~500만원을 넘습니다. 진단비로 대체되지 않는 매일의 비용입니다.' });
+    if (!(cr.daily > 0) && !(cr.nDaily > 0)) cps.push({ level: 'warn', title: '간병비 담보 없음', body: '간병은 하루 10만~17만원, 한 달이면 300만~500만원이 듭니다. 진단비로 대체되지 않는 매일의 비용입니다.' });
     if (cr.daily > 0 && !(cr.nDaily > 0)) cps.push({ level: 'info', title: '요양병원 간병 일당 없음', body: '대부분 상품이 요양병원을 제외합니다. 요양병원은 통상 5~6만원대이고 별도 담보가 필요합니다. 요양병원 포함 여부를 증권에서 확인하세요.' });
     if (cr.basis === 'unknown') cps.push({ level: 'warn', title: '간병비 지급 기준 미확인', body: '2026년 7월부터 주요 손보사가 "하루 8만원 이상" 금액 기준을 "하루 8시간 이상" 시간 기준으로 전환했습니다. 8시간을 못 채우면 지급액이 깎이거나 지급되지 않습니다. 어떤 기준인지 증권으로 확인하세요.' });
     else if (cr.basis === 'money') cps.push({ level: 'info', title: '간병비 금액 기준 — 8시간 기준으로 전환되는 추세', body: '금액 기준은 7~8만원 이상 사용 시 지급입니다. 신규 가입이면 시간 기준 상품이 늘고 있어, 같은 가입금액이라도 실제 수령액이 달라집니다.' });
@@ -12228,7 +12228,7 @@ const PLAN_FRONT = {
         s.gauge(x + 9, yy + 47, cw - 18, c[3], { color: c[3] >= 0.99 ? C.mint : c[3] > 0 ? C.orange : C.gray, h: 4.5 });
       });
       y += 136;
-      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반병원 간병 일당이 ${won(m.state.cov.care.daily)}만원, 요양병원은 ${m.state.cov.care.nDaily ? won(m.state.cov.care.nDaily) + '만원' : '없음'}입니다. 간병인을 하루 쓰면 10만~17만 원이 나가니까, 한 달이면 300만~500만 원을 넘습니다. 지급 기준은 ${ { time: '하루 8시간', money: '하루 7~8만원', unknown: '확인 필요' }[m.state.cov.care.basis] }입니다."` });
+      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반병원 간병 일당이 ${won(m.state.cov.care.daily)}만원, 요양병원은 ${m.state.cov.care.nDaily ? won(m.state.cov.care.nDaily) + '만원' : '없음'}입니다. 간병인을 하루 쓰면 10만~17만 원이 나가니까, 한 달이면 300만~500만 원이 듭니다. 지급 기준은 ${ { time: '하루 8시간', money: '하루 7~8만원', unknown: '확인 필요' }[m.state.cov.care.basis] }입니다."` });
       y += 8;
       y = s.sectionHead(s.ML, y, s.CW, '01', '근거 통계 — 노후의 실제 지출', '출처: 건보공단 2025 노인장기요양보험 통계연보');
       cr2.facts.forEach((f) => { y = s.bullets(s.ML, y, s.CW, [f], { size: 7, gap: 2 }); });
