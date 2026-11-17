@@ -111,6 +111,7 @@ alter table public.qr_challenges enable row level security;
 alter table public.pc_sessions enable row level security;
 
 drop policy if exists devices_own on public.registered_devices;
+drop policy if exists devices_own_read on public.registered_devices;
 /* v6.1 — 인증 사용자 직접 쓰기 정책을 제거합니다. 쓰기는 Edge Function(service_role) 단일 경로만. */
 create policy devices_own_read on public.registered_devices
   for select using (user_id = auth.uid());
@@ -124,6 +125,7 @@ create policy challenges_own_read on public.qr_challenges
   for select using (user_id = auth.uid());
 
 drop policy if exists sessions_own on public.pc_sessions;
+drop policy if exists sessions_own_read on public.pc_sessions;
 /* v6.1 — PC 세션 쓰기도 Edge Function 만. 사용자는 자기 세션을 조회만 합니다. */
 create policy sessions_own_read on public.pc_sessions
   for select using (user_id = auth.uid());

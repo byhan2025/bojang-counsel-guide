@@ -89,6 +89,24 @@ enabled = true
 verify_jwt = true
 entrypoint = "./functions/billing-subscribe/index.ts"
 
+# v6.0 스마트키 — PC 는 로그아웃 상태에서도 챌린지를 발급해야 하므로 게이트웨이 JWT 검증을 끕니다.
+#   (함수 내부에서 PC 키 서명 pc_sig · 5분 시계 · 분당 8회 제한으로 자체 검증)
+[functions.qr-auth-challenge]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/qr-auth-challenge/index.ts"
+
+# 폰 승인 · 기기 관리는 사용자 JWT 필수 (함수 내부에서 requireUser + 마스터 기기 검증).
+[functions.qr-auth-approve]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/qr-auth-approve/index.ts"
+
+[functions.device-manage]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/device-manage/index.ts"
+
 # PG 웹훅은 Supabase JWT 가 아니라 PG 서명(PG_WEBHOOK_SECRET)으로 인증합니다.
 [functions.billing-webhook]
 enabled = true
