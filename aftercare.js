@@ -295,9 +295,11 @@
   function fillCurrentClient() {
     const S = root.BojangApp && root.BojangApp.state;
     if (!S) return;
-    const nameEl = $('#ac-name'), birthEl = $('#ac-birth');
+    const nameEl = $('#ac-name'), birthEl = $('#ac-birth'), ctEl = $('#ac-contract');
     if (nameEl && S.client && S.client.name && S.client.name !== '홍길동') nameEl.value = S.client.name;
     if (birthEl && S.client && S.client.birth) birthEl.value = S.client.birth;
+    /* v7.1 — 결과 화면 '이 고객 다음 할 일' 띠에서 넣은 계약일을 함께 채웁니다 */
+    if (ctEl && S.client && S.client.contract && ctEl.value !== S.client.contract) ctEl.value = S.client.contract;
     run();
     toast('현재 상담 고객의 이름·생년월일을 넣었습니다');
   }
@@ -364,6 +366,12 @@
     const lb = $('#ac-load'); if (lb) lb.addEventListener('click', fillCurrentClient);
     const pr = $('#sk-privacy-chip');
     if (pr) pr.addEventListener('click', () => setTimeout(run, 60));
+    /* v7.1 — 툴킷에서 바꾼 계약일을 결과 화면 띠와 state 에도 반영 */
+    const ctEl = $('#ac-contract');
+    if (ctEl) ctEl.addEventListener('change', () => {
+      const A = root.BojangApp;
+      if (A && A.setClientContract) A.setClientContract(ctEl.value || '');
+    });
     /* 날짜는 비워 둡니다 — 기본값(오늘)이 들어가면 다른 고객의 계약일로 오해될 수 있습니다 */
     run();
   }

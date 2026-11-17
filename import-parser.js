@@ -954,6 +954,14 @@
         message: '비전 서버 주소가 설정되지 않았습니다. 3단계 백엔드 연동 후 사용할 수 있습니다.'
       };
     }
+    /* v7.1 — fail-closed: 가드가 없거나 허용 판정이 아니면 사진을 외부로 보내지 않습니다 */
+    const g = root.bojangDomainGuard;
+    if (!g || typeof g.allowed !== 'function' || !g.allowed()) {
+      return {
+        ok: false, reason: 'domain-lock', items: [], premium: null, silson: null,
+        message: '지금 실행 환경에서는 사진 AI 인식을 쓸 수 없습니다. 공식 배포처(HTTPS)에서 열어 주세요.'
+      };
+    }
     const form = new FormData();
     form.append('image', blob, opts.filename || 'capture.jpg');
     if (opts.hint) form.append('hint', String(opts.hint));

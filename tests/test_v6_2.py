@@ -345,9 +345,10 @@ def main():
             n0, n1, n2 = (flow or {}).get("nodes", ["", "", ""])
             check("도식 ① 브라우저 로컬 계산 · IndexedDB", "브라우저 로컬 계산" in n0 and "IndexedDB" in n0, n0[:60])
             check("도식 ② 자체 서버 저장 · Supabase(서울)", "자체 서버 저장" in n1 and "Supabase" in n1 and "서울" in n1, n1[:60])
-            check("도식 ③ 외부 AI 비전 분석 · 사진 분석 시 전달", "외부 AI 비전 분석" in n2 and "사진 분석 시 외부 AI로 전달" in n2, n2[:60])
+            # v7.1 — 실제 경로(브라우저 → Edge Function → 외부 AI, 최대 3회 재전송)로 문구를 정확히 고쳤습니다.
+            check("도식 ③ 사진 AI 인식 · 실제 전송 경로", "사진 AI 인식" in n2 and "Edge Function" in n2 and "외부 AI" in n2 and "최대 3회" in n2, n2[:80])
             check("도식 — 단계별 보관/삭제 정책 3건", len((flow or {}).get("keeps", [])) == 3 and all("보관" in k or "보증" in k for k in (flow or {}).get("keeps", [])), (flow or {}).get("keeps"))
-            check("도식 — 사진 서버 미저장 명시", "사진 저장 0건" in n2, n2)
+            check("도식 — 사진 서버 미저장 명시", "저장하지 않고" in n2 or "사진 저장 0건" in n2, n2[:80])
             check("도식 — 즉시 삭제 보증 불가", "보증하지 않음" in n2, n2)
             full_legal = pg.evaluate("() => document.getElementById('legal-body').innerText")
             check("방침 — '1회 전송·즉시 삭제' 단정 없음", "1회 전송" not in full_legal, "")

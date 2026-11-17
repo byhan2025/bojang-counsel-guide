@@ -4305,3 +4305,193 @@ input.mf-filled:focus, .mf-filled:focus{outline:none;border-color:#d4a92f !impor
   .mf-title em{font-size:11px;}
 }
 .post-care .card-sub{font-size:11px;}
+
+/* =========================================================
+   v7.1 — ① 고객 화면 표지(01/30) 하단 플로팅 버튼 비겹침
+   · 가림 모드 칩·스마트키 자물쇠를 덱 하단 바 바로 위로 내리고,
+     슬라이드에 하단 여백을 줘 마지막 줄이 버튼 밑으로 들어가지 않게 합니다.
+   · 좁은 폰(≤430px)에서는 표지를 압축해 360×740 에서 스크롤 없이 한 장으로 보이게 합니다.
+   ========================================================= */
+body.is-client .sk-privacy-chip{left:10px;bottom:calc(62px + env(safe-area-inset-bottom,0px));}
+body.is-client .sk-lock-fab{right:10px;bottom:calc(62px + env(safe-area-inset-bottom,0px));}
+body.is-client .slide{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px));}
+
+@media (max-width:430px){
+  .slide[data-no="1"] .sl-inner{padding:18px 16px 14px;}
+  .cover-brand{padding-bottom:9px;margin-bottom:10px;}
+  .cover-brand .cb-heart svg{width:30px;height:25px;}
+  .cover-eyebrow{font-size:9.5px;letter-spacing:.18em;}
+  .cover-title{margin-top:8px;font-size:24px;line-height:1.24;}
+  .cover-lead{margin-top:7px;font-size:11.5px;line-height:1.5;}
+  .cover-grade{margin-top:11px;padding:9px 0;gap:8px;}
+  .cg-letter{font-size:31px;}
+  .cg-label{font-size:9.5px;}
+  .cg-score{font-size:10.5px;}
+  .cover-meta{margin-top:10px;gap:4px;}
+  .cover-meta div{padding-bottom:3px;}
+  .cover-meta dt{font-size:9.8px;}
+  .cover-meta dd{font-size:11px;}
+  .cover-contact{margin-top:6px;font-size:10px;}
+  .cover-values{display:none;}
+  .cover-foot{margin-top:8px;padding-top:6px;font-size:9px;line-height:1.45;}
+  .cover-sample{margin-top:5px;padding:4px 7px;font-size:9px;}
+}
+
+/* =========================================================
+   v7.1 — ② 결과 화면 '이 고객 다음 할 일' 한 줄 요약 띠
+   ========================================================= */
+.next-action{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  margin:12px 0 0;padding:13px 15px;border-radius:16px;
+  border:1px solid #cfe2f5;background:linear-gradient(135deg,#0b2545,#16436b 62%,#1b5a8a);
+  color:#fff;box-shadow:0 16px 34px -26px rgba(9,29,51,.85);
+}
+.next-action .na-main{flex:1 1 240px;min-width:0;}
+.na-eyebrow{display:block;font-size:9.5px;font-weight:800;letter-spacing:.14em;color:#8ff0dc;}
+.na-big{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-top:3px;}
+.na-label{font-size:11px;font-weight:800;color:#b6cbe0;}
+.na-date{font-size:27px;line-height:1.1;font-weight:800;letter-spacing:-0.03em;color:#fff;font-variant-numeric:tabular-nums;}
+.na-sep{font-size:18px;color:#5d83a8;}
+.na-dday{font-size:20px;font-weight:800;letter-spacing:-0.02em;}
+.na-dday.tone-ok{color:#8ff0dc;}
+.na-dday.tone-warn{color:#ffd47a;}
+.na-dday.tone-danger{color:#ff9d8a;}
+.na-sub{margin-top:5px;font-size:11.5px;line-height:1.5;color:#cfe0f2;}
+.na-second{margin-top:3px;font-size:11px;line-height:1.45;color:#9fb8d2;}
+.na-fix{margin-top:4px;font-size:11px;line-height:1.45;color:#ffd47a;}
+.na-fix b{color:#fff;}
+.next-action .na-side{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;}
+.na-field{display:grid;gap:3px;font-size:9.8px;font-weight:800;color:#9fb8d2;}
+.na-field input{
+  font-family:inherit;font-size:12px;font-weight:700;color:#0b2545;
+  border:1px solid rgba(255,255,255,.35);border-radius:9px;background:#fff;padding:7px 8px;min-height:36px;
+}
+.next-action .na-side .btn-ghost.sm{width:auto;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.28);color:#fff;}
+.next-action.is-empty{
+  background:#f4f8fd;border-color:#d7e5f4;color:#22364f;box-shadow:none;
+}
+.next-action.is-empty .na-eyebrow{color:var(--navy-600);}
+.na-empty-title{display:block;margin-top:2px;font-size:15px;font-weight:800;letter-spacing:-0.03em;color:#0b2545;}
+.na-empty-copy{margin-top:3px;font-size:11.5px;line-height:1.5;color:#4a6485;}
+.next-action.is-empty .na-field{color:#4a6485;}
+.next-action.is-empty .na-field input{border-color:#cfdcea;color:#0b2545;}
+@media (max-width:430px){
+  .next-action{padding:12px 13px;gap:10px;}
+  .na-date{font-size:24px;}
+  .na-dday{font-size:18px;}
+  .next-action .na-side{width:100%;justify-content:space-between;}
+}
+
+/* =========================================================
+   v7.1 — ③ 공공데이터 실무 연동 (F · PUBLIC DATA)
+   ========================================================= */
+.pd-search{display:flex;gap:7px;flex-wrap:wrap;}
+.pd-search input[type="search"]{
+  flex:1 1 190px;min-width:0;font-family:inherit;font-size:12.5px;font-weight:700;color:#22364f;
+  border:1px solid var(--line);border-radius:10px;background:#fff;padding:9px 11px;min-height:42px;
+}
+.pd-search select{
+  font-family:inherit;font-size:11.5px;font-weight:800;color:#22364f;border:1px solid var(--line);
+  border-radius:10px;background:#fff;padding:8px 9px;min-height:42px;
+}
+/* v7.1 — 기본 .btn-ghost/.btn-primary 는 width:100% 라 플렉스 줄에서 입력칸을 밀어냅니다.
+   검색 줄·날짜 줄의 버튼만 내용 폭으로 되돌립니다(청구 검색창이 55px 로 줄어들던 결함). */
+.cc-search .btn-ghost.sm, .cc-date-row .btn-primary.sm,
+.pd-search .btn-primary.sm{width:auto;flex:0 0 auto;}
+.pd-search .btn-primary.sm{margin-top:0;padding:10px 14px;border-radius:10px;font-size:12px;min-height:42px;}
+.pd-proxy-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:7px;}
+.pd-proxy-state{font-size:10px;font-weight:800;color:#0f7a5f;background:#e8f7f2;border:1px solid #bfe7db;border-radius:999px;padding:4px 9px;}
+.pd-proxy-row input[type="url"]{
+  flex:1 1 180px;min-width:0;font-family:inherit;font-size:11px;font-weight:600;color:#41597a;
+  border:1px dashed #cfdcea;border-radius:9px;background:#fbfdff;padding:7px 9px;min-height:36px;
+}
+.pd-out{margin-top:9px;}
+.pd-empty,.pd-result{display:grid;gap:9px;}
+.pd-empty p{font-size:12px;line-height:1.55;color:#41597a;}
+.pd-sug{display:flex;gap:6px;flex-wrap:wrap;}
+.pd-sug-btn{
+  font-family:inherit;font-size:11.5px;font-weight:800;color:var(--navy-700,#1b4a78);
+  border:1px solid #cfe0f2;border-radius:999px;background:#f4f9ff;padding:6px 11px;min-height:34px;
+}
+.pd-group{border:1px solid #e2ecf7;border-radius:13px;background:#fbfdff;padding:11px 12px;}
+.pd-group-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.pd-group-head b{font-size:13px;font-weight:800;color:#0b2545;letter-spacing:-0.02em;}
+.pd-kcd{font-size:10px;font-weight:800;color:#5b7590;background:#eef4fb;border-radius:6px;padding:2px 6px;}
+.pd-major{font-size:10px;font-weight:800;color:#8a5a0c;background:#fdf3de;border:1px solid #f0dcb0;border-radius:999px;padding:2px 8px;}
+.pd-drugs{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;}
+.pd-drug{display:inline-flex;align-items:baseline;gap:4px;font-size:11px;font-weight:800;color:#22364f;background:#fff;border:1px solid #e2ecf7;border-radius:8px;padding:3px 7px;}
+.pd-drug em{font-style:normal;font-size:9.6px;font-weight:700;color:#7b8ea4;}
+.pd-items{display:grid;gap:4px;margin-top:8px;}
+.pd-item{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11.5px;font-weight:700;color:#22364f;line-height:1.45;}
+.pd-chip{font-size:9.6px;font-weight:800;border-radius:999px;padding:2px 7px;border:1px solid transparent;}
+.pd-chip.pd-now{color:#8a1f14;background:#fdeceb;border-color:#f6cfca;}
+.pd-chip.pd-check{color:#7a4a17;background:#fdf3de;border-color:#f0dcb0;}
+.pd-chip.pd-past{color:#41597a;background:#eef2f7;border-color:#dbe4ee;}
+.pd-chip.pd-later{color:#5b7590;background:#f4f7fb;border-color:#e5edf6;}
+.pd-group-note{margin-top:7px;font-size:11px;line-height:1.55;color:#41597a;}
+.pd-note{font-size:11px;line-height:1.5;color:#8a5a0c;background:#fdf8ee;border:1px solid #f0dcb0;border-radius:9px;padding:7px 9px;}
+.pd-cau{border:1px solid #d7e5f4;border-radius:12px;background:#f4f9ff;padding:10px 12px;}
+.pd-cau b{display:block;font-size:12px;font-weight:800;color:#0b2545;}
+.pd-cau p{margin-top:4px;font-size:11px;line-height:1.6;color:#41597a;}
+.pd-disclaimer{margin-top:2px;font-size:10px;line-height:1.5;color:#8a9bb0;}
+.pd-profile{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:#22364f;}
+.pd-profile b{font-size:12.5px;font-weight:800;color:#0b2545;}
+.pd-profile span{font-weight:800;color:var(--navy-600,#1b4a78);background:#eef4fb;border-radius:999px;padding:3px 9px;}
+.pd-refresh{width:auto;margin-left:auto;}
+.pd-fam{margin-top:6px;font-size:11px;line-height:1.55;color:#8a5a0c;background:#fdf8ee;border:1px solid #f0dcb0;border-radius:9px;padding:7px 9px;}
+.pd-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:9px;}
+.pd-stat{border:1px solid #e2ecf7;border-radius:13px;background:#fff;padding:11px 12px;display:flex;flex-direction:column;gap:5px;}
+.pd-stat.rel-high{border-color:#bcd7f0;box-shadow:inset 0 3px 0 #1b4a78;}
+.pd-stat.rel-mid{box-shadow:inset 0 3px 0 #9fc0de;}
+.pd-stat.rel-low{box-shadow:inset 0 3px 0 #dbe4ee;}
+.pd-stat-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.pd-stat-head b{font-size:12.5px;font-weight:800;color:#0b2545;letter-spacing:-0.02em;}
+.pd-badge{font-size:9.4px;font-weight:800;color:#8a1f14;background:#fdeceb;border:1px solid #f6cfca;border-radius:999px;padding:2px 7px;}
+.pd-stat-head-line{margin:0;font-size:11.5px;line-height:1.5;font-weight:700;color:#22364f;}
+.pd-stat-rows{display:grid;gap:3px;}
+.pd-stat-rows div{display:flex;align-items:baseline;gap:6px;font-size:11px;color:#41597a;}
+.pd-stat-rows span{flex:1 1 auto;}
+.pd-stat-rows b{font-size:13px;font-weight:800;color:#0b2545;font-variant-numeric:tabular-nums;}
+.pd-stat-rows em{font-style:normal;font-size:9.6px;font-weight:800;color:#7b8ea4;}
+.pd-stat-take{margin:0;font-size:10.6px;line-height:1.55;color:#41597a;}
+.pd-stat-own{margin:0;font-size:10.4px;font-weight:800;color:#1b4a78;}
+.pd-stat-line{margin-top:auto;padding-top:6px;font-size:9.4px;line-height:1.45;color:#8a9bb0;border-top:1px dashed #e5edf6;}
+.pd-basis{margin-top:8px;font-size:10px;line-height:1.5;color:#8a9bb0;}
+.pd-gaps{display:grid;gap:8px;margin-top:7px;}
+.pd-gap{border:1px solid #f0dcb0;border-radius:12px;background:#fffdf7;padding:10px 12px;}
+.pd-gap-head b{font-size:12px;font-weight:800;color:#7a4a17;}
+.pd-gap dl{margin-top:6px;display:grid;gap:5px;}
+.pd-gap dl div{display:grid;grid-template-columns:64px 1fr;gap:7px;}
+.pd-gap dt{font-size:9.8px;font-weight:800;color:#8a6a3a;}
+.pd-gap dd{margin:0;font-size:11px;line-height:1.55;color:#3f4f63;}
+.pd-cal-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;}
+.pd-cal-row .ac-field{flex:1 1 150px;min-width:0;}
+.pd-cal-row .btn-primary.sm{width:auto;flex:0 0 auto;min-height:42px;}
+.pd-cal{display:grid;gap:8px;}
+.pd-cal-ok{font-size:12px;line-height:1.55;color:#0f7a5f;}
+.pd-cal-warn{font-size:12px;line-height:1.55;font-weight:700;color:#8a1f14;}
+.pd-cal-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.pd-cal-pair div{display:grid;gap:2px;border:1px solid #e2ecf7;border-radius:11px;background:#fbfdff;padding:9px 10px;}
+.pd-cal-pair span{font-size:10px;font-weight:800;color:#5b7590;}
+.pd-cal-pair b{font-size:14px;font-weight:800;color:#0b2545;font-variant-numeric:tabular-nums;}
+.pd-cal-pair em{font-style:normal;font-size:10px;font-weight:700;color:#7b8ea4;}
+.pd-cal-which{font-size:11px;line-height:1.55;color:#22364f;}
+.pd-cal-note{font-size:10.6px;line-height:1.5;color:#41597a;}
+.pd-hols{display:flex;gap:6px;flex-wrap:wrap;}
+.pd-hol{font-size:10.4px;font-weight:800;color:#22364f;background:#eef4fb;border:1px solid #dbe4ee;border-radius:999px;padding:4px 9px;}
+@media (max-width:560px){
+  .pd-stat-grid{grid-template-columns:1fr;}
+  .pd-gap dl div{grid-template-columns:1fr;gap:1px;}
+  .pd-cal-pair{grid-template-columns:1fr;}
+  .pd-search input[type="search"]{flex:1 1 100%;}
+  .pd-search select{flex:1 1 auto;min-width:0;}
+  .pd-proxy-row input[type="url"]{flex:1 1 100%;}
+}
+
+/* v7.1 — 공공데이터 프록시 개인정보 경계 안내 */
+.pd-proxy-note{margin-top:6px;font-size:9.8px;line-height:1.55;color:#7b8ea4;background:#f7fafd;border:1px dashed #dbe4ee;border-radius:9px;padding:7px 9px;}
+.pd-proxy-note b{color:#41597a;}
+
+/* v7.1 — 청구 매칭: 빠진 서류 표시 · 간병 '참고' 배지 */
+.cc-lack{margin-top:4px;font-size:10.5px;font-weight:800;color:#8a1f14;}
+.cc-advisory{font-size:9.4px;font-weight:800;color:#7a4a17;background:#fdf3de;border:1px solid #f0dcb0;border-radius:999px;padding:2px 7px;}

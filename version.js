@@ -1,4 +1,4 @@
-/* 보장분석 라이프 리포트 v7.0 — 버전 단일 상수 (version.js)
+/* 보장분석 라이프 리포트 v7.1 — 버전 단일 상수 (version.js)
 
    v5.9: 버전 표기가 헤더·입력 영역·모달·PDF·서비스워커·manifest 에 흩어져
    v5.2 / v5.5 / v5.8 이 섞여 보이던 문제를 없앱니다.
@@ -8,7 +8,7 @@
 (function (root) {
   'use strict';
 
-  const APP_VERSION = 'v7.0';
+  const APP_VERSION = 'v7.1';
   const APP_VERSION_NUM = APP_VERSION.replace(/^v/, '');
   const APP_VERSION_MONTH = '2026.11';
   const APP_TAGLINE = '고객 맞춤형 보장 점검 · 리모델링 상담 가이드';

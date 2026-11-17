@@ -87,19 +87,20 @@ def main():
             # =========================================================
             ver = read(os.path.join(ROOT, "version.js"))
             VER = (re.findall(r"const APP_VERSION = '([^']+)'", ver) or [""])[0]
-            check("version.js 단일 상수 v7.0", VER == "v7.0" and len(re.findall(r"const APP_VERSION = '([^']+)'", ver)) == 1, VER)
-            check("window.APP_VERSION = v7.0", pg.evaluate("() => window.APP_VERSION") == "v7.0")
-            check("sw 캐시 bojang-guide-v7.0", "const CACHE = 'bojang-guide-v7.0';" in read(os.path.join(ROOT, "sw.js")))
+            # v7.1 — 버전 단일 상수 확인은 회차 고정 대신 '한 곳에서만 정의되고 화면·캐시가 같은 값'을 검사합니다.
+            check("version.js 단일 상수", bool(re.fullmatch(r"v\d+\.\d+(\.\d+)?", VER)) and len(re.findall(r"const APP_VERSION = '([^']+)'", ver)) == 1, VER)
+            check("window.APP_VERSION = " + VER, pg.evaluate("() => window.APP_VERSION") == VER)
+            check("sw 캐시 bojang-guide-" + VER, ("const CACHE = 'bojang-guide-%s';" % VER) in read(os.path.join(ROOT, "sw.js")))
             check("sw — 신규 3개 파일 캐시", all(("./%s" % f) in read(os.path.join(ROOT, "sw.js")) for f in ("aftercare.js", "claimcheck.js", "memofill.js")))
             man = json.loads(read(os.path.join(ROOT, "manifest.json")))
-            check("manifest v7.0", "v7.0" in man.get("name", ""), man.get("name"))
+            check("manifest — 현재 버전 표기", ("v" + VER.lstrip("v").split(".")[0]) in man.get("name", ""), man.get("name"))
             check("manifest — v7.0 신기능 설명", all(k in man.get("description", "") for k in ("사후관리 디데이", "청구 담보 매칭", "상담 메모")), man.get("description", "")[-90:])
             readme = read(os.path.join(ROOT, "README.md"))
             check("README v7.0 절", "## v7.0에서 달라진 것" in readme and "## v6.2에서 달라진 것" in readme)
             html = read(os.path.join(ROOT, "index.html"))
-            check("index — title v7.0", "리포트 v7.0 ·" in html)
-            check("index — meta app-version v7.0", '<meta name="app-version" content="v7.0">' in html)
-            check("화면 표기 v7.0", pg.inner_text(".hh-ver").strip().startswith("v7.0"), pg.inner_text(".hh-ver"))
+            check("index — title 현재 버전", ("리포트 %s ·" % VER) in html)
+            check("index — meta app-version", ('<meta name="app-version" content="%s">' % VER) in html)
+            check("화면 표기 " + VER, pg.inner_text(".hh-ver").strip().startswith(VER), pg.inner_text(".hh-ver"))
 
             # =========================================================
             # B. 사후관리 디데이 5종 — 날짜 산출식
@@ -493,7 +494,7 @@ def main():
             b = pg.evaluate("() => 1")
             single = os.path.join(ROOT, "dist", "bojang-guide.single.html")
             sh_html = read(single)
-            check("단일 HTML — v7.0 표기", VER in sh_html and 'content="v7.0"' in sh_html, len(sh_html) // 1024)
+            check("단일 HTML — 버전 표기", VER in sh_html and ('content="%s"' % VER) in sh_html, len(sh_html) // 1024)
             check("단일 HTML — 신규 모듈 포함", all(k in sh_html for k in ("사후관리 디데이", "확인할 후보 담보", "기기에서만 처리(로컬)", "다음 점검 예정일")))
             check("단일 HTML — 외부 참조 0", sh_html.count('<script src="http') == 0 and sh_html.count('<link href="http') == 0 and sh_html.count('<link rel="stylesheet" href="./') == 0, "")
 

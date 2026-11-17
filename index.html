@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v7.0 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
-<meta name="app-version" content="v7.0">
+<title>보장분석 라이프 리포트 v7.1 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<meta name="app-version" content="v7.1">
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
 <link rel="manifest" href="./manifest.json">
@@ -318,7 +318,7 @@
 
     <details class="app-foot-details">
       <summary>기준일 · 반영 기능 자세히 보기</summary>
-      <p class="app-foot">기준일 2026-11-17 · v7.0 기준점(사후관리 디데이 5종과 리터치 카톡 문구 · 진료서류 청구 담보 매칭과 상법 제662조 소멸시효 · 상담 메모 6단계 빠른 채움(100% 로컬) · 첫 화면 샘플 버튼 카피 개선) · v6.2 기준점(첫 화면 ①입력→②분석→③PDF 흐름 배너 · 로그인 없는 30장 샘플 체험 모드(가상 고객 격리·저장 차단) · 개인정보처리방침 데이터 흐름 1장 도식 · AI 보조자료 면책 문구(결과 화면·1·10·30장 PDF 꼬리말)) · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
+      <p class="app-foot">기준일 2026-11-17 · v7.1 기준점(공공데이터 실무 연동 — 복용약 고지 체크·맞춤 공식통계·약관 괴리·공휴일 영업일 보정(100% 오프라인 내장, 프록시 선택) · 결과 화면 '이 고객 다음 할 일' 한 줄 띠 · KCD 칩 클릭 불통 수정 · 간병인 사용일당 3분기 표기 · 고객 표지 플로팅 버튼 겹침 해소) · v7.0 기준점(사후관리 디데이 5종과 리터치 카톡 문구 · 진료서류 청구 담보 매칭과 상법 제662조 소멸시효 · 상담 메모 6단계 빠른 채움(100% 로컬) · 첫 화면 샘플 버튼 카피 개선) · v6.2 기준점(첫 화면 ①입력→②분석→③PDF 흐름 배너 · 로그인 없는 30장 샘플 체험 모드(가상 고객 격리·저장 차단) · 개인정보처리방침 데이터 흐름 1장 도식 · AI 보조자료 면책 문구(결과 화면·1·10·30장 PDF 꼬리말)) · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
     </details>
   </section>
 
@@ -454,7 +454,7 @@
                 <button type="button" class="btn-ghost sm" id="mf-example">예시 넣기</button>
                 <button type="button" class="btn-ghost sm" id="mf-undo" hidden>되돌리기</button>
               </div>
-              <p class="mf-note">🔒 메모는 외부 AI 서버로 보내지 않고 이 기기에서만 분석합니다(저장하지 않음). 뽑아낸 숫자는 고객에게 한 번 더 확인하세요.</p>
+              <p class="mf-note">🔒 <b>메모 원문은 저장되지 않습니다</b>(외부 AI 서버로도 보내지 않음). 다만 여기서 뽑아낸 <b>이름·보험료·담보 금액 등은 상담 입력란에 반영되어 이 기기(localStorage·IndexedDB)에 저장되고, 로그인 후 클라우드 동기화를 켜면 Supabase로 함께 동기화</b>됩니다 — 고객에게 한 번 더 확인하고, 원하지 않는 값은 지워 주세요.</p>
               <div id="mf-out" class="mf-out" aria-live="polite"></div>
             </div>
           </div>
@@ -694,6 +694,9 @@
       <p class="disclaimer">종합 점수·권장선은 상담 보조용 자체 산식입니다. 통계는 통계청 2024 · 중앙암등록본부 2023 · 중앙심뇌혈관질환센터 2023 · 건보공단 2025 공표 수치이며, 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.</p>
     </div>
 
+    <!-- ============ v7.1 이 고객 다음 할 일 한 줄 요약 띠 ============ -->
+    <div class="next-action internal no-print" id="next-action" aria-live="polite"></div>
+
     <!-- ============ v7.0 상담 후 챙길 것 3칸 ============ -->
     <div class="card internal no-print post-care" id="post-care">
       <div class="card-title"><span class="eyebrow">AFTER CONSULT</span> 상담 후 챙길 것 <span class="card-sub">30초 안에 이어서 처리 · 바로 열립니다</span></div>
@@ -873,7 +876,7 @@
         <input id="cc-q" type="search" placeholder="코드 또는 이름 — 예: C18 / 대장암 / K35 / 디스크" autocomplete="off" aria-label="질환 코드 검색">
         <button type="button" class="btn-ghost sm" id="cc-search">찾기</button>
       </div>
-      <div id="cc-codes" class="cc-codes" role="group" aria-label="검색된 질환 코드"></div>
+      <div id="cm-codes" class="cm-codes" role="group" aria-label="검색된 질환 코드"></div>
       <div id="cc-picked" class="cc-picked"></div>
 
       <div class="cc-cols">
@@ -884,8 +887,8 @@
         <div class="cc-col">
           <div class="subhead">가입 특약</div>
           <label class="cc-rider"><input type="checkbox" id="cc-rider-surgery"><span>수술 1~5종 · 질병수술비</span></label>
-          <label class="cc-rider"><input type="checkbox" id="cc-rider-care"><span>간병일당 (입원)</span></label>
-          <label class="cc-rider cc-rider-sub"><span>간병 지급 기준</span><select id="cc-care-basis"><option value="8">8시간제 · 일당 8만원 기준</option><option value="6">6시간제 · 일당 8만원 기준</option></select></label>
+          <label class="cc-rider"><input type="checkbox" id="cc-rider-care"><span>간병인 사용일당 (입원)</span></label>
+          <label class="cc-rider cc-rider-sub"><span>간병 지급 기준</span><select id="cc-care-basis"><option value="8">시간제 · 8시간 이상</option><option value="6">시간제 · 6시간 이상</option><option value="old">구 계약 · 금액제(8만원 미만 50%)</option></select></label>
           <label class="cc-rider"><input type="checkbox" id="cc-rider-silson"><span>5세대 실손</span></label>
         </div>
       </div>
@@ -898,7 +901,46 @@
       <p class="source-note">계산은 100% 브라우저 안에서 이루어집니다 · 근거: KCD 한국표준질병사인분류 · 상법 제662조(3년) · 5세대 실손 비중증 제외 4항목 · 상품별 약관 우선</p>
     </div>
 
-    <p class="app-foot">기준일 2026-11-15 · 상품별 약관이 우선합니다 · 특정 보험사·상품 추천이 아닌 상담 구조 안내</p>
+    <!-- ============ v7.1 F · PUBLIC DATA (100% 오프라인 내장 · 선택적 실시간) ============ -->
+    <div class="card" id="card-publicdata">
+      <div class="card-title"><span class="eyebrow">F · PUBLIC DATA</span> 공공데이터 실무 연동 <span class="card-sub">복용약 고지 · 맞춤 공식통계 · 공휴일 보정 — 기본 100% 오프라인</span></div>
+      <p class="card-lead">공공데이터(식약처·통계청·중앙암등록본부·건보공단·천문연구원 특일)를 앱 안에 내장해 <b>인터넷 없이도</b> 그 자리에서 계산합니다. 아래 세 가지는 보장분석·PDF와 별개로 동작하며, 고객 정보는 어떤 경우에도 외부로 나가지 않습니다.</p>
+
+      <div class="subhead">F-1 · 복용약 고지 누락 체크 <em>약 이름 → 질환군 → 3개월·5년·3·2·5 문항</em></div>
+      <div class="pd-med">
+        <div class="pd-search">
+          <input id="pd-med-q" type="search" placeholder="약 이름·성분 — 예: 아스피린, 메트포르민, 리바로, 씬지로이드, 자렐토" autocomplete="off" aria-label="복용약 검색">
+          <select id="pd-med-period" aria-label="복용 기간">
+            <option value="">복용 기간 모름</option>
+            <option value="3m">3개월 이내 시작</option>
+            <option value="1y">1년 이내 시작</option>
+            <option value="long">1년 이상 복용</option>
+          </select>
+          <button type="button" class="btn-primary sm" id="pd-med-search">체크</button>
+        </div>
+        <div class="pd-proxy-row">
+          <span class="pd-proxy-state" id="pd-proxy-state">오프라인 전용 — 외부 전송 없음</span>
+          <input id="pd-proxy" type="url" placeholder="선택 · API 프록시 주소(https://…)" autocomplete="off" aria-label="공공데이터 프록시 주소">
+          <button type="button" class="btn-ghost sm" id="pd-med-live">실시간 조회</button>
+        </div>
+        <p class="pd-proxy-note" id="pd-proxy-note">선택 기능입니다. 프록시 주소를 넣고 [실시간 조회]를 누를 때 <b>입력한 약 이름만</b> 제3자 프록시(k-skill 등)로 나갑니다 — 프록시 운영자·중계(Cloudflare 등) 처리와 <b>국외 이전</b>이 있을 수 있고 응답은 <b>최대 5분 캐시</b>될 수 있습니다. 고객 이름·연락처·증권 값·가족력·연령·성별은 전송하지 않으며, 기본값은 100% 기기 내 내장 사전(외부 요청 0회)입니다. 식약처·KOSIS·천문연 공공데이터는 일반 참고자료일 뿐 <b>개인 고지 누락·보험금 지급 여부·보험사 상령일을 확정 판정하지 않습니다.</b></p>
+      </div>
+      <div id="pd-med-out" class="pd-out" aria-live="polite"></div>
+
+      <div class="subhead">F-2 · 이 고객 맞춤 공식 통계 + 약관 괴리 <em>출처·기준연도·대상 범위 고정 표기</em></div>
+      <div id="pd-stat-out" class="pd-out" aria-live="polite"></div>
+
+      <div class="subhead">F-3 · 특일(공휴일) 반영 영업일·마감일 보정 <em>2026~2028 내장 달력 · 2028 잠정</em></div>
+      <div class="pd-cal-row">
+        <label class="ac-field"><span>기준일</span><input id="pd-cal-date" type="date"></label>
+        <label class="ac-field"><span>계산할 기한</span><select id="pd-cal-kind"></select></label>
+        <button type="button" class="btn-primary sm" id="pd-cal-run">보정 계산</button>
+      </div>
+      <div id="pd-cal-out" class="pd-out" aria-live="polite"></div>
+      <p class="source-note">복용약 사전은 식약처·약학정보원 공개 정보를 상담용으로 요약한 내장 사전(70여 성분)입니다 · 통계 출처·기준연도·대상 범위는 카드마다 표기 · 공휴일은 「관공서의 공휴일에 관한 규정」·우주항공청 월력요항 기준(2028년 잠정) · 계산은 100% 이 기기 안에서 이루어지고, 프록시를 직접 설정하고 '실시간 조회'를 누른 검색어만 외부로 나갑니다. 공공데이터는 참고자료이며 개인 고지 누락·지급 여부·상령일을 확정하지 않습니다.</p>
+    </div>
+
+    <p class="app-foot">기준일 2026-11-17 · 상품별 약관이 우선합니다 · 특정 보험사·상품 추천이 아닌 상담 구조 안내</p>
     <div class="view-homebar no-print"><button type="button" class="home-back" data-home="1">🏠 메인으로</button><span>현장 툴킷</span></div>
   </section>
 
@@ -1099,7 +1141,7 @@
   <div class="modal-card hub-card" role="dialog" aria-modal="true" aria-labelledby="ih-title">
     <span class="hub-eyebrow">START · INPUT MODE</span>
     <strong id="ih-title">어떻게 입력할까요?</strong>
-    <p>고객의 보장분석표를 어떤 방법으로 가져올지 먼저 고르세요. 수기·PDF는 이 기기에서 처리되며, 사진 AI 인식 실행 시에만 외부 AI API(Google Gemini 등)로 전송되고 앱·자체 서버에는 사진을 저장하지 않습니다.</p>
+    <p>고객의 보장분석표를 어떤 방법으로 가져올지 먼저 고르세요. 수기·PDF는 이 기기에서 처리되며, 사진 AI 인식 실행 시에만 <b>브라우저 → 자체 서버(Supabase Edge Function) → 외부 AI(Google Gemini 등)</b> 경로로 전송됩니다(모델 오류 시 대체 모델로 최대 3회 재전송). 사진은 앱과 자체 서버 DB에 저장하지 않습니다.</p>
     <div class="hub-list">
       <button type="button" class="hub-opt" data-mode="manual">
         <span class="ho-ico" aria-hidden="true">✎</span>
@@ -1211,6 +1253,7 @@
 <script src="./tools.js"></script>
 <script src="./aftercare.js"></script>
 <script src="./claimcheck.js"></script>
+<script src="./publicdata.js"></script>
 <script src="./memofill.js"></script>
 <script src="./monetize.js"></script>
 <script src="./backend.js"></script>

@@ -158,10 +158,13 @@
     state.subscription = null;
   }
 
-  /* v5.9 — 공식 도메인이 아닌 복제본에서는 서버 호출을 막습니다 */
-  const DOMAIN_LOCK = '공식 배포처가 아닌 주소에서는 서버 기능(클라우드·AI·결제)을 쓸 수 없습니다.';
+  /* v5.9 — 공식 도메인이 아닌 복제본에서는 서버 호출을 막습니다.
+     v7.1 — fail-closed: 가드가 없거나 판정 메서드가 없거나 file: 실행·호스트 없음이면 막습니다. */
+  const DOMAIN_LOCK = '지금 실행 환경에서는 서버 기능(클라우드·AI·결제)을 쓸 수 없습니다. 공식 배포처(HTTPS)에서 열어 주세요.';
   function guardAllows() {
-    return !(root.BojangGuard && root.BojangGuard.networkAllowed && !root.BojangGuard.networkAllowed());
+    const g = root.bojangDomainGuard;
+    if (!g || typeof g.allowed !== 'function') return false;
+    try { return !!g.allowed(); } catch (e) { return false; }
   }
 
   async function request(path, opts) {

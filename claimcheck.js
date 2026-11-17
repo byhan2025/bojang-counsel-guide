@@ -16,6 +16,15 @@
 
   const DISCLAIMER = '본 결과는 상담 참고용이며 최종 지급 여부는 상품 약관 및 보험사 심사에 따릅니다.';
 
+  /* v7.1 — 간병인 사용일당 지급 기준 3분기 (한대리·보고서 지적)
+     담보명을 '일당 8만원 고정'으로 쓰면 8만원이 약관상 법정 기준인 것처럼 읽힙니다.
+     실제로는 ① 8시간제 ② 6시간제 ③ 구 계약 금액제(8만원 미만 50% 감액) 세 갈래입니다. */
+  const CARE_BASIS_WHY = {
+    '8': '8시간제 상품 — 1일 8시간 이상 간병인을 사용한 사실(간병인 사용 확인서·계약서·영수증)이 지급 기준입니다. 일당은 증권의 가입금액 기준으로 지급됩니다.',
+    '6': '6시간제 상품 — 1일 6시간 이상 간병인을 사용한 사실이 기준입니다. 8시간제와 가입금액·보험료가 다르므로 증권의 시간 기준을 먼저 확인하세요.',
+    'old': '구 계약 금액제 — 약정 일당이 8만원 미만이면 실제 지급액의 50%만 지급되는 상품이 많습니다(8만원 이상이면 100%). 가입 시점 약관의 감액 조항을 그대로 확인하세요.'
+  };
+
   /* 날짜(UTC) — aftercare.js 와 같은 규칙 */
   function pad2(n) { return String(n).padStart(2, '0'); }
   function parts(s) {
@@ -180,7 +189,7 @@
       has('detail', 2, '실손은 급여/비급여 구분이 있는 세부내역서가 있어야 계산됩니다.');
       has('receipt', 3, '실손 청구의 기본 첨부 서류입니다.');
     }
-    if (input.care) has('admit', 2, '간병일당은 입원일수·간병 기간을 확인할 수 있는 서류가 필요합니다.');
+    if (input.care) has('admit', 2, '간병인 사용일당은 입원일수·간병 기간·간병인 사용 사실을 확인할 수 있는 서류가 필요합니다.');
     return list.sort((a, b) => a.rank - b.rank);
   }
 
@@ -190,25 +199,32 @@
     if (!cls) return { empty: true };
     const docSet = {};
     DOCS.forEach((d) => { docSet[d.key] = !!input.docs[d.key]; });
+    /* v7.1 — 해당 담보의 필수 서류가 “모두” 체크됐을 때만 '서류 준비됨' */
+    const readyFor = (need) => (need || []).every((k) => docSet[k]);
+    const lackOf = (need) => (need || []).filter((k) => !docSet[k]).map((k) => DOC_LABEL[k] || k);
 
     const rows = [];
-    cls.dx.forEach((d) => rows.push({ dambo: d, kind: '진단비', need: ['dx'], ok: docSet.dx, why: code.pays }));
+    cls.dx.forEach((d) => rows.push({ dambo: d, kind: '진단비', need: ['dx'], ok: readyFor(['dx']), lack: lackOf(['dx']), why: code.pays }));
     if (input.surgery) {
+      const need = (cls.group === '암' || cls.group === '유사암') ? ['surgery', 'path'] : ['surgery'];
       cls.op.forEach((d) => rows.push({
-        dambo: d, kind: '수술비', need: ['surgery', 'path'], ok: docSet.surgery,
+        dambo: d, kind: '수술비', need, ok: readyFor(need), lack: lackOf(need),
         why: (cls.group === '암' || cls.group === '유사암')
           ? (OP_HINT[code.code] || code.check) + ' 병리 결과지가 없으면 일반암/유사암 구분이 어렵습니다.'
           : (OP_HINT[code.code] || code.check)
       }));
     } else if (cls.op.length) {
-      rows.push({ dambo: '수술 1~5종 특약', kind: '수술비', need: ['surgery'], ok: false, locked: true, why: '가입 특약에 수술비를 체크하면 종수 기준으로 매칭합니다.' });
+      rows.push({ dambo: '수술 1~5종 특약', kind: '수술비', need: ['surgery'], ok: false, lack: ['수술확인서'], locked: true, why: '가입 특약에 수술비를 체크하면 종수 기준으로 매칭합니다.' });
     }
-    cls.tx.forEach((d) => rows.push({ dambo: d, kind: '치료비', need: ['detail'], ok: docSet.detail, why: code.check }));
+    cls.tx.forEach((d) => rows.push({ dambo: d, kind: '치료비', need: ['detail'], ok: readyFor(['detail']), lack: lackOf(['detail']), why: code.check }));
     if (input.care && (cls.group === '뇌' || cls.group === '심장' || cls.group === '수술' || cls.group === '암')) {
-      rows.push({ dambo: '간병일당(8만원 기준)', kind: '간병', need: ['admit'], ok: docSet.admit, why: input.careBasis === '6' ? '6시간제 상품 — 1일 6시간 이상 간병인 사용 확인서가 기준입니다.' : '8시간제 상품 — 1일 8시간 이상 간병인 사용 확인서가 기준입니다.' });
+      rows.push({
+        dambo: '간병인 사용일당', kind: '간병', need: ['admit'], ok: readyFor(['admit']), lack: lackOf(['admit']), advisory: true,
+        why: (CARE_BASIS_WHY[input.careBasis] || CARE_BASIS_WHY['8']) + ' ※ 후보·참고 안내입니다 — 실제 지급액·지급 여부는 계약·특약별로 확정됩니다.'
+      });
     }
     if (input.silson5) {
-      rows.push({ dambo: '5세대 실손(비중증 특약2)', kind: '실손', need: ['detail', 'receipt'], ok: docSet.detail && docSet.receipt, why: '연 1,000만원 한도·자기부담 50%. 도수·체외충격파·비급여 주사·미등재 신의료기술은 보장 제외(0원)입니다.' });
+      rows.push({ dambo: '5세대 실손(비중증 특약2)', kind: '실손', need: ['detail', 'receipt'], ok: readyFor(['detail', 'receipt']), lack: lackOf(['detail', 'receipt']), why: '연 1,000만원 한도·자기부담 50%. 도수·체외충격파·비급여 주사·미등재 신의료기술은 보장 제외(0원)입니다.' });
     }
 
     const required = requiredDocs(cls, input);
@@ -220,7 +236,7 @@
     if (soleReceipt) notes.push('영수증만으로는 수술 종수·원발/전이암 판정이 불가능합니다. 수술확인서와 병리조직결과지가 1순위로 필요한 서류입니다.');
     if (cls.silson) notes.push(cls.silson);
     if (input.silson5) notes.push('5세대 비중증 제외 4항목(도수·체외충격파·비급여 주사·미등재 신의료기술)은 자기부담 50%가 아니라 0원입니다.');
-    if (input.care) notes.push('간병일당은 요양병원 제외/포함, 지급 기준(8시간제·6시간제), 가족 간병 인정 여부를 증권에서 확인하세요.');
+    if (input.care) notes.push('간병인 사용일당은 후보·참고 안내입니다 — 실제 지급액은 계약·특약별 약정 일당과 시간 기준으로 확정됩니다. ① 시간제(8시간·6시간)와 ② 구 계약 금액제(약정 일당 8만원 미만이면 50% 감액)를 구분해 확인하고, 요양병원 제외·포함과 가족 간병 인정 여부도 증권에서 확인하세요.');
     (cls.caveat || []).forEach((c) => notes.push(c));
     if (code.group === '암' && docSet.path && !docSet.dx) notes.push('병리 결과지만으로는 진단확정일을 증명하기 어렵습니다 — 진단서를 함께 받으세요.');
 
@@ -229,14 +245,27 @@
   }
 
   function expiryOf(accident) {
+    /* v7.1 — 유효하지 않은 날짜(존재하지 않는 날짜·미래 날짜)는 시효 판정을 만들지 않습니다 */
+    const v = checkDate(accident);
+    if (!v.ok) return v;
     const date = addMonths(accident, 36);
     const days = diffDays(todayISO(), date);
     return {
-      date, days,
+      ok: true, date, days,
       tone: days < 0 ? 'danger' : days <= 90 ? 'danger' : days <= 180 ? 'warn' : 'ok',
       label: days < 0 ? '시효 완성 — 청구권 소멸 위험' : days <= 90 ? '긴급 — 90일 이내' : days <= 180 ? '주의 — 6개월 이내' : '여유',
       note: '계속 입원·통원으로 청구가 나뉘면 시효 기산일이 달라질 수 있습니다(입원 종료일·최종 진료일 기준). 보험사에 기산일을 확인하세요.'
     };
+  }
+
+  /* v7.1 — 사고일 검증: 형식·달력 오류(2026-02-31, 2026-13-40)와 미래 날짜를 모두 막습니다. */
+  function checkDate(s) {
+    const raw = String(s == null ? '' : s).trim();
+    if (!raw) return { ok: false, reason: 'empty', message: '사고일(진단확정·수술·퇴원일)을 입력하면 3년 소멸시효와 D-day가 나옵니다.' };
+    if (!parts(raw)) return { ok: false, reason: 'invalid', message: '날짜가 올바르지 않습니다 — ' + raw + ' (예: 2026-02-31·2026-13-40은 없는 날짜입니다). 다시 확인해 주세요.' };
+    const days = diffDays(todayISO(), raw);
+    if (days != null && days > 0) return { ok: false, reason: 'future', message: '사고일이 오늘(' + todayISO() + ')보다 뒤입니다 — 진단확정·수술·퇴원일을 다시 확인해 주세요.' };
+    return { ok: true, date: raw };
   }
 
   /* =========================================================
@@ -267,7 +296,7 @@
       <code>${esc(c.code)}</code><b>${esc(c.name)}</b><span>${esc(c.group)}</span></button>`).join('');
     $$('[data-cm-code]', host).forEach((b) => {
       b.addEventListener('click', () => {
-        picked = (typeof FC_CODES !== 'undefined' ? FC_CODES : []).find((c) => c.code === b.dataset.ccCode) || null;
+        picked = (typeof FC_CODES !== 'undefined' ? FC_CODES : []).find((c) => c.code === b.dataset.cmCode) || null;
         paintCodes(list);
         paintPicked();
         run();
@@ -308,18 +337,31 @@
   function resultHTML(r) {
     if (!r || r.empty) return '<p class="cc-none">먼저 질환·코드를 골라 주세요.</p>';
     const rows = r.rows.map((row) => `<div class="cm-row ${row.ok ? 'is-ok' : (row.locked ? 'is-locked' : 'is-miss')}">
-        <div class="cm-row-head"><b>${esc(row.dambo)}</b><span class="cc-kind">${esc(row.kind)}</span><span class="cc-verdict">${row.locked ? '특약 미선택' : (row.ok ? '서류 준비됨' : '서류 더 필요')}</span></div>
+        <div class="cm-row-head"><b>${esc(row.dambo)}</b><span class="cc-kind">${esc(row.kind)}</span>${row.advisory ? '<span class="cc-advisory">참고</span>' : ''}<span class="cc-verdict">${row.locked ? '특약 미선택' : (row.ok ? '서류 준비됨' : '서류 더 필요')}</span></div>
+        ${(!row.ok && !row.locked && row.lack && row.lack.length) ? `<p class="cc-lack">빠진 서류 — ${row.lack.map(esc).join(' · ')}</p>` : ''}
         <p>${esc(row.why || '')}</p>
       </div>`).join('');
     const miss = r.missing.length ? `<div class="cc-block cc-miss">
         <div class="cc-block-title">추가로 필요한 서류 — 1순위부터</div>
         <ul class="cc-miss-list">${r.missing.map((m) => `<li><span class="cc-rank">${m.rank}순위</span><b>${esc(DOC_LABEL[m.key] || m.key)}</b><span>${esc(m.why)}</span></li>`).join('')}</ul>
       </div>` : `<div class="cc-block cc-ok"><div class="cc-block-title">추가로 필요한 서류 없음</div><p>핵심 서류가 모두 체크되어 있습니다. 사본·원본 요구 여부만 보험사에 확인하세요.</p></div>`;
-    const ex = r.expiry ? `<div class="cc-block cc-expiry tone-${r.expiry.tone}">
+    /* v7.1 — 유효하지 않은 사고일은 '긴급'이 아니라 입력 오류로 안내 */
+    let ex;
+    if (r.expiry && r.expiry.ok === false && (r.expiry.reason === 'invalid' || r.expiry.reason === 'future')) {
+      ex = `<div class="cc-block cc-expiry tone-warn">
+        <div class="cc-block-title">소멸시효 — 날짜를 확인해 주세요</div>
+        <p class="cc-exp-date">${esc(r.expiry.message)}</p>
+        <p class="cc-exp-note">없는 날짜는 시효를 계산할 수 없고, 미래 날짜는 아직 사고가 아니므로 D-day 판정을 하지 않습니다.</p>
+      </div>`;
+    } else if (r.expiry && r.expiry.date) {
+      ex = `<div class="cc-block cc-expiry tone-${r.expiry.tone}">
         <div class="cc-block-title">상법 제662조 소멸시효 — 사고일 + 3년</div>
         <p class="cc-exp-date">${esc(koDate(r.expiry.date))} <b class="tone-${r.expiry.tone}">${esc(ddayText(r.expiry.days))}</b> <span>${esc(r.expiry.label)}</span></p>
         <p class="cc-exp-note">${esc(r.expiry.note)}</p>
-      </div>` : '<div class="cc-block"><div class="cc-block-title">소멸시효</div><p>사고일(진단확정·수술·퇴원일)을 넣으면 3년 만료일과 D-day가 나옵니다.</p></div>';
+      </div>`;
+    } else {
+      ex = '<div class="cc-block"><div class="cc-block-title">소멸시효</div><p>사고일(진단확정·수술·퇴원일)을 넣으면 3년 만료일과 D-day가 나옵니다.</p></div>';
+    }
     return `<div class="cc-block">
         <div class="cc-block-title">확인할 후보 담보</div>
         <div class="cm-rows">${rows || '<p class="cc-none">이 코드에 바로 연결되는 후보 담보가 없습니다. 고지·인수 판단 항목입니다.</p>'}</div>
@@ -359,7 +401,8 @@
   }
 
   root.BojangClaimCheck = {
-    init, run, match, classify, searchCodes, findCode, expiryOf, DOCS, DISCLAIMER,
+    init, run, match, classify, searchCodes, findCode, expiryOf, checkDate, DOCS, DISCLAIMER,
+    preview: (input) => resultHTML(match(input)),
     pick: (codeStr) => {
       picked = (typeof FC_CODES !== 'undefined' ? FC_CODES : []).find((c) => c.code === codeStr) || null;
       paintCodes(searchCodes(codeStr)); paintPicked(); return run();

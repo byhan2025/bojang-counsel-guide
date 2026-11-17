@@ -40,8 +40,81 @@
 
   function isClone() { return !isOfficial(); }
 
-  /* 서버(클라우드·비전) 호출 허용 여부 — 복제 도메인에서는 막습니다 */
-  function networkAllowed() { return isOfficial(); }
+  /* =========================================================
+     v7.1 — 네트워크 가드 fail-closed (4호 보고서 P0)
+     판정 근거가 하나라도 비면(가드 없음·메서드 없음·file: 실행·호스트 없음·비공식 호스트)
+     외부 요청을 보내지 않습니다. 기기 안 기능은 그대로 동작합니다.
+     ========================================================= */
+  function networkReason() {
+    const g = root.bojangDomainGuard;
+    if (!g || typeof g.allowed !== 'function') return 'no-guard';
+    const p = protocol();
+    if (!p) return 'no-protocol';
+    if (p === 'file:') return 'file-protocol';
+    const h = host();
+    if (!h) return 'no-host';
+    if (p !== 'https:' && p !== 'http:') return 'not-http';
+    if (OFFICIAL_HOSTS.indexOf(h) < 0) return 'unofficial-host';
+    return '';
+  }
+
+  /* 서버(클라우드·비전·프록시) 호출 허용 여부 — 위 근거가 모두 맞을 때만 */
+  function networkAllowed() { return networkReason() === ''; }
+
+  function blockedError(reason) {
+    const e = new Error('GUARD_BLOCKED:' + (reason || 'blocked'));
+    e.code = 'GUARD_BLOCKED';
+    e.reason = reason || 'blocked';
+    return e;
+  }
+
+  /* 외부(교차 출처) 요청인지 — 판정할 수 없으면 외부로 봅니다(보수적) */
+  function isExternalUrl(url) {
+    const raw = String(url == null ? '' : (typeof url === 'string' ? url : (url.url || '')));
+    if (!raw) return true;
+    if (/^(data|blob):/i.test(raw)) return false;
+    if (!/^https?:/i.test(raw) && !/^\//.test(raw)) return false;
+    let u;
+    try { u = new URL(raw, (root.location && root.location.href) || 'https://invalid.local/'); } catch (e) { return true; }
+    if (!/^https?:$/i.test(u.protocol)) return false;
+    if (protocol() === 'file:') return true;                 /* 파일 실행에서는 모든 http(s)가 외부 */
+    const origin = (root.location && root.location.origin) || '';
+    if (!origin || origin === 'null') return true;           /* 출처를 알 수 없으면 외부로 간주 */
+    return u.origin !== origin;
+  }
+
+  /* =========================================================
+     v7.1 — 전역 fetch 가드 (단일 차단 지점)
+     같은 출처(앱 파일) 요청은 그대로, 외부 요청은 허용되지 않으면 0회로 막습니다.
+     ========================================================= */
+  let blockedCount = 0;
+  const blockedUrls = [];
+  function installFetchGuard() {
+    if (root.__bojangFetchGuarded) return;
+    const orig = root.fetch;
+    if (typeof orig !== 'function') return;
+    root.__bojangFetchGuarded = true;
+    root.fetch = function (input, init) {
+      const url = typeof input === 'string' ? input : (input && input.url) || '';
+      if (isExternalUrl(url) && !networkAllowed()) {
+        blockedCount++;
+        if (blockedUrls.length < 20) blockedUrls.push(String(url).slice(0, 80));
+        return Promise.reject(blockedError(networkReason()));
+      }
+      return orig.call(root, input, init);
+    };
+  }
+
+  root.bojangDomainGuard = {
+    enabled: true,
+    allowed: networkAllowed,
+    reason: networkReason,
+    isExternalUrl,
+    assert() { if (!networkAllowed()) throw blockedError(networkReason()); return true; },
+    blocked: () => blockedCount,
+    blockedUrls: () => blockedUrls.slice(),
+    reset() { blockedCount = 0; blockedUrls.length = 0; }
+  };
 
   function banner() {
     if (!isClone()) return null;
@@ -107,15 +180,17 @@
   }
 
   function init() {
+    installFetchGuard();
     banner();
-    if (isClone()) {
-      try { console.warn('[BojangGuard] 비공식 도메인 — 서버 호출 차단:', host()); } catch (e) { /* noop */ }
+    if (!networkAllowed()) {
+      try { console.warn('[BojangGuard] 외부 요청 차단( fail-closed ) —', networkReason(), host()); } catch (e) { /* noop */ }
     }
-    return { official: isOfficial(), host: host(), mark: mark() };
+    return { official: isOfficial(), host: host(), mark: mark(), network: networkAllowed(), reason: networkReason() };
   }
 
   root.BojangGuard = {
-    init, isOfficial, isClone, networkAllowed, host, protocol, banner, mark, stamp,
-    identity, OFFICIAL_HOSTS, OFFICIAL_LABEL
+    init, isOfficial, isClone, networkAllowed, networkReason, isExternalUrl, host, protocol, banner, mark, stamp,
+    identity, OFFICIAL_HOSTS, OFFICIAL_LABEL,
+    blocked: () => blockedCount, blockedUrls: () => blockedUrls.slice(), blockedError
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -17,7 +17,7 @@
 
   const DEFAULT = {
     age: '40', gender: '남', job: '1', silson: '4', premium: 27,
-    client: { name: '홍길동', birth: '', consultant: '' },
+    client: { name: '홍길동', birth: '', consultant: '', contract: '' },
     contracts: [],
     family: [],
     disc: {},
@@ -37,7 +37,7 @@
      샘플은 메인의 '샘플 데이터로 체험하기' 버튼으로만 들어갑니다. */
   const EMPTY = {
     age: '40', gender: '남', job: '1', silson: 'none', premium: 0,
-    client: { name: '', birth: '', consultant: '' },
+    client: { name: '', birth: '', consultant: '', contract: '' },
     contracts: [], family: [], disc: {},
     cov: {
       cancer: { general: 0, similar: 0, treatment: { surgery: 0, drug: 0, radio: 0, icu: 0, extra: 0 }, recur: false },
@@ -1064,8 +1064,86 @@
     state.analyzed = true;
     $('#result').hidden = false;
     $('#save-bar').hidden = false;
+    renderNextAction();
     if (window.BojangLive) window.BojangLive.markDirty();
     if (window.BojangDeck) window.BojangDeck.refresh(state);
+  }
+
+  /* =========================================================
+     v7.1 — 결과 화면 '이 고객 다음 할 일' 한 줄 요약 띠
+     계약일(또는 생년월일)이 있으면 가장 가까운 점검일을 큰 글씨로 바로 보여 주고,
+     없을 때는 계약일 입력을 유도합니다. 날짜가 주말·공휴일이면 영업일 보정을 병기합니다.
+     ========================================================= */
+  function nextActionData() {
+    const A = window.BojangAftercare;
+    const contract = state.client.contract || '';
+    const birth = state.client.birth || '';
+    if (!A || (!contract && !birth)) return { empty: true, contract, birth };
+    const r = A.calc({ name: state.client.name, contract, birth });
+    const upcoming = r.items.filter((i) => i.available && i.days != null && i.days >= 0).sort((a, b) => a.days - b.days);
+    return {
+      empty: false, contract, birth,
+      next: r.nextCheck, item: upcoming[0] || null, second: upcoming[1] || null,
+      total: upcoming.length
+    };
+  }
+
+  function setClientContract(v) {
+    state.client.contract = String(v || '');
+    saveSession();
+    const ac = $('#ac-contract');
+    if (ac && ac.value !== state.client.contract) ac.value = state.client.contract;
+    renderNextAction();
+  }
+
+  function renderNextAction() {
+    const host = $('#next-action');
+    if (!host) return null;
+    const d = nextActionData();
+    const P = window.BojangPublicData;
+    if (d.empty) {
+      host.className = 'next-action internal no-print is-empty';
+      host.innerHTML = `
+        <div class="na-row">
+          <span class="na-eyebrow">NEXT TASK</span>
+          <b class="na-empty-title">이 고객 다음 할 일</b>
+          <p class="na-empty-copy">계약일을 넣으면 가장 가까운 점검일이 여기에 뜹니다 — 생년월일만 있어도 상령일을 계산합니다.</p>
+        </div>
+        <label class="na-field"><span>계약일</span><input type="date" id="na-contract" value="${esc(d.contract)}"></label>`;
+      const el = $('#na-contract');
+      if (el) el.addEventListener('change', () => setClientContract(el.value));
+      return d;
+    }
+    const days = d.next.days;
+    const tone = days <= 30 ? 'danger' : days <= 90 ? 'warn' : 'ok';
+    const fix = (P && P.calendar && d.next.date) ? P.calendar.correct(d.next.date) : null;
+    const fixLine = fix && !fix.ok
+      ? `<p class="na-fix">${esc(d.next.date)}은 ${esc(fix.reason)} — 직전 영업일 <b>${esc(fix.prev)}(${esc(P.date.weekday(fix.prev))})</b>${fix.provisional ? ' · 2028 잠정 달력' : ''}</p>`
+      : '';
+    const secondLine = d.second
+      ? `<p class="na-second">그다음 · ${esc(d.second.title)} ${esc(d.second.date)} (${esc(BojangAftercare.date.ddayText(d.second.days))})</p>`
+      : '';
+    host.className = 'next-action internal no-print';
+    host.innerHTML = `
+      <div class="na-main">
+        <span class="na-eyebrow">NEXT TASK · 이 고객 다음 할 일</span>
+        <div class="na-big">
+          <span class="na-label">다음 점검</span>
+          <b class="na-date">${esc(d.next.date)}</b>
+          <span class="na-sep" aria-hidden="true">·</span>
+          <b class="na-dday tone-${tone}">${esc(BojangAftercare.date.ddayText(days))}</b>
+        </div>
+        <p class="na-sub">${esc(d.next.title)} · ${esc(BojangAftercare.date.koDate(d.next.date))}(${esc(P && P.date ? P.date.weekday(d.next.date) : '')})</p>
+        ${secondLine}
+        ${fixLine}
+      </div>
+      <div class="na-side">
+        <label class="na-field"><span>계약일</span><input type="date" id="na-contract" value="${esc(d.contract)}"></label>
+        <button type="button" class="btn-ghost sm" data-na-go="aftercare">사후관리 열기 →</button>
+      </div>`;
+    const el = $('#na-contract');
+    if (el) el.addEventListener('change', () => setClientContract(el.value));
+    return d;
   }
 
   function weightNotes(m) {
@@ -1221,6 +1299,8 @@
     openSampleDemo, exitSampleDemo, isSampleMode: () => !!state.sampleMode,
     legal: { open: openLegal, close: closeLegal, render: renderLegal }, guardNumberInput,
     isSample: () => !!state.sample,
+    /* v7.1 — 결과 화면 '이 고객 다음 할 일' 띠 */
+    renderNextAction, nextActionData, setClientContract,
     /* v6.1 — 도구 탭 고지 체크가 6단계 입력과 같은 state.disc를 쓰도록 */
     discTouched: () => { saveSession(); renderDisclosure(); renderSummary(); if (state.analyzed) analyze(); }
   };
@@ -1793,6 +1873,8 @@
     if (name === 'brand' && window.BojangBrand) window.BojangBrand.render();
     /* v7.0 — 가림 모드가 바뀌었을 수 있으니 툴킷 디데이를 다시 그립니다 */
     if (name === 'toolkit' && window.BojangAftercare) window.BojangAftercare.run();
+    /* v7.1 — 공공데이터 카드의 맞춤 통계를 현재 고객 조건으로 다시 그립니다 */
+    if (name === 'toolkit' && window.BojangPublicData) window.BojangPublicData.refresh();
     if (window.BojangTools) {
       if (name === 'codes') window.BojangTools.renderCodes();
       else if (name === 'silson') window.BojangTools.renderSilson();
@@ -2751,11 +2833,11 @@
       sections: [
         ['1. 수집·이용 항목', '① 이 기기 저장(IndexedDB): 상담 이력 — 고객명(선택)·생년월일(선택)·연령대·성별·직업급수·실손 세대·월 보험료·담보 금액·계약 목록·고지 체크·상담 라벨·점수. ② 이 기기 저장(localStorage): 화면 설정(보기 모드·가이드 확인 여부·큰 글씨)과 입력 중인 상담 1건. ③ 클라우드(로그인해 동기화를 켰을 때만): 이메일, 상담 스냅샷 — 고객명·생년월일·연령대·성별·직업급수·실손 세대·월 보험료·담보 금액·계약 목록·고지 체크·상담 라벨·점수 — 와 브랜드 설정(상호·담당자·연락처·로고)이 Supabase(서울 리전)에 저장됩니다. 로그인하지 않으면 이 기기 저장만 사용합니다.'],
         ['2. 사진 촬영 — 앱·자체 서버에 저장하지 않음', '카메라로 찍은 보장분석표 사진은 이 앱과 자체 Supabase DB에 저장하지 않습니다(서버 저장 0건). 촬영본은 화면 메모리에서 전처리해 인식에 쓰고, localStorage·IndexedDB 어디에도 남기지 않습니다.'],
-        ['3. AI 사진 인식 — 외부 AI API 전송', '사진에서 담보 숫자를 자동으로 읽을 때에만, 축소한 이미지가 외부 AI API(Google Gemini 등)로 전송됩니다. 앱은 전송 이미지를 자체 서버에 저장하지 않지만, 전송된 이미지의 보관·삭제는 해당 공급자의 API 개인정보·남용방지 정책을 따르며, 앱이 공급자 측 즉시 삭제를 보증하지는 않습니다. 요청이 실패(오류·요청 제한)하면 같은 목적으로 대체 모델에 다시 시도할 수 있습니다. 인식 결과 텍스트만 화면에 표시하며, 사진 인식을 쓰지 않으면 어떤 이미지도 외부로 나가지 않습니다.'],
+        ['3. AI 사진 인식 — 실제 전송 경로', '사진에서 담보 숫자를 자동으로 읽을 때에만 다음 경로로 이미지가 전송됩니다: ① 이 브라우저 → ② 자체 서버(Supabase Edge Function · parse-coverage-vision) → ③ 외부 AI(Google Gemini, 설정에 따라 OpenAI). ②는 이미지를 DB·스토리지에 저장하지 않고 메모리에서만 처리하며 응답 후 즉시 참조를 해제합니다. ③에서 모델 오류·요청 제한이 나면 대체 모델 체인으로 최대 3회까지 다시 전송될 수 있습니다(gemini-3.8-flash → gemini-4-hydrogen → gemini-flash-latest). 전송된 이미지의 공급자 측 보관·삭제는 해당 API 개인정보·남용방지 정책을 따르며, 앱이 공급자 측 즉시 삭제를 보증하지는 않습니다. 인식 결과 텍스트만 화면에 표시하고, 사진 인식을 쓰지 않으면 어떤 이미지도 외부로 나가지 않습니다.'],
         ['4. 보관 위치와 기간', '① 상담 이력은 이 기기의 IndexedDB에, 입력 중인 상담 1건은 localStorage에 보관되고 이용자가 삭제할 때까지 남습니다. ② 클라우드 동기화를 켜면 상담 스냅샷이 Supabase(서울 리전)에 저장되며, 이용자가 상담을 삭제하거나 계정을 정리할 때까지 보관합니다. ③ PDF·JSON 파일은 이용자 기기에서 만들어지고, 서비스가 따로 보관하지 않습니다.'],
         ['5. 제3자 제공·처리위탁', '개인정보를 제3자에게 판매·제공하지 않습니다. 다만 서비스 운영을 위해 Supabase(서울 리전 · 로그인·상담 동기화 데이터 저장)와 외부 AI API(Google Gemini 등 · 사진 인식 시에만 해당)에 처리를 위탁합니다. AI 공급자 측 이미지 보관은 해당 공급자의 API 정책(남용 감시 목적의 제한 기간 보관 포함)을 따릅니다. 법령에 따라 수사기관이 요구하는 경우는 예외로 합니다.'],
         ['6. 이용자의 권리', '이용자는 언제든지 ① 상담 이력 삭제(목록의 × 버튼), ② 클라우드 기록 삭제·로그아웃, ③ 브라우저 데이터 삭제로 기기 저장값을 지울 수 있습니다. 삭제한 자료는 복구되지 않습니다.'],
-        ['7. 안전성 확보 조치', '① 모든 서버 통신은 HTTPS로 암호화합니다. ② 클라우드 데이터는 계정 단위 접근 제어(RLS)로 분리합니다. ③ 공식 배포처가 아닌 도메인에서 열린 복제본은 서버 호출을 차단합니다. ④ 발급 PDF에는 발급 단위 식별 워터마크(ID-XXXX)가 들어가 유출 경로를 추적할 수 있습니다. ⑤ 스마트키 기기 잠금을 쓰면 상담 화면에 PIN·생체 잠금이 걸리고, 등록 기기(최대 2대)와 세션 정보만 서버에 저장됩니다(기기 개인키·사진은 서버에 저장하지 않음).'],
+        ['7. 안전성 확보 조치', '① 모든 서버 통신은 HTTPS로 암호화합니다. ② 클라우드 데이터는 계정 단위 접근 제어(RLS)로 분리합니다. ③ 공식 배포처가 아닌 도메인에서 열린 복제본은 서버 호출을 차단하고, 보안 가드가 없거나 판정할 수 없는 실행 환경(파일로 직접 열기·호스트 없음·가드 미탑재)에서는 외부 요청을 0건으로 막는 fail-closed로 동작합니다. ④ 발급 PDF에는 발급 단위 식별 워터마크(ID-XXXX)가 들어가 유출 경로를 추적할 수 있습니다. ⑤ 스마트키 기기 잠금을 쓰면 상담 화면에 PIN·생체 잠금이 걸리고, 등록 기기(최대 2대)와 세션 정보만 서버에 저장됩니다(기기 개인키·사진은 서버에 저장하지 않음).'],
         ['8. 문의', '개인정보 관련 문의는 브랜드 설정에 입력한 담당 설계사 연락처로 받습니다.']
       ]
     }
@@ -2790,14 +2872,14 @@
     },
     {
       no: '3',
-      title: '외부 AI 비전 분석',
-      where: '사진 분석 시 외부 AI로 전달',
+      title: '사진 AI 인식 (2단 전송)',
+      where: '브라우저 → 자체 Edge Function → 외부 AI',
       items: [
-        '보장분석표 사진을 AI로 읽을 때만 축소 이미지를 전달 (오류 시 대체 모델로 재전송될 수 있음)',
-        '앱·자체 서버에는 사진 저장 0건',
-        '전송 이미지의 보관·삭제는 해당 AI 공급자 API 정책을 따름'
+        '사진을 AI로 읽을 때만: 브라우저 → Supabase Edge Function(parse-coverage-vision) → 외부 AI(Google Gemini, 설정에 따라 OpenAI)',
+        'Edge Function은 사진을 DB·스토리지에 저장하지 않고 메모리에서만 처리(응답 후 참조 해제)',
+        '모델 오류·요청 제한 시 대체 모델 체인으로 최대 3회 재전송될 수 있음 · 전송 이미지 보관은 공급자 API 정책을 따름'
       ],
-      keep: '앱은 공급자 측 즉시 삭제를 보증하지 않음 · 사진 인식을 쓰지 않으면 전송 없음'
+      keep: '앱은 공급자 측 즉시 삭제를 보증하지 않음 · 사진 인식을 쓰지 않으면 전송 0건 · 판정 불가 환경(파일 실행·가드 없음)은 fail-closed로 차단'
     }
   ];
 
@@ -2896,6 +2978,7 @@
     /* v7.0 — 사후관리 디데이 · 청구 서류 매칭 · 상담 메모 빠른 채움 */
     if (window.BojangAftercare) window.BojangAftercare.init();
     if (window.BojangClaimCheck) window.BojangClaimCheck.init();
+    if (window.BojangPublicData) window.BojangPublicData.init();
     if (window.BojangMemoFill) window.BojangMemoFill.init();
     if (window.BojangInputHub) {
       window.BojangInputHub.init({
@@ -2941,6 +3024,17 @@
         openMoreMenu(true);
         setTimeout(() => { const el = $('#history-list'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 80);
       }
+    });
+    /* v7.1 — '이 고객 다음 할 일' 띠 → 사후관리 카드로 이동 */
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-na-go]');
+      if (!btn) return;
+      switchView('toolkit');
+      setTimeout(() => {
+        const card = $('#card-aftercare');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (window.BojangAftercare) window.BojangAftercare.run();
+      }, 90);
     });
     $('#btn-home').addEventListener('click', goHome);
     /* v7.0 — 상담 후 챙길 것 3칸 → 현장 툴킷의 해당 도구로 바로 이동 */

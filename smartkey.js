@@ -579,6 +579,11 @@
     async call(name, payload) {
       const url = this.endpoint(name);
       if (!url) { this.remote = 'unavailable'; return null; }
+      /* v7.1 — fail-closed: 허용 근거가 없으면 외부 요청 0회 */
+      const g = root.bojangDomainGuard;
+      if (!g || typeof g.allowed !== 'function' || !g.allowed()) {
+        this.remote = 'unavailable'; this.lastError = 'domain-lock'; return null;
+      }
       const B = root.BojangBackend;
       const cfg = B && B.config ? B.config() : {};
       try {
