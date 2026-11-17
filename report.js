@@ -2576,7 +2576,7 @@
         s.gauge(x + 9, yy + 47, cw - 18, c[3], { color: c[3] >= 0.99 ? C.mint : c[3] > 0 ? C.orange : C.gray, h: 4.5 });
       });
       y += 136;
-      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반병원 간병 일당이 ${won(m.state.cov.care.daily)}만원, 요양병원은 ${m.state.cov.care.nDaily ? won(m.state.cov.care.nDaily) + '만원' : '없음'}입니다. 간병인을 하루 쓰면 10만~15만 원이 나가니까, 한 달이면 300만 원을 넘습니다. 지급 기준은 ${ { time: '하루 8시간', money: '하루 7~8만원', unknown: '확인 필요' }[m.state.cov.care.basis] }입니다."` });
+      y = s.script(s.ML, y, s.CW, { title: '판독', text: `"${m.client.name}님은 일반병원 간병 일당이 ${won(m.state.cov.care.daily)}만원, 요양병원은 ${m.state.cov.care.nDaily ? won(m.state.cov.care.nDaily) + '만원' : '없음'}입니다. 간병인을 하루 쓰면 10만~17만 원이 나가니까, 한 달이면 300만~500만 원을 넘습니다. 지급 기준은 ${ { time: '하루 8시간', money: '하루 7~8만원', unknown: '확인 필요' }[m.state.cov.care.basis] }입니다."` });
       y += 8;
       y = s.sectionHead(s.ML, y, s.CW, '01', '근거 통계 — 노후의 실제 지출', '출처: 건보공단 2025 노인장기요양보험 통계연보');
       cr2.facts.forEach((f) => { y = s.bullets(s.ML, y, s.CW, [f], { size: 7, gap: 2 }); });
