@@ -1540,6 +1540,8 @@
     state.contracts = [];
     state.label = '';
     state.migration = { migrated: false, notes: [], clamped: 0 };
+    /* v7.0 — 새 상담을 열면 메모 원문·강조 표시를 함께 비웁니다(원문은 저장하지 않습니다) */
+    if (window.BojangMemoFill && window.BojangMemoFill.reset) window.BojangMemoFill.reset();
     syncSegments();
     renderClientFields();
     renderFamilyChips();
@@ -1789,6 +1791,8 @@
     if (name === 'live' && window.BojangLive) window.BojangLive.render();
     if (name === 'remodel' && window.BojangRemodel) window.BojangRemodel.render();
     if (name === 'brand' && window.BojangBrand) window.BojangBrand.render();
+    /* v7.0 — 가림 모드가 바뀌었을 수 있으니 툴킷 디데이를 다시 그립니다 */
+    if (name === 'toolkit' && window.BojangAftercare) window.BojangAftercare.run();
     if (window.BojangTools) {
       if (name === 'codes') window.BojangTools.renderCodes();
       else if (name === 'silson') window.BojangTools.renderSilson();
@@ -2787,9 +2791,9 @@
     {
       no: '3',
       title: '외부 AI 비전 분석',
-      where: '사진 업로드 시 1회 전달',
+      where: '사진 분석 시 외부 AI로 전달',
       items: [
-        '보장분석표 사진을 AI로 읽을 때만 축소 이미지 1회 전달',
+        '보장분석표 사진을 AI로 읽을 때만 축소 이미지를 전달 (오류 시 대체 모델로 재전송될 수 있음)',
         '앱·자체 서버에는 사진 저장 0건',
         '전송 이미지의 보관·삭제는 해당 AI 공급자 API 정책을 따름'
       ],
@@ -2889,6 +2893,10 @@
     if (window.BojangBackend) window.BojangBackend.init();
     renderHome();
     if (window.BojangTools) window.BojangTools.init();
+    /* v7.0 — 사후관리 디데이 · 청구 서류 매칭 · 상담 메모 빠른 채움 */
+    if (window.BojangAftercare) window.BojangAftercare.init();
+    if (window.BojangClaimCheck) window.BojangClaimCheck.init();
+    if (window.BojangMemoFill) window.BojangMemoFill.init();
     if (window.BojangInputHub) {
       window.BojangInputHub.init({
         state: state,
@@ -2920,6 +2928,8 @@
       else if (k === 'silson') switchView('silson');
       else if (k === 'disclose') switchView('disclose');
       else if (k === 'premium') switchView('premium');
+      else if (k === 'aftercare') { switchView('toolkit'); setTimeout(() => { const el = $('#card-aftercare'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (window.BojangAftercare) window.BojangAftercare.run(); }, 80); }
+      else if (k === 'claimcheck') { switchView('toolkit'); setTimeout(() => { const el = $('#card-claimcheck'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80); }
       else if (k === 'remodel') switchView('remodel');
       else if (k === 'brand') switchView('brand');
       else if (k === 'pdf') {
@@ -2933,6 +2943,30 @@
       }
     });
     $('#btn-home').addEventListener('click', goHome);
+    /* v7.0 — 상담 후 챙길 것 3칸 → 현장 툴킷의 해당 도구로 바로 이동 */
+    document.addEventListener('click', (e) => {
+      const cell = e.target.closest('[data-pc-go]');
+      if (!cell) return;
+      const kind = cell.dataset.pcGo;
+      const go = (id, after) => {
+        switchView('toolkit');
+        setTimeout(() => {
+          const el = $('#' + id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (after) after();
+        }, 90);
+      };
+      if (kind === 'claimcheck') go('card-claimcheck');
+      else if (kind === 'aftercare') { go('card-aftercare'); setTimeout(() => { if (window.BojangAftercare) window.BojangAftercare.run(); }, 140); }
+      else if (kind === 'kakao') {
+        go('card-aftercare', () => {
+          const has = window.BojangAftercare && window.BojangAftercare.readInput().contract;
+          toast(has ? '카톡 인사말 복사 버튼을 누르면 초안이 복사됩니다' : '계약일을 넣으면 카톡 안내 초안이 만들어집니다');
+          const btn = $('#ac-results [data-ac-copy]');
+          if (btn) { btn.classList.add('is-pulse'); setTimeout(() => btn.classList.remove('is-pulse'), 1600); }
+        });
+      }
+    });
     /* v5.9 — 첫 화면 3버튼 · 더보기 메뉴 · 샘플 체험 */
     const moreBtn = $('#btn-more-menu');
     if (moreBtn) moreBtn.addEventListener('click', () => openMoreMenu());

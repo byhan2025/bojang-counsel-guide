@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v6.2 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
-<meta name="app-version" content="v6.2">
+<title>보장분석 라이프 리포트 v7.0 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<meta name="app-version" content="v7.0">
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
 
@@ -4053,8 +4053,278 @@ body.is-sample .deck-top{padding-top:calc(6px + env(safe-area-inset-top));}
 }
 .disclaimer-official b{font-weight:700;color:#16293e;}
 
+/* =========================================================
+   v7.0 — ① 상담 메모로 빠른 채움 (100% 로컬)
+   ========================================================= */
+.mf-card{
+  margin:0 0 14px;border:1px solid #d5e4f3;border-radius:16px;overflow:hidden;
+  background:linear-gradient(180deg,#f6fbff 0%,#ffffff 70%);
+}
+.mf-head{
+  display:flex;align-items:center;gap:10px;width:100%;padding:12px 13px;
+  background:none;border:0;text-align:left;flex-wrap:wrap;
+}
+.mf-ico{font-size:17px;line-height:1;flex:0 0 auto;}
+.mf-title{flex:1 1 150px;min-width:0;display:block;}
+.mf-title b{display:block;font-size:13px;font-weight:800;letter-spacing:-0.02em;color:var(--ink);}
+.mf-title em{display:block;font-style:normal;font-size:11.5px;line-height:1.5;color:var(--ink-2);}
+.mf-badge{
+  flex:0 0 auto;font-size:10.5px;font-weight:800;color:#0a6b57;
+  background:var(--point-soft);border:1px solid #bfe9dd;border-radius:999px;padding:4px 8px;white-space:nowrap;
+}
+.mf-caret{flex:0 0 auto;color:var(--muted);font-size:12px;transition:transform .15s ease;}
+.mf-card.is-open .mf-caret{transform:rotate(180deg);}
+.mf-body{padding:0 13px 14px;}
+.mf-text{
+  width:100%;min-height:94px;border:1px solid var(--line);border-radius:12px;
+  padding:10px 11px;font-size:13px;line-height:1.6;color:var(--ink);background:#fff;resize:vertical;
+}
+.mf-text:focus{outline:none;border-color:var(--navy-600);box-shadow:0 0 0 3px rgba(27,74,120,.08);}
+.mf-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px;}
+.mf-note{font-size:11px;line-height:1.55;color:var(--muted);margin-top:8px;}
+.mf-out{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;}
+.mf-out:empty{display:none;}
+.mf-out-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:7px;}
+.mf-out-head b{font-size:12.5px;font-weight:800;color:var(--ink);}
+.mf-local{font-size:10.5px;font-weight:800;color:#0a6b57;}
+.mf-hits{display:grid;gap:5px;margin:0;}
+.mf-hits li{
+  display:flex;gap:8px;font-size:11.5px;line-height:1.5;
+  background:#fff;border:1px solid var(--line-2);border-radius:9px;padding:6px 9px;
+}
+.mf-hits li b{flex:0 0 96px;color:var(--navy-700);font-weight:800;}
+.mf-hits li span{flex:1;min-width:0;color:var(--ink-2);}
+.mf-hits li.mf-warn{background:var(--warn-soft);border-color:#f2dfbd;color:#7a5108;display:block;}
+.mf-next{font-size:11px;line-height:1.55;color:var(--ink-2);margin-top:8px;}
+
+/* =========================================================
+   v7.0 — ② 사후관리 디데이 5종
+   ========================================================= */
+.ac-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:10px;}
+.ac-field{
+  display:block;border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px 10px;
+}
+.ac-field > span{display:block;font-size:11px;font-weight:800;color:var(--navy-700);margin-bottom:3px;letter-spacing:-0.01em;}
+.ac-field > span em{font-style:normal;font-weight:600;color:var(--muted);font-size:10px;}
+.ac-field input,.ac-field select{
+  width:100%;border:0;outline:none;font-size:13px;line-height:1.5;background:none;color:var(--ink);padding:0;
+}
+.ac-check{
+  display:flex;gap:8px;align-items:flex-start;grid-column:1 / -1;
+  border:1px solid var(--line);border-radius:12px;padding:9px 10px;background:#fff;
+  font-size:11.5px;line-height:1.5;color:var(--ink-2);
+}
+.ac-check input{margin:2px 0 0;flex:0 0 auto;}
+.ac-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.ac-results{display:grid;gap:10px;}
+.ac-results:empty{display:none;}
+.ac-item{border:1px solid var(--line);border-radius:14px;padding:11px 12px;background:#fff;}
+.ac-item.tone-soon{border-color:#f0d6a8;background:linear-gradient(180deg,#fffdf6,#fff 60%);}
+.ac-item.tone-past{background:#fafbfd;}
+.ac-item.is-empty{border-style:dashed;background:#fbfcfe;}
+.ac-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.ac-no{
+  width:20px;height:20px;border-radius:50%;background:var(--navy-700);color:#fff;
+  font-size:11px;font-weight:800;display:grid;place-items:center;flex:0 0 20px;
+}
+.ac-head b{font-size:12.5px;font-weight:800;color:var(--ink);}
+.ac-tag{font-size:10px;font-weight:800;color:var(--navy-600);background:#eef4fb;border-radius:999px;padding:2px 7px;}
+.ac-date{margin-left:auto;font-size:12px;font-weight:800;color:var(--navy-700);}
+.ac-dday{font-size:11px;font-weight:900;border-radius:999px;padding:3px 8px;background:#eef4fb;color:var(--navy-600);}
+.ac-dday.tone-ok{background:var(--point-soft);color:#0a7a64;}
+.ac-dday.tone-soon{background:var(--warn-soft);color:#8a5a05;}
+.ac-dday.tone-past{background:#eef1f5;color:var(--muted);}
+.ac-main{font-size:12.5px;font-weight:700;color:var(--ink);margin:8px 0 6px;line-height:1.55;}
+.ac-lines{display:grid;gap:4px;margin:0 0 8px;}
+.ac-lines li{font-size:11.5px;line-height:1.55;color:var(--ink-2);padding-left:9px;position:relative;}
+.ac-lines li:before{content:'·';position:absolute;left:0;color:var(--muted);font-weight:900;}
+.ac-lines li b{color:var(--navy-700);font-weight:800;}
+.ac-extra-date{font-weight:700;color:var(--ink);}
+.ac-extra-dday{font-style:normal;font-weight:900;font-size:10.5px;color:var(--navy-600);}
+.ac-extra-dday.tone-soon{color:#8a5a05;}
+.ac-extra-dday.tone-past{color:var(--muted);}
+.ac-warn{
+  margin:0 0 8px;font-size:11.5px;font-weight:700;line-height:1.5;color:#8a5a05;
+  background:var(--warn-soft);border:1px solid #f2dfbd;border-radius:9px;padding:7px 9px;
+}
+.ac-item.tone-past .ac-warn{color:#a4342a;background:var(--danger-soft);border-color:#f6cfcb;}
+.ac-hint{font-size:11.5px;color:var(--muted);margin-top:6px;}
+.ac-copy{margin-top:2px;}
+.ac-foot{font-size:10.5px;line-height:1.6;color:var(--muted);}
+@media (max-width:700px){
+  .ac-grid{grid-template-columns:1fr;}
+  .ac-date{margin-left:0;width:100%;}
+}
+
+/* =========================================================
+   v7.0 — ③ 청구 서류 · 담보 매칭
+   ========================================================= */
+.cc-search{display:flex;gap:8px;margin-bottom:9px;}
+.cc-search input{
+  flex:1;min-width:0;border:1px solid var(--line);border-radius:11px;padding:9px 11px;
+  font-size:13px;color:var(--ink);background:#fff;
+}
+.cc-search input:focus{outline:none;border-color:var(--navy-600);box-shadow:0 0 0 3px rgba(27,74,120,.08);}
+.cm-codes{display:flex;gap:7px;overflow-x:auto;padding-bottom:5px;margin-bottom:7px;-webkit-overflow-scrolling:touch;}
+.cm-code{
+  flex:0 0 auto;display:flex;flex-direction:column;gap:1px;text-align:left;
+  border:1px solid var(--line);border-radius:11px;background:#fff;padding:7px 10px;
+}
+.cm-code code{font-size:10.5px;font-weight:800;color:var(--navy-600);}
+.cm-code b{font-size:11.5px;font-weight:700;color:var(--ink);white-space:nowrap;}
+.cm-code span{font-size:10px;color:var(--muted);}
+.cm-code.is-on{border-color:var(--navy-600);box-shadow:0 0 0 2px rgba(27,74,120,.12);}
+.cc-none{font-size:11.5px;color:var(--muted);line-height:1.6;}
+.cc-picked:empty{display:none;}
+.cc-pick{
+  border:1px solid #cfe3f7;background:#f7fbff;border-radius:12px;padding:10px 11px;margin-bottom:11px;
+}
+.cc-pick-code{font-size:11px;font-weight:900;color:var(--navy-600);margin-right:6px;}
+.cc-pick > b{font-size:12.5px;color:var(--ink);}
+.cc-pick-group{font-size:10px;font-weight:800;color:var(--navy-600);background:#e7f0fa;border-radius:999px;padding:2px 7px;margin-left:6px;}
+.cc-pick p{margin-top:5px;font-size:11.5px;line-height:1.55;color:var(--ink-2);}
+.cc-pick p b{color:var(--navy-700);font-weight:800;margin-right:5px;}
+.cc-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.cc-docs{display:grid;gap:6px;}
+.cc-doc{
+  display:grid;grid-template-columns:auto 1fr;align-items:center;gap:2px 8px;text-align:left;
+  border:1px solid var(--line);border-radius:11px;background:#fff;padding:7px 9px;
+}
+.cc-doc .cc-box{
+  width:17px;height:17px;border:1.5px solid #c3cfdd;border-radius:5px;display:grid;place-items:center;
+  grid-row:span 2;background:#fff;
+}
+.cc-doc b{font-size:12px;font-weight:700;color:var(--ink);}
+.cc-doc em{font-style:normal;font-size:10.5px;color:var(--muted);line-height:1.4;}
+.cc-doc.is-on{border-color:var(--point);background:var(--point-soft);}
+.cc-doc.is-on .cc-box{background:var(--point);border-color:var(--point);}
+.cc-doc.is-on .cc-box:after{content:'✓';color:#fff;font-size:11px;font-weight:900;line-height:1;}
+.cc-rider{
+  display:flex;gap:8px;align-items:center;font-size:12px;color:var(--ink-2);
+  border:1px solid var(--line);border-radius:11px;background:#fff;padding:8px 9px;margin-bottom:6px;
+}
+.cc-rider input{flex:0 0 auto;margin:0;}
+.cc-rider span{flex:1;min-width:0;line-height:1.45;}
+.cc-rider-sub{flex-wrap:wrap;}
+.cc-rider-sub select{
+  width:100%;margin-top:4px;border:1px solid var(--line);border-radius:9px;padding:6px 8px;
+  font-size:12px;background:#fff;color:var(--ink);
+}
+.cc-date-row{display:flex;flex-wrap:wrap;gap:9px;align-items:flex-end;margin:12px 0;}
+.cc-date-row .ac-field{flex:1 1 220px;}
+.cc-out{display:grid;gap:10px;}
+.cc-out:empty{display:none;}
+.cc-block{border-top:1px dashed var(--line);padding-top:10px;}
+.cc-block:first-child{border-top:0;padding-top:0;}
+.cc-block-title{font-size:11.5px;font-weight:800;color:var(--navy-700);margin-bottom:7px;letter-spacing:-0.01em;}
+.cm-rows{display:grid;gap:7px;}
+.cm-row{border:1px solid var(--line);border-radius:12px;background:#fff;padding:9px 11px;}
+.cm-row.is-ok{border-color:#c7e8da;background:#f6fdfa;}
+.cm-row.is-miss{border-color:#f0d6a8;background:#fffdf7;}
+.cm-row.is-locked{background:#fafbfd;border-style:dashed;}
+.cm-row-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.cm-row-head b{font-size:12.5px;color:var(--ink);}
+.cc-kind{font-size:10px;font-weight:800;color:var(--navy-600);background:#eef4fb;border-radius:999px;padding:2px 7px;}
+.cc-verdict{margin-left:auto;font-size:11px;font-weight:900;color:var(--ink-2);}
+.cm-row.is-ok .cc-verdict{color:#0a7a64;}
+.cm-row.is-miss .cc-verdict{color:#8a5a05;}
+.cm-row p{margin-top:5px;font-size:11.5px;line-height:1.55;color:var(--ink-2);}
+.cc-miss{border:1px solid #f2dfbd;background:#fffdf7;border-radius:12px;padding:10px 11px;}
+.cc-miss-list{display:grid;gap:6px;}
+.cc-miss-list li{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:baseline;}
+.cc-rank{
+  grid-row:span 2;font-size:10px;font-weight:900;color:#8a5a05;background:var(--warn-soft);
+  border-radius:999px;padding:2px 7px;white-space:nowrap;
+}
+.cc-miss-list li b{font-size:12px;color:var(--ink);}
+.cc-miss-list li span:last-child{font-size:11px;line-height:1.5;color:var(--ink-2);grid-column:2;}
+.cc-ok{border:1px solid #c7e8da;background:#f6fdfa;border-radius:12px;padding:10px 11px;}
+.cc-ok p{font-size:11.5px;line-height:1.55;color:var(--ink-2);}
+.cc-expiry{border:1px solid var(--line);background:#fbfcfe;border-radius:12px;padding:10px 11px;}
+.cc-expiry.tone-danger{border-color:#f6cfcb;background:var(--danger-soft);}
+.cc-expiry.tone-warn{border-color:#f2dfbd;background:var(--warn-soft);}
+.cc-exp-date{font-size:12.5px;font-weight:800;color:var(--ink);}
+.cc-exp-date b{font-size:12px;font-weight:900;margin-left:4px;}
+.cc-exp-date b.tone-danger{color:#a4342a;}
+.cc-exp-date b.tone-warn{color:#8a5a05;}
+.cc-exp-date b.tone-ok{color:#0a7a64;}
+.cc-exp-date span{font-size:11px;font-weight:800;color:var(--ink-2);margin-left:6px;}
+.cc-exp-note{margin-top:5px;font-size:11px;line-height:1.55;color:var(--ink-2);}
+.cc-notes{display:grid;gap:4px;}
+.cc-notes li{font-size:11.5px;line-height:1.55;color:var(--ink-2);padding-left:9px;position:relative;}
+.cc-notes li:before{content:'·';position:absolute;left:0;color:var(--muted);font-weight:900;}
+.cc-disclaimer{font-size:10.5px;line-height:1.6;color:var(--muted);}
+@media (max-width:700px){
+  .cc-cols{grid-template-columns:1fr;}
+}
+
+/* ---------- v7.0 메모 자동 입력 필드 노란 강조 ---------- */
+input.mf-filled,
+select.mf-filled,
+.fam-chip.mf-filled,
+.dc-item.mf-filled,
+.dc-chip.mf-filled,
+.seg button.mf-filled{
+  background:#fff7d6 !important;
+  border-color:#e5c25e !important;
+  box-shadow:inset 0 0 0 1px rgba(229,194,94,.55) !important;
+}
+input.mf-filled:focus, .mf-filled:focus{outline:none;border-color:#d4a92f !important;}
+.seg button.mf-filled{color:#6b4c00;}
+
+/* ---------- v7.0 사후관리 — 다음 점검 예정일 ---------- */
+.ac-next{
+  font-size:11.5px;line-height:1.55;color:var(--navy-700);background:#f4f9ff;
+  border:1px solid #d9e8f7;border-radius:11px;padding:9px 11px;margin:2px 0 0;
+}
+.ac-next b{font-size:12.5px;font-weight:800;}
+.ac-next span{font-size:11px;font-weight:900;color:var(--navy-600);margin-left:4px;}
+.ac-copy.is-pulse{animation:ac-pulse 1.6s ease 2;}
+@keyframes ac-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(27,74,120,0);}
+  50%{box-shadow:0 0 0 4px rgba(27,74,120,.22);}
+}
+.ac-actions .btn-primary.sm, .ac-actions .btn-ghost.sm{flex:0 1 auto;width:auto;}
+
+/* ---------- v7.0 상담 후 챙길 것 3칸 ---------- */
+.post-care .pc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;}
+.pc-cell{
+  display:flex;flex-direction:column;gap:4px;text-align:left;min-height:96px;
+  border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+.pc-cell:active{border-color:var(--navy-600);box-shadow:0 0 0 2px rgba(27,74,120,.1);}
+.pc-ico{font-size:18px;line-height:1;}
+.pc-cell b{font-size:12.5px;font-weight:800;color:var(--ink);letter-spacing:-0.02em;}
+.pc-cell span:not(.pc-ico){font-size:11.5px;line-height:1.5;color:var(--ink-2);}
+.pc-cell em{margin-top:auto;font-style:normal;font-size:11px;font-weight:800;color:var(--navy-600);}
+@media (max-width:700px){
+  .post-care .pc-grid{grid-template-columns:1fr;}
+  .pc-cell{min-height:64px;flex-direction:row;flex-wrap:wrap;align-items:center;gap:2px 9px;padding:11px 12px;}
+  .pc-cell .pc-ico{flex:0 0 auto;font-size:16px;}
+  .pc-cell b{flex:1 1 auto;}
+  .pc-cell span:not(.pc-ico){flex:1 1 100%;padding-left:25px;}
+  .pc-cell em{flex:0 0 100%;padding-left:25px;}
+}
+.cm-row{display:block;}
+
+/* ---------- v7.0 메모 카드 헤더 — 좁은 화면에서 배지가 제목 줄을 밀지 않도록 ---------- */
+@media (max-width:560px){
+  .mf-head{
+    display:grid;grid-template-columns:auto 1fr auto;
+    grid-template-areas:"ico title caret" "badge badge badge";
+    gap:3px 9px;align-items:center;
+  }
+  .mf-ico{grid-area:ico;}
+  .mf-title{grid-area:title;}
+  .mf-caret{grid-area:caret;}
+  .mf-badge{grid-area:badge;justify-self:start;margin-top:3px;}
+  .mf-title em{font-size:11px;}
+}
+.post-care .card-sub{font-size:11px;}
+
 </style>
-<!-- build 9db74a31d71a · protected=true -->
+<!-- build 9c74b0443548 · protected=true -->
 </head>
 <body>
 
@@ -4152,7 +4422,7 @@ body.is-sample .deck-top{padding-top:calc(6px + env(safe-area-inset-top));}
       </div>
       <div class="hh-top">
         <span class="hh-eyebrow" data-app-version-eyebrow>LIFE REPORT · BETA V6.0</span>
-        <span class="hh-ver" data-app-version-label>v6.2 · 2026.11</span>
+        <span class="hh-ver" data-app-version-label>v7.0 · 2026.11</span>
       </div>
       <h2>무엇을 하시겠어요?</h2>
       <p>상담 전 과정을 한 화면에서 시작합니다. 입력·계산과 PDF는 <b>이 기기에서</b> 하고, 로그인해 클라우드 동기화를 켜면 상담 스냅샷(이름·생년월일·연령대·성별·보험료·담보·계약·고지 체크)만 <b>Supabase(서울)</b>에 저장됩니다.</p>
@@ -4203,8 +4473,8 @@ body.is-sample .deck-top{padding-top:calc(6px + env(safe-area-inset-top));}
         </button>
         <button type="button" class="sample-demo" id="btn-sample-demo">
           <span class="sd-ico" aria-hidden="true">🎬</span>
-          <span class="sd-txt"><b>로그인 없이 진짜 30장 샘플 바로 열기</b>
-            <em>가상 고객 김서연 · 저장·이력과 섞이지 않는 체험 모드</em></span>
+          <span class="sd-txt"><b>로그인 없이 30장 샘플 보기</b>
+            <em>가상 고객 김서연 · 저장·전송 안 됨</em></span>
           <span class="sd-go" aria-hidden="true">→</span>
         </button>
         <button type="button" class="sample-link" id="btn-sample">샘플 값만 채우기 (연습·시연용) →</button>
@@ -4276,7 +4546,7 @@ body.is-sample .deck-top{padding-top:calc(6px + env(safe-area-inset-top));}
       </button>
     </div>
 
-    <div class="home-section-title"><span class="eyebrow">FC TOOLS</span> 설계사 실무 도우미 <span class="hst-sub">상담 현장에서 바로 쓰는 4종</span></div>
+    <div class="home-section-title"><span class="eyebrow">FC TOOLS</span> 설계사 실무 도우미 <span class="hst-sub">상담 현장에서 바로 쓰는 8종</span></div>
     <div class="home-grid fc-grid">
       <button type="button" class="hg-card" data-home-go="codes">
         <span class="hg-no">9</span>
@@ -4301,6 +4571,18 @@ body.is-sample .deck-top{padding-top:calc(6px + env(safe-area-inset-top));}
         <b>💰 적정 보험료 · 리모델링 비교기</b>
         <span>소득 대비 권장 보장성 보험료(7~10%) 계산 + 현재·재배치·보완 후 점수 비교</span>
         <em>계산</em>
+      </button>
+      <button type="button" class="hg-card" data-home-go="aftercare">
+        <span class="hg-no">15</span>
+        <b>📅 사후관리 디데이 5종</b>
+        <span>90일 면책·감액·고지의무·실손 철회·상령일을 날짜로 계산 → 항목별 카톡 인사말 1탭 복사</span>
+        <em>D-DAY</em>
+      </button>
+      <button type="button" class="hg-card" data-home-go="claimcheck">
+        <span class="hg-no">16</span>
+        <b>🧾 청구 서류 · 담보 매칭</b>
+        <span>KCD 코드 + 가진 서류만 체크 → 확인할 후보 담보·추가로 필요한 서류·3년 소멸시효</span>
+        <em>매칭</em>
       </button>
       <button type="button" class="hg-card pro-card" data-home-go="remodel">
         <span class="hg-no">13</span>
@@ -4346,7 +4628,7 @@ body.is-sample .deck-top{padding-top:calc(6px + env(safe-area-inset-top));}
 
     <details class="app-foot-details">
       <summary>기준일 · 반영 기능 자세히 보기</summary>
-      <p class="app-foot">기준일 2026-11-17 · v6.2 기준점(첫 화면 ①입력→②분석→③PDF 흐름 배너 · 로그인 없는 30장 샘플 체험 모드(가상 고객 격리·저장 차단) · 개인정보처리방침 데이터 흐름 1장 도식 · AI 보조자료 면책 문구(결과 화면·1·10·30장 PDF 꼬리말)) · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
+      <p class="app-foot">기준일 2026-11-17 · v7.0 기준점(사후관리 디데이 5종과 리터치 카톡 문구 · 진료서류 청구 담보 매칭과 상법 제662조 소멸시효 · 상담 메모 6단계 빠른 채움(100% 로컬) · 첫 화면 샘플 버튼 카피 개선) · v6.2 기준점(첫 화면 ①입력→②분석→③PDF 흐름 배너 · 로그인 없는 30장 샘플 체험 모드(가상 고객 격리·저장 차단) · 개인정보처리방침 데이터 흐름 1장 도식 · AI 보조자료 면책 문구(결과 화면·1·10·30장 PDF 꼬리말)) · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
     </details>
   </section>
 
@@ -4466,6 +4748,26 @@ body.is-sample .deck-top{padding-top:calc(6px + env(safe-area-inset-top));}
 
         <div class="wiz-panel is-active" data-step="1">
           <div class="wiz-panel-title"><span class="n">1</span>기본 정보<em>고객 · 생년월일 · 실손 · 보험료</em></div>
+
+          <!-- ============ v7.0 상담 메모로 빠른 채움 (100% 로컬) ============ -->
+          <div class="mf-card no-print" id="memo-fill">
+            <button type="button" class="mf-head" id="mf-toggle" aria-expanded="false" aria-controls="mf-body">
+              <span class="mf-ico" aria-hidden="true">📝</span>
+              <span class="mf-title"><b>상담 메모로 빠른 채움</b><em>메모를 붙여넣으면 이름·나이·보험료·담보·고지 항목을 6단계 입력칸에 넣습니다</em></span>
+              <span class="mf-badge">🔒 기기에서만 처리(로컬)</span>
+              <span class="mf-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="mf-body" id="mf-body" hidden>
+              <textarea id="mf-text" class="mf-text" rows="5" spellcheck="false" placeholder="예) 김서연 42세 여성, 월 보험료 18만원. 암 5000, 뇌 2000, 심장 1500, 수술 1~5종 300, 간병 10만원. 부모님 암 가족력. 고혈압 약 3년째 복용, 5년 전 담낭 수술."></textarea>
+              <div class="mf-actions">
+                <button type="button" class="btn-primary sm" id="mf-parse">메모 분석해서 채우기</button>
+                <button type="button" class="btn-ghost sm" id="mf-example">예시 넣기</button>
+                <button type="button" class="btn-ghost sm" id="mf-undo" hidden>되돌리기</button>
+              </div>
+              <p class="mf-note">🔒 메모는 외부 AI 서버로 보내지 않고 이 기기에서만 분석합니다(저장하지 않음). 뽑아낸 숫자는 고객에게 한 번 더 확인하세요.</p>
+              <div id="mf-out" class="mf-out" aria-live="polite"></div>
+            </div>
+          </div>
 
           <div class="card">
             <div class="card-title"><span class="eyebrow">CLIENT</span> 고객 정보 <span class="card-sub">PDF 표지에 그대로 들어갑니다</span></div>
@@ -4702,6 +5004,31 @@ body.is-sample .deck-top{padding-top:calc(6px + env(safe-area-inset-top));}
       <p class="disclaimer">종합 점수·권장선은 상담 보조용 자체 산식입니다. 통계는 통계청 2024 · 중앙암등록본부 2023 · 중앙심뇌혈관질환센터 2023 · 건보공단 2025 공표 수치이며, 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.</p>
     </div>
 
+    <!-- ============ v7.0 상담 후 챙길 것 3칸 ============ -->
+    <div class="card internal no-print post-care" id="post-care">
+      <div class="card-title"><span class="eyebrow">AFTER CONSULT</span> 상담 후 챙길 것 <span class="card-sub">30초 안에 이어서 처리 · 바로 열립니다</span></div>
+      <div class="pc-grid">
+        <button type="button" class="pc-cell" data-pc-go="claimcheck">
+          <span class="pc-ico" aria-hidden="true">🧾</span>
+          <b>청구 서류 체크</b>
+          <span>KCD 코드 → 확인할 후보 담보 · 추가로 필요한 서류 · 3년 시효</span>
+          <em>열기 →</em>
+        </button>
+        <button type="button" class="pc-cell" data-pc-go="aftercare">
+          <span class="pc-ico" aria-hidden="true">📅</span>
+          <b>사후관리 날짜</b>
+          <span>계약일만 넣으면 90일 면책 · 감액 · 고지의무 · 상령일 D-day</span>
+          <em>계산 →</em>
+        </button>
+        <button type="button" class="pc-cell" data-pc-go="kakao">
+          <span class="pc-ico" aria-hidden="true">💬</span>
+          <b>카톡 안내 초안</b>
+          <span>사후관리 문구 + 다음 점검 예정일까지 붙여 넣기만 하면 끝</span>
+          <em>초안 열기 →</em>
+        </button>
+      </div>
+    </div>
+
     <div class="card internal no-print" id="recent-card">
       <div class="card-title"><span class="eyebrow">RECENT</span> 최근 상담
         <span class="card-sub" id="result-hist-sub">이 기기에만 저장 · 최대 30건</span>
@@ -4822,6 +5149,63 @@ body.is-sample .deck-top{padding-top:calc(6px + env(safe-area-inset-top));}
     <div class="card">
       <div class="card-title"><span class="eyebrow">C · OBJECTION</span> 반론 돌파 화법 <span class="card-sub">공감 → 환기 → 대안</span></div>
       <div id="objections"></div>
+    </div>
+
+    <!-- ============ v7.0 D · 사후관리 디데이 5종 ============ -->
+    <div class="card" id="card-aftercare">
+      <div class="card-title"><span class="eyebrow">D · AFTERCARE</span> 사후관리 디데이 5종 <span class="card-sub">계약·치료 날짜만 넣으면 알림일과 카톡 문구가 나옵니다</span></div>
+      <p class="card-lead">가입 뒤에도 돈이 되는 연락은 <strong>날짜</strong>에서 나옵니다. <strong>계약일은 필수</strong>이고 나머지 날짜는 넣는 만큼 항목이 채워집니다. 다섯 개의 연락 시점과 그날 쓸 인사말 초안을 만들어 드립니다.</p>
+      <div class="ac-grid">
+        <label class="ac-field"><span>고객명 <em>선택</em></span><input id="ac-name" type="text" maxlength="20" autocomplete="off" placeholder="김서연"></label>
+        <label class="ac-field"><span>계약일</span><input id="ac-contract" type="date"></label>
+        <label class="ac-field"><span>생년월일</span><input id="ac-birth" type="date"></label>
+        <label class="ac-field"><span>최종 치료일 <em>선택</em></span><input id="ac-treatment" type="date"></label>
+        <label class="ac-field"><span>완치 종결일 <em>선택</em></span><input id="ac-cure" type="date"></label>
+        <label class="ac-field"><span>실손 전환 승락일 <em>선택</em></span><input id="ac-switch" type="date"></label>
+        <label class="ac-field"><span>감액 기간</span><select id="ac-reduction"><option value="1">1년</option><option value="2">2년 특약</option></select></label>
+        <label class="ac-check"><input id="ac-claimed" type="checkbox"><span>전환 후 보험금 수령(지급사유 발생) 이력 있음</span></label>
+      </div>
+      <div class="ac-actions">
+        <button type="button" class="btn-primary sm" id="ac-calc">디데이 계산</button>
+        <button type="button" class="btn-ghost sm" id="ac-load">현재 고객 이름·생년월일 불러오기</button>
+        <button type="button" class="btn-ghost sm" id="ac-reset">비우기</button>
+      </div>
+      <div id="ac-results" class="ac-results"></div>
+      <p class="source-note">계산은 기기에서만 이루어집니다. 근거: 표준 약관의 암보장개시일·감액·고지의무 조항, 금융감독원 5세대 실손 전환 안내(2026.5), 상법 제662조. 날짜 기산은 상품 약관이 기준입니다.</p>
+    </div>
+
+    <!-- ============ v7.0 E · 청구 서류 · 담보 매칭 ============ -->
+    <div class="card" id="card-claimcheck">
+      <div class="card-title"><span class="eyebrow">E · CLAIM MATCH</span> 진료·보험 서류 청구 담보 매칭 <span class="card-sub">KCD 코드 + 가진 서류 → 후보 담보·추가 서류·소멸시효</span></div>
+      <p class="card-lead">진단서 한 장을 들고 왔을 때, <strong>확인할 후보 담보</strong>와 <strong>추가로 필요한 서류</strong>를 그 자리에서 정리합니다. 확정 판정이 아니므로 마지막은 약관·심사로 확인합니다. 입력값은 외부로 보내지 않습니다.</p>
+
+      <div class="cc-search">
+        <input id="cc-q" type="search" placeholder="코드 또는 이름 — 예: C18 / 대장암 / K35 / 디스크" autocomplete="off" aria-label="질환 코드 검색">
+        <button type="button" class="btn-ghost sm" id="cc-search">찾기</button>
+      </div>
+      <div id="cc-codes" class="cc-codes" role="group" aria-label="검색된 질환 코드"></div>
+      <div id="cc-picked" class="cc-picked"></div>
+
+      <div class="cc-cols">
+        <div class="cc-col">
+          <div class="subhead">가진 서류 <em>탄색한 것만</em></div>
+          <div id="cc-docs" class="cc-docs"></div>
+        </div>
+        <div class="cc-col">
+          <div class="subhead">가입 특약</div>
+          <label class="cc-rider"><input type="checkbox" id="cc-rider-surgery"><span>수술 1~5종 · 질병수술비</span></label>
+          <label class="cc-rider"><input type="checkbox" id="cc-rider-care"><span>간병일당 (입원)</span></label>
+          <label class="cc-rider cc-rider-sub"><span>간병 지급 기준</span><select id="cc-care-basis"><option value="8">8시간제 · 일당 8만원 기준</option><option value="6">6시간제 · 일당 8만원 기준</option></select></label>
+          <label class="cc-rider"><input type="checkbox" id="cc-rider-silson"><span>5세대 실손</span></label>
+        </div>
+      </div>
+
+      <div class="cc-date-row">
+        <label class="ac-field"><span>사고일 <em>진단확정 · 수술 · 퇴원일</em></span><input id="cc-date" type="date"></label>
+        <button type="button" class="btn-primary sm" id="cc-run">청구 매칭 계산</button>
+      </div>
+      <div id="cc-out" class="cc-out" aria-live="polite"></div>
+      <p class="source-note">계산은 100% 브라우저 안에서 이루어집니다 · 근거: KCD 한국표준질병사인분류 · 상법 제662조(3년) · 5세대 실손 비중증 제외 4항목 · 상품별 약관 우선</p>
     </div>
 
     <p class="app-foot">기준일 2026-11-15 · 상품별 약관이 우선합니다 · 특정 보험사·상품 추천이 아닌 상담 구조 안내</p>
@@ -5114,7 +5498,7 @@ body.is-sample .deck-top{padding-top:calc(6px + env(safe-area-inset-top));}
 
 <footer class="app-legal no-print" id="app-legal">
   <div class="al-brand">
-    <b>보장분석 라이프 리포트 <em data-app-version>v6.2</em></b>
+    <b>보장분석 라이프 리포트 <em data-app-version>v7.0</em></b>
     <span>상담 보조 도구 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다</span>
   </div>
   <div class="al-links">
@@ -5127,7 +5511,7 @@ body.is-sample .deck-top{padding-top:calc(6px + env(safe-area-inset-top));}
 (function (root) {
   'use strict';
 
-  const APP_VERSION = 'v6.2';
+  const APP_VERSION = 'v7.0';
   const APP_VERSION_NUM = APP_VERSION.replace(/^v/, '');
   const APP_VERSION_MONTH = '2026.11';
   const APP_TAGLINE = '고객 맞춤형 보장 점검 · 리모델링 상담 가이드';
@@ -11215,15 +11599,25 @@ const PLAN_FRONT = {
         const dx = gi ? hdx : bdx;
         const core = dx.core;
         const tx = x + 132, tw = half - 144;
+
+        const fit = (str, t, w, o) => {
+          let size = o.size;
+          while (size > o.min && s.measure(String(str), size, o.weight) > w) size -= 0.1;
+          s.text(str, t, o.y || y, Object.assign({}, o, { size, y: undefined }));
+          return size;
+        };
         s.text('핵심 범위 금액', tx, y + 32, { size: 6, weight: 600, color: C.muted });
-        s.text(`${core ? won(core.val) : '0'}만원`, tx, y + 40, { size: 10, weight: 800, color: core && core.val >= 2000 ? C.mint : C.red });
+        fit(`${core ? won(core.val) : '0'}만원`, tx, tw, { y: y + 40, size: 10, weight: 800, min: 7.2, color: core && core.val >= 2000 ? C.mint : C.red });
         s.text('권장 범위', tx, y + 56, { size: 6, weight: 600, color: C.muted });
-        s.text(gi ? '허혈성심장질환 I20~I25' : '뇌혈관질환 I60~I69', tx, y + 65, { size: 6.8, weight: 700, color: C.navy });
-        s.gauge(tx, y + 80, tw, dxp.fill, { color: dxp.fill >= 0.99 ? C.mint : C.orange, h: 6 });
-        s.text(`충족 ${Math.round(dxp.fill * 100)}%`, tx, y + 89, { size: 6.2, weight: 600, color: C.ink2 });
-        s.text(`주요치료비 3종 ${subHave(PK(row, 'treat'))}/3 · ${won(effVal(PK(row, 'treat')))}만원`, tx, y + 100, { size: 6.2, weight: 600, color: effVal(PK(row, 'treat')) > 0 ? C.mint : C.red });
-        s.text((dx.scenarios || []).map((sc) => `${BK.dxShort(sc.label.replace(/\(.*/, ''))} ${won(sc.sum)}`).join(' · '), tx, y + 112, { size: 5.9, weight: 600, color: C.navy });
-        s.para(gi ? '협심증(I20)은 허혈성심장 담보에서만, 급성심근경색(I21)은 두 담보가 합산됩니다.' : '뇌경색(I63)은 뇌혈관+뇌졸중, 뇌출혈(I61)은 세 담보가 합산됩니다.', tx, y + 122, tw, { size: 5.7, color: C.ink2, lh: 1.32 });
+        fit(gi ? '허혈성심장질환 I20~I25' : '뇌혈관질환 I60~I69', tx, tw, { y: y + 65, size: 6.8, weight: 700, min: 5.4, color: C.navy });
+        s.gauge(tx, y + 78, tw, dxp.fill, { color: dxp.fill >= 0.99 ? C.mint : C.orange, h: 6 });
+        s.text(`충족 ${Math.round(dxp.fill * 100)}%`, tx, y + 87, { size: 6.2, weight: 600, color: C.ink2 });
+        fit(`주요치료비 3종 ${subHave(PK(row, 'treat'))}/3 · ${won(effVal(PK(row, 'treat')))}만원`, tx, tw, {
+          y: y + 97, size: 6.2, weight: 600, min: 5.0, color: effVal(PK(row, 'treat')) > 0 ? C.mint : C.red
+        });
+        const scen = (dx.scenarios || []).map((sc) => `${BK.dxShort(sc.label.replace(/\(.*/, ''))} ${won(sc.sum)}`).join(' · ');
+        s.para(scen, tx, y + 107, tw, { size: 5.5, color: C.navy, lh: 1.24 });
+        s.para(gi ? '협심증(I20)은 허혈성심장 담보에서만, 급성심근경색(I21)은 두 담보가 합산됩니다.' : '뇌경색(I63)은 뇌혈관+뇌졸중, 뇌출혈(I61)은 세 담보가 합산됩니다.', tx, y + 123, tw, { size: 5.5, color: C.ink2, lh: 1.26 });
       });
       y += 150;
 
@@ -14830,6 +15224,1060 @@ const PLAN_FRONT = {
   }
 
   root.BojangTools = { init, renderCodes, renderSilson, renderDisclosureTool, renderClaimDocs, renderPremiumTool, disclosureText, judgeDisclosure };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function (root) {
+  'use strict';
+
+  const $ = (sel, r) => (r || document).querySelector(sel);
+  const $$ = (sel, r) => Array.from((r || document).querySelectorAll(sel));
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const copy = (t, m) => {
+    if (root.__bojangCopy) root.__bojangCopy(t, m);
+    else if (root.navigator && navigator.clipboard) navigator.clipboard.writeText(t).catch(() => {});
+  };
+  const toast = (m) => { if (root.__bojangToast) root.__bojangToast(m); };
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function parts(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s == null ? '' : s).trim());
+    if (!m) return null;
+    const y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+    if (mo < 1 || mo > 12 || d < 1) return null;
+    const last = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+    if (d > last) return null;
+    return { y, m: mo, d };
+  }
+  function iso(d) { return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1) + '-' + pad2(d.getUTCDate()); }
+  function toUTC(s) {
+    const p = parts(s);
+    return p ? new Date(Date.UTC(p.y, p.m - 1, p.d)) : null;
+  }
+  function todayISO(ref) {
+    const n = ref ? new Date(ref) : new Date();
+    if (isNaN(n.getTime())) return null;
+    return n.getFullYear() + '-' + pad2(n.getMonth() + 1) + '-' + pad2(n.getDate());
+  }
+  function addDays(s, n) {
+    const d = toUTC(s);
+    if (!d) return null;
+    d.setUTCDate(d.getUTCDate() + Number(n || 0));
+    return iso(d);
+  }
+
+  function addMonths(s, n) {
+    const d = toUTC(s);
+    if (!d) return null;
+    const day = d.getUTCDate();
+    const target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + Number(n || 0), 1));
+    const last = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+    target.setUTCDate(Math.min(day, last));
+    return iso(target);
+  }
+  function addYears(s, n) { return addMonths(s, 12 * Number(n || 0)); }
+  function diffDays(fromISO, toISO) {
+    const a = toUTC(fromISO), b = toUTC(toISO);
+    if (!a || !b) return null;
+    return Math.round((b - a) / 86400000);
+  }
+  function ddayText(days) {
+    if (days == null) return '';
+    if (days === 0) return 'D-DAY';
+    return days > 0 ? 'D-' + days : 'D+' + Math.abs(days);
+  }
+  function state(days) {
+    if (days == null) return 'none';
+    if (days < 0) return 'past';
+    if (days <= 30) return 'soon';
+    return 'ok';
+  }
+  function koDate(s) {
+    const p = parts(s);
+    return p ? `${p.y}년 ${p.m}월 ${p.d}일` : '';
+  }
+
+  function nextAgeDayISO(birth, today) {
+    const p = parts(birth);
+    const t = parts(today || todayISO());
+    if (!p || !t) return null;
+    const build = (year) => {
+      const total = (p.m - 1) + 6;
+      const yy = year + Math.floor(total / 12);
+      const mm = ((total % 12) + 12) % 12;
+      const last = new Date(Date.UTC(yy, mm + 1, 0)).getUTCDate();
+      return iso(new Date(Date.UTC(yy, mm, Math.min(p.d, last))));
+    };
+    let cand = build(t.y);
+    if (cand < (today || todayISO())) cand = build(t.y + 1);
+    return cand;
+  }
+
+  function privacyOn() {
+    try { return !!(root.BojangSmartKey && root.BojangSmartKey.privacy && root.BojangSmartKey.privacy.enabled()); }
+    catch (e) { return false; }
+  }
+  function maskName(name) {
+    const s = String(name == null ? '' : name).trim();
+    if (!s) return '';
+    if (!privacyOn()) return s;
+    try {
+      if (root.BojangSmartKey && root.BojangSmartKey.privacy && root.BojangSmartKey.privacy.maskName) {
+        return root.BojangSmartKey.privacy.maskName(s);
+      }
+    } catch (e) {   }
+    if (s.length === 1) return '*';
+    if (s.length === 2) return s[0] + '*';
+    return s[0] + '*'.repeat(Math.max(1, s.length - 2)) + s[s.length - 1];
+  }
+  function callName(name) { return maskName(name) || '고객'; }
+
+  const ITEM_META = [
+    { key: 'imunity', no: 1, title: '90일 면책 해제일', tag: '보장개시' },
+    { key: 'reduction', no: 2, title: '감액 해제일', tag: '감액' },
+    { key: 'disclosure', no: 3, title: '고지의무 경과일', tag: '재가입·전환' },
+    { key: 'silson', no: 4, title: '실손 전환 철회 기한', tag: '전환' },
+    { key: 'ageday', no: 5, title: '상령일 디데이', tag: '보험나이' }
+  ];
+
+  function calc(input, today) {
+    input = input || {};
+    const now = today || todayISO();
+    const name = String(input.name || '').trim();
+    const contract = parts(input.contract) ? input.contract : '';
+    const birth = parts(input.birth) ? input.birth : '';
+    const treatment = parts(input.treatment) ? input.treatment : '';
+    const cure = parts(input.cure) ? input.cure : '';
+    const sw = parts(input.switchDate) ? input.switchDate : '';
+    const claimed = !!input.claimed;
+    const years = String(input.reductionYears) === '2' ? 2 : 1;
+
+    const items = [];
+    const push = (meta, body) => items.push(Object.assign({}, meta, body));
+
+    if (contract) {
+      const date = addDays(contract, 90);
+      const days = diffDays(now, date);
+      push(ITEM_META[0], {
+        available: true, date, days, state: state(days),
+        headline: `${koDate(date)} 0시(${ddayText(days)})부터 일반암 보장이 개시됩니다`,
+        lines: [
+          '계약일을 1일째로 세어 91일째 0시 — 계산식은 계약일 + 90일입니다.',
+          '일반암만 해당합니다. 유사암(갑상선암·제자리암·경계성종양)·뇌·심장은 대개 보장개시일부터 즉시 보장되고, 대장점막내암은 상품별로 다릅니다.',
+          days > 0 ? '이 날짜 전에 진단이 확정되면 일반암 진단비는 지급되지 않습니다.' : '면책 기간은 이미 지났습니다 — 지금은 일반암도 보장됩니다.'
+        ],
+        warn: days >= 0 && days <= 30 ? '면책 해제가 ' + days + '일 남았습니다 — 이 시기의 진단은 지급되지 않으니 고객에게 먼저 알려 주세요' : '',
+        copy: `${callName(name)}님, 안녕하세요. ${koDate(date)}부터 가입하신 암보장의 90일 면책 기간이 끝나 일반암 진단비가 온전히 보장됩니다. 그 전에 진단이 확정되면 일반암 진단비는 지급되지 않으니 그 점만 미리 기억해 주세요. 유사암·뇌·심장은 해당되지 않는 경우가 많습니다. 궁금하신 점 있으면 편하게 연락 주세요.`
+      });
+    } else {
+      push(ITEM_META[0], { available: false, hint: '계약일을 넣으면 계산됩니다' });
+    }
+
+    if (contract) {
+      const date = addYears(contract, years);
+      const days = diffDays(now, date);
+      push(ITEM_META[1], {
+        available: true, date, days, state: state(days),
+        headline: `${koDate(date)} 0시(${ddayText(days)})부터 ${years}년 감액이 해제됩니다`,
+        lines: [
+          `계약 후 ${years}년 이내에 진단·수술을 받으면 약정 금액의 50%(상품에 따라 50~90%)만 지급되는 감액 기간입니다.`,
+          '해제일 0시부터 100% 지급됩니다. 감액률·기간은 특약마다 다르니 증권으로 확인하세요.',
+          years === 2 ? '2년 감액 특약을 선택했습니다 — 1년 특약 상품이면 1년 시점에 이미 해제됩니다.' : '2년 감액 특약에 가입했다면 1년이 아니라 2년 시점에 해제됩니다.'
+        ],
+        warn: days >= 0 && days <= 30 ? '감액 해제가 ' + days + '일 남았습니다 — 지금 진단·수술이 필요하면 해제 뒤로 미룰 수 있는지 상담하세요' : '',
+        copy: `${callName(name)}님, ${years}년 감액 기간이 ${koDate(date)}에 끝납니다. 그 전에 진단이나 수술을 받으면 약정 금액의 50%만 지급되는 경우가 많으니, 그 안에 진단받을 일이 생기면 먼저 연락 주세요. 해제일 이후에는 100% 지급됩니다.`
+      });
+    } else {
+      push(ITEM_META[1], { available: false, hint: '계약일을 넣으면 계산됩니다' });
+    }
+
+    const twoYear = treatment ? addYears(treatment, 2) : null;
+    const fiveYear = cure ? addYears(cure, 5) : null;
+    if (twoYear || fiveYear) {
+      const primary = twoYear || fiveYear;
+      const days = diffDays(now, primary);
+      const extra = [];
+      if (twoYear) extra.push({ label: '최종 치료일 + 2년 · 간편심사(3·2·5) 전환 검토', date: twoYear, days: diffDays(now, twoYear) });
+      if (fiveYear) extra.push({ label: '완치 종결일 + 5년 · 표준체 심사 가능 시점', date: fiveYear, days: diffDays(now, fiveYear) });
+      push(ITEM_META[2], {
+        available: true, date: primary, days, state: state(days), extra,
+        headline: twoYear
+          ? `${koDate(twoYear)}(${ddayText(diffDays(now, twoYear))})부터 간편심사 3·2·5 문항의 2년 조회가 비워집니다`
+          : `${koDate(fiveYear)}(${ddayText(diffDays(now, fiveYear))})부터 표준체 심사가 가능해집니다`,
+        lines: [
+          '최종 치료일 + 2년 — 간편심사(3·2·5)의 2년 입원·수술 문항이 지나 재가입·전환을 검토할 수 있는 시점입니다.',
+          '완치 종결일 + 5년 — 표준체(일반심사) 전환을 검토할 수 있는 시점입니다.',
+          '기산일은 마지막 치료일(입원·수술·투약 포함)과 완치 종결일 중 무엇으로 보는지 상품·인수 기준마다 다릅니다. 고지서·진단서 날짜로 확인하세요.',
+          '3·5·5 상품은 5년 문항이 남아 있으니 3·2·5 와 함께 비교하세요.'
+        ],
+        warn: days >= 0 && days <= 90 ? '고지의무 경과가 ' + days + '일 남았습니다 — 그 뒤 가입이 유리한지 미리 계산해 두세요' : '',
+        copy: twoYear
+          ? `${callName(name)}님, ${koDate(twoYear)}이 지나면 간편심사(3·2·5)로 다시 보험을 알아볼 수 있는 시점이 됩니다${fiveYear ? ' (표준체 심사는 ' + koDate(fiveYear) + '부터)' : ''}. 그때 건강 상태에 맞춰 더 나은 조건으로 정리할 수 있으니 달력에 표시해 두세요.`
+          : `${callName(name)}님, ${koDate(fiveYear)}이 지나면 표준체(일반심사)로 다시 보험을 알아볼 수 있습니다. 그때까지는 간편심사 상품으로 준비해 두는 편이 좋습니다.`
+      });
+    } else {
+      push(ITEM_META[2], { available: false, hint: '최종 치료일 또는 완치 종결일을 넣으면 계산됩니다' });
+    }
+
+    if (sw) {
+      const date = addMonths(sw, 6);
+      const threeMonth = addMonths(sw, 3);
+      const days = diffDays(now, date);
+      const days3 = diffDays(now, threeMonth);
+      const beyond3 = days3 != null && days3 < 0;
+      const blocked = claimed && beyond3;
+      push(ITEM_META[3], {
+        available: true, date, days, state: blocked ? 'past' : state(days),
+        headline: blocked
+          ? `철회 불가 — 전환 후 3개월(${koDate(threeMonth)})이 지나고 보험금 수령 이력이 있어 되돌릴 수 없습니다`
+          : (claimed
+            ? `${koDate(threeMonth)}(${ddayText(days3)})까지만 되돌릴 수 있습니다 — 보험금 수령 이력이 있어 3개월 뒤에는 철회가 막힙니다`
+            : `${koDate(date)}(${ddayText(days)})까지 이전 실손으로 되돌릴 수 있습니다`),
+        lines: [
+          '전환 후 6개월 이내이고 보험금 지급사유가 없으면 철회(원상복구)할 수 있습니다. 철회는 계약자별 1회만 가능합니다.',
+          claimed ? '보험금 수령 이력이 있으면 실제 철회 마감일은 6개월이 아니라 3개월입니다.' : '보험금을 받지 않았다면 마감은 6개월입니다.',
+          `전환 후 3개월 이내(${koDate(threeMonth)}까지)는 보험금 지급사유가 발생해도 복귀할 수 있고, 그때는 보험료 차액을 정산하며 전환 이후 사고는 기존 계약으로 보장합니다.`,
+          claimed
+            ? '전환 후 보험금을 수령(지급사유 발생)했다면 3개월이 지난 뒤부터는 철회가 불가합니다 — 1원이라도 받은 이력이 있으면 이 예외에 해당합니다.'
+            : '전환 후 보험금을 아직 받지 않았다면 6개월 안에 철회할 수 있습니다.',
+          '철회하면 다시 5세대로 전환할 때 별도 심사를 거쳐야 합니다.'
+        ],
+        warn: blocked
+          ? '철회 불가 — 지급사유 발생 + 3개월 경과. 보험사에 예외 여부를 확인하세요'
+          : (claimed ? '보험금 수령 이력이 있습니다 — 3개월 경과 시점부터 철회 불가' : (days >= 0 && days <= 30 ? '철회 기한이 ' + days + '일 남았습니다' : '')),
+        copy: claimed
+          ? `${callName(name)}님, 5세대 실손으로 전환한 뒤 보험금을 받으셨다면 3개월이 지난 뒤부터는 이전 실손으로 되돌릴 수 없습니다. 철회는 1회만 가능하니 남은 기한(${koDate(date)}까지)과 조건을 함께 확인해 드리겠습니다.`
+          : `${callName(name)}님, 5세대 실손으로 전환한 뒤 ${koDate(date)}까지는 이전 실손으로 되돌릴 수 있습니다. 다만 그 전에 보험금을 받으면 3개월이 지나는 순간부터는 되돌릴 수 없으니, 다시 생각할 일이 있으면 3개월 안에 알려 주세요. 철회는 1회만 가능합니다.`
+      });
+    } else {
+      push(ITEM_META[3], { available: false, hint: '실손 전환 승낙일을 넣으면 계산됩니다' });
+    }
+
+    if (birth) {
+      const date = nextAgeDayISO(birth, now);
+      const days = diffDays(now, date);
+      push(ITEM_META[4], {
+        available: true, date, days, state: state(days),
+        headline: `${koDate(date)}(${ddayText(days)})에 보험나이가 한 살 올라갑니다`,
+        lines: [
+          '상령일 = 생일 + 6개월. 이날 0시부터 보험나이가 한 살 올라가 새 계약의 보험료가 인상됩니다.',
+          '2월 29일생은 그 해에 2월 29일이 없으면 2월 말일로 당겨 계산합니다.',
+          days >= 0 && days <= 30 ? '보완 가입이 필요하면 상령일 전에 청약하는 편이 보험료에 유리합니다.' : '보완 가입 시점을 정할 때 이 날짜를 기준으로 잡으세요.'
+        ],
+        warn: days >= 0 && days <= 30 ? '상령일이 ' + days + '일 남았습니다 — 이번 달 청약 여부를 정해야 합니다' : '',
+        copy: `${callName(name)}님, ${koDate(date)}에 보험나이가 한 살 올라갑니다(상령일). 그날 이후 새로 가입하면 같은 보장도 보험료가 올라가니, 보완이 필요하면 그 전에 정리하는 편이 좋습니다. 필요한 부분만 골라서 안내해 드릴게요.`
+      });
+    } else {
+      push(ITEM_META[4], { available: false, hint: '생년월일을 넣으면 계산됩니다' });
+    }
+
+    const upcoming = items.filter((i) => i.available && i.days != null && i.days >= 0).sort((a, b) => a.days - b.days);
+    const nextItem = upcoming[0] || null;
+    const nextDate = nextItem ? nextItem.date : addMonths(now, 6);
+    const nextLine = `\n\n다음 점검 예정일: ${koDate(nextDate)}${nextItem ? ' (' + nextItem.title + ' 기준)' : ''}`;
+    items.forEach((it) => { if (it.copy) it.copy += nextLine; });
+
+    return { today: now, name, items, nextCheck: { date: nextDate, title: nextItem ? nextItem.title : '기본 6개월', days: diffDays(now, nextDate) } };
+  }
+
+  let last = null;
+
+  function readInput() {
+    const val = (id) => { const el = $('#' + id); return el ? String(el.value || '').trim() : ''; };
+    const chk = (id) => { const el = $('#' + id); return !!(el && el.checked); };
+    return {
+      name: val('ac-name'), contract: val('ac-contract'), birth: val('ac-birth'),
+      treatment: val('ac-treatment'), cure: val('ac-cure'), switchDate: val('ac-switch'),
+      claimed: chk('ac-claimed'), reductionYears: val('ac-reduction') || '1'
+    };
+  }
+
+  function fillCurrentClient() {
+    const S = root.BojangApp && root.BojangApp.state;
+    if (!S) return;
+    const nameEl = $('#ac-name'), birthEl = $('#ac-birth');
+    if (nameEl && S.client && S.client.name && S.client.name !== '홍길동') nameEl.value = S.client.name;
+    if (birthEl && S.client && S.client.birth) birthEl.value = S.client.birth;
+    run();
+    toast('현재 상담 고객의 이름·생년월일을 넣었습니다');
+  }
+
+  function itemHTML(it) {
+    if (!it.available) {
+      return `<article class="ac-item is-empty" data-ac-item="${it.key}">
+        <div class="ac-head"><span class="ac-no">${it.no}</span><b>${esc(it.title)}</b><span class="ac-tag">${esc(it.tag)}</span></div>
+        <p class="ac-hint">${esc(it.hint)}</p>
+      </article>`;
+    }
+    const extra = (it.extra || []).map((e) => `<li><b>${esc(e.label)}</b> · <span class="ac-extra-date">${esc(koDate(e.date))}</span> <em class="ac-extra-dday tone-${state(e.days)}">${esc(ddayText(e.days))}</em></li>`).join('');
+    return `<article class="ac-item tone-${it.state}" data-ac-item="${it.key}">
+      <div class="ac-head">
+        <span class="ac-no">${it.no}</span><b>${esc(it.title)}</b><span class="ac-tag">${esc(it.tag)}</span>
+        <span class="ac-date">${esc(koDate(it.date))}</span>
+        <span class="ac-dday tone-${it.state}">${esc(ddayText(it.days))}</span>
+      </div>
+      <p class="ac-main">${esc(it.headline)}</p>
+      <ul class="ac-lines">${it.lines.map((l) => `<li>${esc(l)}</li>`).join('')}${extra}</ul>
+      ${it.warn ? `<p class="ac-warn">⚠ ${esc(it.warn)}</p>` : ''}
+      <button type="button" class="btn-ghost sm ac-copy" data-ac-copy="${it.key}">💬 카톡 인사말 복사</button>
+    </article>`;
+  }
+
+  function render() {
+    const host = $('#ac-results');
+    if (!host || !last) return;
+    host.innerHTML = last.items.map(itemHTML).join('') +
+      `<p class="ac-next">다음 점검 예정일 <b>${esc(koDate(last.nextCheck.date))}</b> <span>${esc(ddayText(last.nextCheck.days))}</span> — 카톡 초안 끝에 이 날짜가 자동으로 들어갑니다.</p>` +
+      `<p class="ac-foot">계산은 이 기기에서만 이루어집니다 · 기준일 ${esc(last.today)} · 날짜 기준은 상품 약관과 인수 기준에 따라 달라질 수 있습니다.</p>`;
+    $$('[data-ac-copy]', host).forEach((b) => {
+      b.addEventListener('click', () => {
+        const it = last.items.find((x) => x.key === b.dataset.acCopy);
+        if (!it || !it.copy) return;
+        copy(it.copy, '카톡 인사말을 복사했습니다 — 붙여넣기만 하세요');
+      });
+    });
+  }
+
+  function run() {
+    last = calc(readInput());
+    render();
+    return last;
+  }
+
+  function reset() {
+    ['ac-name', 'ac-contract', 'ac-birth', 'ac-treatment', 'ac-cure', 'ac-switch'].forEach((id) => { const el = $('#' + id); if (el) el.value = ''; });
+    const c = $('#ac-claimed'); if (c) c.checked = false;
+    const r = $('#ac-reduction'); if (r) r.value = '1';
+    run();
+  }
+
+  function init() {
+    if (!$('#ac-results')) return;
+    ['ac-contract', 'ac-birth', 'ac-treatment', 'ac-cure', 'ac-switch', 'ac-reduction'].forEach((id) => {
+      const el = $('#' + id);
+      if (el) el.addEventListener('change', run);
+    });
+    const claimed = $('#ac-claimed');
+    if (claimed) claimed.addEventListener('change', run);
+    const btn = $('#ac-calc'); if (btn) btn.addEventListener('click', () => { run(); toast('디데이 5종을 계산했습니다'); });
+    const rb = $('#ac-reset'); if (rb) rb.addEventListener('click', reset);
+    const lb = $('#ac-load'); if (lb) lb.addEventListener('click', fillCurrentClient);
+    const pr = $('#sk-privacy-chip');
+    if (pr) pr.addEventListener('click', () => setTimeout(run, 60));
+    /* 날짜는 비워 둡니다 — 기본값(오늘)이 들어가면 다른 고객의 계약일로 오해될 수 있습니다 */
+    run();
+  }
+
+  root.BojangAftercare = {
+    calc, render, init, run, readInput, copyTextFor: (key) => (last ? (last.items.find((i) => i.key === key) || {}).copy || '' : ''),
+    ITEM_META, maskName,
+    date: { parts, addDays, addMonths, addYears, diffDays, todayISO, nextAgeDayISO, ddayText, state, koDate }
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function (root) {
+  'use strict';
+
+  const $ = (sel, r) => (r || document).querySelector(sel);
+  const $$ = (sel, r) => Array.from((r || document).querySelectorAll(sel));
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const toast = (m) => { if (root.__bojangToast) root.__bojangToast(m); };
+
+  const DISCLAIMER = '본 결과는 상담 참고용이며 최종 지급 여부는 상품 약관 및 보험사 심사에 따릅니다.';
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function parts(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s == null ? '' : s).trim());
+    if (!m) return null;
+    const y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+    if (mo < 1 || mo > 12 || d < 1 || d > new Date(Date.UTC(y, mo, 0)).getUTCDate()) return null;
+    return { y, m: mo, d };
+  }
+  function iso(d) { return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1) + '-' + pad2(d.getUTCDate()); }
+  function toUTC(s) { const p = parts(s); return p ? new Date(Date.UTC(p.y, p.m - 1, p.d)) : null; }
+  function todayISO() { const n = new Date(); return n.getFullYear() + '-' + pad2(n.getMonth() + 1) + '-' + pad2(n.getDate()); }
+  function addMonths(s, n) {
+    const d = toUTC(s);
+    if (!d) return null;
+    const day = d.getUTCDate();
+    const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + Number(n || 0), 1));
+    const last = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate();
+    t.setUTCDate(Math.min(day, last));
+    return iso(t);
+  }
+  function diffDays(fromISO, toISO) {
+    const a = toUTC(fromISO), b = toUTC(toISO);
+    return (!a || !b) ? null : Math.round((b - a) / 86400000);
+  }
+  function ddayText(days) { return days == null ? '' : days === 0 ? 'D-DAY' : (days > 0 ? 'D-' + days : 'D+' + Math.abs(days)); }
+  function koDate(s) { const p = parts(s); return p ? `${p.y}년 ${p.m}월 ${p.d}일` : ''; }
+
+  const DOCS = [
+    { key: 'dx', label: '진단서', note: '병명·코드·진단확정일' },
+    { key: 'detail', label: '진료비 세부내역서', note: '급여/비급여 구분' },
+    { key: 'surgery', label: '수술확인서', note: '수술명·수술일·방법' },
+    { key: 'path', label: '병리조직결과지', note: '원발/전이·악성 여부' },
+    { key: 'admit', label: '입·퇴원확인서', note: '입원일수·간병 기간' },
+    { key: 'receipt', label: '진료비 영수증', note: '실손 청구 기본' }
+  ];
+  const DOC_LABEL = DOCS.reduce((a, d) => (a[d.key] = d.label, a), {});
+
+  const CODE_RULES = {
+
+    C73: { group: '유사암' }, C44: { group: '유사암' },
+    'D00~D09': { group: '유사암' }, 'D37~D48': { group: '유사암' },
+
+    I63: { group: '뇌', dx: ['뇌졸중 진단비', '뇌혈관질환 진단비'], caveat: ['뇌출혈 진단비는 지급되지 않습니다(담보 범위 밖).'] },
+    I60: { group: '뇌', dx: ['뇌출혈 진단비', '뇌졸중 진단비', '뇌혈관질환 진단비'] },
+    I61: { group: '뇌', dx: ['뇌출혈 진단비', '뇌졸중 진단비', '뇌혈관질환 진단비'] },
+    I62: { group: '뇌', dx: ['뇌출혈 진단비', '뇌졸중 진단비', '뇌혈관질환 진단비'], caveat: ['외상성 출혈(S06)이면 질병이 아니라 상해 담보 영역입니다.'] },
+    I64: { group: '뇌', dx: ['뇌혈관질환 진단비'], caveat: ['표준 뇌졸중 분류표(I60~I63·I65~I66)에서 I64가 빠져 뇌졸중 진단비는 지급되지 않는 상품이 많습니다.'] },
+    'I65~I66': { group: '뇌', dx: ['뇌혈관질환 진단비'], caveat: ['뇌경색이 발생하지 않은 협착은 뇌졸중 담보에서 제외되는 경우가 많습니다.'] },
+    I67: { group: '뇌', dx: ['뇌혈관질환 진단비'], caveat: ['뇌졸중 담보에서는 제외되는 코드입니다.'] },
+    I69: { group: '뇌', dx: ['뇌혈관질환 진단비'] },
+    G45: { group: '뇌', dx: ['뇌혈관질환 진단비'], caveat: ['뇌졸중 담보에서는 대체로 제외됩니다.'] },
+
+    I20: { group: '심장', dx: ['허혈성심장질환 진단비'], caveat: ['급성심근경색 진단비는 지급되지 않습니다. 스텐트·혈관성형술은 수술이 아닌 처치로 분류될 수 있습니다.'] },
+    'I20.1': { group: '심장', dx: ['허혈성심장질환 진단비(I20~I25)'], caveat: ['급성심근경색 담보에서는 지급 없음.'] },
+    I21: { group: '심장', dx: ['급성심근경색 진단비', '허혈성심장질환 진단비'] },
+    I22: { group: '심장', dx: ['급성심근경색 진단비(1회한 여부 확인)', '허혈성심장질환 진단비'], caveat: ['1회한 담보는 첫 지급 뒤 재지급이 없습니다 — 재진단 담보 필요.'] },
+    I23: { group: '심장', dx: ['급성심근경색 진단비'], caveat: ['상품에 따라 I21~I22만 담아 I23이 빠질 수 있습니다.'] },
+    I25: { group: '심장', dx: ['허혈성심장질환 진단비'], caveat: ['급성심근경색 진단비는 지급되지 않습니다.'] },
+    I48: { group: '심장', dx: ['심장질환 담보(상품별)'], caveat: ['허혈성심장질환 담보 범위에는 포함되지 않습니다. 부정맥은 별도 담보가 없으면 미보장.'] },
+    I50: { group: '심장', dx: ['심장질환 담보(상품별)'], caveat: ['허혈성심장질환 담보로는 지급되지 않습니다.'] },
+
+    M51: { group: '수술', op: ['질병 1~5종 수술비', '질병수술비(N대)'] },
+    M50: { group: '수술', op: ['질병 1~5종 수술비', '질병수술비(N대)'] },
+    M48: { group: '수술', op: ['질병 1~5종 수술비', '질병수술비(N대)', '비급여 수술비(가입 시)'] },
+    'K63.5': { group: '수술', op: ['질병수술비(제외되는 상품이 많음)'], caveat: ['내시경 용종 절제는 시술로 보아 수술비를 지급하지 않는 상품이 많습니다.'] },
+    D12: { group: '수술', op: ['질병 1~5종 수술비'] },
+    K35: { group: '수술', op: ['질병 1~5종 수술비', '질병수술비(N대)'] },
+    K80: { group: '수술', op: ['질병 1~5종 수술비', '질병수술비(N대)'] },
+    N20: { group: '수술', op: ['질병수술비(체외충격파 제외 확인)'], caveat: ['체외충격파 쇄석술은 시술로 제외되는 상품이 많습니다.'] },
+    H25: { group: '수술', op: ['질병 1~5종 수술비', '비급여 수술비(가입 시)'], caveat: ['다초점·난시교정 렌즈는 비급여 — 5세대 실손 비중증 한도로는 부족할 수 있습니다.'] },
+    M17: { group: '수술', op: ['질병 1~5종 수술비', '비급여 수술비(가입 시)'] },
+
+    S72: { group: '상해', op: ['상해수술비', '상해 1~5종 수술비'], caveat: ['질병수술비로는 지급되지 않습니다 — 상해 축으로 청구하세요.'] },
+    S82: { group: '상해', op: ['상해수술비', '상해 1~5종 수술비'], caveat: ['질병수술비로는 지급되지 않습니다.'] },
+
+    J18: { group: '기타', dx: ['입원일당(입원일수 기준)'], caveat: ['질병수술비는 수술을 받은 경우에만 해당됩니다.'] },
+    I10: { group: '기타', caveat: ['진단비 지급 대상이 아닙니다 — 고지·인수 판단 항목입니다.'] },
+    N18: { group: '기타', caveat: ['중대질병 고지 항목 — 진단비 지급 대상이 아닙니다.'] },
+    K74: { group: '기타', caveat: ['중대질병 고지 항목 — 진단비 지급 대상이 아닙니다.'] },
+    F00: { group: '기타', dx: ['치매 진단비(상품별)', '장기요양·간병(등급 전제)'] },
+    U22: { group: '기타', dx: ['치매 진단비(상품별)', '장기요양·간병(등급 전제)'] }
+  };
+
+  const OP_HINT = {
+    K35: '복강경 충수절제술은 3종 안팎, 개복 전환 시 5종 — 회사 분류표가 기준입니다.',
+    M17: '인공관절 치환술은 5종(대수술) 고액 구간인 경우가 많습니다.',
+    M48: '척추 유합술은 5종 구간 — 비급여 나사·케이지 사용 시 비급여 수술비 담보도 확인하세요.',
+    M51: '관혈적 유합술만 수술비 대상이고, 내시경 감압술의 종수는 회사마다 다릅니다.',
+    M50: '목 디스크는 절개(관혈) 여부·분류표에 따라 종수가 갈립니다.',
+    K80: '복강경 담낭절제술의 종수를 분류표에서 확인하세요. 내시경 결석 제거는 시술입니다.',
+    N20: '체외충격파 쇄석술은 시술로 제외되는 상품이 많습니다.',
+    H25: '백내장 수술의 종수를 분류표에서 확인하고, 다초점 렌즈는 비급여로 따로 보세요.',
+    'K63.5': '건강검진 중 용종 제거는 수술비보다 고지의무(5년 문항)가 문제되는 대표 사례입니다.',
+    C16: '조기 위암 내시경 절제(ESD)는 4~5종 또는 시술 제외 여부가 회사별로 갈립니다.',
+    C67: '경요도 절제(TURB)는 시술 분류로 수술비에서 제외될 수 있습니다.'
+  };
+
+  function findCode(q) {
+    const s = String(q || '').trim().toLowerCase();
+    if (!s) return null;
+    const list = (typeof FC_CODES !== 'undefined' ? FC_CODES : []);
+    return list.find((c) => String(c.code).toLowerCase() === s) ||
+      list.find((c) => (String(c.code) + ' ' + c.name + ' ' + (c.tags || '')).toLowerCase().indexOf(s) >= 0) || null;
+  }
+  function searchCodes(q) {
+    const s = String(q || '').trim().toLowerCase();
+    const list = (typeof FC_CODES !== 'undefined' ? FC_CODES : []);
+    if (!s) return list.slice(0, 6);
+    return list.filter((c) => (String(c.code) + ' ' + c.name + ' ' + (c.tags || '') + ' ' + (c.group || '')).toLowerCase().indexOf(s) >= 0).slice(0, 8);
+  }
+
+  const GROUP_BASE = {
+    '암': { dx: ['일반암 진단비'], op: ['암수술비'], tx: ['항암약물치료비', '항암방사선치료비', '중환자실 입원비'], silson: '암 치료는 5세대 실손에서 중증(특약1) 비급여로 청구합니다(연 5,000만·자기부담 30%).' },
+    '유사암': { dx: ['유사암 진단비'], op: ['암수술비(상품별)'], tx: [], silson: '유사암 치료도 실손 청구는 가능하지만 진단비는 유사암 담보에서만 나옵니다.' },
+    '뇌': { dx: ['뇌혈관질환 진단비'], tx: ['뇌혈관 수술비', '혈전용해제 치료비', '중환자실 입원비'], silson: '뇌혈관 치료는 중증 비급여(특약1) 영역입니다.' },
+    '심장': { dx: ['허혈성심장질환 진단비'], tx: ['심장 수술비', '혈전용해제 치료비', '중환자실 입원비'], silson: '심장 치료는 중증 비급여(특약1) 영역입니다.' },
+    '수술': { op: ['질병 1~5종 수술비', '질병수술비(N대)'], silson: '입원·통원 실손은 세부내역서 기준으로 청구합니다.' },
+    '상해': { op: ['상해수술비', '상해 1~5종 수술비'], silson: '상해는 질병 담보가 아니라 상해 담보 축입니다.' },
+    '기타': { silson: '진단비 담보가 없는 항목은 실손·입원일당 중심으로 확인하세요.' }
+  };
+
+  function classify(code) {
+    if (!code) return null;
+    const rule = CODE_RULES[code.code] || {};
+    const group = rule.group || code.group || '기타';
+    const base = GROUP_BASE[group] || GROUP_BASE['기타'];
+    const dx = rule.dx || base.dx || [];
+    const op = rule.op || base.op || [];
+    const tx = rule.tx || base.tx || [];
+    const caveat = (rule.caveat || []).slice();
+    return { group, dx, op, tx, caveat, silson: base.silson || '' };
+  }
+
+  function requiredDocs(cls, input) {
+    const list = [];
+    const has = (k, rank, why) => { if (!list.some((x) => x.key === k)) list.push({ key: k, rank, why }); };
+    if (cls.group === '암' || cls.group === '유사암') {
+      has('dx', 1, '진단확정일·병명·KCD 코드가 적힌 진단서가 진단비 청구의 기본입니다.');
+      has('path', 1, '원발/전이, 일반암/유사암 판정이 병리조직결과지로 갈립니다.');
+      if (cls.op.length) has('surgery', 1, '수술명·수술일·수술방법이 있어야 수술비 종수를 판정합니다.');
+    } else if (cls.group === '뇌' || cls.group === '심장') {
+      has('dx', 1, '진단서에 질환명과 코드가 있어야 담보 범위를 가릅니다.');
+      has('admit', 2, '입원일당·중환자실 담보는 입·퇴원 확인서가 필요합니다.');
+      if (cls.tx.length) has('surgery', 2, '수술·시술 담보는 수술확인서(또는 시술 기록)로 확인합니다.');
+    } else if (cls.group === '수술' || cls.group === '상해') {
+      has('surgery', 1, '수술확인서가 없으면 수술 종수를 판정할 수 없습니다.');
+      has('dx', 2, '질병·상해 구분과 진단명 확인용입니다.');
+    } else if (cls.group === '기타') {
+      has('dx', 2, '지급 대상 담보가 있는지 진단서로 먼저 확인하세요.');
+    }
+    if (input.silson5 || input.receipt || input.detail) {
+      has('detail', 2, '실손은 급여/비급여 구분이 있는 세부내역서가 있어야 계산됩니다.');
+      has('receipt', 3, '실손 청구의 기본 첨부 서류입니다.');
+    }
+    if (input.care) has('admit', 2, '간병일당은 입원일수·간병 기간을 확인할 수 있는 서류가 필요합니다.');
+    return list.sort((a, b) => a.rank - b.rank);
+  }
+
+  function match(input) {
+    const code = input.code || null;
+    const cls = classify(code);
+    if (!cls) return { empty: true };
+    const docSet = {};
+    DOCS.forEach((d) => { docSet[d.key] = !!input.docs[d.key]; });
+
+    const rows = [];
+    cls.dx.forEach((d) => rows.push({ dambo: d, kind: '진단비', need: ['dx'], ok: docSet.dx, why: code.pays }));
+    if (input.surgery) {
+      cls.op.forEach((d) => rows.push({
+        dambo: d, kind: '수술비', need: ['surgery', 'path'], ok: docSet.surgery,
+        why: (cls.group === '암' || cls.group === '유사암')
+          ? (OP_HINT[code.code] || code.check) + ' 병리 결과지가 없으면 일반암/유사암 구분이 어렵습니다.'
+          : (OP_HINT[code.code] || code.check)
+      }));
+    } else if (cls.op.length) {
+      rows.push({ dambo: '수술 1~5종 특약', kind: '수술비', need: ['surgery'], ok: false, locked: true, why: '가입 특약에 수술비를 체크하면 종수 기준으로 매칭합니다.' });
+    }
+    cls.tx.forEach((d) => rows.push({ dambo: d, kind: '치료비', need: ['detail'], ok: docSet.detail, why: code.check }));
+    if (input.care && (cls.group === '뇌' || cls.group === '심장' || cls.group === '수술' || cls.group === '암')) {
+      rows.push({ dambo: '간병일당(8만원 기준)', kind: '간병', need: ['admit'], ok: docSet.admit, why: input.careBasis === '6' ? '6시간제 상품 — 1일 6시간 이상 간병인 사용 확인서가 기준입니다.' : '8시간제 상품 — 1일 8시간 이상 간병인 사용 확인서가 기준입니다.' });
+    }
+    if (input.silson5) {
+      rows.push({ dambo: '5세대 실손(비중증 특약2)', kind: '실손', need: ['detail', 'receipt'], ok: docSet.detail && docSet.receipt, why: '연 1,000만원 한도·자기부담 50%. 도수·체외충격파·비급여 주사·미등재 신의료기술은 보장 제외(0원)입니다.' });
+    }
+
+    const required = requiredDocs(cls, input);
+    const missing = required.filter((r) => !docSet[r.key]);
+    const checkedCount = DOCS.filter((d) => docSet[d.key]).length;
+    const soleReceipt = checkedCount > 0 && !docSet.dx && !docSet.surgery && !docSet.path;
+
+    const notes = [];
+    if (soleReceipt) notes.push('영수증만으로는 수술 종수·원발/전이암 판정이 불가능합니다. 수술확인서와 병리조직결과지가 1순위로 필요한 서류입니다.');
+    if (cls.silson) notes.push(cls.silson);
+    if (input.silson5) notes.push('5세대 비중증 제외 4항목(도수·체외충격파·비급여 주사·미등재 신의료기술)은 자기부담 50%가 아니라 0원입니다.');
+    if (input.care) notes.push('간병일당은 요양병원 제외/포함, 지급 기준(8시간제·6시간제), 가족 간병 인정 여부를 증권에서 확인하세요.');
+    (cls.caveat || []).forEach((c) => notes.push(c));
+    if (code.group === '암' && docSet.path && !docSet.dx) notes.push('병리 결과지만으로는 진단확정일을 증명하기 어렵습니다 — 진단서를 함께 받으세요.');
+
+    const expiry = input.accident ? expiryOf(input.accident) : null;
+    return { code, cls, rows, missing, notes, soleReceipt, expiry, disclaimer: DISCLAIMER };
+  }
+
+  function expiryOf(accident) {
+    const date = addMonths(accident, 36);
+    const days = diffDays(todayISO(), date);
+    return {
+      date, days,
+      tone: days < 0 ? 'danger' : days <= 90 ? 'danger' : days <= 180 ? 'warn' : 'ok',
+      label: days < 0 ? '시효 완성 — 청구권 소멸 위험' : days <= 90 ? '긴급 — 90일 이내' : days <= 180 ? '주의 — 6개월 이내' : '여유',
+      note: '계속 입원·통원으로 청구가 나뉘면 시효 기산일이 달라질 수 있습니다(입원 종료일·최종 진료일 기준). 보험사에 기산일을 확인하세요.'
+    };
+  }
+
+  let picked = null;
+  let lastResult = null;
+
+  function readInput() {
+    const docs = {};
+    $$('#cc-docs [data-cc-doc]').forEach((b) => { docs[b.dataset.ccDoc] = b.classList.contains('is-on'); });
+    const chk = (id) => !!($('#' + id) && $('#' + id).checked);
+    const val = (id) => { const el = $('#' + id); return el ? String(el.value || '').trim() : ''; };
+    return {
+      code: picked, docs,
+      accident: val('cc-date'),
+      surgery: chk('cc-rider-surgery'), care: chk('cc-rider-care'), careBasis: val('cc-care-basis'),
+      silson5: chk('cc-rider-silson'),
+      detail: !!docs.detail, receipt: !!docs.receipt
+    };
+  }
+
+  function paintCodes(list) {
+    const host = $('#cm-codes');
+    if (!host) return;
+    if (!list.length) { host.innerHTML = '<p class="cc-none">검색 결과가 없습니다. 코드(C73) 또는 이름(갑상선암)으로 다시 찾아보세요.</p>'; return; }
+    host.innerHTML = list.map((c) => `<button type="button" class="cm-code${picked && picked.code === c.code ? ' is-on' : ''}" data-cm-code="${esc(c.code)}">
+      <code>${esc(c.code)}</code><b>${esc(c.name)}</b><span>${esc(c.group)}</span></button>`).join('');
+    $$('[data-cm-code]', host).forEach((b) => {
+      b.addEventListener('click', () => {
+        picked = (typeof FC_CODES !== 'undefined' ? FC_CODES : []).find((c) => c.code === b.dataset.ccCode) || null;
+        paintCodes(list);
+        paintPicked();
+        run();
+      });
+    });
+  }
+
+  function paintPicked() {
+    const host = $('#cc-picked');
+    if (!host) return;
+    if (!picked) { host.innerHTML = '<p class="cc-none">질환·코드를 고르면 확인할 후보 담보를 계산합니다.</p>'; return; }
+    host.innerHTML = `<div class="cc-pick">
+      <span class="cc-pick-code">${esc(picked.code)}</span>
+      <b>${esc(picked.name)}</b>
+      <span class="cc-pick-group">${esc(picked.group)}</span>
+      <p><b>지급 담보</b> ${esc(picked.pays)}</p>
+      <p><b>확인 포인트</b> ${esc(picked.check)}</p>
+    </div>`;
+  }
+
+  function paintDocs() {
+    const host = $('#cc-docs');
+    if (!host) return;
+    if (host.dataset.bound === '1') return;
+    host.dataset.bound = '1';
+    host.innerHTML = DOCS.map((d) => `<button type="button" class="cc-doc" data-cc-doc="${d.key}" aria-pressed="false">
+      <span class="cc-box" aria-hidden="true"></span><b>${esc(d.label)}</b><em>${esc(d.note)}</em></button>`).join('');
+    $$('[data-cc-doc]', host).forEach((b) => {
+      b.addEventListener('click', () => {
+        const on = !b.classList.contains('is-on');
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-pressed', String(on));
+        run();
+      });
+    });
+  }
+
+  function resultHTML(r) {
+    if (!r || r.empty) return '<p class="cc-none">먼저 질환·코드를 골라 주세요.</p>';
+    const rows = r.rows.map((row) => `<div class="cm-row ${row.ok ? 'is-ok' : (row.locked ? 'is-locked' : 'is-miss')}">
+        <div class="cm-row-head"><b>${esc(row.dambo)}</b><span class="cc-kind">${esc(row.kind)}</span><span class="cc-verdict">${row.locked ? '특약 미선택' : (row.ok ? '서류 준비됨' : '서류 더 필요')}</span></div>
+        <p>${esc(row.why || '')}</p>
+      </div>`).join('');
+    const miss = r.missing.length ? `<div class="cc-block cc-miss">
+        <div class="cc-block-title">추가로 필요한 서류 — 1순위부터</div>
+        <ul class="cc-miss-list">${r.missing.map((m) => `<li><span class="cc-rank">${m.rank}순위</span><b>${esc(DOC_LABEL[m.key] || m.key)}</b><span>${esc(m.why)}</span></li>`).join('')}</ul>
+      </div>` : `<div class="cc-block cc-ok"><div class="cc-block-title">추가로 필요한 서류 없음</div><p>핵심 서류가 모두 체크되어 있습니다. 사본·원본 요구 여부만 보험사에 확인하세요.</p></div>`;
+    const ex = r.expiry ? `<div class="cc-block cc-expiry tone-${r.expiry.tone}">
+        <div class="cc-block-title">상법 제662조 소멸시효 — 사고일 + 3년</div>
+        <p class="cc-exp-date">${esc(koDate(r.expiry.date))} <b class="tone-${r.expiry.tone}">${esc(ddayText(r.expiry.days))}</b> <span>${esc(r.expiry.label)}</span></p>
+        <p class="cc-exp-note">${esc(r.expiry.note)}</p>
+      </div>` : '<div class="cc-block"><div class="cc-block-title">소멸시효</div><p>사고일(진단확정·수술·퇴원일)을 넣으면 3년 만료일과 D-day가 나옵니다.</p></div>';
+    return `<div class="cc-block">
+        <div class="cc-block-title">확인할 후보 담보</div>
+        <div class="cm-rows">${rows || '<p class="cc-none">이 코드에 바로 연결되는 후보 담보가 없습니다. 고지·인수 판단 항목입니다.</p>'}</div>
+      </div>
+      ${miss}
+      ${ex}
+      ${r.notes.length ? `<div class="cc-block"><div class="cc-block-title">상담 메모</div><ul class="cc-notes">${r.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul></div>` : ''}
+      <p class="cc-disclaimer">※ ${esc(r.disclaimer)}</p>`;
+  }
+
+  function run() {
+    const input = readInput();
+    lastResult = match(input);
+    const out = $('#cc-out');
+    if (out) out.innerHTML = resultHTML(lastResult);
+    return lastResult;
+  }
+
+  function init() {
+    if (!$('#cc-out')) return;
+    paintDocs();
+    paintCodes(searchCodes(''));
+    paintPicked();
+    const q = $('#cc-q');
+    const search = () => paintCodes(searchCodes(q ? q.value : ''));
+    if (q) {
+      q.addEventListener('input', search);
+      q.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); search(); } });
+    }
+    const sb = $('#cc-search'); if (sb) sb.addEventListener('click', search);
+    const runBtn = $('#cc-run'); if (runBtn) runBtn.addEventListener('click', () => { run(); toast('청구 서류와 담보를 매칭했습니다'); });
+    const dateEl = $('#cc-date'); if (dateEl) dateEl.addEventListener('change', run);
+    ['cc-rider-surgery', 'cc-rider-care', 'cc-rider-silson', 'cc-care-basis'].forEach((id) => {
+      const el = $('#' + id); if (el) el.addEventListener('change', run);
+    });
+    run();
+  }
+
+  root.BojangClaimCheck = {
+    init, run, match, classify, searchCodes, findCode, expiryOf, DOCS, DISCLAIMER,
+    pick: (codeStr) => {
+      picked = (typeof FC_CODES !== 'undefined' ? FC_CODES : []).find((c) => c.code === codeStr) || null;
+      paintCodes(searchCodes(codeStr)); paintPicked(); return run();
+    },
+    selected: () => picked,
+    date: { addMonths, diffDays, ddayText, koDate, todayISO }
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function (root) {
+  'use strict';
+
+  const $ = (sel, r) => (r || document).querySelector(sel);
+  const $$ = (sel, r) => Array.from((r || document).querySelectorAll(sel));
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const toast = (m) => { if (root.__bojangToast) root.__bojangToast(m); };
+
+  const BADGE = '기기에서만 처리(로컬)';
+
+  const EXAMPLE = '김서연 42세 여성, 월 보험료 18만원. 암 5000, 뇌 2000, 심장 1500, 수술 1~5종 300, 간병 10만원. 부모님 암 가족력. 고혈압 약 3년째 복용, 5년 전 담낭 수술. 실손 4세대.';
+
+  function toManwon(numStr, unit) {
+    const n = Number(String(numStr || '').replace(/[,]/g, ''));
+    if (!isFinite(n) || n <= 0) return null;
+    const u = unit || '만';
+    if (u === '억') return Math.round(n * 10000);
+    if (u === '천만') return Math.round(n * 1000);
+    return Math.round(n);
+  }
+  function manwonLabel(v) {
+    const n = Number(v || 0);
+    if (n >= 10000) return (n / 10000).toFixed(n % 10000 === 0 ? 0 : 1) + '억';
+    return n.toLocaleString('ko-KR') + '만원';
+  }
+
+  function amountAfter(text, leadRegExp) {
+    const re = new RegExp('(?:' + leadRegExp + ')[^0-9]{0,14}(\\d{1,5}(?:[.,]\\d+)?)\\s*(억|천만|만)?', 'i');
+    const m = re.exec(text);
+    if (!m) return null;
+    const unit = m[2] || '만';
+    const v = toManwon(m[1], unit);
+    if (v == null || v < 1) return null;
+    return v;
+  }
+
+  const DISC_RULES = [
+    { re: '(고혈압|혈압약|혈압강하제|혈압 조절)', keys: ['y5m_htn'], label: '고혈압', always: ['m3_daily'], why: '혈압약 상시 복용은 3개월 문항이기도 합니다' },
+    { re: '(당뇨|인슐린|혈당약)', keys: ['y5m_dm'], label: '당뇨병', always: ['m3_daily'] },
+    { re: '(협심증|스텐트|관상동맥)', keys: ['y5m_angina'], label: '협심증' },
+    { re: '(심근경색)', keys: ['y5m_mi'], label: '심근경색' },
+    { re: '(뇌졸중|뇌출혈|뇌경색)', keys: ['y5m_stroke'], label: '뇌졸중' },
+    { re: '(간경화)', keys: ['y5m_cirr'], label: '간경화' },
+    { re: '(위암|유방암|갑상선암|폐암|대장암|간암|자궁암|전립선암|암 진단|암진단|암 수술|암수술|암 병력)', keys: ['y5m_cancer'], label: '암' },
+    { re: '(입원)', keys: ['y5_inop'], label: '입원', period: { '3개월': ['m3_in', 'y2_inop'], '1년': ['y2_inop'], '2년': ['y2_inop'] } },
+    { re: '(수술)', keys: ['y5_inop'], label: '수술', period: { '3개월': ['m3_op', 'y2_inop'], '1년': ['y2_inop'], '2년': ['y2_inop'] } },
+    { re: '(투약|복용|처방)', keys: ['m3_med'], label: '투약' }
+  ];
+
+  function periodBefore(text, idx) {
+    const head = text.slice(Math.max(0, idx - 14), idx);
+    if (/3\s*개월/.test(head)) return '3개월';
+    if (/1\s*년/.test(head)) return '1년';
+    if (/2\s*년/.test(head)) return '2년';
+    if (/5\s*년/.test(head)) return '5년';
+    return '';
+  }
+
+  function parseBirth(text) {
+    let m = /(\d{4})\s*[.\-\/년]\s*(\d{1,2})\s*[.\-\/월]\s*(\d{1,2})\s*일?/.exec(text);
+    if (m) {
+      const y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+      if (y >= 1900 && y <= 2026 && mo >= 1 && mo <= 12 && d >= 1 && d <= 31) {
+        return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      }
+      return null;
+    }
+    m = /(?:생년월일|주민번호 앞자리)\s*[:：]?\s*(\d{2}|\d{4})\s*[.\-\/]?\s*(\d{2})\s*[.\-\/]?\s*(\d{2})/.exec(text);
+    if (m) {
+      let y = Number(m[1]);
+      if (y < 100) y = y > 26 ? 1900 + y : 2000 + y;
+      const yy = y, mo = Number(m[2]), d = Number(m[3]);
+      if (yy >= 1900 && yy <= 2026 && mo >= 1 && mo <= 12 && d >= 1 && d <= 31) {
+        return `${yy}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      }
+    }
+    return null;
+  }
+
+  function parseAge(text) {
+    const m = /(?:만\s*)?(\d{2})\s*(?:세|살)/.exec(text);
+    if (!m) return null;
+    const a = Number(m[1]);
+    return a >= 0 && a <= 100 ? a : null;
+  }
+
+  function parseName(text) {
+    const NOT_NAME = /^(부모|아버지|어머니|아빠|엄마|배우자|아내|남편|자녀|아들|딸|형제|자매|동생|본인|가족|고객|상담|보험|실손|남성|여성)$/;
+    const ok = (s) => !!s && /^[가-힣]{2,4}$/.test(s) && !NOT_NAME.test(s);
+    const labeled = /(?:고객명|성함|이름)\s*[:：]?\s*([가-힣]{2,4})/.exec(text);
+    if (labeled && ok(labeled[1])) return labeled[1];
+    const withNim = /([가-힣]{2,4})\s*(?:고객)?님/.exec(text);
+    if (withNim && withNim.index < 30 && ok(withNim[1])) return withNim[1];
+    const head = /^\s*([가-힣]{2,4})(?=\s|,|\d)/.exec(text);
+    if (head && ok(head[1])) return head[1];
+    return '';
+  }
+
+  function parsePremium(text) {
+    let m = /(?:월\s*)?보험료[^0-9]{0,10}(\d{1,3}(?:[.,]\d+)?)\s*(만)?\s*원?/.exec(text);
+    if (m) { const v = toManwon(m[1], m[2] ? '만' : '만'); if (v && v <= 300) return v; }
+    m = /(?:월|매달|한\s*달)\s*(\d{1,3})\s*만\s*원?/.exec(text);
+    if (m) { const v = Number(m[1]); if (v > 0 && v <= 300) return v; }
+    m = /(\d{1,3})\s*만\s*원\s*(?:정도|내외)?\s*(?:내고|납입|내요|냅니다)/.exec(text);
+    if (m) { const v = Number(m[1]); if (v > 0 && v <= 300) return v; }
+    return null;
+  }
+
+  function parseSilson(text) {
+    const m = /실손[^0-9]{0,8}([1-5])\s*세대/.exec(text) || /([1-5])\s*세대\s*실손/.exec(text);
+    if (m) return m[1];
+    if (/실손\s*(없|미가입|0)/.test(text)) return 'none';
+    return null;
+  }
+
+  function parse(text) {
+    const t = String(text || '');
+    const out = { name: '', birth: '', age: null, gender: '', premium: null, silson: null, family: [], cov: {}, disc: {}, hits: [], warnings: [] };
+    if (!t.trim()) return out;
+
+    out.name = parseName(t);
+    out.birth = parseBirth(t) || '';
+    out.age = parseAge(t);
+    if (/여성|여자|여\s*고객|\(여\)|여성분/.test(t)) out.gender = '여';
+    else if (/남성|남자|남\s*고객|\(남\)|남성분/.test(t)) out.gender = '남';
+    out.premium = parsePremium(t);
+    out.silson = parseSilson(t);
+
+    if (/가족력\s*(없|없음|해당\s*없)/.test(t)) out.family = ['none'];
+    else {
+      const famIdx = t.search(/가족력|부모|아버지|어머니|아빠|엄마|형제|자매/);
+      if (famIdx >= 0) {
+        const near = t.slice(famIdx, famIdx + 60);
+        if (/암/.test(near)) out.family.push('cancer');
+        if (/뇌|뇌졸중|뇌출혈/.test(near)) out.family.push('brain');
+        if (/심장|협심증|심근경색/.test(near)) out.family.push('heart');
+        if (/치매/.test(near)) out.family.push('dementia');
+        if (out.family.length) out.hits.push({ field: '가족력', value: out.family.map((k) => ({ cancer: '암', brain: '뇌혈관', heart: '심장', dementia: '치매' }[k])).join(' · ') });
+      }
+    }
+
+    const cancer = amountAfter(t, '암(?!\\s*(?:수술|진단|보험료|가족|병력))');
+    if (cancer) {
+      out.cov.cancer = { general: cancer };
+      out.hits.push({ field: '암 진단비', value: manwonLabel(cancer) });
+    }
+    const brainLead = /뇌출혈/.test(t) ? '뇌출혈' : /뇌졸중/.test(t) ? '뇌졸중' : '뇌';
+    const brain = /뇌/.test(t) ? amountAfter(t, brainLead) : null;
+    if (brain) {
+      const part = /뇌졸중/.test(t) ? 'stroke' : /뇌출혈/.test(t) ? 'bleed' : 'vascular';
+      out.cov.brain = { [part]: brain };
+      out.hits.push({ field: '뇌 진단비', value: manwonLabel(brain) + (part === 'stroke' ? ' (뇌졸중)' : part === 'bleed' ? ' (뇌출혈)' : ' (뇌혈관)') });
+    }
+    const heartLead = /심근경색/.test(t) ? '심근경색' : /허혈/.test(t) ? '허혈성심장' : '심장';
+    const heart = /심장|허혈|심근경색/.test(t) ? amountAfter(t, heartLead) : null;
+    if (heart) {
+      const part = /급성\s*심근경색|심근경색/.test(t) ? 'ami' : 'ischemic';
+      out.cov.heart = { [part]: heart };
+      out.hits.push({ field: '심장 진단비', value: manwonLabel(heart) + (part === 'ami' ? ' (급성심근경색)' : ' (허혈성)') });
+    }
+    const surgery = /수술/.test(t) ? amountAfter(t, '(?:수술비|수술\\s*1\\s*~\\s*5\\s*종|수술\\s*5종|수술비\\s*1~5종|수술)') : null;
+    if (surgery) {
+      out.cov.surgery = { disease15: surgery };
+      out.hits.push({ field: '질병 1~5종 수술비', value: manwonLabel(surgery) });
+    }
+    const care = /간병/.test(t) ? amountAfter(t, '간병(?:비|일당)?') : null;
+    if (care) {
+      out.cov.care = { daily: care };
+      out.hits.push({ field: '간병 일당', value: manwonLabel(care) });
+    }
+
+    DISC_RULES.forEach((r) => {
+      const re = new RegExp(r.re, 'i');
+      const m = re.exec(t);
+      if (!m) return;
+      const period = periodBefore(t, m.index);
+      let keys = r.keys.slice();
+      if (period && r.period && r.period[period]) keys = r.keys.concat(r.period[period]);
+      (r.always || []).forEach((k) => { if (keys.indexOf(k) < 0) keys.push(k); });
+      keys.forEach((k) => { out.disc[k] = true; });
+      out.hits.push({ field: '고지 · ' + r.label, value: (period ? period + ' 이내 — ' : '') + '체크' });
+    });
+
+    if (/암\s*(?:진단|수술|치료|병력)|(?:위암|유방암|갑상선암|폐암|대장암|간암)/.test(t) && !out.disc.y5m_cancer) {
+      out.disc.y5m_cancer = true;
+      out.hits.push({ field: '고지 · 암', value: '체크' });
+    }
+
+    if (!out.hits.length) out.warnings.push('메모에서 채울 값을 찾지 못했습니다. 이름·나이·보험료·담보 금액을 숫자로 적어 주세요.');
+    return out;
+  }
+
+  let backup = null;
+
+  const MARKS = [];
+  function clearMarks() {
+    while (MARKS.length) { const el = MARKS.pop(); if (el) el.classList.remove('mf-filled'); }
+  }
+  function markEl(el) {
+    if (!el || el.classList.contains('mf-filled')) return;
+    el.classList.add('mf-filled');
+    MARKS.push(el);
+    const off = () => { el.classList.remove('mf-filled'); const i = MARKS.indexOf(el); if (i >= 0) MARKS.splice(i, 1); };
+    el.addEventListener('input', off, { once: true });
+    el.addEventListener('change', off, { once: true });
+    el.addEventListener('click', off, { once: true });
+  }
+  function markFilled(parsed) {
+    clearMarks();
+    if (!parsed) return 0;
+    const sels = [];
+    if (parsed.name) sels.push('#client-name');
+    if (parsed.birth) sels.push('#client-birth');
+    if (parsed.premium != null) sels.push('#premium');
+    if (parsed.age != null) sels.push('#seg-age .is-on');
+    if (parsed.gender) sels.push('#seg-gender .is-on');
+    if (parsed.silson) sels.push('#seg-silson .is-on');
+    (parsed.family || []).forEach((k) => sels.push(`#family-chips [data-fam="${k}"]`));
+    Object.keys(parsed.disc || {}).forEach((k) => sels.push(`#disclosure-checks [data-disc="${k}"]`));
+    if (parsed.cov && parsed.cov.cancer) sels.push('input[data-item="cancer"][data-part="general"]');
+    if (parsed.cov && parsed.cov.brain) Object.keys(parsed.cov.brain).forEach((k) => sels.push(`input[data-item="brain"][data-part="dx"][data-sub="${k}"]`));
+    if (parsed.cov && parsed.cov.heart) Object.keys(parsed.cov.heart).forEach((k) => sels.push(`input[data-item="heart"][data-part="dx"][data-sub="${k}"]`));
+    if (parsed.cov && parsed.cov.surgery) sels.push('input[data-item="surgery"][data-part="disease15"]');
+    if (parsed.cov && parsed.cov.care) sels.push('input[data-item="care"][data-part="daily"]');
+    let n = 0;
+    sels.forEach((sel) => { const el = $(sel); if (el) { markEl(el); n++; } });
+    return n;
+  }
+
+  function snapshot() {
+    const S = root.BojangApp && root.BojangApp.state;
+    if (!S) return null;
+    return JSON.stringify({
+      client: S.client, age: S.age, gender: S.gender, premium: S.premium, silson: S.silson,
+      family: S.family, cov: S.cov, disc: S.disc
+    });
+  }
+
+  function apply(parsed) {
+    const S = root.BojangApp && root.BojangApp.state;
+    if (!S || !parsed) return 0;
+    backup = snapshot();
+    let n = 0;
+
+    if (parsed.name) { S.client.name = parsed.name; n++; }
+    if (parsed.birth) { S.client.birth = parsed.birth; n++; }
+    if (parsed.age != null) { S.age = String(Math.max(20, Math.min(70, Math.floor(parsed.age / 10) * 10))); n++; }
+    if (parsed.gender) { S.gender = parsed.gender; n++; }
+    if (parsed.premium != null) { S.premium = parsed.premium; n++; }
+    if (parsed.silson) { S.silson = parsed.silson; n++; }
+    if (parsed.family && parsed.family.length) { S.family = parsed.family.slice(); n++; }
+
+    Object.keys(parsed.cov || {}).forEach((area) => {
+      const patch = parsed.cov[area];
+      if (!S.cov[area]) return;
+      if (area === 'cancer' && patch.general != null) { S.cov.cancer.general = patch.general; n++; }
+      if (area === 'brain') {
+        Object.keys(patch).forEach((k) => { if (S.cov.brain.dx[k] != null) { S.cov.brain.dx[k] = patch[k]; n++; } });
+      }
+      if (area === 'heart') {
+        Object.keys(patch).forEach((k) => { if (S.cov.heart.dx[k] != null) { S.cov.heart.dx[k] = patch[k]; n++; } });
+      }
+      if (area === 'surgery' && patch.disease15 != null) { S.cov.surgery.disease15 = patch.disease15; n++; }
+      if (area === 'care' && patch.daily != null) { S.cov.care.daily = patch.daily; n++; }
+    });
+
+    Object.keys(parsed.disc || {}).forEach((k) => { S.disc[k] = true; n++; });
+
+    if (root.BojangModel && root.BojangModel.normalizeState) { try { root.BojangModel.normalizeState(S); } catch (e) {   } }
+    if (root.BojangApp && root.BojangApp.renderAllInputs) root.BojangApp.renderAllInputs();
+    if (root.BojangApp && root.BojangApp.discTouched) { try { root.BojangApp.discTouched(); } catch (e) {   } }
+    markFilled(parsed);
+    return n;
+  }
+
+  function undo() {
+    const S = root.BojangApp && root.BojangApp.state;
+    if (!S || !backup) return false;
+    const b = JSON.parse(backup);
+    S.client = b.client; S.age = b.age; S.gender = b.gender; S.premium = b.premium; S.silson = b.silson;
+    S.family = b.family; S.cov = b.cov; S.disc = b.disc;
+    if (root.BojangApp && root.BojangApp.renderAllInputs) root.BojangApp.renderAllInputs();
+    if (root.BojangApp && root.BojangApp.discTouched) { try { root.BojangApp.discTouched(); } catch (e) {   } }
+    backup = null;
+    clearMarks();
+    return true;
+  }
+
+  function outHTML(parsed, applied) {
+    const hits = parsed.hits.map((h) => `<li><b>${esc(h.field)}</b><span>${esc(h.value)}</span></li>`).join('');
+    const warns = (parsed.warnings || []).map((w) => `<li class="mf-warn">${esc(w)}</li>`).join('');
+    return `<div class="mf-out-head">
+        <b>${applied ? applied + '개 항목을 입력칸에 넣었습니다' : '메모에서 찾은 값'}</b>
+        <span class="mf-local">🔒 ${esc(BADGE)} · 외부 전송 0건</span>
+      </div>
+      <ul class="mf-hits">${hits || '<li>채울 값을 찾지 못했습니다.</li>'}</ul>
+      ${warns ? `<ul class="mf-hits">${warns}</ul>` : ''}
+      ${applied ? '<p class="mf-next">노란 칸은 메모에서 읽어 넣은 값입니다 — 고객에게 확인하고 틀린 칸만 고치면 강조가 사라집니다. 1단계 기본 정보 → 2단계 암 보장 순서로 확인하세요.</p>' : ''}`;
+  }
+
+  function run() {
+    const ta = $('#mf-text');
+    const out = $('#mf-out');
+    if (!ta || !out) return null;
+    const parsed = parse(ta.value);
+    const applied = apply(parsed);
+    out.innerHTML = outHTML(parsed, applied);
+    const undoBtn = $('#mf-undo');
+    if (undoBtn) undoBtn.hidden = !applied;
+    if (applied) toast('메모에서 ' + applied + '개 항목을 채웠습니다 · 기기에서만 처리');
+    return { parsed, applied };
+  }
+
+  function toggle(open) {
+    const body = $('#mf-body');
+    const btn = $('#mf-toggle');
+    if (!body || !btn) return;
+    const next = open == null ? body.hidden : !!open;
+    body.hidden = !next;
+    btn.setAttribute('aria-expanded', String(next));
+    $('#memo-fill').classList.toggle('is-open', next);
+    if (next) setTimeout(() => { const ta = $('#mf-text'); if (ta) ta.focus({ preventScroll: true }); }, 60);
+  }
+
+  function init() {
+    if (!$('#memo-fill')) return;
+    const btn = $('#mf-toggle');
+    if (btn) btn.addEventListener('click', () => toggle());
+    const runBtn = $('#mf-parse');
+    if (runBtn) runBtn.addEventListener('click', run);
+    const undoBtn = $('#mf-undo');
+    if (undoBtn) undoBtn.addEventListener('click', () => {
+      if (undo()) { toast('메모 반영 전 상태로 되돌렸습니다'); const out = $('#mf-out'); if (out) out.innerHTML = ''; undoBtn.hidden = true; }
+    });
+    const exBtn = $('#mf-example');
+    if (exBtn) exBtn.addEventListener('click', () => { const ta = $('#mf-text'); if (ta) { ta.value = EXAMPLE; ta.focus(); } });
+  }
+
+  /* v7.0 — 새 상담·초기화 시 메모 원문과 강조를 비웁니다. 메모는 어디에도 저장하지 않습니다. */
+  function reset() {
+    const ta = $('#mf-text'); if (ta) ta.value = '';
+    const out = $('#mf-out'); if (out) out.innerHTML = '';
+    const u = $('#mf-undo'); if (u) u.hidden = true;
+    clearMarks();
+    backup = null;
+  }
+
+  root.BojangMemoFill = { init, parse, apply, undo, run, toggle, reset, EXAMPLE, BADGE, toManwon, manwonLabel };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
@@ -21954,6 +23402,8 @@ const PLAN_FRONT = {
     state.contracts = [];
     state.label = '';
     state.migration = { migrated: false, notes: [], clamped: 0 };
+
+    if (window.BojangMemoFill && window.BojangMemoFill.reset) window.BojangMemoFill.reset();
     syncSegments();
     renderClientFields();
     renderFamilyChips();
@@ -22190,6 +23640,8 @@ const PLAN_FRONT = {
     if (name === 'live' && window.BojangLive) window.BojangLive.render();
     if (name === 'remodel' && window.BojangRemodel) window.BojangRemodel.render();
     if (name === 'brand' && window.BojangBrand) window.BojangBrand.render();
+
+    if (name === 'toolkit' && window.BojangAftercare) window.BojangAftercare.run();
     if (window.BojangTools) {
       if (name === 'codes') window.BojangTools.renderCodes();
       else if (name === 'silson') window.BojangTools.renderSilson();
@@ -23161,9 +24613,9 @@ const PLAN_FRONT = {
     {
       no: '3',
       title: '외부 AI 비전 분석',
-      where: '사진 업로드 시 1회 전달',
+      where: '사진 분석 시 외부 AI로 전달',
       items: [
-        '보장분석표 사진을 AI로 읽을 때만 축소 이미지 1회 전달',
+        '보장분석표 사진을 AI로 읽을 때만 축소 이미지를 전달 (오류 시 대체 모델로 재전송될 수 있음)',
         '앱·자체 서버에는 사진 저장 0건',
         '전송 이미지의 보관·삭제는 해당 AI 공급자 API 정책을 따름'
       ],
@@ -23263,6 +24715,10 @@ const PLAN_FRONT = {
     if (window.BojangBackend) window.BojangBackend.init();
     renderHome();
     if (window.BojangTools) window.BojangTools.init();
+    /* v7.0 — 사후관리 디데이 · 청구 서류 매칭 · 상담 메모 빠른 채움 */
+    if (window.BojangAftercare) window.BojangAftercare.init();
+    if (window.BojangClaimCheck) window.BojangClaimCheck.init();
+    if (window.BojangMemoFill) window.BojangMemoFill.init();
     if (window.BojangInputHub) {
       window.BojangInputHub.init({
         state: state,
@@ -23294,6 +24750,8 @@ const PLAN_FRONT = {
       else if (k === 'silson') switchView('silson');
       else if (k === 'disclose') switchView('disclose');
       else if (k === 'premium') switchView('premium');
+      else if (k === 'aftercare') { switchView('toolkit'); setTimeout(() => { const el = $('#card-aftercare'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (window.BojangAftercare) window.BojangAftercare.run(); }, 80); }
+      else if (k === 'claimcheck') { switchView('toolkit'); setTimeout(() => { const el = $('#card-claimcheck'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80); }
       else if (k === 'remodel') switchView('remodel');
       else if (k === 'brand') switchView('brand');
       else if (k === 'pdf') {
@@ -23307,6 +24765,30 @@ const PLAN_FRONT = {
       }
     });
     $('#btn-home').addEventListener('click', goHome);
+    /* v7.0 — 상담 후 챙길 것 3칸 → 현장 툴킷의 해당 도구로 바로 이동 */
+    document.addEventListener('click', (e) => {
+      const cell = e.target.closest('[data-pc-go]');
+      if (!cell) return;
+      const kind = cell.dataset.pcGo;
+      const go = (id, after) => {
+        switchView('toolkit');
+        setTimeout(() => {
+          const el = $('#' + id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (after) after();
+        }, 90);
+      };
+      if (kind === 'claimcheck') go('card-claimcheck');
+      else if (kind === 'aftercare') { go('card-aftercare'); setTimeout(() => { if (window.BojangAftercare) window.BojangAftercare.run(); }, 140); }
+      else if (kind === 'kakao') {
+        go('card-aftercare', () => {
+          const has = window.BojangAftercare && window.BojangAftercare.readInput().contract;
+          toast(has ? '카톡 인사말 복사 버튼을 누르면 초안이 복사됩니다' : '계약일을 넣으면 카톡 안내 초안이 만들어집니다');
+          const btn = $('#ac-results [data-ac-copy]');
+          if (btn) { btn.classList.add('is-pulse'); setTimeout(() => btn.classList.remove('is-pulse'), 1600); }
+        });
+      }
+    });
     /* v5.9 — 첫 화면 3버튼 · 더보기 메뉴 · 샘플 체험 */
     const moreBtn = $('#btn-more-menu');
     if (moreBtn) moreBtn.addEventListener('click', () => openMoreMenu());

@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v6.2 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
-<meta name="app-version" content="v6.2">
+<title>보장분석 라이프 리포트 v7.0 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<meta name="app-version" content="v7.0">
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
 <link rel="manifest" href="./manifest.json">
@@ -112,7 +112,7 @@
       </div>
       <div class="hh-top">
         <span class="hh-eyebrow" data-app-version-eyebrow>LIFE REPORT · BETA V6.0</span>
-        <span class="hh-ver" data-app-version-label>v6.2 · 2026.11</span>
+        <span class="hh-ver" data-app-version-label>v7.0 · 2026.11</span>
       </div>
       <h2>무엇을 하시겠어요?</h2>
       <p>상담 전 과정을 한 화면에서 시작합니다. 입력·계산과 PDF는 <b>이 기기에서</b> 하고, 로그인해 클라우드 동기화를 켜면 상담 스냅샷(이름·생년월일·연령대·성별·보험료·담보·계약·고지 체크)만 <b>Supabase(서울)</b>에 저장됩니다.</p>
@@ -163,8 +163,8 @@
         </button>
         <button type="button" class="sample-demo" id="btn-sample-demo">
           <span class="sd-ico" aria-hidden="true">🎬</span>
-          <span class="sd-txt"><b>로그인 없이 진짜 30장 샘플 바로 열기</b>
-            <em>가상 고객 김서연 · 저장·이력과 섞이지 않는 체험 모드</em></span>
+          <span class="sd-txt"><b>로그인 없이 30장 샘플 보기</b>
+            <em>가상 고객 김서연 · 저장·전송 안 됨</em></span>
           <span class="sd-go" aria-hidden="true">→</span>
         </button>
         <button type="button" class="sample-link" id="btn-sample">샘플 값만 채우기 (연습·시연용) →</button>
@@ -236,7 +236,7 @@
       </button>
     </div>
 
-    <div class="home-section-title"><span class="eyebrow">FC TOOLS</span> 설계사 실무 도우미 <span class="hst-sub">상담 현장에서 바로 쓰는 4종</span></div>
+    <div class="home-section-title"><span class="eyebrow">FC TOOLS</span> 설계사 실무 도우미 <span class="hst-sub">상담 현장에서 바로 쓰는 8종</span></div>
     <div class="home-grid fc-grid">
       <button type="button" class="hg-card" data-home-go="codes">
         <span class="hg-no">9</span>
@@ -261,6 +261,18 @@
         <b>💰 적정 보험료 · 리모델링 비교기</b>
         <span>소득 대비 권장 보장성 보험료(7~10%) 계산 + 현재·재배치·보완 후 점수 비교</span>
         <em>계산</em>
+      </button>
+      <button type="button" class="hg-card" data-home-go="aftercare">
+        <span class="hg-no">15</span>
+        <b>📅 사후관리 디데이 5종</b>
+        <span>90일 면책·감액·고지의무·실손 철회·상령일을 날짜로 계산 → 항목별 카톡 인사말 1탭 복사</span>
+        <em>D-DAY</em>
+      </button>
+      <button type="button" class="hg-card" data-home-go="claimcheck">
+        <span class="hg-no">16</span>
+        <b>🧾 청구 서류 · 담보 매칭</b>
+        <span>KCD 코드 + 가진 서류만 체크 → 확인할 후보 담보·추가로 필요한 서류·3년 소멸시효</span>
+        <em>매칭</em>
       </button>
       <button type="button" class="hg-card pro-card" data-home-go="remodel">
         <span class="hg-no">13</span>
@@ -306,7 +318,7 @@
 
     <details class="app-foot-details">
       <summary>기준일 · 반영 기능 자세히 보기</summary>
-      <p class="app-foot">기준일 2026-11-17 · v6.2 기준점(첫 화면 ①입력→②분석→③PDF 흐름 배너 · 로그인 없는 30장 샘플 체험 모드(가상 고객 격리·저장 차단) · 개인정보처리방침 데이터 흐름 1장 도식 · AI 보조자료 면책 문구(결과 화면·1·10·30장 PDF 꼬리말)) · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
+      <p class="app-foot">기준일 2026-11-17 · v7.0 기준점(사후관리 디데이 5종과 리터치 카톡 문구 · 진료서류 청구 담보 매칭과 상법 제662조 소멸시효 · 상담 메모 6단계 빠른 채움(100% 로컬) · 첫 화면 샘플 버튼 카피 개선) · v6.2 기준점(첫 화면 ①입력→②분석→③PDF 흐름 배너 · 로그인 없는 30장 샘플 체험 모드(가상 고객 격리·저장 차단) · 개인정보처리방침 데이터 흐름 1장 도식 · AI 보조자료 면책 문구(결과 화면·1·10·30장 PDF 꼬리말)) · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
     </details>
   </section>
 
@@ -426,6 +438,26 @@
 
         <div class="wiz-panel is-active" data-step="1">
           <div class="wiz-panel-title"><span class="n">1</span>기본 정보<em>고객 · 생년월일 · 실손 · 보험료</em></div>
+
+          <!-- ============ v7.0 상담 메모로 빠른 채움 (100% 로컬) ============ -->
+          <div class="mf-card no-print" id="memo-fill">
+            <button type="button" class="mf-head" id="mf-toggle" aria-expanded="false" aria-controls="mf-body">
+              <span class="mf-ico" aria-hidden="true">📝</span>
+              <span class="mf-title"><b>상담 메모로 빠른 채움</b><em>메모를 붙여넣으면 이름·나이·보험료·담보·고지 항목을 6단계 입력칸에 넣습니다</em></span>
+              <span class="mf-badge">🔒 기기에서만 처리(로컬)</span>
+              <span class="mf-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="mf-body" id="mf-body" hidden>
+              <textarea id="mf-text" class="mf-text" rows="5" spellcheck="false" placeholder="예) 김서연 42세 여성, 월 보험료 18만원. 암 5000, 뇌 2000, 심장 1500, 수술 1~5종 300, 간병 10만원. 부모님 암 가족력. 고혈압 약 3년째 복용, 5년 전 담낭 수술."></textarea>
+              <div class="mf-actions">
+                <button type="button" class="btn-primary sm" id="mf-parse">메모 분석해서 채우기</button>
+                <button type="button" class="btn-ghost sm" id="mf-example">예시 넣기</button>
+                <button type="button" class="btn-ghost sm" id="mf-undo" hidden>되돌리기</button>
+              </div>
+              <p class="mf-note">🔒 메모는 외부 AI 서버로 보내지 않고 이 기기에서만 분석합니다(저장하지 않음). 뽑아낸 숫자는 고객에게 한 번 더 확인하세요.</p>
+              <div id="mf-out" class="mf-out" aria-live="polite"></div>
+            </div>
+          </div>
 
           <div class="card">
             <div class="card-title"><span class="eyebrow">CLIENT</span> 고객 정보 <span class="card-sub">PDF 표지에 그대로 들어갑니다</span></div>
@@ -662,6 +694,31 @@
       <p class="disclaimer">종합 점수·권장선은 상담 보조용 자체 산식입니다. 통계는 통계청 2024 · 중앙암등록본부 2023 · 중앙심뇌혈관질환센터 2023 · 건보공단 2025 공표 수치이며, 실제 지급 여부·금액은 가입한 상품의 약관과 증권이 기준입니다.</p>
     </div>
 
+    <!-- ============ v7.0 상담 후 챙길 것 3칸 ============ -->
+    <div class="card internal no-print post-care" id="post-care">
+      <div class="card-title"><span class="eyebrow">AFTER CONSULT</span> 상담 후 챙길 것 <span class="card-sub">30초 안에 이어서 처리 · 바로 열립니다</span></div>
+      <div class="pc-grid">
+        <button type="button" class="pc-cell" data-pc-go="claimcheck">
+          <span class="pc-ico" aria-hidden="true">🧾</span>
+          <b>청구 서류 체크</b>
+          <span>KCD 코드 → 확인할 후보 담보 · 추가로 필요한 서류 · 3년 시효</span>
+          <em>열기 →</em>
+        </button>
+        <button type="button" class="pc-cell" data-pc-go="aftercare">
+          <span class="pc-ico" aria-hidden="true">📅</span>
+          <b>사후관리 날짜</b>
+          <span>계약일만 넣으면 90일 면책 · 감액 · 고지의무 · 상령일 D-day</span>
+          <em>계산 →</em>
+        </button>
+        <button type="button" class="pc-cell" data-pc-go="kakao">
+          <span class="pc-ico" aria-hidden="true">💬</span>
+          <b>카톡 안내 초안</b>
+          <span>사후관리 문구 + 다음 점검 예정일까지 붙여 넣기만 하면 끝</span>
+          <em>초안 열기 →</em>
+        </button>
+      </div>
+    </div>
+
     <div class="card internal no-print" id="recent-card">
       <div class="card-title"><span class="eyebrow">RECENT</span> 최근 상담
         <span class="card-sub" id="result-hist-sub">이 기기에만 저장 · 최대 30건</span>
@@ -782,6 +839,63 @@
     <div class="card">
       <div class="card-title"><span class="eyebrow">C · OBJECTION</span> 반론 돌파 화법 <span class="card-sub">공감 → 환기 → 대안</span></div>
       <div id="objections"></div>
+    </div>
+
+    <!-- ============ v7.0 D · 사후관리 디데이 5종 ============ -->
+    <div class="card" id="card-aftercare">
+      <div class="card-title"><span class="eyebrow">D · AFTERCARE</span> 사후관리 디데이 5종 <span class="card-sub">계약·치료 날짜만 넣으면 알림일과 카톡 문구가 나옵니다</span></div>
+      <p class="card-lead">가입 뒤에도 돈이 되는 연락은 <strong>날짜</strong>에서 나옵니다. <strong>계약일은 필수</strong>이고 나머지 날짜는 넣는 만큼 항목이 채워집니다. 다섯 개의 연락 시점과 그날 쓸 인사말 초안을 만들어 드립니다.</p>
+      <div class="ac-grid">
+        <label class="ac-field"><span>고객명 <em>선택</em></span><input id="ac-name" type="text" maxlength="20" autocomplete="off" placeholder="김서연"></label>
+        <label class="ac-field"><span>계약일</span><input id="ac-contract" type="date"></label>
+        <label class="ac-field"><span>생년월일</span><input id="ac-birth" type="date"></label>
+        <label class="ac-field"><span>최종 치료일 <em>선택</em></span><input id="ac-treatment" type="date"></label>
+        <label class="ac-field"><span>완치 종결일 <em>선택</em></span><input id="ac-cure" type="date"></label>
+        <label class="ac-field"><span>실손 전환 승락일 <em>선택</em></span><input id="ac-switch" type="date"></label>
+        <label class="ac-field"><span>감액 기간</span><select id="ac-reduction"><option value="1">1년</option><option value="2">2년 특약</option></select></label>
+        <label class="ac-check"><input id="ac-claimed" type="checkbox"><span>전환 후 보험금 수령(지급사유 발생) 이력 있음</span></label>
+      </div>
+      <div class="ac-actions">
+        <button type="button" class="btn-primary sm" id="ac-calc">디데이 계산</button>
+        <button type="button" class="btn-ghost sm" id="ac-load">현재 고객 이름·생년월일 불러오기</button>
+        <button type="button" class="btn-ghost sm" id="ac-reset">비우기</button>
+      </div>
+      <div id="ac-results" class="ac-results"></div>
+      <p class="source-note">계산은 기기에서만 이루어집니다. 근거: 표준 약관의 암보장개시일·감액·고지의무 조항, 금융감독원 5세대 실손 전환 안내(2026.5), 상법 제662조. 날짜 기산은 상품 약관이 기준입니다.</p>
+    </div>
+
+    <!-- ============ v7.0 E · 청구 서류 · 담보 매칭 ============ -->
+    <div class="card" id="card-claimcheck">
+      <div class="card-title"><span class="eyebrow">E · CLAIM MATCH</span> 진료·보험 서류 청구 담보 매칭 <span class="card-sub">KCD 코드 + 가진 서류 → 후보 담보·추가 서류·소멸시효</span></div>
+      <p class="card-lead">진단서 한 장을 들고 왔을 때, <strong>확인할 후보 담보</strong>와 <strong>추가로 필요한 서류</strong>를 그 자리에서 정리합니다. 확정 판정이 아니므로 마지막은 약관·심사로 확인합니다. 입력값은 외부로 보내지 않습니다.</p>
+
+      <div class="cc-search">
+        <input id="cc-q" type="search" placeholder="코드 또는 이름 — 예: C18 / 대장암 / K35 / 디스크" autocomplete="off" aria-label="질환 코드 검색">
+        <button type="button" class="btn-ghost sm" id="cc-search">찾기</button>
+      </div>
+      <div id="cc-codes" class="cc-codes" role="group" aria-label="검색된 질환 코드"></div>
+      <div id="cc-picked" class="cc-picked"></div>
+
+      <div class="cc-cols">
+        <div class="cc-col">
+          <div class="subhead">가진 서류 <em>탄색한 것만</em></div>
+          <div id="cc-docs" class="cc-docs"></div>
+        </div>
+        <div class="cc-col">
+          <div class="subhead">가입 특약</div>
+          <label class="cc-rider"><input type="checkbox" id="cc-rider-surgery"><span>수술 1~5종 · 질병수술비</span></label>
+          <label class="cc-rider"><input type="checkbox" id="cc-rider-care"><span>간병일당 (입원)</span></label>
+          <label class="cc-rider cc-rider-sub"><span>간병 지급 기준</span><select id="cc-care-basis"><option value="8">8시간제 · 일당 8만원 기준</option><option value="6">6시간제 · 일당 8만원 기준</option></select></label>
+          <label class="cc-rider"><input type="checkbox" id="cc-rider-silson"><span>5세대 실손</span></label>
+        </div>
+      </div>
+
+      <div class="cc-date-row">
+        <label class="ac-field"><span>사고일 <em>진단확정 · 수술 · 퇴원일</em></span><input id="cc-date" type="date"></label>
+        <button type="button" class="btn-primary sm" id="cc-run">청구 매칭 계산</button>
+      </div>
+      <div id="cc-out" class="cc-out" aria-live="polite"></div>
+      <p class="source-note">계산은 100% 브라우저 안에서 이루어집니다 · 근거: KCD 한국표준질병사인분류 · 상법 제662조(3년) · 5세대 실손 비중증 제외 4항목 · 상품별 약관 우선</p>
     </div>
 
     <p class="app-foot">기준일 2026-11-15 · 상품별 약관이 우선합니다 · 특정 보험사·상품 추천이 아닌 상담 구조 안내</p>
@@ -1074,7 +1188,7 @@
 
 <footer class="app-legal no-print" id="app-legal">
   <div class="al-brand">
-    <b>보장분석 라이프 리포트 <em data-app-version>v6.2</em></b>
+    <b>보장분석 라이프 리포트 <em data-app-version>v7.0</em></b>
     <span>상담 보조 도구 · 실제 지급 여부와 금액은 가입 상품의 약관·증권이 기준입니다</span>
   </div>
   <div class="al-links">
@@ -1095,6 +1209,9 @@
 <script src="./client.js"></script>
 <script src="./live.js"></script>
 <script src="./tools.js"></script>
+<script src="./aftercare.js"></script>
+<script src="./claimcheck.js"></script>
+<script src="./memofill.js"></script>
 <script src="./monetize.js"></script>
 <script src="./backend.js"></script>
 <script src="./qrscan.js"></script>

@@ -1328,15 +1328,26 @@
         const dx = gi ? hdx : bdx;
         const core = dx.core;
         const tx = x + 132, tw = half - 144;
+        /* v7.0 — 카드 경계 넘김 방지: 폭을 재어 글자를 줄이고, 긴 줄은 두 줄로 접습니다.
+           (4호 봇 지적: 뇌 보장 금액 한 줄이 옆 카드 경계에서 잘리던 결함) */
+        const fit = (str, t, w, o) => {
+          let size = o.size;
+          while (size > o.min && s.measure(String(str), size, o.weight) > w) size -= 0.1;
+          s.text(str, t, o.y || y, Object.assign({}, o, { size, y: undefined }));
+          return size;
+        };
         s.text('핵심 범위 금액', tx, y + 32, { size: 6, weight: 600, color: C.muted });
-        s.text(`${core ? won(core.val) : '0'}만원`, tx, y + 40, { size: 10, weight: 800, color: core && core.val >= 2000 ? C.mint : C.red });
+        fit(`${core ? won(core.val) : '0'}만원`, tx, tw, { y: y + 40, size: 10, weight: 800, min: 7.2, color: core && core.val >= 2000 ? C.mint : C.red });
         s.text('권장 범위', tx, y + 56, { size: 6, weight: 600, color: C.muted });
-        s.text(gi ? '허혈성심장질환 I20~I25' : '뇌혈관질환 I60~I69', tx, y + 65, { size: 6.8, weight: 700, color: C.navy });
-        s.gauge(tx, y + 80, tw, dxp.fill, { color: dxp.fill >= 0.99 ? C.mint : C.orange, h: 6 });
-        s.text(`충족 ${Math.round(dxp.fill * 100)}%`, tx, y + 89, { size: 6.2, weight: 600, color: C.ink2 });
-        s.text(`주요치료비 3종 ${subHave(PK(row, 'treat'))}/3 · ${won(effVal(PK(row, 'treat')))}만원`, tx, y + 100, { size: 6.2, weight: 600, color: effVal(PK(row, 'treat')) > 0 ? C.mint : C.red });
-        s.text((dx.scenarios || []).map((sc) => `${BK.dxShort(sc.label.replace(/\(.*/, ''))} ${won(sc.sum)}`).join(' · '), tx, y + 112, { size: 5.9, weight: 600, color: C.navy });
-        s.para(gi ? '협심증(I20)은 허혈성심장 담보에서만, 급성심근경색(I21)은 두 담보가 합산됩니다.' : '뇌경색(I63)은 뇌혈관+뇌졸중, 뇌출혈(I61)은 세 담보가 합산됩니다.', tx, y + 122, tw, { size: 5.7, color: C.ink2, lh: 1.32 });
+        fit(gi ? '허혈성심장질환 I20~I25' : '뇌혈관질환 I60~I69', tx, tw, { y: y + 65, size: 6.8, weight: 700, min: 5.4, color: C.navy });
+        s.gauge(tx, y + 78, tw, dxp.fill, { color: dxp.fill >= 0.99 ? C.mint : C.orange, h: 6 });
+        s.text(`충족 ${Math.round(dxp.fill * 100)}%`, tx, y + 87, { size: 6.2, weight: 600, color: C.ink2 });
+        fit(`주요치료비 3종 ${subHave(PK(row, 'treat'))}/3 · ${won(effVal(PK(row, 'treat')))}만원`, tx, tw, {
+          y: y + 97, size: 6.2, weight: 600, min: 5.0, color: effVal(PK(row, 'treat')) > 0 ? C.mint : C.red
+        });
+        const scen = (dx.scenarios || []).map((sc) => `${BK.dxShort(sc.label.replace(/\(.*/, ''))} ${won(sc.sum)}`).join(' · ');
+        s.para(scen, tx, y + 107, tw, { size: 5.5, color: C.navy, lh: 1.24 });
+        s.para(gi ? '협심증(I20)은 허혈성심장 담보에서만, 급성심근경색(I21)은 두 담보가 합산됩니다.' : '뇌경색(I63)은 뇌혈관+뇌졸중, 뇌출혈(I61)은 세 담보가 합산됩니다.', tx, y + 123, tw, { size: 5.5, color: C.ink2, lh: 1.26 });
       });
       y += 150;
 

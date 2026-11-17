@@ -107,18 +107,19 @@ def main():
             # =========================================================
             ver = read(os.path.join(ROOT, "version.js"))
             VER = (re.findall(r"const APP_VERSION = '([^']+)'", ver) or [""])[0]
-            check("version.js 단일 상수 v6.2", VER == "v6.2" and len(re.findall(r"const APP_VERSION = '([^']+)'", ver)) == 1, VER)
-            check("window.APP_VERSION = v6.2", pg.evaluate("() => window.APP_VERSION") == "v6.2")
-            check("sw 캐시 bojang-guide-v6.2", "const CACHE = 'bojang-guide-v6.2';" in read(os.path.join(ROOT, "sw.js")))
+            # v7.0 — 버전 표기는 version.js 상수를 기준으로 읽습니다(이후 버전에서도 회귀 검사로 유지)
+            check("version.js 단일 상수", bool(re.fullmatch(r"v\d+\.\d+(\.\d+)?", VER)) and len(re.findall(r"const APP_VERSION = '([^']+)'", ver)) == 1, VER)
+            check("window.APP_VERSION = " + VER, pg.evaluate("() => window.APP_VERSION") == VER)
+            check("sw 캐시 bojang-guide-" + VER, ("const CACHE = 'bojang-guide-%s';" % VER) in read(os.path.join(ROOT, "sw.js")))
             man = json.loads(read(os.path.join(ROOT, "manifest.json")))
-            check("manifest v6.2", "v6.2" in man.get("name", ""), man.get("name"))
-            check("manifest — v6.2 신기능 설명", all(k in man.get("description", "") for k in ("흐름 배너", "샘플 체험", "데이터 흐름", "면책")), man.get("description", "")[-80:])
+            check("manifest " + VER, VER in man.get("name", ""), man.get("name"))
+            check("manifest — v6.2 신기능 설명 유지", all(k in man.get("description", "") for k in ("흐름 배너", "샘플 체험", "데이터 흐름", "면책")), man.get("description", "")[-80:])
             check("README v6.2 절", "## v6.2에서 달라진 것" in read(os.path.join(ROOT, "README.md")))
             html = read(os.path.join(ROOT, "index.html"))
-            check("index — title v6.2", "리포트 v6.2 ·" in html)
-            check("index — meta app-version v6.2", '<meta name="app-version" content="v6.2">' in html)
+            check("index — title " + VER, ("리포트 %s ·" % VER) in html)
+            check("index — meta app-version " + VER, ('<meta name="app-version" content="%s">' % VER) in html)
             check("index — 정적 표기 v6.1 잔재 0", "data-app-version-label>v6.1" not in html and "data-app-version>v6.1" not in html)
-            check("화면 표기 v6.2", pg.inner_text(".hh-ver").strip().startswith("v6.2"), pg.inner_text(".hh-ver"))
+            check("화면 표기 " + VER, pg.inner_text(".hh-ver").strip().startswith(VER), pg.inner_text(".hh-ver"))
 
             # =========================================================
             # B. 첫 화면 흐름 배너
@@ -344,7 +345,7 @@ def main():
             n0, n1, n2 = (flow or {}).get("nodes", ["", "", ""])
             check("도식 ① 브라우저 로컬 계산 · IndexedDB", "브라우저 로컬 계산" in n0 and "IndexedDB" in n0, n0[:60])
             check("도식 ② 자체 서버 저장 · Supabase(서울)", "자체 서버 저장" in n1 and "Supabase" in n1 and "서울" in n1, n1[:60])
-            check("도식 ③ 외부 AI 비전 분석 · 사진 1회 전달", "외부 AI 비전 분석" in n2 and "1회 전달" in n2, n2[:60])
+            check("도식 ③ 외부 AI 비전 분석 · 사진 분석 시 전달", "외부 AI 비전 분석" in n2 and "사진 분석 시 외부 AI로 전달" in n2, n2[:60])
             check("도식 — 단계별 보관/삭제 정책 3건", len((flow or {}).get("keeps", [])) == 3 and all("보관" in k or "보증" in k for k in (flow or {}).get("keeps", [])), (flow or {}).get("keeps"))
             check("도식 — 사진 서버 미저장 명시", "사진 저장 0건" in n2, n2)
             check("도식 — 즉시 삭제 보증 불가", "보증하지 않음" in n2, n2)
@@ -442,9 +443,9 @@ def main():
 
             single = os.path.join(ROOT, "dist", "bojang-guide.single.html")
             sh_html = read(single)
-            check("단일 HTML — v6.2 표기", VER in sh_html and 'content="v6.2"' in sh_html, len(sh_html) // 1024)
+            check("단일 HTML — 버전 표기", VER in sh_html and ('content="%s"' % VER) in sh_html, len(sh_html) // 1024)
             check("단일 HTML — 외부 참조 0", sh_html.count('<script src="http') == 0 and sh_html.count('<link href="http') == 0 and sh_html.count('<link rel="stylesheet" href="./') == 0, "")
-            check("단일 HTML — 신규 문구 포함", all(k in sh_html for k in ("로그인 없이 진짜 30장 샘플 바로 열기", "샘플 체험 모드(가상 데이터)", "DATA FLOW · 1장 요약", "공식 심사·보장 판단")))
+            check("단일 HTML — 신규 문구 포함", all(k in sh_html for k in ("로그인 없이 30장 샘플 보기", "샘플 체험 모드(가상 데이터)", "DATA FLOW · 1장 요약", "공식 심사·보장 판단")))
 
             for f in ("ui-home-banner-sample.png", "ui-sample-30slides.png", "ui-data-flow-modal.png", "pdf-disclaimer-p1.png"):
                 pth = os.path.join(SHOTS, f)
