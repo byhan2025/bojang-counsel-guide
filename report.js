@@ -1262,7 +1262,7 @@
         { text: r[0], weight: 700, color: C.navy }, r[1], { text: r[2], color: C.ink2 },
         { text: `${Math.round(r[3] * 100)}%`, weight: 700, color: r[3] >= 0.99 ? C.mint : r[3] > 0.4 ? C.orange : C.red, align: 'center' }
       ]), { widths: [140, 130, 150, 95], size: 6.3, rowH: 11.6, headH: 13, align: ['left', 'center', 'center', 'center'] });
-      y = noteStrip(s, y + 4, '유사암에 묶는 범위와 지급 비율은 상품마다 다릅니다. 원발부위 기준 조항의 설명 여부가 다퉈진 판례(대법원 2025.3.13. 선고 2023다250746)도 함께 확인하세요.', { size: 5.8 });
+      y = noteStrip(s, y + 4, '유사암에 묶는 범위와 지급 비율은 상품마다 다릅니다. 원발부위 설명 여부가 다퉈진 판례(대법원 2025.3.13. 선고 2023다250746 — 설명이 없으면 일반암 기준 지급·차액)도 확인하고, 청구권 소멸시효는 상법 제662조에 따라 청구할 수 있게 된 날부터 3년임을 안내합니다.', { size: 5.8 });
       /* v5.7 — 불완전판매 방지 경고 */
       y = warnStrip(s, y + 4, 'cancer');
       /* v5.6 — 증권 직접 기재 담보 (실제 특약명·금액 그대로) */
@@ -1709,8 +1709,23 @@
       });
       y += 80;
 
-      /* 04 체크리스트 */
-      y = s.sectionHead(s.ML, y, s.CW, '04', '다음 단계 체크리스트', '고객과 함께 확인합니다');
+      /* v6.1 — 과보장 점검 5종 · 팔지 않는 상담 */
+      const oc = (typeof OVER_COVERAGE !== 'undefined' ? OVER_COVERAGE : (m.overCoverage || []));
+      if (oc.length) {
+        y = s.sectionHead(s.ML, y, s.CW, '04', '과보장 점검 5종 — 더 넣기 전에 확인', m.sellLess ? '5대 담보 90% 이상: 오늘은 추가 가입을 권하지 않습니다' : '이미 충분한 항목이면 추가 가입 대신 조정합니다');
+        const half = Math.ceil(oc.length / 2);
+        oc.forEach((o, i) => {
+          const col = Math.floor(i / half), row = i % half;
+          const x = s.ML + col * ((s.CW - 10) / 2 + 10);
+          const cy = y + row * 11.5;
+          s.text(`· ${o.t}`, x, cy, { size: 6.1, weight: 700, color: C.navy });
+          s.text(`— ${o.d}`, x + 86, cy, (s.CW - 10) / 2 - 86, { size: 5.8, weight: 500, color: C.ink2 });
+        });
+        y += half * 11.5 + 6;
+      }
+
+      /* 05 체크리스트 */
+      y = s.sectionHead(s.ML, y, s.CW, '05', '다음 단계 체크리스트', '고객과 함께 확인합니다');
       y = s.checks(s.ML, y, s.CW, [
         '증권 원본(또는 앱 캡처)으로 담보명·코드·지급 조건 확인',
         '가장 비어 있는 1순위 한 칸의 금액 결정',
@@ -2137,14 +2152,14 @@
         y = s.script(s.ML, y, s.CW, { title: i === 0 ? '소득 보전' : i === 1 ? '유사암' : '치료비', text: `"${t}"`, accent: [C.blue, C.navy2, C.mint][i] });
         y += 6;
       });
-      y = noteStrip(s, y + 2, '화법은 외우는 문장이 아니라 확인하는 문장입니다. 고객이 고개를 끄덕이지 않으면 같은 말을 반복하지 말고, 다른 비유로 바꿉니다.', { size: 6.6 });
+      y = noteStrip(s, y + 2, '화법은 외우는 문장이 아니라 확인하는 문장입니다. 고객이 고개를 끄덕이지 않으면 같은 말을 반복하지 말고, 다른 비유로 바꿉니다. 상해 담보는 직업급수가 바뀌었는데 회사에 알리지 않으면 비례보상으로 삭감될 수 있음을 함께 안내합니다.', { size: 6.4 });
       y = noSay(s, y + 8, PLAN_EXTRA.cancer.noSay);
       foot(s, 8, '1순위 암 · 질문·화법');
     });
 
     P.push((s) => {
       let y = head(s, 9, 'PLAN 1 · CANCER', '암 — 증권 함정 6가지', '증권을 펼쳐놓고 이 여섯 줄만 확인하면 대부분의 구멍이 보입니다.');
-      y = todoStrip(s, y, '이 페이지는 고객에게 다 보여주지 않습니다. 설계사가 확인하고, 해당되는 항목만 골라一句话로 설명합니다.');
+      y = todoStrip(s, y, '이 페이지는 고객에게 다 보여주지 않습니다. 설계사가 확인하고, 해당되는 항목만 골라 한 문장으로 설명합니다.');
       y += 10;
       pb.traps.forEach((t, i) => {
         s.rect(s.ML, y, s.CW, 62, { fill: i % 2 ? C.sky2 : '#fff', r: 4, stroke: C.line });
