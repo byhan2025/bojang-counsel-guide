@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
-<title>보장분석 라이프 리포트 v7.1 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
-<meta name="app-version" content="v7.1">
+<title>보장분석 라이프 리포트 v7.1.1 · 고객 맞춤형 보장 점검 · 리모델링 상담 가이드</title>
+<meta name="app-version" content="v7.1.1">
 <meta name="description" content="설계사를 위한 보장분석 라이프 리포트. 뇌혈관·뇌졸중·뇌출혈 / 허혈성심장·급성심근경색 진단비를 범위별로 입력해 합산 지급을 판독하고, 고객 30장 슬라이드와 1·10·30장 PDF로 안내합니다. 질병코드 사전·실손 세대 비교·고지 판정·적정 보험료 계산기·리모델링 비교기·내 브랜드(화이트라벨)까지.">
 <meta name="theme-color" content="#F5F8FB">
 
@@ -4335,23 +4335,25 @@ body.is-client .slide{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px)
 
 @media (max-width:430px){
   .slide[data-no="1"] .sl-inner{padding:18px 16px 14px;}
-  .cover-brand{padding-bottom:9px;margin-bottom:10px;}
+  .cover-brand{padding-bottom:7px;margin-bottom:8px;}
   .cover-brand .cb-heart svg{width:30px;height:25px;}
   .cover-eyebrow{font-size:9.5px;letter-spacing:.18em;}
-  .cover-title{margin-top:8px;font-size:24px;line-height:1.24;}
-  .cover-lead{margin-top:7px;font-size:11.5px;line-height:1.5;}
-  .cover-grade{margin-top:11px;padding:9px 0;gap:8px;}
-  .cg-letter{font-size:31px;}
+  .cover-title{margin-top:6px;font-size:23px;line-height:1.22;}
+  .cover-lead{margin-top:5px;font-size:11px;line-height:1.45;}
+  .cover-grade{margin-top:8px;padding:7px 0;gap:8px;}
+  .cg-letter{font-size:29px;}
   .cg-label{font-size:9.5px;}
   .cg-score{font-size:10.5px;}
-  .cover-meta{margin-top:10px;gap:4px;}
-  .cover-meta div{padding-bottom:3px;}
-  .cover-meta dt{font-size:9.8px;}
-  .cover-meta dd{font-size:11px;}
-  .cover-contact{margin-top:6px;font-size:10px;}
-  .cover-values{display:none;}
-  .cover-foot{margin-top:8px;padding-top:6px;font-size:9px;line-height:1.45;}
-  .cover-sample{margin-top:5px;padding:4px 7px;font-size:9px;}
+  .cover-meta{margin-top:8px;gap:3px;}
+  .cover-meta div{padding-bottom:2px;}
+  .cover-meta dt{font-size:9.6px;}
+  .cover-meta dd{font-size:10.6px;}
+  .cover-contact{margin-top:5px;font-size:9.6px;}
+  /* v7.1.1 — 숨겼던 보장 가치 문구를 복원하되 간격을 줄여 360×740 한 장 유지 */
+  .cover-values{display:flex;margin-top:7px;padding-top:4px;gap:5px;font-size:8.6px;line-height:1.2;}
+  .cover-values i{height:7px;}
+  .cover-foot{margin-top:6px;padding-top:5px;font-size:8.8px;line-height:1.4;}
+  .cover-sample{margin-top:4px;padding:3px 7px;font-size:8.8px;}
 }
 
 /* =========================================================
@@ -4494,6 +4496,8 @@ body.is-client .slide{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px)
 .pd-cal-pair em{font-style:normal;font-size:10px;font-weight:700;color:#7b8ea4;}
 .pd-cal-which{font-size:11px;line-height:1.55;color:#22364f;}
 .pd-cal-note{font-size:10.6px;line-height:1.5;color:#41597a;}
+/* v7.1.1 — 영업일 보정은 '운영상 참고일'임을 분리해 알리는 줄 */
+.pd-cal-ref{font-size:10px;line-height:1.5;color:#5a6b80;font-weight:700;border-top:1px dashed #dbe4ee;padding-top:6px;}
 .pd-hols{display:flex;gap:6px;flex-wrap:wrap;}
 .pd-hol{font-size:10.4px;font-weight:800;color:#22364f;background:#eef4fb;border:1px solid #dbe4ee;border-radius:999px;padding:4px 9px;}
 @media (max-width:560px){
@@ -4508,13 +4512,25 @@ body.is-client .slide{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px)
 /* v7.1 — 공공데이터 프록시 개인정보 경계 안내 */
 .pd-proxy-note{margin-top:6px;font-size:9.8px;line-height:1.55;color:#7b8ea4;background:#f7fafd;border:1px dashed #dbe4ee;border-radius:9px;padding:7px 9px;}
 .pd-proxy-note b{color:#41597a;}
+.pd-proxy-summary{margin:0;}
+.pd-proxy-more{margin-top:4px;}
+.pd-proxy-more summary{cursor:pointer;font-weight:800;color:#41597a;font-size:9.6px;list-style:none;}
+.pd-proxy-more summary::-webkit-details-marker{display:none;}
+.pd-proxy-more summary::after{content:' ▾';}
+.pd-proxy-more[open] summary::after{content:' ▴';}
+.pd-proxy-more p{margin:4px 0 0;}
+@media (max-width:430px){
+  /* v7.1.1 — 360px 첫 두 줄 요약만 기본 노출(부이 대리 UX) */
+  .pd-proxy-summary{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .pd-proxy-more summary{font-size:9.4px;padding:2px 0;}
+}
 
 /* v7.1 — 청구 매칭: 빠진 서류 표시 · 간병 '참고' 배지 */
 .cc-lack{margin-top:4px;font-size:10.5px;font-weight:800;color:#8a1f14;}
 .cc-advisory{font-size:9.4px;font-weight:800;color:#7a4a17;background:#fdf3de;border:1px solid #f0dcb0;border-radius:999px;padding:2px 7px;}
 
 </style>
-<!-- build 9a7d1a5b632e · protected=true -->
+<!-- build 6e8129b4ef27 · protected=true -->
 </head>
 <body>
 
@@ -4818,7 +4834,7 @@ body.is-client .slide{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px)
 
     <details class="app-foot-details">
       <summary>기준일 · 반영 기능 자세히 보기</summary>
-      <p class="app-foot">기준일 2026-11-17 · v7.1 기준점(공공데이터 실무 연동 — 복용약 고지 체크·맞춤 공식통계·약관 괴리·공휴일 영업일 보정(100% 오프라인 내장, 프록시 선택) · 결과 화면 '이 고객 다음 할 일' 한 줄 띠 · KCD 칩 클릭 불통 수정 · 간병인 사용일당 3분기 표기 · 고객 표지 플로팅 버튼 겹침 해소) · v7.0 기준점(사후관리 디데이 5종과 리터치 카톡 문구 · 진료서류 청구 담보 매칭과 상법 제662조 소멸시효 · 상담 메모 6단계 빠른 채움(100% 로컬) · 첫 화면 샘플 버튼 카피 개선) · v6.2 기준점(첫 화면 ①입력→②분석→③PDF 흐름 배너 · 로그인 없는 30장 샘플 체험 모드(가상 고객 격리·저장 차단) · 개인정보처리방침 데이터 흐름 1장 도식 · AI 보조자료 면책 문구(결과 화면·1·10·30장 PDF 꼬리말)) · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
+      <p class="app-foot">기준일 2026-11-17 · v7.1.1 기준점(회의실 6대 결함 완결 패치 — 암·유사암 진단비 필수서류(병리조직결과지)·프록시 표준 약 이름만 전송·백엔드 목적지 allowlist·표지 보장 가치 문구 복원(360×740 넘침 0)·공휴일 참고일 분리·OCR 모델 후보 4개 문구) · v7.1 기준점(공공데이터 실무 연동 — 복용약 고지 체크·맞춤 공식통계·약관 괴리·공휴일 영업일 보정(100% 오프라인 내장, 프록시 선택) · 결과 화면 '이 고객 다음 할 일' 한 줄 띠 · KCD 칩 클릭 불통 수정 · 간병인 사용일당 3분기 표기 · 고객 표지 플로팅 버튼 겹침 해소) · v7.0 기준점(사후관리 디데이 5종과 리터치 카톡 문구 · 진료서류 청구 담보 매칭과 상법 제662조 소멸시효 · 상담 메모 6단계 빠른 채움(100% 로컬) · 첫 화면 샘플 버튼 카피 개선) · v6.2 기준점(첫 화면 ①입력→②분석→③PDF 흐름 배너 · 로그인 없는 30장 샘플 체험 모드(가상 고객 격리·저장 차단) · 개인정보처리방침 데이터 흐름 1장 도식 · AI 보조자료 면책 문구(결과 화면·1·10·30장 PDF 꼬리말)) · v6.1 기준점(파생값 단일화 effSum·effCnt·gapOf · 고지의무 표준 5문항 단일 엔진 · 간편 3·2·5/3·5·5 판정 역전 수정 · 1~5종 수술비 종수 정정 · 뇌·심장 90일 면책 문구 정정 · 특정순환계 공유 담보 · 과보장 5종·팔지 않는 상담 · 실손 2세대 초기/후기·4세대 재가입·5세대 제외 4항목 · 1회한 vs 연 1회한 타임라인 · 실손 자기부담 시뮬레이터 · 가림 모드 전 영역 · 고객 화면 12px 이상 · 오늘 정할 것 1개) 반영 · 상품별 약관 우선</p>
     </details>
   </section>
 
@@ -5423,7 +5439,13 @@ body.is-client .slide{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px)
           <input id="pd-proxy" type="url" placeholder="선택 · API 프록시 주소(https://…)" autocomplete="off" aria-label="공공데이터 프록시 주소">
           <button type="button" class="btn-ghost sm" id="pd-med-live">실시간 조회</button>
         </div>
-        <p class="pd-proxy-note" id="pd-proxy-note">선택 기능입니다. 프록시 주소를 넣고 [실시간 조회]를 누를 때 <b>입력한 약 이름만</b> 제3자 프록시(k-skill 등)로 나갑니다 — 프록시 운영자·중계(Cloudflare 등) 처리와 <b>국외 이전</b>이 있을 수 있고 응답은 <b>최대 5분 캐시</b>될 수 있습니다. 고객 이름·연락처·증권 값·가족력·연령·성별은 전송하지 않으며, 기본값은 100% 기기 내 내장 사전(외부 요청 0회)입니다. 식약처·KOSIS·천문연 공공데이터는 일반 참고자료일 뿐 <b>개인 고지 누락·보험금 지급 여부·보험사 상령일을 확정 판정하지 않습니다.</b></p>
+        <div class="pd-proxy-note" id="pd-proxy-note">
+          <p class="pd-proxy-summary">기본은 <b>100% 기기 안 내장 사전</b>(외부 요청 0회). [실시간 조회]도 <b>사전에 있는 표준 약 이름만</b> 전송합니다.</p>
+          <details class="pd-proxy-more">
+            <summary>자세한 처리 경계 보기</summary>
+            <p>프록시 주소를 넣고 [실시간 조회]를 누를 때, 내장 사전에서 확인된 표준 약 이름(성분명)만 제3자 프록시(k-skill 등)로 나갑니다 — 사전에 없는 자유 입력은 <b>외부 요청 0회</b>로 차단합니다. 프록시 운영자·중계(Cloudflare 등) 처리와 <b>국외 이전</b>이 있을 수 있고 응답은 <b>최대 5분 캐시</b>될 수 있습니다. 고객 이름·연락처·증권 값·가족력·연령·성별은 전송하지 않습니다. 식약처·KOSIS·천문연 공공데이터는 일반 참고자료일 뿐 <b>개인 고지 누락·보험금 지급 여부·보험사 상령일을 확정 판정하지 않습니다.</b></p>
+          </details>
+        </div>
       </div>
       <div id="pd-med-out" class="pd-out" aria-live="polite"></div>
 
@@ -5641,7 +5663,7 @@ body.is-client .slide{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px)
   <div class="modal-card hub-card" role="dialog" aria-modal="true" aria-labelledby="ih-title">
     <span class="hub-eyebrow">START · INPUT MODE</span>
     <strong id="ih-title">어떻게 입력할까요?</strong>
-    <p>고객의 보장분석표를 어떤 방법으로 가져올지 먼저 고르세요. 수기·PDF는 이 기기에서 처리되며, 사진 AI 인식 실행 시에만 <b>브라우저 → 자체 서버(Supabase Edge Function) → 외부 AI(Google Gemini 등)</b> 경로로 전송됩니다(모델 오류 시 대체 모델로 최대 3회 재전송). 사진은 앱과 자체 서버 DB에 저장하지 않습니다.</p>
+    <p>고객의 보장분석표를 어떤 방법으로 가져올지 먼저 고르세요. 수기·PDF는 이 기기에서 처리되며, 사진 AI 인식 실행 시에만 <b>브라우저 → 자체 서버(Supabase Edge Function) → 외부 AI(Google Gemini 등)</b> 경로로 전송됩니다(모델 오류 시 대체 모델 후보로 재시도 — OpenAI 경로 또는 사용자 지정 Gemini 포함 최대 4개 모델 후보). 사진은 앱과 자체 서버 DB에 저장하지 않습니다.</p>
     <div class="hub-list">
       <button type="button" class="hub-opt" data-mode="manual">
         <span class="ho-ico" aria-hidden="true">✎</span>
@@ -5743,7 +5765,7 @@ body.is-client .slide{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px)
 (function (root) {
   'use strict';
 
-  const APP_VERSION = 'v7.1';
+  const APP_VERSION = 'v7.1.1';
   const APP_VERSION_NUM = APP_VERSION.replace(/^v/, '');
   const APP_VERSION_MONTH = '2026.11';
   const APP_TAGLINE = '고객 맞춤형 보장 점검 · 리모델링 상담 가이드';
@@ -15630,6 +15652,8 @@ const PLAN_FRONT = {
   }
   function callName(name) { return maskName(name) || '고객'; }
 
+  const HOLIDAY_REF_NOTE = '공휴일·주말과 겹칠 때 안내하는 직전·다음 영업일은 운영상 연락·서류 접수 참고일이며, 실제 보장개시일·효력일·상령일은 보험사 약관 기준을 따릅니다.';
+
   const ITEM_META = [
     { key: 'imunity', no: 1, title: '90일 면책 해제일', tag: '보장개시' },
     { key: 'reduction', no: 2, title: '감액 해제일', tag: '감액' },
@@ -15662,7 +15686,8 @@ const PLAN_FRONT = {
         lines: [
           '계약일을 1일째로 세어 91일째 0시 — 계산식은 계약일 + 90일입니다.',
           '일반암만 해당합니다. 유사암(갑상선암·제자리암·경계성종양)·뇌·심장은 대개 보장개시일부터 즉시 보장되고, 대장점막내암은 상품별로 다릅니다.',
-          days > 0 ? '이 날짜 전에 진단이 확정되면 일반암 진단비는 지급되지 않습니다.' : '면책 기간은 이미 지났습니다 — 지금은 일반암도 보장됩니다.'
+          days > 0 ? '이 날짜 전에 진단이 확정되면 일반암 진단비는 지급되지 않습니다.' : '면책 기간은 이미 지났습니다 — 지금은 일반암도 보장됩니다.',
+          HOLIDAY_REF_NOTE
         ],
         warn: days >= 0 && days <= 30 ? '면책 해제가 ' + days + '일 남았습니다 — 이 시기의 진단은 지급되지 않으니 고객에게 먼저 알려 주세요' : '',
         copy: `${callName(name)}님, 안녕하세요. ${koDate(date)}부터 가입하신 암보장의 90일 면책 기간이 끝나 일반암 진단비가 온전히 보장됩니다. 그 전에 진단이 확정되면 일반암 진단비는 지급되지 않으니 그 점만 미리 기억해 주세요. 유사암·뇌·심장은 해당되지 않는 경우가 많습니다. 궁금하신 점 있으면 편하게 연락 주세요.`
@@ -15760,7 +15785,8 @@ const PLAN_FRONT = {
         lines: [
           '상령일 = 생일 + 6개월. 이날 0시부터 보험나이가 한 살 올라가 새 계약의 보험료가 인상됩니다.',
           '2월 29일생은 그 해에 2월 29일이 없으면 2월 말일로 당겨 계산합니다.',
-          days >= 0 && days <= 30 ? '보완 가입이 필요하면 상령일 전에 청약하는 편이 보험료에 유리합니다.' : '보완 가입 시점을 정할 때 이 날짜를 기준으로 잡으세요.'
+          days >= 0 && days <= 30 ? '보완 가입이 필요하면 상령일 전에 청약하는 편이 보험료에 유리합니다.' : '보완 가입 시점을 정할 때 이 날짜를 기준으로 잡으세요.',
+          HOLIDAY_REF_NOTE
         ],
         warn: days >= 0 && days <= 30 ? '상령일이 ' + days + '일 남았습니다 — 이번 달 청약 여부를 정해야 합니다' : '',
         copy: `${callName(name)}님, ${koDate(date)}에 보험나이가 한 살 올라갑니다(상령일). 그날 이후 새로 가입하면 같은 보장도 보험료가 올라가니, 보완이 필요하면 그 전에 정리하는 편이 좋습니다. 필요한 부분만 골라서 안내해 드릴게요.`
@@ -15876,7 +15902,7 @@ const PLAN_FRONT = {
 
   root.BojangAftercare = {
     calc, render, init, run, readInput, copyTextFor: (key) => (last ? (last.items.find((i) => i.key === key) || {}).copy || '' : ''),
-    ITEM_META, maskName,
+    ITEM_META, maskName, HOLIDAY_REF_NOTE,
     date: { parts, addDays, addMonths, addYears, diffDays, todayISO, nextAgeDayISO, ddayText, state, koDate }
   };
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -16068,7 +16094,12 @@ const PLAN_FRONT = {
     const lackOf = (need) => (need || []).filter((k) => !docSet[k]).map((k) => DOC_LABEL[k] || k);
 
     const rows = [];
-    cls.dx.forEach((d) => rows.push({ dambo: d, kind: '진단비', need: ['dx'], ok: readyFor(['dx']), lack: lackOf(['dx']), why: code.pays }));
+
+    const dxNeed = (cls.group === '암' || cls.group === '유사암') ? ['dx', 'path'] : ['dx'];
+    const dxWhy = code.pays + (dxNeed.length > 1
+      ? ' 암·유사암 진단비는 병리조직결과지까지 있어야 일반암/유사암 구분이 서고, 그 구분이 지급액을 가릅니다.'
+      : '');
+    cls.dx.forEach((d) => rows.push({ dambo: d, kind: '진단비', need: dxNeed, ok: readyFor(dxNeed), lack: lackOf(dxNeed), why: dxWhy }));
     if (input.surgery) {
       const need = (cls.group === '암' || cls.group === '유사암') ? ['surgery', 'path'] : ['surgery'];
       cls.op.forEach((d) => rows.push({
@@ -16762,11 +16793,13 @@ const PLAN_FRONT = {
     </div>`;
   }
 
+  const HOLIDAY_REF_NOTE = '공휴일 보정은 운영상 연락·서류 접수 참고일입니다 — 실제 보장개시일·효력일·상령일은 보험사 약관 기준을 따릅니다.';
+
   const CAL_KINDS = [
-    { key: 'withdraw', label: '청약 철회 (청약일 + 15일)', days: 15, dir: 'prev', note: '청약철회는 청약일부터 15일(상품에 따라 30일)입니다. 마감일이 휴일이면 직전 영업일까지 접수해야 안전합니다.' },
-    { key: 'claim3y', label: '보험금 청구 소멸시효 (사고일 + 3년)', years: 3, dir: 'prev', note: '상법 제662조 3년. 마감일이 휴일이면 직전 영업일이 실무 마감입니다.' },
-    { key: 'immune90', label: '90일 면책 해제일 (계약일 + 90일)', days: 90, dir: 'next', note: '해제일이 휴일이면 다음 영업일부터 진단·수술이 보장됩니다(상품 약관 확인).' },
-    { key: 'ageDay', label: '상령일 (생일 + 6개월)', months: 6, dir: 'next', note: '상령일이 휴일이면 다음 영업일에 청약하면 보험나이가 이미 올라가 보험료가 비쌀 수 있습니다 — 직전 영업일 청약을 검토하세요.' }
+    { key: 'withdraw', label: '청약 철회 (청약일 + 15일)', days: 15, dir: 'prev', note: '청약철회는 청약일부터 15일(상품에 따라 30일)입니다. 마감일이 휴일이면 직전 영업일까지 접수하는 것이 운영상 안전합니다.' },
+    { key: 'claim3y', label: '보험금 청구 소멸시효 (사고일 + 3년)', years: 3, dir: 'prev', note: '상법 제662조 3년. 마감일이 휴일이면 직전 영업일 접수를 운영상 참고일로 안내합니다 — 시효 기산·완성은 법과 약관 기준입니다.' },
+    { key: 'immune90', label: '90일 면책 해제일 (계약일 + 90일)', days: 90, dir: 'next', note: '해제일이 휴일이면 다음 영업일을 운영상 참고일로 함께 안내합니다 — 실제 보장개시일·효력일은 보험사 약관 기준을 따릅니다.' },
+    { key: 'ageDay', label: '상령일 (생일 + 6개월)', months: 6, dir: 'next', note: '상령일이 휴일이면 청약·접수 시점을 영업일 기준으로 안내합니다 — 실제 상령일·보험나이 적용은 보험사 약관 기준을 따릅니다.' }
   ];
 
   function calHTML(r) {
@@ -16783,9 +16816,10 @@ const PLAN_FRONT = {
         <div><span>직전 영업일</span><b>${esc(koDate(c.prev))}</b><em>${esc(weekday(c.prev))}요일 · ${esc(dday(diffDays(todayISO(), c.prev)))}</em></div>
         <div><span>다음 영업일</span><b>${esc(koDate(c.next))}</b><em>${esc(weekday(c.next))}요일 · ${esc(dday(diffDays(todayISO(), c.next)))}</em></div>
       </div>`);
-      rows.push(`<p class="pd-cal-which">${kind.dir === 'prev' ? '마감일이면 <b>직전 영업일</b>까지 접수해야 기한을 넘기지 않습니다.' : '개시일이면 <b>다음 영업일</b>부터 효력이 생깁니다(상품 약관 확인).'}</p>`);
+      rows.push(`<p class="pd-cal-which">${kind.dir === 'prev' ? '마감일이면 <b>직전 영업일</b>까지 접수하는 것이 운영상 안전합니다(참고일).' : '<b>다음 영업일</b>을 운영상 참고일로 안내합니다 — 실제 효력 발생일은 약관 기준입니다.'}</p>`);
     }
     rows.push(`<p class="pd-cal-note">${esc(kind.note)}</p>`);
+    rows.push(`<p class="pd-cal-ref">${esc(HOLIDAY_REF_NOTE)}</p>`);
     if (!calLast.covered) rows.push(`<p class="pd-cal-warn">${esc(r.date)}는 내장 달력(2026~2028) 밖입니다 — 공휴일 확인이 안 되니 보험사·금융감독원 달력으로 확인하세요.</p>`);
     if (c.provisional) rows.push('<p class="pd-cal-warn">2028년은 월력요항 공고 전 잠정 달력입니다 — 임시공휴일이 추가될 수 있습니다.</p>');
     const up = r.upcoming.map((h) => `<span class="pd-hol">${esc(h.date.slice(5).replace('-', '/'))} ${esc(h.name)}${h.provisional ? ' (잠정)' : ''}</span>`).join('');
@@ -16799,7 +16833,7 @@ const PLAN_FRONT = {
 
   const PROXY_KEY = 'bojang.pd.proxy.v1';
 
-  const PROXY_NOTICE = '선택 기능입니다. 프록시 주소를 직접 넣고 [실시간 조회]를 누를 때, 입력한 약 이름(검색어)만 제3자 API 프록시(k-skill 등)로 전송됩니다 — 프록시 운영자와 중계(Cloudflare 등)의 처리 및 국외 이전이 있을 수 있고, 응답은 최대 5분 캐시될 수 있습니다. 고객 이름·연락처·증권 값·가족력·연령·성별은 전송하지 않으며, 기본값은 100% 기기 내 내장 사전(외부 요청 0회)입니다. 식약처·KOSIS·천문연 등 공공데이터는 일반 참고자료일 뿐, 개인 고지 누락 여부·보험금 지급 여부·보험사 상령일을 확정 판정하지 않습니다.';
+  const PROXY_NOTICE = '선택 기능입니다. 프록시 주소를 직접 넣고 [실시간 조회]를 누를 때, 내장 사전에서 확인된 표준 약 이름(성분명)만 제3자 API 프록시(k-skill 등)로 전송됩니다 — 사전에 없는 자유 입력은 외부 요청 0회로 차단합니다. 프록시 운영자와 중계(Cloudflare 등)의 처리 및 국외 이전이 있을 수 있고, 응답은 최대 5분 캐시될 수 있습니다. 고객 이름·연락처·증권 값·가족력·연령·성별은 전송하지 않으며, 기본값은 100% 기기 내 내장 사전(외부 요청 0회)입니다. 식약처·KOSIS·천문연 등 공공데이터는 일반 참고자료일 뿐, 개인 고지 누락 여부·보험금 지급 여부·보험사 상령일을 확정 판정하지 않습니다.';
 
   function proxyGet() {
     try { return String(root.localStorage.getItem(PROXY_KEY) || ''); } catch (e) { return ''; }
@@ -16816,13 +16850,25 @@ const PLAN_FRONT = {
     return proxyGet();
   }
 
+  function proxyQuery(q) {
+    const raw = String(q == null ? '' : q).trim();
+    if (!raw || raw.length > 20) return null;
+    if (/[,，、;/\n]/.test(raw)) return null;
+    const key = norm(raw);
+    if (!key) return null;
+    const hit = DRUGS.find((d) => norm(d.n) === key || String(d.a || '').split(',').some((x) => norm(x) === key));
+    return hit ? hit.n : null;
+  }
+
   async function fetchDrugLive(q) {
     const g = root.bojangDomainGuard;
     if (!g || typeof g.allowed !== 'function' || !g.allowed()) return { ok: false, reason: 'blocked' };
     const base = proxyGet();
     if (!base) return { ok: false, reason: 'off' };
+    const std = proxyQuery(q);
+    if (!std) return { ok: false, reason: 'not-in-dictionary' };
     try {
-      const url = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'q=' + encodeURIComponent(String(q || '').slice(0, 40));
+      const url = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'q=' + encodeURIComponent(std);
       const res = await fetch(url, { method: 'GET', headers: { Accept: 'application/json' } });
       if (!res.ok) return { ok: false, reason: 'http ' + res.status };
       const data = await res.json();
@@ -16894,7 +16940,8 @@ const PLAN_FRONT = {
       if (r.ok) toast('실시간 조회 ' + (r.items.length ? r.items.length + '건' : '결과 없음') + ' — 내장 사전과 함께 확인하세요');
       else toast(r.reason === 'blocked' ? '지금 실행 환경에서는 외부 조회를 막았습니다 — 내장 사전 결과만 씁니다'
         : r.reason === 'off' ? '프록시 주소를 먼저 넣어 주세요 — 지금은 오프라인 사전으로 동작합니다'
-          : '실시간 조회 실패 — 내장 사전 결과를 그대로 씁니다');
+          : r.reason === 'not-in-dictionary' ? '내장 사전에 없는 검색어입니다 — 외부로 보내지 않았습니다(요청 0회)'
+            : '실시간 조회 실패 — 내장 사전 결과를 그대로 씁니다');
     });
     const proxy = $('#pd-proxy');
     if (proxy) proxy.addEventListener('change', () => proxySet(proxy.value.trim()));
@@ -16935,16 +16982,17 @@ const PLAN_FRONT = {
 
   root.BojangPublicData = {
     init, refresh, applyMeds, applyCal,
-    PROXY_NOTICE,
+    PROXY_NOTICE, HOLIDAY_REF_NOTE,
     drugs: { list: DRUGS, groups: GROUPS, search: searchDrugs, check: checkMeds, itemMeta },
     stats: { cards: STAT_CARDS, gaps: GAP_CARDS, forClient: statsFor },
     calendar: {
       holidays: HOLIDAYS, isHoliday: calendar.isHoliday.bind(calendar), isBusinessDay: calendar.isBusinessDay.bind(calendar),
       prev: calendar.prev.bind(calendar), next: calendar.next.bind(calendar), correct: calendar.correct.bind(calendar),
-      upcoming: calendar.upcoming.bind(calendar), covered: calendar.covered.bind(calendar), businessDays: calendar.businessDays.bind(calendar)
+      upcoming: calendar.upcoming.bind(calendar), covered: calendar.covered.bind(calendar), businessDays: calendar.businessDays.bind(calendar),
+      refNote: HOLIDAY_REF_NOTE
     },
     kinds: CAL_KINDS,
-    proxy: { get: proxyGet, set: proxySet, fetchDrug: fetchDrugLive },
+    proxy: { get: proxyGet, set: proxySet, fetchDrug: fetchDrugLive, query: proxyQuery },
     date: { addDays, addMonths, diffDays, koDate, dday, todayISO, weekday },
     selected: () => ({ med: medLast, stats: statLast, cal: calLast }),
     DISCLAIMER
@@ -18687,10 +18735,26 @@ const PLAN_FRONT = {
     try { return !!g.allowed(); } catch (e) { return false; }
   }
 
+  const BACKEND_HOSTS = ['ntfhdiujapctomzzaifu.supabase.co', 'localhost', '127.0.0.1', '::1'];
+  const HOST_LOCK = '허용되지 않은 서버 주소입니다 — 공식 연결 정보(공식 프로젝트 URL)만 사용합니다.';
+
+  function destinationHost(url) {
+    let u;
+    try { u = new URL(String(url || '').trim(), 'https://invalid.local/'); } catch (e) { return ''; }
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return '';
+    return String(u.hostname || '').toLowerCase().replace(/^\[|\]$/g, '');
+  }
+  function hostAllowed(url) {
+    const h = destinationHost(url);
+    return !!h && BACKEND_HOSTS.indexOf(h) >= 0;
+  }
+  function hostLocked() { return { ok: false, status: 0, error: 'host-lock', message: HOST_LOCK }; }
+
   async function request(path, opts) {
     opts = opts || {};
     if (!guardAllows()) return { ok: false, status: 0, error: 'domain-lock', message: DOMAIN_LOCK };
     const url = cfg.url + path;
+    if (!hostAllowed(url)) return hostLocked();
     const headers = Object.assign({
       apikey: cfg.anonKey,
       Authorization: 'Bearer ' + (opts.token || cfg.anonKey)
@@ -18719,6 +18783,7 @@ const PLAN_FRONT = {
   function authError(res) {
     const raw = String(res.error || res.message || '');
     const map = [
+      [/^host-lock$/, HOST_LOCK],
       [/invalid login credentials/i, '이메일 또는 비밀번호가 맞지 않습니다.'],
       [/email not confirmed/i, '이메일 확인이 필요합니다. 메일함의 확인 링크를 눌러 주세요.'],
       [/user already registered|already been registered/i, '이미 가입된 이메일입니다. 로그인해 주세요.'],
@@ -18761,7 +18826,7 @@ const PLAN_FRONT = {
     state.busy = true; render();
     const res = await request('/auth/v1/token?grant_type=password', { method: 'POST', body: { email: String(email).trim(), password } });
     state.busy = false;
-    if (!res.ok) { state.lastError = authError(res); render(); return { ok: false, reason: 'signin-failed', message: state.lastError }; }
+    if (!res.ok) { state.lastError = authError(res); render(); return { ok: false, reason: res.error === 'host-lock' ? 'host-lock' : 'signin-failed', message: state.lastError }; }
     state.lastError = '';
     saveSession(res.data);
     await afterAuth();
@@ -18826,6 +18891,13 @@ const PLAN_FRONT = {
       state.message = DOMAIN_LOCK;
       render();
       return { ok: false, reason: 'domain-lock', message: DOMAIN_LOCK };
+    }
+    if (!hostAllowed(cfg.url)) {
+      state.busy = false;
+      state.connection = 'error';
+      state.message = HOST_LOCK;
+      render();
+      return { ok: false, reason: 'host-lock', message: HOST_LOCK };
     }
     let ok = false;
     let detail = '';
@@ -19153,6 +19225,7 @@ const PLAN_FRONT = {
     if (!hasSession()) return { ok: false, reason: 'auth-required', items: [], premium: null, silson: null, message: '사진 AI 인식은 로그인 후 사용할 수 있습니다.' };
     const url = functionUrl(VISION_PATH);
     if (!url || !blob) return { ok: false, reason: 'no-endpoint', items: [], premium: null, silson: null, message: '비전 서버 주소가 설정되지 않았습니다.' };
+    if (!hostAllowed(url)) return { ok: false, reason: 'host-lock', items: [], premium: null, silson: null, message: HOST_LOCK };
 
     const token = await authToken();
     const form = new FormData();
@@ -19221,6 +19294,7 @@ const PLAN_FRONT = {
     if (!hasSession()) return { ok: false, reason: 'auth-required', message: '구독은 로그인 후 시작할 수 있습니다.' };
     const url = functionUrl(BILLING_PATH);
     if (!url) return { ok: false, reason: 'no-endpoint', message: '결제 서버 주소가 설정되지 않았습니다.' };
+    if (!hostAllowed(url)) return { ok: false, reason: 'host-lock', message: HOST_LOCK };
     state.busy = true; state.message = '구독 결제를 진행하고 있습니다…'; render();
     let out;
     try {
@@ -19555,6 +19629,7 @@ const PLAN_FRONT = {
     parseCoverageVision, subscribe,
     openAccount, closeAccount, render,
     BETA_NOTICE, LIVE_NOTICE, AUTH_REQUIRED, PRICE, CFG_KEY, SESSION_KEY,
+    allowedHosts: BACKEND_HOSTS.slice(), hostAllowed, HOST_LOCK,
     state: () => ({ mode: state.mode, connection: state.connection, message: state.message, busy: state.busy, subscription: state.subscription, plan: state.plan }),
     config: () => Object.assign({}, cfg)
   };
@@ -24024,7 +24099,7 @@ const PLAN_FRONT = {
     const tone = days <= 30 ? 'danger' : days <= 90 ? 'warn' : 'ok';
     const fix = (P && P.calendar && d.next.date) ? P.calendar.correct(d.next.date) : null;
     const fixLine = fix && !fix.ok
-      ? `<p class="na-fix">${esc(d.next.date)}은 ${esc(fix.reason)} — 직전 영업일 <b>${esc(fix.prev)}(${esc(P.date.weekday(fix.prev))})</b>${fix.provisional ? ' · 2028 잠정 달력' : ''}</p>`
+      ? `<p class="na-fix">${esc(d.next.date)}은 ${esc(fix.reason)} — 직전 영업일 <b>${esc(fix.prev)}(${esc(P.date.weekday(fix.prev))})</b>${fix.provisional ? ' · 2028 잠정 달력' : ''}<br><em>운영상 연락·서류 접수 참고일이며, 실제 효력일·상령일은 보험사 약관 기준을 따릅니다.</em></p>`
       : '';
     const secondLine = d.second
       ? `<p class="na-second">그다음 · ${esc(d.second.title)} ${esc(d.second.date)} (${esc(BojangAftercare.date.ddayText(d.second.days))})</p>`
@@ -25691,7 +25766,7 @@ const PLAN_FRONT = {
       sections: [
         ['1. 수집·이용 항목', '① 이 기기 저장(IndexedDB): 상담 이력 — 고객명(선택)·생년월일(선택)·연령대·성별·직업급수·실손 세대·월 보험료·담보 금액·계약 목록·고지 체크·상담 라벨·점수. ② 이 기기 저장(localStorage): 화면 설정(보기 모드·가이드 확인 여부·큰 글씨)과 입력 중인 상담 1건. ③ 클라우드(로그인해 동기화를 켰을 때만): 이메일, 상담 스냅샷 — 고객명·생년월일·연령대·성별·직업급수·실손 세대·월 보험료·담보 금액·계약 목록·고지 체크·상담 라벨·점수 — 와 브랜드 설정(상호·담당자·연락처·로고)이 Supabase(서울 리전)에 저장됩니다. 로그인하지 않으면 이 기기 저장만 사용합니다.'],
         ['2. 사진 촬영 — 앱·자체 서버에 저장하지 않음', '카메라로 찍은 보장분석표 사진은 이 앱과 자체 Supabase DB에 저장하지 않습니다(서버 저장 0건). 촬영본은 화면 메모리에서 전처리해 인식에 쓰고, localStorage·IndexedDB 어디에도 남기지 않습니다.'],
-        ['3. AI 사진 인식 — 실제 전송 경로', '사진에서 담보 숫자를 자동으로 읽을 때에만 다음 경로로 이미지가 전송됩니다: ① 이 브라우저 → ② 자체 서버(Supabase Edge Function · parse-coverage-vision) → ③ 외부 AI(Google Gemini, 설정에 따라 OpenAI). ②는 이미지를 DB·스토리지에 저장하지 않고 메모리에서만 처리하며 응답 후 즉시 참조를 해제합니다. ③에서 모델 오류·요청 제한이 나면 대체 모델 체인으로 최대 3회까지 다시 전송될 수 있습니다(gemini-3.8-flash → gemini-4-hydrogen → gemini-flash-latest). 전송된 이미지의 공급자 측 보관·삭제는 해당 API 개인정보·남용방지 정책을 따르며, 앱이 공급자 측 즉시 삭제를 보증하지는 않습니다. 인식 결과 텍스트만 화면에 표시하고, 사진 인식을 쓰지 않으면 어떤 이미지도 외부로 나가지 않습니다.'],
+        ['3. AI 사진 인식 — 실제 전송 경로', '사진에서 담보 숫자를 자동으로 읽을 때에만 다음 경로로 이미지가 전송됩니다: ① 이 브라우저 → ② 자체 서버(Supabase Edge Function · parse-coverage-vision) → ③ 외부 AI(Google Gemini, 설정에 따라 OpenAI). ②는 이미지를 DB·스토리지에 저장하지 않고 메모리에서만 처리하며 응답 후 즉시 참조를 해제합니다. ③에서 모델 오류·요청 제한이 나면 대체 모델 후보로 다시 시도할 수 있습니다 — OpenAI 경로 또는 사용자 지정 Gemini 포함 최대 4개 모델 후보입니다(사용자 지정 Gemini → gemini-3.8-flash → gemini-4-hydrogen → gemini-flash-latest). 전송된 이미지의 공급자 측 보관·삭제는 해당 API 개인정보·남용방지 정책을 따르며, 앱이 공급자 측 즉시 삭제를 보증하지는 않습니다. 인식 결과 텍스트만 화면에 표시하고, 사진 인식을 쓰지 않으면 어떤 이미지도 외부로 나가지 않습니다.'],
         ['4. 보관 위치와 기간', '① 상담 이력은 이 기기의 IndexedDB에, 입력 중인 상담 1건은 localStorage에 보관되고 이용자가 삭제할 때까지 남습니다. ② 클라우드 동기화를 켜면 상담 스냅샷이 Supabase(서울 리전)에 저장되며, 이용자가 상담을 삭제하거나 계정을 정리할 때까지 보관합니다. ③ PDF·JSON 파일은 이용자 기기에서 만들어지고, 서비스가 따로 보관하지 않습니다.'],
         ['5. 제3자 제공·처리위탁', '개인정보를 제3자에게 판매·제공하지 않습니다. 다만 서비스 운영을 위해 Supabase(서울 리전 · 로그인·상담 동기화 데이터 저장)와 외부 AI API(Google Gemini 등 · 사진 인식 시에만 해당)에 처리를 위탁합니다. AI 공급자 측 이미지 보관은 해당 공급자의 API 정책(남용 감시 목적의 제한 기간 보관 포함)을 따릅니다. 법령에 따라 수사기관이 요구하는 경우는 예외로 합니다.'],
         ['6. 이용자의 권리', '이용자는 언제든지 ① 상담 이력 삭제(목록의 × 버튼), ② 클라우드 기록 삭제·로그아웃, ③ 브라우저 데이터 삭제로 기기 저장값을 지울 수 있습니다. 삭제한 자료는 복구되지 않습니다.'],
@@ -25732,7 +25807,7 @@ const PLAN_FRONT = {
       items: [
         '사진을 AI로 읽을 때만: 브라우저 → Supabase Edge Function(parse-coverage-vision) → 외부 AI(Google Gemini, 설정에 따라 OpenAI)',
         'Edge Function은 사진을 DB·스토리지에 저장하지 않고 메모리에서만 처리(응답 후 참조 해제)',
-        '모델 오류·요청 제한 시 대체 모델 체인으로 최대 3회 재전송될 수 있음 · 전송 이미지 보관은 공급자 API 정책을 따름'
+        '모델 오류·요청 제한 시 대체 모델 후보로 재시도(OpenAI 경로 또는 사용자 지정 Gemini 포함 최대 4개 모델 후보) · 전송 이미지 보관은 공급자 API 정책을 따름'
       ],
       keep: '앱은 공급자 측 즉시 삭제를 보증하지 않음 · 사진 인식을 쓰지 않으면 전송 0건 · 판정 불가 환경(파일 실행·가드 없음)은 fail-closed로 차단'
     }

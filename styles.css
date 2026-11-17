@@ -4318,23 +4318,25 @@ body.is-client .slide{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px)
 
 @media (max-width:430px){
   .slide[data-no="1"] .sl-inner{padding:18px 16px 14px;}
-  .cover-brand{padding-bottom:9px;margin-bottom:10px;}
+  .cover-brand{padding-bottom:7px;margin-bottom:8px;}
   .cover-brand .cb-heart svg{width:30px;height:25px;}
   .cover-eyebrow{font-size:9.5px;letter-spacing:.18em;}
-  .cover-title{margin-top:8px;font-size:24px;line-height:1.24;}
-  .cover-lead{margin-top:7px;font-size:11.5px;line-height:1.5;}
-  .cover-grade{margin-top:11px;padding:9px 0;gap:8px;}
-  .cg-letter{font-size:31px;}
+  .cover-title{margin-top:6px;font-size:23px;line-height:1.22;}
+  .cover-lead{margin-top:5px;font-size:11px;line-height:1.45;}
+  .cover-grade{margin-top:8px;padding:7px 0;gap:8px;}
+  .cg-letter{font-size:29px;}
   .cg-label{font-size:9.5px;}
   .cg-score{font-size:10.5px;}
-  .cover-meta{margin-top:10px;gap:4px;}
-  .cover-meta div{padding-bottom:3px;}
-  .cover-meta dt{font-size:9.8px;}
-  .cover-meta dd{font-size:11px;}
-  .cover-contact{margin-top:6px;font-size:10px;}
-  .cover-values{display:none;}
-  .cover-foot{margin-top:8px;padding-top:6px;font-size:9px;line-height:1.45;}
-  .cover-sample{margin-top:5px;padding:4px 7px;font-size:9px;}
+  .cover-meta{margin-top:8px;gap:3px;}
+  .cover-meta div{padding-bottom:2px;}
+  .cover-meta dt{font-size:9.6px;}
+  .cover-meta dd{font-size:10.6px;}
+  .cover-contact{margin-top:5px;font-size:9.6px;}
+  /* v7.1.1 — 숨겼던 보장 가치 문구를 복원하되 간격을 줄여 360×740 한 장 유지 */
+  .cover-values{display:flex;margin-top:7px;padding-top:4px;gap:5px;font-size:8.6px;line-height:1.2;}
+  .cover-values i{height:7px;}
+  .cover-foot{margin-top:6px;padding-top:5px;font-size:8.8px;line-height:1.4;}
+  .cover-sample{margin-top:4px;padding:3px 7px;font-size:8.8px;}
 }
 
 /* =========================================================
@@ -4477,6 +4479,8 @@ body.is-client .slide{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px)
 .pd-cal-pair em{font-style:normal;font-size:10px;font-weight:700;color:#7b8ea4;}
 .pd-cal-which{font-size:11px;line-height:1.55;color:#22364f;}
 .pd-cal-note{font-size:10.6px;line-height:1.5;color:#41597a;}
+/* v7.1.1 — 영업일 보정은 '운영상 참고일'임을 분리해 알리는 줄 */
+.pd-cal-ref{font-size:10px;line-height:1.5;color:#5a6b80;font-weight:700;border-top:1px dashed #dbe4ee;padding-top:6px;}
 .pd-hols{display:flex;gap:6px;flex-wrap:wrap;}
 .pd-hol{font-size:10.4px;font-weight:800;color:#22364f;background:#eef4fb;border:1px solid #dbe4ee;border-radius:999px;padding:4px 9px;}
 @media (max-width:560px){
@@ -4491,6 +4495,18 @@ body.is-client .slide{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px)
 /* v7.1 — 공공데이터 프록시 개인정보 경계 안내 */
 .pd-proxy-note{margin-top:6px;font-size:9.8px;line-height:1.55;color:#7b8ea4;background:#f7fafd;border:1px dashed #dbe4ee;border-radius:9px;padding:7px 9px;}
 .pd-proxy-note b{color:#41597a;}
+.pd-proxy-summary{margin:0;}
+.pd-proxy-more{margin-top:4px;}
+.pd-proxy-more summary{cursor:pointer;font-weight:800;color:#41597a;font-size:9.6px;list-style:none;}
+.pd-proxy-more summary::-webkit-details-marker{display:none;}
+.pd-proxy-more summary::after{content:' ▾';}
+.pd-proxy-more[open] summary::after{content:' ▴';}
+.pd-proxy-more p{margin:4px 0 0;}
+@media (max-width:430px){
+  /* v7.1.1 — 360px 첫 두 줄 요약만 기본 노출(부이 대리 UX) */
+  .pd-proxy-summary{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .pd-proxy-more summary{font-size:9.4px;padding:2px 0;}
+}
 
 /* v7.1 — 청구 매칭: 빠진 서류 표시 · 간병 '참고' 배지 */
 .cc-lack{margin-top:4px;font-size:10.5px;font-weight:800;color:#8a1f14;}

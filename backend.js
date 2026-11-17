@@ -167,10 +167,31 @@
     try { return !!g.allowed(); } catch (e) { return false; }
   }
 
+  /* v7.1.1 — 연결 목적지 allowlist(fail-closed, 4호 지적).
+     화면 가드(window.bojangDomainGuard)를 통과해도 목적지 호스트가 공식 목록에 없으면
+     설정값(localStorage·__BOJANG_CONFIG__)이 바뀌어도 요청을 보내지 않습니다.
+     · ntfhdiujapctomzzaifu.supabase.co — 공식 서울 리전 프로젝트
+     · localhost · 127.0.0.1 · ::1 — 로컬 검증 환경(도메인 가드와 같은 목록) */
+  const BACKEND_HOSTS = ['ntfhdiujapctomzzaifu.supabase.co', 'localhost', '127.0.0.1', '::1'];
+  const HOST_LOCK = '허용되지 않은 서버 주소입니다 — 공식 연결 정보(공식 프로젝트 URL)만 사용합니다.';
+
+  function destinationHost(url) {
+    let u;
+    try { u = new URL(String(url || '').trim(), 'https://invalid.local/'); } catch (e) { return ''; }
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return '';
+    return String(u.hostname || '').toLowerCase().replace(/^\[|\]$/g, '');
+  }
+  function hostAllowed(url) {
+    const h = destinationHost(url);
+    return !!h && BACKEND_HOSTS.indexOf(h) >= 0;
+  }
+  function hostLocked() { return { ok: false, status: 0, error: 'host-lock', message: HOST_LOCK }; }
+
   async function request(path, opts) {
     opts = opts || {};
     if (!guardAllows()) return { ok: false, status: 0, error: 'domain-lock', message: DOMAIN_LOCK };
     const url = cfg.url + path;
+    if (!hostAllowed(url)) return hostLocked();
     const headers = Object.assign({
       apikey: cfg.anonKey,
       Authorization: 'Bearer ' + (opts.token || cfg.anonKey)
@@ -199,6 +220,7 @@
   function authError(res) {
     const raw = String(res.error || res.message || '');
     const map = [
+      [/^host-lock$/, HOST_LOCK],                       /* v7.1.1 — 목적지 allowlist 차단은 그대로 안내 */
       [/invalid login credentials/i, '이메일 또는 비밀번호가 맞지 않습니다.'],
       [/email not confirmed/i, '이메일 확인이 필요합니다. 메일함의 확인 링크를 눌러 주세요.'],
       [/user already registered|already been registered/i, '이미 가입된 이메일입니다. 로그인해 주세요.'],
@@ -241,7 +263,7 @@
     state.busy = true; render();
     const res = await request('/auth/v1/token?grant_type=password', { method: 'POST', body: { email: String(email).trim(), password } });
     state.busy = false;
-    if (!res.ok) { state.lastError = authError(res); render(); return { ok: false, reason: 'signin-failed', message: state.lastError }; }
+    if (!res.ok) { state.lastError = authError(res); render(); return { ok: false, reason: res.error === 'host-lock' ? 'host-lock' : 'signin-failed', message: state.lastError }; }
     state.lastError = '';
     saveSession(res.data);
     await afterAuth();
@@ -309,6 +331,13 @@
       state.message = DOMAIN_LOCK;
       render();
       return { ok: false, reason: 'domain-lock', message: DOMAIN_LOCK };
+    }
+    if (!hostAllowed(cfg.url)) {
+      state.busy = false;
+      state.connection = 'error';
+      state.message = HOST_LOCK;
+      render();
+      return { ok: false, reason: 'host-lock', message: HOST_LOCK };
     }
     let ok = false;
     let detail = '';
@@ -658,6 +687,7 @@
     if (!hasSession()) return { ok: false, reason: 'auth-required', items: [], premium: null, silson: null, message: '사진 AI 인식은 로그인 후 사용할 수 있습니다.' };
     const url = functionUrl(VISION_PATH);
     if (!url || !blob) return { ok: false, reason: 'no-endpoint', items: [], premium: null, silson: null, message: '비전 서버 주소가 설정되지 않았습니다.' };
+    if (!hostAllowed(url)) return { ok: false, reason: 'host-lock', items: [], premium: null, silson: null, message: HOST_LOCK };   /* v7.1.1 */
 
     const token = await authToken();
     const form = new FormData();
@@ -729,6 +759,7 @@
     if (!hasSession()) return { ok: false, reason: 'auth-required', message: '구독은 로그인 후 시작할 수 있습니다.' };
     const url = functionUrl(BILLING_PATH);
     if (!url) return { ok: false, reason: 'no-endpoint', message: '결제 서버 주소가 설정되지 않았습니다.' };
+    if (!hostAllowed(url)) return { ok: false, reason: 'host-lock', message: HOST_LOCK };   /* v7.1.1 */
     state.busy = true; state.message = '구독 결제를 진행하고 있습니다…'; render();
     let out;
     try {
@@ -1069,6 +1100,7 @@
     parseCoverageVision, subscribe,
     openAccount, closeAccount, render,
     BETA_NOTICE, LIVE_NOTICE, AUTH_REQUIRED, PRICE, CFG_KEY, SESSION_KEY,
+    allowedHosts: BACKEND_HOSTS.slice(), hostAllowed, HOST_LOCK,
     state: () => ({ mode: state.mode, connection: state.connection, message: state.message, busy: state.busy, subscription: state.subscription, plan: state.plan }),
     config: () => Object.assign({}, cfg)
   };

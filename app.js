@@ -1118,7 +1118,7 @@
     const tone = days <= 30 ? 'danger' : days <= 90 ? 'warn' : 'ok';
     const fix = (P && P.calendar && d.next.date) ? P.calendar.correct(d.next.date) : null;
     const fixLine = fix && !fix.ok
-      ? `<p class="na-fix">${esc(d.next.date)}은 ${esc(fix.reason)} — 직전 영업일 <b>${esc(fix.prev)}(${esc(P.date.weekday(fix.prev))})</b>${fix.provisional ? ' · 2028 잠정 달력' : ''}</p>`
+      ? `<p class="na-fix">${esc(d.next.date)}은 ${esc(fix.reason)} — 직전 영업일 <b>${esc(fix.prev)}(${esc(P.date.weekday(fix.prev))})</b>${fix.provisional ? ' · 2028 잠정 달력' : ''}<br><em>운영상 연락·서류 접수 참고일이며, 실제 효력일·상령일은 보험사 약관 기준을 따릅니다.</em></p>`
       : '';
     const secondLine = d.second
       ? `<p class="na-second">그다음 · ${esc(d.second.title)} ${esc(d.second.date)} (${esc(BojangAftercare.date.ddayText(d.second.days))})</p>`
@@ -2833,7 +2833,7 @@
       sections: [
         ['1. 수집·이용 항목', '① 이 기기 저장(IndexedDB): 상담 이력 — 고객명(선택)·생년월일(선택)·연령대·성별·직업급수·실손 세대·월 보험료·담보 금액·계약 목록·고지 체크·상담 라벨·점수. ② 이 기기 저장(localStorage): 화면 설정(보기 모드·가이드 확인 여부·큰 글씨)과 입력 중인 상담 1건. ③ 클라우드(로그인해 동기화를 켰을 때만): 이메일, 상담 스냅샷 — 고객명·생년월일·연령대·성별·직업급수·실손 세대·월 보험료·담보 금액·계약 목록·고지 체크·상담 라벨·점수 — 와 브랜드 설정(상호·담당자·연락처·로고)이 Supabase(서울 리전)에 저장됩니다. 로그인하지 않으면 이 기기 저장만 사용합니다.'],
         ['2. 사진 촬영 — 앱·자체 서버에 저장하지 않음', '카메라로 찍은 보장분석표 사진은 이 앱과 자체 Supabase DB에 저장하지 않습니다(서버 저장 0건). 촬영본은 화면 메모리에서 전처리해 인식에 쓰고, localStorage·IndexedDB 어디에도 남기지 않습니다.'],
-        ['3. AI 사진 인식 — 실제 전송 경로', '사진에서 담보 숫자를 자동으로 읽을 때에만 다음 경로로 이미지가 전송됩니다: ① 이 브라우저 → ② 자체 서버(Supabase Edge Function · parse-coverage-vision) → ③ 외부 AI(Google Gemini, 설정에 따라 OpenAI). ②는 이미지를 DB·스토리지에 저장하지 않고 메모리에서만 처리하며 응답 후 즉시 참조를 해제합니다. ③에서 모델 오류·요청 제한이 나면 대체 모델 체인으로 최대 3회까지 다시 전송될 수 있습니다(gemini-3.8-flash → gemini-4-hydrogen → gemini-flash-latest). 전송된 이미지의 공급자 측 보관·삭제는 해당 API 개인정보·남용방지 정책을 따르며, 앱이 공급자 측 즉시 삭제를 보증하지는 않습니다. 인식 결과 텍스트만 화면에 표시하고, 사진 인식을 쓰지 않으면 어떤 이미지도 외부로 나가지 않습니다.'],
+        ['3. AI 사진 인식 — 실제 전송 경로', '사진에서 담보 숫자를 자동으로 읽을 때에만 다음 경로로 이미지가 전송됩니다: ① 이 브라우저 → ② 자체 서버(Supabase Edge Function · parse-coverage-vision) → ③ 외부 AI(Google Gemini, 설정에 따라 OpenAI). ②는 이미지를 DB·스토리지에 저장하지 않고 메모리에서만 처리하며 응답 후 즉시 참조를 해제합니다. ③에서 모델 오류·요청 제한이 나면 대체 모델 후보로 다시 시도할 수 있습니다 — OpenAI 경로 또는 사용자 지정 Gemini 포함 최대 4개 모델 후보입니다(사용자 지정 Gemini → gemini-3.8-flash → gemini-4-hydrogen → gemini-flash-latest). 전송된 이미지의 공급자 측 보관·삭제는 해당 API 개인정보·남용방지 정책을 따르며, 앱이 공급자 측 즉시 삭제를 보증하지는 않습니다. 인식 결과 텍스트만 화면에 표시하고, 사진 인식을 쓰지 않으면 어떤 이미지도 외부로 나가지 않습니다.'],
         ['4. 보관 위치와 기간', '① 상담 이력은 이 기기의 IndexedDB에, 입력 중인 상담 1건은 localStorage에 보관되고 이용자가 삭제할 때까지 남습니다. ② 클라우드 동기화를 켜면 상담 스냅샷이 Supabase(서울 리전)에 저장되며, 이용자가 상담을 삭제하거나 계정을 정리할 때까지 보관합니다. ③ PDF·JSON 파일은 이용자 기기에서 만들어지고, 서비스가 따로 보관하지 않습니다.'],
         ['5. 제3자 제공·처리위탁', '개인정보를 제3자에게 판매·제공하지 않습니다. 다만 서비스 운영을 위해 Supabase(서울 리전 · 로그인·상담 동기화 데이터 저장)와 외부 AI API(Google Gemini 등 · 사진 인식 시에만 해당)에 처리를 위탁합니다. AI 공급자 측 이미지 보관은 해당 공급자의 API 정책(남용 감시 목적의 제한 기간 보관 포함)을 따릅니다. 법령에 따라 수사기관이 요구하는 경우는 예외로 합니다.'],
         ['6. 이용자의 권리', '이용자는 언제든지 ① 상담 이력 삭제(목록의 × 버튼), ② 클라우드 기록 삭제·로그아웃, ③ 브라우저 데이터 삭제로 기기 저장값을 지울 수 있습니다. 삭제한 자료는 복구되지 않습니다.'],
@@ -2877,7 +2877,7 @@
       items: [
         '사진을 AI로 읽을 때만: 브라우저 → Supabase Edge Function(parse-coverage-vision) → 외부 AI(Google Gemini, 설정에 따라 OpenAI)',
         'Edge Function은 사진을 DB·스토리지에 저장하지 않고 메모리에서만 처리(응답 후 참조 해제)',
-        '모델 오류·요청 제한 시 대체 모델 체인으로 최대 3회 재전송될 수 있음 · 전송 이미지 보관은 공급자 API 정책을 따름'
+        '모델 오류·요청 제한 시 대체 모델 후보로 재시도(OpenAI 경로 또는 사용자 지정 Gemini 포함 최대 4개 모델 후보) · 전송 이미지 보관은 공급자 API 정책을 따름'
       ],
       keep: '앱은 공급자 측 즉시 삭제를 보증하지 않음 · 사진 인식을 쓰지 않으면 전송 0건 · 판정 불가 환경(파일 실행·가드 없음)은 fail-closed로 차단'
     }

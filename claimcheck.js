@@ -204,7 +204,13 @@
     const lackOf = (need) => (need || []).filter((k) => !docSet[k]).map((k) => DOC_LABEL[k] || k);
 
     const rows = [];
-    cls.dx.forEach((d) => rows.push({ dambo: d, kind: '진단비', need: ['dx'], ok: readyFor(['dx']), lack: lackOf(['dx']), why: code.pays }));
+    /* v7.1.1 — 암·유사암 진단비는 진단서 + 병리조직결과지를 '함께' 요구합니다(4호 지적).
+       진단서만 체크해도 '서류 준비됨'이 나와 병리조직결과지가 빠진 채 청구하는 일을 막습니다. */
+    const dxNeed = (cls.group === '암' || cls.group === '유사암') ? ['dx', 'path'] : ['dx'];
+    const dxWhy = code.pays + (dxNeed.length > 1
+      ? ' 암·유사암 진단비는 병리조직결과지까지 있어야 일반암/유사암 구분이 서고, 그 구분이 지급액을 가릅니다.'
+      : '');
+    cls.dx.forEach((d) => rows.push({ dambo: d, kind: '진단비', need: dxNeed, ok: readyFor(dxNeed), lack: lackOf(dxNeed), why: dxWhy }));
     if (input.surgery) {
       const need = (cls.group === '암' || cls.group === '유사암') ? ['surgery', 'path'] : ['surgery'];
       cls.op.forEach((d) => rows.push({

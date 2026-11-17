@@ -8,7 +8,7 @@
 (function (root) {
   'use strict';
 
-  const APP_VERSION = 'v7.1';
+  const APP_VERSION = 'v7.1.1';
   const APP_VERSION_NUM = APP_VERSION.replace(/^v/, '');
   const APP_VERSION_MONTH = '2026.11';
   const APP_TAGLINE = '고객 맞춤형 보장 점검 · 리모델링 상담 가이드';

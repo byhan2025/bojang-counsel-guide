@@ -524,11 +524,14 @@
     </div>`;
   }
 
+  /* v7.1.1 — 공휴일 보정은 '운영상 참고일'입니다. 실제 보장개시일·효력일·상령일을 바꾸는 값이 아닙니다(4호 지적). */
+  const HOLIDAY_REF_NOTE = '공휴일 보정은 운영상 연락·서류 접수 참고일입니다 — 실제 보장개시일·효력일·상령일은 보험사 약관 기준을 따릅니다.';
+
   const CAL_KINDS = [
-    { key: 'withdraw', label: '청약 철회 (청약일 + 15일)', days: 15, dir: 'prev', note: '청약철회는 청약일부터 15일(상품에 따라 30일)입니다. 마감일이 휴일이면 직전 영업일까지 접수해야 안전합니다.' },
-    { key: 'claim3y', label: '보험금 청구 소멸시효 (사고일 + 3년)', years: 3, dir: 'prev', note: '상법 제662조 3년. 마감일이 휴일이면 직전 영업일이 실무 마감입니다.' },
-    { key: 'immune90', label: '90일 면책 해제일 (계약일 + 90일)', days: 90, dir: 'next', note: '해제일이 휴일이면 다음 영업일부터 진단·수술이 보장됩니다(상품 약관 확인).' },
-    { key: 'ageDay', label: '상령일 (생일 + 6개월)', months: 6, dir: 'next', note: '상령일이 휴일이면 다음 영업일에 청약하면 보험나이가 이미 올라가 보험료가 비쌀 수 있습니다 — 직전 영업일 청약을 검토하세요.' }
+    { key: 'withdraw', label: '청약 철회 (청약일 + 15일)', days: 15, dir: 'prev', note: '청약철회는 청약일부터 15일(상품에 따라 30일)입니다. 마감일이 휴일이면 직전 영업일까지 접수하는 것이 운영상 안전합니다.' },
+    { key: 'claim3y', label: '보험금 청구 소멸시효 (사고일 + 3년)', years: 3, dir: 'prev', note: '상법 제662조 3년. 마감일이 휴일이면 직전 영업일 접수를 운영상 참고일로 안내합니다 — 시효 기산·완성은 법과 약관 기준입니다.' },
+    { key: 'immune90', label: '90일 면책 해제일 (계약일 + 90일)', days: 90, dir: 'next', note: '해제일이 휴일이면 다음 영업일을 운영상 참고일로 함께 안내합니다 — 실제 보장개시일·효력일은 보험사 약관 기준을 따릅니다.' },
+    { key: 'ageDay', label: '상령일 (생일 + 6개월)', months: 6, dir: 'next', note: '상령일이 휴일이면 청약·접수 시점을 영업일 기준으로 안내합니다 — 실제 상령일·보험나이 적용은 보험사 약관 기준을 따릅니다.' }
   ];
 
   function calHTML(r) {
@@ -545,9 +548,10 @@
         <div><span>직전 영업일</span><b>${esc(koDate(c.prev))}</b><em>${esc(weekday(c.prev))}요일 · ${esc(dday(diffDays(todayISO(), c.prev)))}</em></div>
         <div><span>다음 영업일</span><b>${esc(koDate(c.next))}</b><em>${esc(weekday(c.next))}요일 · ${esc(dday(diffDays(todayISO(), c.next)))}</em></div>
       </div>`);
-      rows.push(`<p class="pd-cal-which">${kind.dir === 'prev' ? '마감일이면 <b>직전 영업일</b>까지 접수해야 기한을 넘기지 않습니다.' : '개시일이면 <b>다음 영업일</b>부터 효력이 생깁니다(상품 약관 확인).'}</p>`);
+      rows.push(`<p class="pd-cal-which">${kind.dir === 'prev' ? '마감일이면 <b>직전 영업일</b>까지 접수하는 것이 운영상 안전합니다(참고일).' : '<b>다음 영업일</b>을 운영상 참고일로 안내합니다 — 실제 효력 발생일은 약관 기준입니다.'}</p>`);
     }
     rows.push(`<p class="pd-cal-note">${esc(kind.note)}</p>`);
+    rows.push(`<p class="pd-cal-ref">${esc(HOLIDAY_REF_NOTE)}</p>`);
     if (!calLast.covered) rows.push(`<p class="pd-cal-warn">${esc(r.date)}는 내장 달력(2026~2028) 밖입니다 — 공휴일 확인이 안 되니 보험사·금융감독원 달력으로 확인하세요.</p>`);
     if (c.provisional) rows.push('<p class="pd-cal-warn">2028년은 월력요항 공고 전 잠정 달력입니다 — 임시공휴일이 추가될 수 있습니다.</p>');
     const up = r.upcoming.map((h) => `<span class="pd-hol">${esc(h.date.slice(5).replace('-', '/'))} ${esc(h.name)}${h.provisional ? ' (잠정)' : ''}</span>`).join('');
@@ -565,7 +569,7 @@
   const PROXY_KEY = 'bojang.pd.proxy.v1';
 
   /* v7.1 — 선택 기능(실시간 조회)의 개인정보·처리 경계. 화면과 테스트가 같은 문구를 씁니다. */
-  const PROXY_NOTICE = '선택 기능입니다. 프록시 주소를 직접 넣고 [실시간 조회]를 누를 때, 입력한 약 이름(검색어)만 제3자 API 프록시(k-skill 등)로 전송됩니다 — 프록시 운영자와 중계(Cloudflare 등)의 처리 및 국외 이전이 있을 수 있고, 응답은 최대 5분 캐시될 수 있습니다. 고객 이름·연락처·증권 값·가족력·연령·성별은 전송하지 않으며, 기본값은 100% 기기 내 내장 사전(외부 요청 0회)입니다. 식약처·KOSIS·천문연 등 공공데이터는 일반 참고자료일 뿐, 개인 고지 누락 여부·보험금 지급 여부·보험사 상령일을 확정 판정하지 않습니다.';
+  const PROXY_NOTICE = '선택 기능입니다. 프록시 주소를 직접 넣고 [실시간 조회]를 누를 때, 내장 사전에서 확인된 표준 약 이름(성분명)만 제3자 API 프록시(k-skill 등)로 전송됩니다 — 사전에 없는 자유 입력은 외부 요청 0회로 차단합니다. 프록시 운영자와 중계(Cloudflare 등)의 처리 및 국외 이전이 있을 수 있고, 응답은 최대 5분 캐시될 수 있습니다. 고객 이름·연락처·증권 값·가족력·연령·성별은 전송하지 않으며, 기본값은 100% 기기 내 내장 사전(외부 요청 0회)입니다. 식약처·KOSIS·천문연 등 공공데이터는 일반 참고자료일 뿐, 개인 고지 누락 여부·보험금 지급 여부·보험사 상령일을 확정 판정하지 않습니다.';
 
   function proxyGet() {
     try { return String(root.localStorage.getItem(PROXY_KEY) || ''); } catch (e) { return ''; }
@@ -584,13 +588,28 @@
 
   /* 실시간 조회 — 대표가 주소를 넣고 '실시간' 버튼을 누른 그 검색어만 나갑니다. 실패하면 내장 사전으로 되돌립니다.
      v7.1 — 판정 근거가 없으면(file: 실행·호스트 없음·가드 없음) 외부 요청 0회 */
+  /* v7.1.1 — 프록시 전송 allowlist(4호 지적).
+     자유 입력 앞 40자를 그대로 보내던 경로를 없앴습니다. 내장 사전에서 '정확히' 확인된
+     표준 약 이름(성분명)만 프록시로 나가고, 그 밖의 입력은 외부 요청 0회로 끝납니다. */
+  function proxyQuery(q) {
+    const raw = String(q == null ? '' : q).trim();
+    if (!raw || raw.length > 20) return null;                 /* 표준 약 이름·성분명은 20자 이내 */
+    if (/[,，、;/\n]/.test(raw)) return null;                 /* 여러 개를 한 번에 넣으면 대조가 모호 — 차단 */
+    const key = norm(raw);
+    if (!key) return null;
+    const hit = DRUGS.find((d) => norm(d.n) === key || String(d.a || '').split(',').some((x) => norm(x) === key));
+    return hit ? hit.n : null;                                 /* 사전의 표준 이름으로만 전송 */
+  }
+
   async function fetchDrugLive(q) {
     const g = root.bojangDomainGuard;
     if (!g || typeof g.allowed !== 'function' || !g.allowed()) return { ok: false, reason: 'blocked' };
     const base = proxyGet();
     if (!base) return { ok: false, reason: 'off' };
+    const std = proxyQuery(q);
+    if (!std) return { ok: false, reason: 'not-in-dictionary' };
     try {
-      const url = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'q=' + encodeURIComponent(String(q || '').slice(0, 40));
+      const url = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'q=' + encodeURIComponent(std);
       const res = await fetch(url, { method: 'GET', headers: { Accept: 'application/json' } });
       if (!res.ok) return { ok: false, reason: 'http ' + res.status };
       const data = await res.json();
@@ -662,7 +681,8 @@
       if (r.ok) toast('실시간 조회 ' + (r.items.length ? r.items.length + '건' : '결과 없음') + ' — 내장 사전과 함께 확인하세요');
       else toast(r.reason === 'blocked' ? '지금 실행 환경에서는 외부 조회를 막았습니다 — 내장 사전 결과만 씁니다'
         : r.reason === 'off' ? '프록시 주소를 먼저 넣어 주세요 — 지금은 오프라인 사전으로 동작합니다'
-          : '실시간 조회 실패 — 내장 사전 결과를 그대로 씁니다');
+          : r.reason === 'not-in-dictionary' ? '내장 사전에 없는 검색어입니다 — 외부로 보내지 않았습니다(요청 0회)'
+            : '실시간 조회 실패 — 내장 사전 결과를 그대로 씁니다');
     });
     const proxy = $('#pd-proxy');
     if (proxy) proxy.addEventListener('change', () => proxySet(proxy.value.trim()));
@@ -704,16 +724,17 @@
 
   root.BojangPublicData = {
     init, refresh, applyMeds, applyCal,
-    PROXY_NOTICE,
+    PROXY_NOTICE, HOLIDAY_REF_NOTE,
     drugs: { list: DRUGS, groups: GROUPS, search: searchDrugs, check: checkMeds, itemMeta },
     stats: { cards: STAT_CARDS, gaps: GAP_CARDS, forClient: statsFor },
     calendar: {
       holidays: HOLIDAYS, isHoliday: calendar.isHoliday.bind(calendar), isBusinessDay: calendar.isBusinessDay.bind(calendar),
       prev: calendar.prev.bind(calendar), next: calendar.next.bind(calendar), correct: calendar.correct.bind(calendar),
-      upcoming: calendar.upcoming.bind(calendar), covered: calendar.covered.bind(calendar), businessDays: calendar.businessDays.bind(calendar)
+      upcoming: calendar.upcoming.bind(calendar), covered: calendar.covered.bind(calendar), businessDays: calendar.businessDays.bind(calendar),
+      refNote: HOLIDAY_REF_NOTE
     },
     kinds: CAL_KINDS,
-    proxy: { get: proxyGet, set: proxySet, fetchDrug: fetchDrugLive },
+    proxy: { get: proxyGet, set: proxySet, fetchDrug: fetchDrugLive, query: proxyQuery },
     date: { addDays, addMonths, diffDays, koDate, dday, todayISO, weekday },
     selected: () => ({ med: medLast, stats: statLast, cal: calLast }),
     DISCLAIMER

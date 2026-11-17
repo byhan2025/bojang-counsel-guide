@@ -123,6 +123,9 @@
      5종 계산
      input: { name, contract, birth, treatment, cure, switchDate, claimed, reductionYears }
      ========================================================= */
+  /* v7.1.1 — 공휴일·주말 영업일 보정은 '운영상 참고일'입니다. 실제 효력일·상령일을 바꾸지 않습니다(4호 지적). */
+  const HOLIDAY_REF_NOTE = '공휴일·주말과 겹칠 때 안내하는 직전·다음 영업일은 운영상 연락·서류 접수 참고일이며, 실제 보장개시일·효력일·상령일은 보험사 약관 기준을 따릅니다.';
+
   const ITEM_META = [
     { key: 'imunity', no: 1, title: '90일 면책 해제일', tag: '보장개시' },
     { key: 'reduction', no: 2, title: '감액 해제일', tag: '감액' },
@@ -156,7 +159,8 @@
         lines: [
           '계약일을 1일째로 세어 91일째 0시 — 계산식은 계약일 + 90일입니다.',
           '일반암만 해당합니다. 유사암(갑상선암·제자리암·경계성종양)·뇌·심장은 대개 보장개시일부터 즉시 보장되고, 대장점막내암은 상품별로 다릅니다.',
-          days > 0 ? '이 날짜 전에 진단이 확정되면 일반암 진단비는 지급되지 않습니다.' : '면책 기간은 이미 지났습니다 — 지금은 일반암도 보장됩니다.'
+          days > 0 ? '이 날짜 전에 진단이 확정되면 일반암 진단비는 지급되지 않습니다.' : '면책 기간은 이미 지났습니다 — 지금은 일반암도 보장됩니다.',
+          HOLIDAY_REF_NOTE
         ],
         warn: days >= 0 && days <= 30 ? '면책 해제가 ' + days + '일 남았습니다 — 이 시기의 진단은 지급되지 않으니 고객에게 먼저 알려 주세요' : '',
         copy: `${callName(name)}님, 안녕하세요. ${koDate(date)}부터 가입하신 암보장의 90일 면책 기간이 끝나 일반암 진단비가 온전히 보장됩니다. 그 전에 진단이 확정되면 일반암 진단비는 지급되지 않으니 그 점만 미리 기억해 주세요. 유사암·뇌·심장은 해당되지 않는 경우가 많습니다. 궁금하신 점 있으면 편하게 연락 주세요.`
@@ -258,7 +262,8 @@
         lines: [
           '상령일 = 생일 + 6개월. 이날 0시부터 보험나이가 한 살 올라가 새 계약의 보험료가 인상됩니다.',
           '2월 29일생은 그 해에 2월 29일이 없으면 2월 말일로 당겨 계산합니다.',
-          days >= 0 && days <= 30 ? '보완 가입이 필요하면 상령일 전에 청약하는 편이 보험료에 유리합니다.' : '보완 가입 시점을 정할 때 이 날짜를 기준으로 잡으세요.'
+          days >= 0 && days <= 30 ? '보완 가입이 필요하면 상령일 전에 청약하는 편이 보험료에 유리합니다.' : '보완 가입 시점을 정할 때 이 날짜를 기준으로 잡으세요.',
+          HOLIDAY_REF_NOTE
         ],
         warn: days >= 0 && days <= 30 ? '상령일이 ' + days + '일 남았습니다 — 이번 달 청약 여부를 정해야 합니다' : '',
         copy: `${callName(name)}님, ${koDate(date)}에 보험나이가 한 살 올라갑니다(상령일). 그날 이후 새로 가입하면 같은 보장도 보험료가 올라가니, 보완이 필요하면 그 전에 정리하는 편이 좋습니다. 필요한 부분만 골라서 안내해 드릴게요.`
@@ -378,7 +383,7 @@
 
   root.BojangAftercare = {
     calc, render, init, run, readInput, copyTextFor: (key) => (last ? (last.items.find((i) => i.key === key) || {}).copy || '' : ''),
-    ITEM_META, maskName,
+    ITEM_META, maskName, HOLIDAY_REF_NOTE,
     date: { parts, addDays, addMonths, addYears, diffDays, todayISO, nextAgeDayISO, ddayText, state, koDate }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

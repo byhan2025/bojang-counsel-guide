@@ -87,21 +87,21 @@ def main():
             # =========================================================
             ver = read(os.path.join(ROOT, "version.js"))
             VER = (re.findall(r"const APP_VERSION = '([^']+)'", ver) or [""])[0]
-            check("version.js 단일 상수 v7.1", VER == "v7.1" and len(re.findall(r"const APP_VERSION = '([^']+)'", ver)) == 1, VER)
-            check("window.APP_VERSION = v7.1", pg.evaluate("() => window.APP_VERSION") == "v7.1")
-            check("sw 캐시 bojang-guide-v7.1", "const CACHE = 'bojang-guide-v7.1';" in read(os.path.join(ROOT, "sw.js")))
+            check("version.js 단일 상수 v7.1.1", VER == "v7.1.1" and len(re.findall(r"const APP_VERSION = '([^']+)'", ver)) == 1, VER)
+            check("window.APP_VERSION = v7.1.1", pg.evaluate("() => window.APP_VERSION") == "v7.1.1")
+            check("sw 캐시 bojang-guide-v7.1.1", "const CACHE = 'bojang-guide-v7.1.1';" in read(os.path.join(ROOT, "sw.js")))
             check("sw — publicdata.js 캐시", "'./publicdata.js'" in read(os.path.join(ROOT, "sw.js")))
             man = json.loads(read(os.path.join(ROOT, "manifest.json")))
-            check("manifest v7.1", "v7.1" in man.get("name", ""), man.get("name"))
+            check("manifest v7.1.1", "v7.1.1" in man.get("name", ""), man.get("name"))
             check("manifest — 공공데이터 설명", all(k in man.get("description", "") for k in ("공공데이터", "복용약", "공휴일")), man.get("description", "")[-60:])
             readme = read(os.path.join(ROOT, "README.md"))
-            check("README v7.1 절", "## v7.1에서 달라진 것" in readme and "## v7.0에서 달라진 것" in readme)
+            check("README v7.1.1 절", "## v7.1.1에서 달라진 것" in readme and "## v7.1에서 달라진 것" in readme and "## v7.0에서 달라진 것" in readme)
             check("README — k-skill 공공데이터 절", "F · PUBLIC DATA" in readme and "약관 괴리" in readme)
             html = read(os.path.join(ROOT, "index.html"))
-            check("index — title v7.1", "리포트 v7.1 ·" in html)
-            check("index — meta app-version v7.1", '<meta name="app-version" content="v7.1">' in html)
+            check("index — title v7.1.1", "리포트 v7.1.1 ·" in html)
+            check("index — meta app-version v7.1.1", '<meta name="app-version" content="v7.1.1">' in html)
             check("index — publicdata.js 로드", '<script src="./publicdata.js"></script>' in html)
-            check("화면 표기 v7.1", pg.inner_text(".hh-ver").strip().startswith("v7.1"), pg.inner_text(".hh-ver"))
+            check("화면 표기 v7.1.1", pg.inner_text(".hh-ver").strip().startswith("v7.1.1"), pg.inner_text(".hh-ver"))
 
             # =========================================================
             # B. KCD 코드 칩 클릭 (data-cm-code → dataset.cmCode)
@@ -250,6 +250,7 @@ def main():
                        fix: el.querySelector('.na-fix') ? el.querySelector('.na-fix').innerText : '' }; }""")
             check("띠 — 입력한 계약일이 툴킷 계약일과 동기화", holiday["ac"] == "2026-09-26" and holiday["contract"] == "2026-09-26", [holiday["ac"], holiday["contract"]])
             check("띠 — 공휴일과 겹치면 직전 영업일 병기", "직전 영업일" in holiday["fix"] and "2026-12-24" in holiday["fix"], holiday["fix"])
+            check("띠 — 보정일은 운영 참고일·약관 기준 명시", "참고일" in holiday["fix"] and "약관" in holiday["fix"], holiday["fix"][-60:])
             pg.evaluate("() => document.querySelector('#next-action').scrollIntoView({block:'center'})")
             pg.wait_for_timeout(250)
             pg.screenshot(path=os.path.join(SHOTS, "ui-next-action-strip.png"))
@@ -460,7 +461,7 @@ def main():
 
             card_flow = pg.evaluate("() => { BojangApp.legal.open('privacy'); const t = document.getElementById('legal-body').innerText; BojangApp.legal.close(); return t; }")
             check("방침 — 사진 실제 경로(브라우저→Edge Function→외부 AI)", "Edge Function" in card_flow and "Gemini" in card_flow and "브라우저" in card_flow)
-            check("방침 — 대체 모델 최대 3회 재전송 명시", "최대 3회" in card_flow)
+            check("방침 — 대체 모델 후보 최대 4개 명시", "최대 4개 모델 후보" in card_flow and "최대 3회" not in card_flow, card_flow[-120:])
             check("방침 — fail-closed 차단 명시", "fail-closed" in card_flow or "외부 요청을 0건" in card_flow)
 
             memo_txt = pg.evaluate("() => document.querySelector('#view-analysis .mf-note').innerText")
@@ -515,11 +516,25 @@ def main():
             check("360px 표지 — 보장 항목 4행도 가려지지 않음", meta_cover["n"] == 4 and meta_cover["hit"] == 0, meta_cover)
             check("360px 표지 — 하단 면책 문구도 가려지지 않음", meta_cover["footHit"] is False)
 
-            pd_notice = pg.evaluate("() => ({ js: BojangPublicData.PROXY_NOTICE, ui: document.querySelector('#pd-proxy-note').innerText })")
+            pd_notice = pg.evaluate("""() => {
+              const n = document.querySelector('#pd-proxy-note');
+              const d = n.querySelector('details');
+              const sum = n.querySelector('.pd-proxy-summary');
+              const cs = sum ? getComputedStyle(sum) : null;
+              return { js: BojangPublicData.PROXY_NOTICE, ui: n.textContent,
+                       summary: sum ? sum.innerText : '', more: d ? d.textContent : '',
+                       open: d ? d.open : null, hasDetails: !!d,
+                       sumH: sum ? sum.getBoundingClientRect().height : 0,
+                       lh: cs ? parseFloat(cs.lineHeight) : 0, vw: innerWidth };
+            }""")
             check("공공데이터 — 프록시 안내: 제3자·Cloudflare·국외 이전", all(k in pd_notice["js"] for k in ("제3자", "Cloudflare", "국외 이전")), pd_notice["js"][:60])
             check("공공데이터 — 프록시 안내: 최대 5분 캐시", "5분 캐시" in pd_notice["js"])
             check("공공데이터 — 공공데이터는 확정 판정 아님", "확정 판정하지 않습니다" in pd_notice["js"], pd_notice["js"][-60:])
             check("공공데이터 — 화면에도 같은 경계 표기", "국외 이전" in pd_notice["ui"] and "확정 판정하지 않습니다" in pd_notice["ui"])
+            check("공공데이터 — 안내는 기본 접힘(details)", pd_notice["hasDetails"] and pd_notice["open"] is False, pd_notice["open"])
+            check("공공데이터 — 접힌 상태에서 요약 두 줄만 노출", "내장 사전" in pd_notice["summary"] and "표준 약 이름" in pd_notice["summary"]
+                  and pd_notice["sumH"] <= pd_notice["lh"] * 2 + 3, [pd_notice["sumH"], pd_notice["lh"]])
+            check("공공데이터 — 상세는 접기 안에 보존", all(k in pd_notice["more"] for k in ("Cloudflare", "국외 이전", "5분 캐시", "확정 판정하지 않습니다")))
             pd_live = pg.evaluate("""async () => {
               const before = BojangGuard.blocked();
               const off = await BojangPublicData.proxy.fetchDrug('아스피린');
@@ -534,12 +549,158 @@ def main():
             check("공공데이터 — 프록시 미설정이면 외부 요청 없음", pd_live["off"] == "off", pd_live)
             check("공공데이터 — 가드 차단 시 실시간 조회도 0회", pd_live["blocked"] == "blocked", pd_live["blocked"])
 
+            # =========================================================
+            # L. v7.1.1 — 회의실 4호 봇·부이 대리 지적 6건
+            # =========================================================
+            c73 = pg.evaluate("""() => {
+              const C = BojangClaimCheck;
+              const code = FC_CODES.find((c) => c.code === 'C73');
+              const rowOf = (r) => (r.rows.find((x) => x.kind === '진단비') || {});
+              const only = C.match({ code, docs: { dx: true } });
+              const both = C.match({ code, docs: { dx: true, path: true } });
+              return { only: rowOf(only), both: rowOf(both), htmlOnly: C.preview({ code, docs: { dx: true } }),
+                       htmlBoth: C.preview({ code, docs: { dx: true, path: true } }), group: only.cls ? only.cls.group : null };
+            }""")
+            check("v7.1.1 청구 — C73(유사암) 진단비 필수서류는 진단서 + 병리조직결과지", c73["group"] == "유사암" and c73["only"].get("need") == ["dx", "path"], [c73["group"], c73["only"].get("need")])
+            check("v7.1.1 청구 — C73 + 진단서 단독은 '서류 더 필요'", c73["only"].get("ok") is False and "병리조직결과지" in (c73["only"].get("lack") or []), c73["only"].get("lack"))
+            check("v7.1.1 청구 — 화면에 '빠진 서류 — 병리조직결과지'", "서류 더 필요" in c73["htmlOnly"] and "빠진 서류 — 병리조직결과지" in c73["htmlOnly"], c73["htmlOnly"][:90])
+            check("v7.1.1 청구 — 진단서 + 병리조직결과지면 '서류 준비됨'", c73["both"].get("ok") is True and "서류 준비됨" in c73["htmlBoth"], c73["both"].get("lack"))
+            c18 = pg.evaluate("""() => { const C = BojangClaimCheck;
+              const r = C.match({ code: FC_CODES.find((c) => c.code === 'C18'), docs: { dx: true } });
+              const row = r.rows.find((x) => x.kind === '진단비') || {};
+              return { ok: row.ok, lack: row.lack || [], need: row.need || [] }; }""")
+            check("v7.1.1 청구 — 일반암(C18) 진단비도 병리 필수", c18["need"] == ["dx", "path"] and c18["ok"] is False and "병리조직결과지" in c18["lack"], c18)
+
+            prox = pg.evaluate("""() => {
+              const q = BojangPublicData.proxy.query;
+              return { std: q('아스피린'), brand: q('리바로'), unknown: q('모르는약'),
+                       free: q('김한기 010-1234-5678'), multi: q('아스피린, 메트포르민'),
+                       partial: q('아스피'), long: q('가'.repeat(21)), empty: q(''), spaced: q('  메트포르민  ') };
+            }""")
+            check("v7.1.1 프록시 — 표준 성분명은 그대로 조회", prox["std"] == "아스피린" and prox["spaced"] == "메트포르민", [prox["std"], prox["spaced"]])
+            check("v7.1.1 프록시 — 브랜드명은 표준 성분명으로 정규화", prox["brand"] == "피타바스타틴", prox["brand"])
+            check("v7.1.1 프록시 — 사전 미매칭·부분일치·다건·개인정보형 입력은 전송 대상 아님",
+                  all(prox[k] is None for k in ("unknown", "free", "multi", "partial", "long", "empty")), prox)
+            ext_before = len(external)
+            prox_call = pg.evaluate("""async () => {
+              BojangPublicData.proxy.set('https://proxy.example.kr/k-skill');
+              const free = await BojangPublicData.proxy.fetchDrug('김한기 010-1234-5678');
+              const unknown = await BojangPublicData.proxy.fetchDrug('모르는약');
+              const multi = await BojangPublicData.proxy.fetchDrug('아스피린, 메트포르민');
+              BojangPublicData.proxy.set('');
+              return { free: free.reason, unknown: unknown.reason, multi: multi.reason };
+            }""")
+            check("v7.1.1 프록시 — 미매칭 자유 입력은 외부 요청 0회로 차단",
+                  all(prox_call[k] == "not-in-dictionary" for k in ("free", "unknown", "multi")), prox_call)
+            check("v7.1.1 프록시 — 차단 시 네트워크로 나가지 않음", len(external) == ext_before, external[ext_before:ext_before + 3])
+
+            beh = pg.evaluate("""() => {
+              const B = BojangBackend;
+              return { official: B.hostAllowed('https://ntfhdiujapctomzzaifu.supabase.co/rest/v1/clients'),
+                       officialFn: B.hostAllowed('https://ntfhdiujapctomzzaifu.supabase.co/functions/v1/parse-coverage-vision'),
+                       local: B.hostAllowed('http://127.0.0.1:54321/auth/v1/health'),
+                       localhost: B.hostAllowed('http://localhost:54321/rest/v1/'),
+                       evil: B.hostAllowed('https://evil.example.com/rest/v1/'),
+                       lookalike: B.hostAllowed('https://ntfhdiujapctomzzaifu.supabase.co.evil.example/rest/v1/'),
+                       otherProject: B.hostAllowed('https://otherapp.supabase.co/rest/v1/'),
+                       noScheme: B.hostAllowed('ntfhdiujapctomzzaifu.supabase.co'),
+                       script: B.hostAllowed('javascript:alert(1)'),
+                       hosts: B.allowedHosts };
+            }""")
+            check("v7.1.1 백엔드 — 공식 프로젝트·로컬 호스트만 허용", all(beh[k] for k in ("official", "officialFn", "local", "localhost")), beh)
+            check("v7.1.1 백엔드 — 위장·타 프로젝트·무스킴·스크립트 차단", all(beh[k] is False for k in ("evil", "lookalike", "otherProject", "noScheme", "script")), beh)
+            check("v7.1.1 백엔드 — allowlist 1번은 공식 프로젝트 고정", beh["hosts"] and beh["hosts"][0] == "ntfhdiujapctomzzaifu.supabase.co", beh["hosts"])
+            ext_before = len(external)
+            bad_cfg = pg.evaluate("""async () => {
+              BojangBackend.configure({ SUPABASE_URL: 'https://evil.example.com', SUPABASE_ANON_KEY: 'test-key' });
+              const test = await BojangBackend.testConnection();
+              const saved = window.bojangDomainGuard;
+              window.bojangDomainGuard = { allowed: () => true };
+              const sign = await BojangBackend.signIn('fc@example.com', 'bojang1234');
+              window.bojangDomainGuard = saved;
+              return { mode: BojangBackend.state().mode, msg: BojangBackend.state().message,
+                       test: test.reason, testMsg: test.message, sign: sign.message, locked: BojangBackend.HOST_LOCK };
+            }""")
+            check("v7.1.1 백엔드 — 설정을 바꿔도 미허용 목적지는 차단(fail-closed)", bad_cfg["mode"] == "live-backend" and bad_cfg["test"] == "host-lock", bad_cfg)
+            check("v7.1.1 백엔드 — 로그인도 같은 allowlist를 먼저 본다", bad_cfg["sign"] == bad_cfg["locked"] and "허용되지 않은 서버 주소" in bad_cfg["sign"], bad_cfg["sign"])
+            check("v7.1.1 백엔드 — 차단 시 외부 요청 0건", len(external) == ext_before, external[ext_before:ext_before + 3])
+            pg.evaluate("() => { BojangBackend.clearConfig(); localStorage.removeItem(BojangBackend.CFG_KEY); }")
+
+            pg.evaluate("""() => { BojangApp.state.view='client'; BojangDeck.show(BojangApp.state);
+              const c=document.querySelector('#sk-privacy-chip'); if(c){c.hidden=false;} }""")
+            pg.wait_for_timeout(450)
+            cover_v = pg.evaluate("""() => {
+              const slide = document.querySelector('.slide[data-no="1"]');
+              const v = slide.querySelector('.cover-values');
+              const cs = v ? getComputedStyle(v) : null;
+              const spans = v ? Array.from(v.querySelectorAll('span')) : [];
+              const foot = slide.querySelector('.cover-foot');
+              const r = (el) => el.getBoundingClientRect().toJSON();
+              return { display: cs ? cs.display : null, items: spans.map((s) => s.innerText),
+                       shown: spans.filter((s) => s.getBoundingClientRect().height > 0).length,
+                       valuesBottom: v ? r(v).bottom : null, footTop: foot ? r(foot).top : null,
+                       slideBottom: r(slide).bottom, slideTop: r(slide).top,
+                       scrollH: slide.scrollHeight, clientH: slide.clientHeight, vw: innerWidth, vh: innerHeight };
+            }""")
+            check("v7.1.1 표지 — 360px에서 보장 가치 문구 4개 모두 표시",
+                  cover_v["display"] == "flex" and cover_v["items"] == ["보장분석", "맞춤설계", "가족보장", "든든한미래"] and cover_v["shown"] == 4,
+                  [cover_v["display"], cover_v["items"], cover_v["shown"]])
+            check("v7.1.1 표지 — 문구가 표지 안(면책 문구 위)에 들어감",
+                  cover_v["valuesBottom"] is not None and cover_v["footTop"] is not None and cover_v["valuesBottom"] <= cover_v["footTop"] + 0.5,
+                  [cover_v["valuesBottom"], cover_v["footTop"]])
+            check("v7.1.1 표지 — 360×740 세로 넘침 0",
+                  cover_v["scrollH"] <= cover_v["clientH"] and cover_v["vh"] == 740, [cover_v["scrollH"], cover_v["clientH"]])
+            pg.screenshot(path=os.path.join(SHOTS, "ui-cover-no-overlap.png"))
+            check("v7.1.1 스크린샷 ui-cover-no-overlap.png 재촬영", os.path.getsize(os.path.join(SHOTS, "ui-cover-no-overlap.png")) > 10000)
+
+            hol = pg.evaluate("""() => {
+              const P = BojangPublicData;
+              const kind = (P.kinds || []).find((k) => k.key === 'immune90') || {};
+              const age = (P.kinds || []).find((k) => k.key === 'ageDay') || {};
+              const wd = (P.kinds || []).find((k) => k.key === 'withdraw') || {};
+              document.querySelector('#pd-cal-kind').value = 'immune90';
+              document.querySelector('#pd-cal-date').value = '2026-12-25';
+              P.applyCal();
+              const out = document.querySelector('#pd-cal-out').innerText;
+              const A = BojangAftercare.calc({ contract: '2026-08-20', birth: '1988-05-14' });
+              const im = A.items.find((i) => i.key === 'imunity') || {};
+              const ag = A.items.find((i) => i.key === 'ageday') || {};
+              return { note: P.HOLIDAY_REF_NOTE, kindNote: kind.note, ageNote: age.note, wdNote: wd.note, out,
+                       imLines: im.lines || [], agLines: ag.lines || [], after: BojangAftercare.HOLIDAY_REF_NOTE };
+            }""")
+            check("v7.1.1 공휴일 — 보정은 '운영상 연락·서류 접수 참고일'로 분리", "운영상 연락·서류 접수 참고일" in hol["note"] and "보험사 약관 기준" in hol["note"], hol["note"])
+            check("v7.1.1 공휴일 — 90일 면책·상령일 문구의 효력 단정 제거",
+                  "보장됩니다" not in hol["kindNote"] and "약관 기준" in hol["kindNote"] and "약관 기준" in hol["ageNote"], [hol["kindNote"][:50], hol["ageNote"][:50]])
+            check("v7.1.1 공휴일 — 화면에도 참고일·약관 기준 표기", "운영상 연락·서류 접수 참고일" in hol["out"] and "약관 기준" in hol["out"], hol["out"][-90:])
+            check("v7.1.1 공휴일 — 사후관리 면책·상령일 항목에 같은 경계",
+                  any("참고일" in l and "약관 기준" in l for l in hol["imLines"]) and any("참고일" in l and "약관 기준" in l for l in hol["agLines"]),
+                  [hol["imLines"][-1:], hol["agLines"][-1:]])
+            check("v7.1.1 공휴일 — 사후관리 모듈도 같은 상수 공유", "운영상 연락" in hol["after"] and "약관 기준" in hol["after"])
+
+            ocr = pg.evaluate("""() => {
+              BojangApp.legal.open('privacy');
+              const host = document.querySelector('#legal-body .lg-flow');
+              const nodes = host ? Array.from(host.querySelectorAll('.lgf-node')).map((n) => n.innerText) : [];
+              const legal = document.getElementById('legal-body').innerText;
+              BojangApp.legal.close();
+              return { flow3: nodes[2] || '', legal, flowCount: nodes.length };
+            }""")
+            ocr_html = read(os.path.join(ROOT, "index.html"))
+            ocr_app = read(os.path.join(ROOT, "app.js"))
+            check("v7.1.1 OCR — 방침에 '최대 4개 모델 후보'", "최대 4개 모델 후보" in ocr["legal"] and "최대 3회" not in ocr["legal"], ocr["legal"][-90:])
+            check("v7.1.1 OCR — 데이터 흐름 도식 ③도 4개 후보", "최대 4개 모델 후보" in ocr["flow3"] and ocr["flowCount"] == 3, ocr["flow3"][:120])
+            check("v7.1.1 OCR — 촬영 안내(index)·앱 문구 정확화", "최대 4개 모델 후보" in ocr_html and "최대 3회" not in ocr_html and "최대 3회" not in ocr_app)
+
+            pg.evaluate("() => { BojangDeck.hide(); BojangApp.switchView('advisor'); }")
+            pg.set_viewport_size({"width": 1280, "height": 900})
+            pg.wait_for_timeout(200)
+
             check("콘솔 오류 0 (데스크톱)", len(errors) == 0, errors[:3])
 
             # 단일 HTML
             sh = os.path.join(ROOT, "dist", "bojang-guide.single.html")
             sh_html = read(sh)
-            check("단일 HTML — v7.1 표기", "v7.1" in sh_html and 'content="v7.1"' in sh_html, len(sh_html) // 1024)
+            check("단일 HTML — v7.1.1 표기", "v7.1.1" in sh_html and 'content="v7.1.1"' in sh_html, len(sh_html) // 1024)
             check("단일 HTML — 공공데이터 모듈 포함", "BojangPublicData" in sh_html and "복용약" in sh_html)
             check("단일 HTML — 외부 참조 0", len(re.findall(r'(?:src|href)="\./', sh_html)) == 0)
 
