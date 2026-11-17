@@ -35,8 +35,8 @@ import pymupdf
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "tests", "out")
-SHOTS = "/workspace/reports/bojang-guide/v7.2"
-TMP = "/workspace/tmp/v72"
+SHOTS = os.environ.get("BOJANG_SHOTS") or "/workspace/reports/bojang-guide/v7.2"
+TMP = os.environ.get("BOJANG_PDF_OUT") or "/workspace/tmp/v72"
 os.makedirs(OUT, exist_ok=True)
 os.makedirs(SHOTS, exist_ok=True)
 os.makedirs(TMP, exist_ok=True)
