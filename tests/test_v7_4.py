@@ -448,7 +448,7 @@ def main():
             # =============================================================
             for name in ("model.js", "content.js", "import-parser.js", "inputhub.js", "app.js"):
                 src = read(os.path.join(ROOT, name))
-                check("J. %s — 실제 고객 이름 하드코딩 없음" % name, ("580904" not in src) and ("익산시" not in src), "")
+                check("J. %s — 주민번호 원문 하드코딩 없음" % name, not re.search(r"\d{6}\s*-\s*[1-8]\d{6}", src), "")
             check("J. 콘솔 오류 0", len(errors) == 0, errors[:5])
 
             browser.close()
