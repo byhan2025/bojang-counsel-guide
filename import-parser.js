@@ -392,6 +392,140 @@
     return good / total < 0.45;
   }
 
+  /* =========================================================
+     v7.4 — 개인정보 최소 수집 · 마스킹
+     보장분석 PDF를 통으로 넣을 때 필요한 것은 이름·성별·생년월일 뿐입니다.
+       · 이름: 가운데 글자를 x로 마스킹해 저장·표시합니다 (홍길동 → 홍x동, 김철 → 김x, 남궁민수 → 남xx수)
+       · 생년월일: 주민번호 앞 6자리 + 하이픈 + 성별코드 1자리만 남깁니다 (780804-2)
+       · 주민번호 뒤 6자리·주소·전화번호·이메일·설계번호는 추출하지 않고, 화면 텍스트에서도 가립니다
+     ========================================================= */
+  const PII_STOP = /^(피보험자|계약자|보험계약자|수익자|보험자|대리인|배우자|자녀|부모|본인|없음|미성년|성년|생년월일|주민등록번호|주민번호|주소|연락처|전화번호|휴대폰|설계번호|설계일자|가입금액|보장보험료|납입기간|보장내역|보장명|보장상세|기재로|에게|에서|입니다|합니다)$/;
+
+  function maskName(name) {
+    const chars = Array.from(String(name == null ? '' : name).replace(/\s+/g, ''));
+    if (chars.length < 2) return chars.join('');
+    if (chars.length === 2) return chars[0] + 'x';
+    return chars[0] + 'x'.repeat(chars.length - 2) + chars[chars.length - 1];
+  }
+  function isNameToken(t) {
+    const s = String(t || '').replace(/\s+/g, '');
+    return /^[가-힣]{2,4}$/.test(s) && !PII_STOP.test(s);
+  }
+
+  /* 이름 후보 — 라벨 줄 다음 줄 / 같은 줄 / '(계약자)' '(여자,68세)' 표기를 모두 봅니다 */
+  function collectNames(text) {
+    const lines = String(text || '').split(/\r?\n/).map((l) => l.trim());
+    const out = [];
+    const push = (n, role) => {
+      const name = String(n || '').replace(/\s+/g, '');
+      if (!isNameToken(name)) return;
+      const score = role === '피보험자' ? 3 : role === '계약자' || role === '보험계약자' ? 2 : 1;
+      out.push({ name, role, score });
+    };
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i];
+      if (!line) continue;
+      let m;
+      /* 라벨만 있는 줄 → 다음 1~3줄 안의 이름 */
+      if ((m = /^(피보험자|계약자|보험계약자|수익자)\s*$/.exec(line))) {
+        for (let j = i + 1; j < Math.min(i + 4, lines.length); j += 1) {
+          const t = lines[j];
+          if (!t) continue;
+          const mm = /^([가-힣]{2,4})(?:\s*\(([^)]*)\))?/.exec(t);
+          if (mm) { push(mm[1], m[1]); break; }
+          if (t.length > 14) break;
+        }
+        continue;
+      }
+      if ((m = /(피보험자|계약자|보험계약자|수익자)\s*[:：]\s*([가-힣]{2,4})/.exec(line))) push(m[2], m[1]);
+      if ((m = /^([가-힣]{2,4})\s*\(\s*(피보험자|계약자|보험계약자)\s*\)/.exec(line))) push(m[1], m[2]);
+      if ((m = /([가-힣]{2,4})\s*\(\s*(?:여자|남자)\s*[,，]?\s*\d{1,3}\s*세\s*\)/.exec(line))) push(m[1], '피보험자');
+    }
+    const best = new Map();
+    out.forEach((x) => { const cur = best.get(x.name); if (!cur || x.score > cur.score) best.set(x.name, x); });
+    return Array.from(best.values()).sort((a, b) => b.score - a.score);
+  }
+
+  /* 주민번호 앞 6자리 + 성별코드 — 설계번호(260428-1-…)와 헷갈리지 않게 문맥 점수를 씁니다 */
+  function findRrn(text) {
+    const src = String(text || '');
+    const re = /(\d{2})(\d{2})(\d{2})\s*-\s*([1-8])(\d{6})?/g;
+    const now = new Date();
+    const cands = [];
+    let m;
+    while ((m = re.exec(src))) {
+      const yy = Number(m[1]), mo = Number(m[2]), dd = Number(m[3]), gd = Number(m[4]);
+      if (mo < 1 || mo > 12 || dd < 1 || dd > 31) continue;
+      const year = yy <= (now.getFullYear() % 100) ? 2000 + yy : 1900 + yy;
+      const ageEst = now.getFullYear() - year;
+      if (ageEst < 0 || ageEst > 110) continue;
+      const before = src.slice(Math.max(0, m.index - 34), m.index);
+      const lineEnd = src.indexOf('\n', m.index);
+      const lineTxt = src.slice(src.lastIndexOf('\n', m.index) + 1, lineEnd < 0 ? src.length : lineEnd);
+      let score = 0;
+      if (/주민|주민등록/.test(before)) score += 4;
+      if (/설계\s*번호|설계일자/.test(before) || /설계\s*번호|설계일자/.test(lineTxt)) score -= 6;
+      if (m[5]) score += 1;
+      if (ageEst >= 1) score += 1;
+      cands.push({ score, birth: `${m[1]}${m[2]}${m[3]}-${m[4]}`, gd, year, mo, dd, ageEst, index: m.index });
+    }
+    cands.sort((a, b) => b.score - a.score);
+    return cands.length ? cands[0] : null;
+  }
+
+  function insuranceAgeOf(year, mo, dd, ref) {
+    const now = ref || new Date();
+    let months = (now.getFullYear() - year) * 12 + ((now.getMonth() + 1) - mo);
+    if (now.getDate() < dd) months -= 1;
+    months = Math.max(0, months);
+    return Math.floor(months / 12) + (months % 12 >= 6 ? 1 : 0);
+  }
+  function bandOf(age) {
+    return String(Math.max(20, Math.min(70, Math.floor(Number(age || 0) / 10) * 10)));
+  }
+
+  /* 텍스트에서 필요한 4가지만 뽑습니다 (원문 이름·주민번호는 반환하지 않음) */
+  function findPii(text) {
+    const src = String(text || '');
+    const names = collectNames(src);
+    const insured = names.find((x) => x.role === '피보험자') || names[0] || null;
+    const rrn = findRrn(src);
+    const paren = /(?:여자|남자)\s*[,，]?\s*(\d{1,3})\s*세/.exec(src);
+    const parenGender = /여자/.test(paren ? paren[0] : '') ? '여' : (/남자/.test(paren ? paren[0] : '') ? '남' : '');
+    const gender = parenGender || (rrn ? ([1, 3, 5, 7].indexOf(rrn.gd) >= 0 ? '남' : '여') : '');
+    const age = paren ? Number(paren[1]) : (rrn ? insuranceAgeOf(rrn.year, rrn.mo, rrn.dd) : null);
+    const pii = {
+      found: !!(insured || rrn),
+      name: insured ? maskName(insured.name) : '',
+      nameMasked: !!(insured && insured.name !== maskName(insured.name)),
+      gender, birth: rrn ? rrn.birth : '',
+      age: (age == null || !isFinite(age)) ? null : age,
+      ageBand: (age == null || !isFinite(age)) ? '' : bandOf(age)
+    };
+    return pii;
+  }
+
+  /* 화면·저장 텍스트에서 민감정보를 가립니다 (주민 뒤 6자리·전화·이메일·주소·이름) */
+  function scrubPii(text) {
+    const src = String(text || '');
+    const pii = findPii(src);
+    const rawNames = collectNames(src).map((x) => x.name);
+    let out = src;
+    out = out.replace(/(\d{6}\s*-\s*[1-8])[\s-]?(\d{6})/g, '$1******');
+    out = out.replace(/\b(01[016789])[-.\s]?\d{3,4}[-.\s]?\d{4}\b/g, '$1-****-****');
+    out = out.replace(/\b(0\d{1,2})[-.\s]\d{3,4}[-.\s]\d{4}\b/g, '$1-****-****');
+    out = out.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '****@****');
+    out = out.replace(/\b\d{5}\s+[가-힣][^\n]{4,120}/g, '***** 주소 비표시');
+    rawNames.forEach((n) => {
+      if (!n || n.length < 2) return;
+      const esc = n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      /* 이름이 문장 속 낱말과 겹치지 않도록 라벨·줄머리·괄호 뒤에서만 바꿉니다 */
+      const ctx = new RegExp('(^|[\\s:(：])' + esc + '(?=[\\s(（:：)님,.·]|$)', 'gm');
+      out = out.replace(ctx, (mm, p1) => p1 + maskName(n));
+    });
+    return { text: out, pii };
+  }
+
   /* PDF → 텍스트 (100% 로컬) */
   async function extractPdfText(buffer) {
     const u8 = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
@@ -914,6 +1048,49 @@
     return null;
   }
 
+  /* =========================================================
+     v7.4 — 뇌·심장 주요치료비(통합형) 식별
+     '특정순환계질환(3~5종) 주요치료비' 같은 포괄 담보를 '직접 기재'가 아니라
+     전용 칸(brain.main / heart.main)으로 보내 단독 치료비와 섮이지 않게 합니다.
+     ========================================================= */
+  function mainRiderOf(name) {
+    const s = String(name || '').replace(/\s+/g, '');
+    if (!/주요치료비/.test(s)) return null;
+    if (/암|항암|유사암|백혈병/.test(s)) return null;   /* 암 주요치료비는 암 영역(5종) 소관 */
+    if (/특정순환계|순환계|뇌심|뇌·심|뇌심장/.test(s)) return { area: 'brain', shared: true, label: '특정순환계(뇌·심장) 주요치료비' };
+    if (/뇌혈관|뇌졸중|뇌출혈|뇌|중추신경/.test(s)) return { area: 'brain', shared: false, label: '뇌혈관 주요치료비' };
+    if (/심장|심혈관|관상동맥|심근|판막/.test(s)) return { area: 'heart', shared: false, label: '심장 주요치료비' };
+    return { area: 'brain', shared: true, label: '주요치료비' };
+  }
+
+  /* 한 줄에 여러 담보가 쉼표로 붙어 있을 때 — 주요치료비 키워드 근처의 금액만 취합니다 */
+  function mainMatchIn(seg, amounts) {
+    const re = /(?:특정\s*순환계[^,\n|]{0,24}주요\s*치료비|(?:뇌|심장|뇌심|심혈관|뇌혈관)[^,\n|]{0,10}주요\s*치료비|주요\s*치료비)/g;
+    const m = re.exec(seg);
+    if (!m) return null;
+    /* 암 주요치료비는 암 영역(5종) 소관 — 여기서 가로채지 않습니다 */
+    const lead = seg.slice(Math.max(0, m.index - 8), m.index) + m[0];
+    if (/암|항암|유사암/.test(lead)) return null;
+    const info = mainRiderOf(m[0]);
+    if (!info) return null;
+    const a = chooseAmount(amounts, m.index, m.index + m[0].length);
+    if (!a) return null;
+    return Object.assign({ amount: a.value, index: m.index }, info);
+  }
+  /* 한 줄에 붙은 1~5종 표기를 모두 종별 칸에 담습니다 */
+  function tierMatchesIn(seg, amounts) {
+    const out = [];
+    TIER_SERIES.forEach((ts) => {
+      const re = new RegExp(ts.re.source, 'g');
+      let m;
+      while ((m = re.exec(seg))) {
+        const a = chooseAmount(amounts, m.index, m.index + m[0].length);
+        if (a) out.push({ field: ts.field, label: ts.label, group: ts.group, tier: Number(m[1]), value: a.value });
+      }
+    });
+    return out;
+  }
+
   /* 직접 기재(custom) — 고정 칸에 없는 특약을 증권 담보명 그대로 담습니다 */
   const CUSTOM_GROUP = { cancer: '암', brain: '뇌', heart: '심장', surgery: '수술', care: '간병' };
   const CUSTOM_KEEP = /(진단비|진단금|수술비|치료비|입원|일당|장해|골절|화상|간병|배상|벌금|실손|수술|치료|보장금|연금|저축|지원금|로봇|다빈치)/;
@@ -985,6 +1162,18 @@
       if (!amounts.length || usedSegs.has(seg)) continue;
       if (takenNames && takenNames.has(cleanCustomName(seg).replace(/\s/g, ''))) continue;
       const areaHint = sec || section;
+      /* v7.4 — 뇌·심장 주요치료비는 전용 칸으로 (직접 기재에 흩어지지 않게) */
+      const mh = mainMatchIn(seg, amounts);
+      if (mh) {
+        if (!out.some((x) => x.field === mh.area + '.main')) {
+          out.push({ field: mh.area + '.main', label: mh.label, group: CUSTOM_GROUP[mh.area], value: mh.amount, unit: '만원',
+            snippet: snip(seg, mh.index, mh.index + 6), apply: true, kind: 'cov',
+            note: mh.shared ? '뇌·심장 공통 주요치료비 — 두 축에 함께 반영합니다.' : null });
+          if (mh.shared) out.push({ field: mh.area + '.mainShared', label: mh.label + ' (뇌·심장 공통)', group: CUSTOM_GROUP[mh.area], value: true, unit: '', snippet: '', apply: true, kind: 'bool' });
+        }
+        usedSegs.add(seg);
+        continue;
+      }
       for (const rule of CUSTOM_RULES) {
         const m = rule.kw.exec(seg);
         if (!m) continue;
@@ -1047,7 +1236,10 @@
      items[] = { field, label, group, value, snippet, apply, note, kind }
      ========================================================= */
   function parseCoverageText(text) {
-    const src = String(text || '');
+    /* v7.4 — 원문에서 민감정보를 먼저 가린 뒤 파싱합니다.
+       화면(텍스트 상자)에는 safeText(가림 처리본)만 쓰고, 필요한 4가지(pii)만 따로 돌려줍니다. */
+    const scrubbed = scrubPii(text);
+    const src = scrubbed.text;
     const lines = src.split(/\r?\n/);
     const boiler = buildBoilerplate(lines);
     const found = new Map();
@@ -1113,6 +1305,25 @@
         return;
       }
 
+      /* v7.4 — 뇌·심장 주요치료비(통합형)는 '직접 기재'가 아니라 전용 칸으로 보냅니다 */
+      const mainHit = mainRiderOf(name);
+      if (mainHit) {
+        const mk = 'main.' + mainHit.area;
+        if (!found.has(mk)) {
+          found.set(mk, true);
+          items.push({
+            field: mainHit.area + '.main', label: mainHit.label, group: mainHit.area === 'brain' ? '뇌' : '심장',
+            value, unit: '만원', snippet, apply: true, kind: 'cov',
+            note: mainHit.shared ? '뇌·심장 공통 주요치료비 — 두 축에 함께 반영합니다.' : null
+          });
+          if (mainHit.shared) items.push({
+            field: mainHit.area + '.mainShared', label: mainHit.label + ' (뇌·심장 공통)', group: mainHit.area === 'brain' ? '뇌' : '심장',
+            value: true, unit: '', snippet: '', apply: true, kind: 'bool'
+          });
+        }
+        return;
+      }
+
       const hit = bestRule(name, detectSection(name));
       if (hit) {
         if (found.has(hit.rule.field)) {
@@ -1151,22 +1362,6 @@
     };
     rows.forEach(handleRow);
 
-    /* 3) 1~5종 수술비 — 1종(없으면 가장 낮은 종) 금액을 대표값으로 */
-    tierMap.forEach((t, field) => {
-      if (found.has(field)) return;
-      const tiers = Object.keys(t.tiers).map(Number).sort((a, b) => a - b);
-      if (!tiers.length) return;
-      const rep = tiers[0];
-      const parts = tiers.map((k) => `${k}종 ${t.tiers[k]}만원`).join(' · ');
-      found.set(field, true);
-      items.push({
-        field, label: t.label, group: t.group, value: t.tiers[rep], unit: '만원',
-        snippet: t.names.join(' / ') + ` · ${parts}`,
-        apply: true, kind: 'cov',
-        note: `${tiers.length}개 종이 있습니다(${parts}). 이 칸은 1종 기준액으로 보고 ${rep}종 ${t.tiers[rep]}만원을 넣었습니다.`
-      });
-    });
-
     /* 4) 한 줄형·구분자형 — 표에 쓰인 줄은 건너뜁니다 */
     for (let li = 0; li < lines.length; li++) {
       if (usedLines.has(li)) continue;
@@ -1179,6 +1374,32 @@
         const isHeading = amounts.length === 0 && seg.replace(/[\[\](){}<>]/g, '').trim().length <= 24 && !!sec;
         if (isHeading) { section = sec; continue; }
         const effective = sec && amounts.length === 0 ? sec : (sec || section);
+
+        /* v7.4 — 1줄형 텍스트의 종별 수술비도 종별 칸에 모읍니다 */
+        const tierHits = amounts.length ? tierMatchesIn(seg, amounts) : [];
+        if (tierHits.length) {
+          tierHits.forEach((h) => {
+            const cur = tierMap.get(h.field);
+            if (!cur) tierMap.set(h.field, { label: h.label, group: h.group, tiers: { [h.tier]: h.value }, names: [seg.slice(0, 28)] });
+            else { if (cur.tiers[h.tier] == null) cur.tiers[h.tier] = h.value; cur.names.push(seg.slice(0, 28)); }
+          });
+          continue;
+        }
+        /* v7.4 — 1줄형 텍스트의 뇌·심장 주요치료비 */
+        const mainLine = amounts.length ? mainMatchIn(seg, amounts) : null;
+        if (mainLine && !found.has('main.' + mainLine.area)) {
+          found.set('main.' + mainLine.area, true);
+          items.push({
+            field: mainLine.area + '.main', label: mainLine.label, group: mainLine.area === 'brain' ? '뇌' : '심장',
+            value: mainLine.amount, unit: '만원', snippet: snip(seg, mainLine.index, mainLine.index + 6), apply: true, kind: 'cov',
+            note: mainLine.shared ? '뇌·심장 공통 주요치료비 — 두 축에 함께 반영합니다.' : null
+          });
+          if (mainLine.shared) items.push({
+            field: mainLine.area + '.mainShared', label: mainLine.label + ' (뇌·심장 공통)', group: mainLine.area === 'brain' ? '뇌' : '심장',
+            value: true, unit: '', snippet: '', apply: true, kind: 'bool'
+          });
+          continue;
+        }
 
         const candidates = [];
         for (const rule of RULES) {
@@ -1263,6 +1484,27 @@
       }
     }
 
+    /* 3-b) 1~5종 수술비 — 표·1줄형에서 모은 종별 금액을 반영합니다 */
+    tierMap.forEach((t, field) => {
+      if (found.has(field)) return;
+      const got = Object.keys(t.tiers).map(Number).sort((a, b) => a - b);
+      if (!got.length) return;
+      const rep = got[0];
+      const tiers = {};
+      [1, 2, 3, 4, 5].forEach((i) => { tiers[String(i)] = Number(t.tiers[i] || 0) || 0; });
+      const parts = [1, 2, 3, 4, 5].map((k) => `${k}종 ${tiers[k] > 0 ? tiers[k] : '—'}`).join(' · ');
+      const missing = [1, 2, 3, 4, 5].filter((k) => !(tiers[k] > 0));
+      found.set(field, true);
+      items.push({
+        field, label: t.label, group: t.group, value: t.tiers[rep], unit: '만원', tiers,
+        snippet: t.names.join(' / ') + ` · ${parts}`,
+        apply: true, kind: 'cov',
+        note: `${got.length}개 종이 확인되었습니다(${got.map((k) => `${k}종 ${t.tiers[k]}만원`).join(' · ')}). 이 칸의 기준액은 ${rep}종 ${t.tiers[rep]}만원입니다.`
+          + (missing.length ? ` ${missing.join('·')} 미확인.` : '')
+      });
+    });
+
+
     /* 6) 한 줄형 텍스트용 직접 기재 규칙 — 이미 담은 이름은 다시 담지 않습니다 */
     const usedSegs = { set: Object.create(null), has(seg) { return !!this.set[seg]; }, add(seg) { this.set[seg] = true; } };
     const skipLines = new Set();
@@ -1271,7 +1513,7 @@
 
     const order = ['기본', '암', '뇌', '심장', '수술', '간병', '생활'];
     items.sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group));
-    return { items, premium, silson, count: items.length };
+    return { items, premium, silson, count: items.length, pii: scrubbed.pii, safeText: src };
   }
 
   /* 이름 하나 → 규칙 하나 (표 행 전용) */
@@ -1544,6 +1786,12 @@
     isAmountCell,
     buildBoilerplate,
     tierSeriesOf,
+    mainRiderOf,
+    /* v7.4 — 개인정보 최소 수집·마스킹 */
+    scrubPii,
+    findPii,
+    maskName,
+    collectNames,
     preprocessImage,
     parseWithVisionBackend,
     decodePdfString,

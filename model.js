@@ -227,6 +227,106 @@
     return { byKey, crossByKey, rows, sum: items.reduce((a, x) => a + x.amount, 0), count: items.length, sharedRider: ownShared };
   }
 
+  /* =========================================================
+     v7.4 — 1~5종 수술비 세부(종별) 값
+     · state.cov.surgery.disease15 는 종전과 같이 '1종 기준액' 대표값입니다(점수·회귀 호환).
+     · 종별 금액은 disease15Tiers / injury15Tiers 에 { '1':10, '2':0 … '5':1000 } 로 보관합니다.
+     · 1종 값이 있으면 대표값을 1종으로 맞추고, 1종이 비어 있으면 가장 낮은 종을 대표값으로 씁니다.
+     ========================================================= */
+  const TIER5_FIELDS = ['disease15', 'injury15'];
+  const TIER5_NUMS = [1, 2, 3, 4, 5];
+  const TIER5_LABEL_FALLBACK = ['1종', '2종', '3종', '4종', '5종'];
+  function tier5Labels() {
+    return (typeof TIER5_LABELS !== 'undefined' && TIER5_LABELS.length) ? TIER5_LABELS : TIER5_LABEL_FALLBACK;
+  }
+  function tier5Obj(state, field) {
+    const s = state && state.cov && state.cov.surgery;
+    const t = s && s[field + 'Tiers'];
+    const out = {};
+    TIER5_NUMS.forEach((i) => { out[String(i)] = (t && typeof t === 'object') ? Math.max(0, Number(t[String(i)] || 0) || 0) : 0; });
+    return out;
+  }
+  function tier5Filled(state, field) {
+    const t = tier5Obj(state, field);
+    return TIER5_NUMS.filter((i) => t[String(i)] > 0).map((i) => ({ tier: i, value: t[String(i)] }));
+  }
+  /* "1종 10 ~ 5종 1,000" — 가장 낮은 종 ~ 가장 높은 종 */
+  function tier5Range(state, field) {
+    const f = tier5Filled(state, field);
+    if (!f.length) return '';
+    const lo = f[0], hi = f[f.length - 1];
+    if (f.length === 1) return `${lo.tier}종 ${won(lo.value)}`;
+    return `${lo.tier}종 ${won(lo.value)} ~ ${hi.tier}종 ${won(hi.value)}`;
+  }
+  /* "1종 10 · 2종 20 · 3종 200 · 5종 1,000 (4종 미확인)" */
+  function tier5Detail(state, field) {
+    const t = tier5Obj(state, field);
+    const labels = tier5Labels();
+    const bits = TIER5_NUMS.map((i) => `${labels[i - 1]} ${t[String(i)] > 0 ? won(t[String(i)]) : '—'}`);
+    const missing = TIER5_NUMS.filter((i) => !(t[String(i)] > 0)).map((i) => labels[i - 1]);
+    return bits.join(' · ') + (missing.length && missing.length < 5 ? ` (${missing.join('·')} 미확인)` : '');
+  }
+  /* PDF·표 한 칸에 들어가는 짧은 표기: "1종 10 · 5종 1,000만원" */
+  function tier5Short(state, field) {
+    const r = tier5Range(state, field);
+    return r ? `${r}만원` : '없음';
+  }
+  function syncTier5(sg) {
+    if (!sg || typeof sg !== 'object') return;
+    TIER5_FIELDS.forEach((field) => {
+      const tk = field + 'Tiers';
+      const cur = sg[tk];
+      const pick = (i) => {
+        if (!cur || typeof cur !== 'object') return 0;
+        if (Array.isArray(cur)) return cur[i - 1];
+        return cur[String(i)];
+      };
+      const out = {};
+      TIER5_NUMS.forEach((i) => { out[String(i)] = Math.max(0, Number(pick(i)) || 0) || 0; });
+      const any = TIER5_NUMS.some((i) => out[String(i)] > 0);
+      const rep = Math.max(0, Number(sg[field] || 0) || 0);
+      /* 종별 값이 없고 대표값만 있으면 1종으로 옮깁니다(구버전 데이터 호환) */
+      if (!any && rep > 0) out['1'] = rep;
+      if (any) {
+        const first = out['1'] > 0 ? out['1'] : (TIER5_NUMS.map((i) => out[String(i)]).find((v) => v > 0) || 0);
+        sg[field] = first;
+      }
+      sg[tk] = out;
+    });
+  }
+
+  /* =========================================================
+     v7.4 — 뇌·심장 주요치료비(통합형) 분리
+     state.cov.brain.main / heart.main = 주요치료비 금액(만원)
+     state.cov.brain.mainShared / heart.mainShared = 뇌·심장 공통 담보 여부
+     ========================================================= */
+  function mainOf(state, key) {
+    const c = state && state.cov && state.cov[key];
+    const v = c ? c.main : 0;
+    return (v && typeof v === 'object') ? 0 : Math.max(0, Number(v) || 0);
+  }
+  function mainSharedOf(state, key) {
+    const c = state && state.cov && state.cov[key];
+    return !!(c && c.mainShared);
+  }
+  /* 주요치료비를 단독 치료비 축(혈전용해·수술)에 권장 비율로 배분 — 중환자실 일당은 제외 */
+  function mainCredit(state, key, subs) {
+    const byKey = {};
+    (subs || []).forEach((s) => { byKey[s.key] = 0; });
+    let amount = mainOf(state, key);
+    let fromSibling = false;
+    if (!(amount > 0) && (key === 'brain' || key === 'heart')) {
+      const sib = key === 'brain' ? 'heart' : 'brain';
+      if (mainOf(state, sib) > 0 && mainSharedOf(state, sib)) { amount = mainOf(state, sib); fromSibling = true; }
+    }
+    if (!(amount > 0)) return { amount: 0, byKey, fromSibling };
+    const mains = (subs || []).filter((s) => s.key === 'lysis' || s.key === 'surgery');
+    const msum = mains.reduce((a, s) => a + (Number(s.rec) || 0), 0);
+    if (msum > 0) mains.forEach((s) => { byKey[s.key] += (amount * (Number(s.rec) || 0)) / msum; });
+    Object.keys(byKey).forEach((k) => { byKey[k] = Math.round(byKey[k]); });
+    return { amount, byKey, fromSibling };
+  }
+
   const TREAT_MIN = 500, TREAT_MAX = 3000;
   const NEURO_MIN = 500, NEURO_MAX = 3000;
   const CANCER_ITEM = () => PRIORITY[0];
@@ -359,8 +459,19 @@
       if (!c) return;
       if (c.dx && typeof c.dx === 'object') Object.keys(c.dx).forEach((k) => { c.dx[k] = fix(c.dx[k], DX_MAX); });
       if (c.treat && typeof c.treat === 'object') Object.keys(c.treat).forEach((k) => { c.treat[k] = fix(c.treat[k]); });
+      if (typeof c.main !== 'object') c.main = fix(c.main);
     });
-    if (cov.surgery) Object.keys(cov.surgery).forEach((k) => { cov.surgery[k] = fix(cov.surgery[k]); });
+    if (cov.surgery) {
+      Object.keys(cov.surgery).forEach((k) => {
+        const v = cov.surgery[k];
+        /* v7.4 — 종별 금액 객체(disease15Tiers 등)는 안쪽 값을 각각 보정합니다 */
+        if (v && typeof v === 'object' && !Array.isArray(v)) {
+          Object.keys(v).forEach((k2) => { v[k2] = fix(v[k2]); });
+          return;
+        }
+        cov.surgery[k] = fix(v);
+      });
+    }
     if (cov.care) {
       cov.care.daily = fix(cov.care.daily);
       cov.care.nDaily = fix(cov.care.nDaily);
@@ -447,6 +558,9 @@
         NEURO_SUBS.forEach((s) => { if (typeof c.treat[s.key] !== 'number') c.treat[s.key] = Number(c.treat[s.key + ''] || 0) || 0; });
       }
       delete c.surgery;
+      /* v7.4 — 주요치료비(통합형) 칸은 숫자로 맞춥니다. 없으면 0 (기존 점수 영향 없음) */
+      c.main = Math.max(0, Math.min(100000, Number(c.main) || 0));
+      c.mainShared = !!c.mainShared;
     });
 
     /* 3) 수술비: 질병 4축 + 상해 2축 */
@@ -468,6 +582,8 @@
       ['disease', 'disease15', 'diseaseNdae', 'diseaseNonPay', 'injury', 'injury15'].forEach((k) => {
         if (typeof s[k] !== 'number') s[k] = Number(s[k] || 0) || 0;
       });
+      /* v7.4 — 종별 칸(1~5종)을 항상 5개로 맞추고 대표값(1종)을 동기화합니다 */
+      syncTier5(s);
     }
 
     /* 4) 간병비: 일반/요양 분리 + 약관 요건 */
@@ -543,7 +659,7 @@
     const parts = item.parts.map((p) => {
       const tiers = p.tiers || (p.key === firstKey ? itemTiers : null) || null;
       let fill = 0, rec = 0, val = 0, option = null, subs = null, stage = null, dx = null;
-      let customInfo = null;
+      let customInfo = null, mainInfo = null;
       if (p.type === 'amount') {
         rec = Math.round(baseRec * p.factor);
         val = Number(getVal(state, item, p) || 0);
@@ -557,17 +673,22 @@
         /* v5.6 — 증권 직접 기재 담보를 세부 칸에 합산 (비어 있으면 종전과 동일)
            v6.1 — 뇌·심장 공유 담보는 형제 축에도 반영 */
         const sib = item.key === 'brain' ? 'heart' : item.key === 'heart' ? 'brain' : null;
-        const cred = customCredits(state, item.key, list.map((sp) => ({ key: sp.key, rec: subRec(baseRec, sp, p) })), { sibling: sib });
+        const recList = list.map((sp) => ({ key: sp.key, rec: subRec(baseRec, sp, p) }));
+        const cred = customCredits(state, item.key, recList, { sibling: sib });
         customInfo = cred;
+        /* v7.4 — 주요치료비(통합형)를 단독 치료비 축에 배분 (값이 없으면 0 → 종전과 동일) */
+        const mainC = mainCredit(state, item.key, recList);
+        mainInfo = mainC;
         subs = list.map((sp) => {
           const srec = subRec(baseRec, sp, p);
           const sval = Number(src[sp.key] || 0) || 0;
           const scred = Number(cred.byKey[sp.key] || 0) || 0;
           const scross = Number((cred.crossByKey || {})[sp.key] || 0) || 0;
-          const eff = sval + scred + scross;
+          const smain = Number(mainC.byKey[sp.key] || 0) || 0;
+          const eff = sval + scred + scross + smain;
           const sfill = srec > 0 ? clamp(eff / srec, 0, 1) : 0;
           return {
-            key: sp.key, label: sp.label, hint: sp.hint, rec: srec, val: sval, custom: scred, cross: scross, own: sval + scred, eff, fill: sfill,
+            key: sp.key, label: sp.label, hint: sp.hint, rec: srec, val: sval, custom: scred, cross: scross, main: smain, own: sval + scred + smain, eff, fill: sfill,
             pct: Math.round(sfill * 100), level: partLevel(sfill, eff), part: sp,
             min: p.min || 500, max: p.max || 3000
           };
@@ -624,7 +745,10 @@
         sharedRider: customInfo ? !!customInfo.sharedRider : false,
         customSum: customInfo ? customInfo.sum : 0,
         customCount: customInfo ? customInfo.count : 0,
-        customRows: customInfo ? customInfo.rows : null };
+        customRows: customInfo ? customInfo.rows : null,
+        mainVal: mainInfo ? mainInfo.amount : 0,
+        mainFromSibling: mainInfo ? !!mainInfo.fromSibling : false,
+        mainOwn: (item.key === 'brain' || item.key === 'heart') ? mainOf(state, item.key) : 0 };
     });
     let fill = parts.reduce((a, p) => a + p.weight * p.fill, 0);
     /* v6.1 — 간병 요건(지급기준) 미확인 상태에서 금액만으로 70%를 넘기지 않습니다 */
@@ -662,21 +786,27 @@
       const p = P('dx');
       const g = P('treat');
       const gSubs = g.subs || [];
-      const n = gSubs.filter((s) => Number(s.eff != null ? s.eff : s.val) > 0).length;
-      const gEff = gSubs.length ? gSubs.reduce((a, s) => a + Number(s.eff != null ? s.eff : s.val), 0) : (g.val || 0);
-      const gAdd = g.customVal > 0 ? ` (직접 기재 ${won(g.customVal)} 포함${g.crossVal > 0 ? ' · 뇌·심장 공유 반영' : ''})` : (g.crossVal > 0 ? ' (뇌·심장 공유 담보 반영)' : '');
+      /* v7.4 — 단독 치료비(혈전용해·수술·중환자실)와 주요치료비(통합형)를 나눠 말합니다 */
+      const ownVal = (s) => Number(s.val || 0) + Number(s.custom || 0);
+      const n = gSubs.filter((s) => ownVal(s) > 0).length;
+      const gOwn = gSubs.reduce((a, s) => a + ownVal(s), 0);
+      const gAdd = g.customVal > 0 ? ` (직접 기재 ${won(g.customVal)} 포함)` : '';
+      const mainBit = g.mainVal > 0 ? ` · 주요치료비 ${won(g.mainVal)}만원${g.mainFromSibling ? '(뇌·심장 공유)' : ''}` : '';
       const d = p.dx || {};
       const core = d.core;
       const narrow = (p.subs || []).filter((s) => !s.isCore && s.val > 0).map((s) => `${dxShort(s.label)} ${won(s.val)}`);
       const coreTxt = core && core.val > 0
         ? `${dxShort(core.label)} ${won(core.val)}만원`
         : (d.gapWarn ? `범위 공백(${dxShort(core ? core.label : '')} 0원)` : '진단비 없음');
-      return `${coreTxt}${narrow.length ? ' + ' + narrow.join(' + ') + '만원' : ''} · 치료비 3종 ${n}/3 ${won(gEff)}만원${gAdd}`;
+      return `${coreTxt}${narrow.length ? ' + ' + narrow.join(' + ') + '만원' : ''} · 치료비 3종 ${n}/3 ${won(gOwn)}만원${gAdd}${mainBit}`;
     }
     if (item.key === 'surgery') {
       const dz = ['disease', 'disease15', 'diseaseNdae', 'diseaseNonPay'].filter((k) => Number(P(k).val) > 0).length;
       const ij = ['injury', 'injury15'].filter((k) => Number(P(k).val) > 0).length;
-      return `질병 ${dz}/4축 · 상해 ${ij}/2축` + (P('diseaseNdae').val > 0 ? ` · N대 ${won(P('diseaseNdae').val)}만원` : ' · N대 없음');
+      /* v7.4 — 1~5종은 종별 금액을 함께 보여 줍니다 */
+      const t1 = tier5Range(state, 'disease15'), t2 = tier5Range(state, 'injury15');
+      const tierBit = (t1 ? ` · 질병 1~5종 ${t1}만원` : '') + (t2 ? ` · 상해 1~5종 ${t2}만원` : '');
+      return `질병 ${dz}/4축 · 상해 ${ij}/2축` + (P('diseaseNdae').val > 0 ? ` · N대 ${won(P('diseaseNdae').val)}만원` : ' · N대 없음') + tierBit;
     }
     const bits = [`일반병원 ${won(c.daily)}만원`, c.nDaily > 0 ? `요양병원 ${won(c.nDaily)}만원` : '요양병원 없음'];
     const basisLabel = { time: '시간 기준', money: '금액 기준', unknown: '지급기준 미확인' }[c.basis] || '지급기준 미확인';
@@ -1583,6 +1713,9 @@
     dxObj, dxTotal, dxCoreVal, dxScenarios, dxShort, DX_SUBS, DX_MAX, simulate,
     CUSTOM_KEYS, CUSTOM_AREA_LABEL, CUSTOM_MODE_LABEL, CUSTOM_MAP,
     customList, customTotal, customAll, customCredits, sanitizeCustom,
+    /* v7.4 — 1~5종 종별 · 뇌·심장 주요치료비 */
+    TIER5_FIELDS, tier5Obj, tier5Filled, tier5Range, tier5Detail, tier5Short, syncTier5,
+    mainOf, mainSharedOf, mainCredit,
     effSum, fillSum, effCnt, subEff, subOwn, gapOf, primaryEmpty,
     oneTimeTimeline, silsonCompare, normalizeDisc,
     renewTrend, RENEW_TREND,

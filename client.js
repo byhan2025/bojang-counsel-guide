@@ -583,6 +583,7 @@
         <span>${subN(bT)}/3종 · ${won(effSumOf(bT))}만원 <em>/ 권장 ${won(bT.rec)}만원</em>${Number(bT.customVal || 0) + Number(bT.crossVal || 0) > 0 ? ` · 직접 기재 ${won(Number(bT.customVal || 0) + Number(bT.crossVal || 0))} 포함` : ''}</span>
         <i>${bTs.filter((s) => !(effOf(s) > 0)).map((s) => esc(s.label)).join(' · ') || '3종 모두 보유'}</i>
       </div>
+      ${BojangModel.mainOf(m.state, 'brain') > 0 ? `<div class="sl-treatline main"><b>뇌·순환계 주요치료비</b><span>${won(m.state.cov.brain.main)}만원 <em>/ 통합형${BojangModel.mainSharedOf(m.state, 'brain') ? ' · 뇌·심장 공통' : ''}</em></span><i>혈전용해·수술 등을 한 담보로 묶은 통합형 — 단독 치료비 3종과 중복 지급 여부는 약관 확인</i></div>` : ''}
       ${bDx.gapWarn ? noteBox(`⚠ 범위 공백 — 뇌혈관질환 진단비가 0원입니다. 뇌경색(I63)은 뇌졸중 금액만 받고, 뇌혈관 후유증(I69)은 지급되지 않습니다.`, 'warn') : noteBox('진단 금액은 범위별 합산 — 뇌경색(I63)은 뇌혈관+뇌졸중, 뇌출혈(I61)은 세 담보. 혈전용해제(tPA)·기계적 혈전제거술은 별도 담보입니다.', 'info')}`, { need: needOf('brain') });
 
     /* ---------- 13 뇌 코드 비교 ---------- */
@@ -679,6 +680,7 @@
             </div>`).join('')}
         </div>
       </div>
+      ${BojangModel.mainOf(m.state, 'heart') > 0 ? `<div class="sl-treatline main"><b>심장·순환계 주요치료비</b><span>${won(m.state.cov.heart.main)}만원 <em>/ 통합형${BojangModel.mainSharedOf(m.state, 'heart') ? ' · 뇌·심장 공통' : ''}</em></span><i>스텐트·우회로 등 여러 치료를 한 담보로 묶은 통합형</i></div>` : ''}
       ${hDx.gapWarn ? noteBox(`⚠ 범위 공백 — 허혈성심장질환 진단비가 0원입니다. 협심증(I20)과 스텐트 시술 구간이 지급되지 않고, 급성심근경색만 이 담보에서 나옵니다.`, 'warn') : noteBox('협심증(I20)은 허혈성심장에서만, 급성심근경색(I21)은 두 담보가 합산됩니다. 스텐트·우회로는 수술비 담보와 1년 미만 50% 감액을 함께 확인하세요.', 'warn')}`, { need: needOf('heart') });
 
     /* ---------- 17 심장 위험요인 ---------- */
@@ -743,12 +745,13 @@
       </div>
       <div class="tile-grid three">
         ${statTile('질병수술비(일반)', `${won(m.state.cov.surgery.disease)}<em>만원</em>`, `권장 ${won(PK(sr, 'disease').rec)}만원`)}
-        ${statTile('질병 1~5종', `${won(m.state.cov.surgery.disease15)}<em>만원</em>`, `권장 ${won(PK(sr, 'disease15').rec)}만원`)}
+        ${statTile('질병 1~5종', `${won(m.state.cov.surgery.disease15)}<em>만원</em>`, `1종 기준 · ${BojangModel.tier5Range(m.state, 'disease15') || '종별 미입력'}`)}
         ${statTile('질병 N대', m.state.cov.surgery.diseaseNdae ? `${won(m.state.cov.surgery.diseaseNdae)}<em>만원</em>` : '없음', '질환 묶음별 한도')}
         ${statTile('비급여 질병 수술', m.state.cov.surgery.diseaseNonPay ? `${won(m.state.cov.surgery.diseaseNonPay)}<em>만원</em>` : '없음', '5세대 실손 보완')}
         ${statTile('일반 상해수술', `${won(m.state.cov.surgery.injury)}<em>만원</em>`, `권장 ${won(PK(sr, 'injury').rec)}만원`)}
-        ${statTile('상해 1~5종', `${won(m.state.cov.surgery.injury15)}<em>만원</em>`, `권장 ${won(PK(sr, 'injury15').rec)}만원`)}
+        ${statTile('상해 1~5종', `${won(m.state.cov.surgery.injury15)}<em>만원</em>`, `1종 기준 · ${BojangModel.tier5Range(m.state, 'injury15') || '종별 미입력'}`)}
       </div>
+      ${noteBox(`1~5종 세부 — 질병 ${BojangModel.tier5Detail(m.state, 'disease15')} / 상해 ${BojangModel.tier5Detail(m.state, 'injury15')} (만원). 같은 수술도 보험사 분류표에 따라 종수가 달라집니다.`, 'info')}
       ${noteBox('5세대 실손은 비중증 비급여 한도가 연 1,000만원·자기부담 50%입니다. 비급여 수술은 실손으로 다 메워지지 않아 정액 비급여 수술비가 보완합니다. 수술비 담보는 1년 미만이면 50%만 지급되는 상품이 흔합니다.', 'info')}`, { need: needOf('surgery') });
 
     /* ---------- 21 수술 사례 ---------- */

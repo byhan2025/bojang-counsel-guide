@@ -258,6 +258,8 @@
     lastResult = null;
     const box = $('#imp-review');
     if (box) box.hidden = true;
+    const pii = $('#imp-pii');
+    if (pii) { pii.hidden = true; pii.innerHTML = ''; }
     const list = $('#imp-rows');
     if (list) list.innerHTML = '';
     const sum = $('#imp-summary');
@@ -266,6 +268,24 @@
 
   function groupLabel(g) {
     return g || '기타';
+  }
+
+  /* v7.4 — 자동 추출된 마스킹 고객정보(이름·성별·생년월일·연령대)를 검수 화면 상단에 보여 줍니다 */
+  function renderPii(result) {
+    const box = $('#imp-pii');
+    if (!box) return;
+    const p = result && result.pii;
+    if (!p || !p.found || (!p.name && !p.birth && !p.gender)) {
+      box.hidden = true;
+      box.innerHTML = '';
+      return;
+    }
+    const bits = [p.name, p.gender, p.birth, p.ageBand ? p.ageBand + '대' : ''].filter(Boolean);
+    box.hidden = false;
+    box.innerHTML = `
+      <div class="pii-head"><span class="eyebrow">CLIENT</span> 자동 추출 고객정보 <em>이름 가운데 글자는 x로 마스킹</em></div>
+      <div class="pii-line">${bits.map((b) => `<span class="pii-chip">${esc(b)}</span>`).join('<i>·</i>')}</div>
+      <p class="pii-note">이름 · 성별 · 생년월일만 담습니다. 주민번호 뒤 6자리 · 주소 · 전화번호 · 이메일 · 설계번호는 추출하지 않고, 화면 텍스트에서도 가립니다. 반영을 누르면 기본정보 칸에 자동으로 채워집니다.</p>`;
   }
 
   function renderReview(result, sourceLabel) {
@@ -277,6 +297,8 @@
     if (!box || !list) return;
     if (!result.items || !result.items.length) {
       box.hidden = true;
+      const pb = $('#imp-pii');
+      if (pb) { pb.hidden = true; pb.innerHTML = ''; }
       setImpStatus('담보 항목을 인식하지 못했습니다. 담보명과 금액이 함께 있는 표를 붙여넣었는지 확인해 주세요.', 'warn');
       lastResult = null;
       return;
@@ -305,6 +327,7 @@
       <div class="rv-head">
         <span></span><span>담보명</span><span>인식 금액</span><span>매칭 근거(원문)</span>
       </div>${rows}`;
+    renderPii(result);
     box.hidden = false;
     const head = [];
     head.push(`${sourceLabel || '텍스트'}에서 ${result.items.length}건 인식`);
@@ -337,8 +360,9 @@
       return;
     }
     const textarea = $('#imp-text');
-    if (textarea) textarea.value = res.text;
     const parsed = BojangImport.parseCoverageText(res.text);
+    /* v7.4 — 화면 텍스트상자에는 개인정보를 가린 본문만 남깁니다 */
+    if (textarea) textarea.value = parsed.safeText || res.text;
     renderReview(parsed, 'PDF');
     const chars = res.text.replace(/\s/g, '').length;
     const tail = res.garbled
@@ -355,6 +379,11 @@
       return;
     }
     const parsed = BojangImport.parseCoverageText(text);
+    /* v7.4 — 붙여넣은 본문도 민감정보를 가린 상태로 남깁니다 */
+    if (parsed.safeText && parsed.safeText !== text) {
+      const t = $('#imp-text');
+      if (t) t.value = parsed.safeText;
+    }
     renderReview(parsed, '붙여넣은 텍스트');
   }
 
@@ -393,7 +422,14 @@
       premium: lastResult.premium != null ? lastResult.premium : null,
       silson: lastResult.silson || null,
       checked: items.length,
-      total: lastResult.items.length
+      total: lastResult.items.length,
+      /* v7.4 — 자동 추출한 마스킹 고객정보(이름·성별·생년월일·연령대) */
+      client: (lastResult.pii && lastResult.pii.found) ? {
+        name: lastResult.pii.name || '',
+        gender: lastResult.pii.gender || '',
+        birth: lastResult.pii.birth || '',
+        ageBand: lastResult.pii.ageBand || ''
+      } : null
     };
     /* 월 보험료·실손 세대를 체크 해제했다면 반영하지 않습니다 */
     if (meta.premium != null && !items.some((i) => i.kind === 'premium')) meta.premium = null;

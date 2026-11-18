@@ -232,14 +232,17 @@
       rows.push(['진단 시 합산', (d.scenarios || []).map((sc) => `${sc.label} ${won(sc.sum)}`).join(' · '), '포함관계 확인']);
       rows.push(['주요치료비 3종', `${subHave(PK('treat'))}/3종 · ${won(PK('treat').val)}만원`, `${won(PK('treat').rec)}만원`]);
       (PK('treat').subs || []).forEach((s) => rows.push([`　${s.label}`, s.val ? `${won(s.val)}만원` : '없음', `${won(s.rec)}만원`]));
+      if (root.BojangModel && root.BojangModel.mainOf(m.state, k) > 0) {
+        rows.push(['주요치료비(통합형)', `${won(BojangModel.mainOf(m.state, k))}만원${BojangModel.mainSharedOf(m.state, k) ? ' (뇌·심장 공통)' : ''}`, '단독 치료비와 별도 확인']);
+      }
     } else if (k === 'surgery') {
       const sg = m.state.cov.surgery;
       rows.push(['질병수술비(일반)', `${won(sg.disease)}만원`, `권장 ${won(PK('disease').rec)}만원`]);
-      rows.push(['질병 1~5종', `${won(sg.disease15)}만원`, `권장 ${won(PK('disease15').rec)}만원`]);
+      rows.push(['질병 1~5종', `${won(sg.disease15)}만원${BojangModel.tier5Range(m.state, 'disease15') ? ` (${BojangModel.tier5Range(m.state, 'disease15')})` : ''}`, `권장 ${won(PK('disease15').rec)}만원`]);
       rows.push(['질병 N대', sg.diseaseNdae ? `${won(sg.diseaseNdae)}만원` : '없음', `권장 ${won(PK('diseaseNdae').rec)}만원`]);
       rows.push(['비급여 질병 수술', sg.diseaseNonPay ? `${won(sg.diseaseNonPay)}만원` : '없음', `권장 ${won(PK('diseaseNonPay').rec)}만원`]);
       rows.push(['일반 상해수술', `${won(sg.injury)}만원`, `권장 ${won(PK('injury').rec)}만원`]);
-      rows.push(['상해 1~5종', `${won(sg.injury15)}만원`, `권장 ${won(PK('injury15').rec)}만원`]);
+      rows.push(['상해 1~5종', `${won(sg.injury15)}만원${BojangModel.tier5Range(m.state, 'injury15') ? ` (${BojangModel.tier5Range(m.state, 'injury15')})` : ''}`, `권장 ${won(PK('injury15').rec)}만원`]);
     } else {
       const cg = m.state.cov.care;
       rows.push(['일반병원 간병일당', `${won(cg.daily)}만원`, `권장 ${won(PK('daily').rec)}만원 (5~20만원)`]);

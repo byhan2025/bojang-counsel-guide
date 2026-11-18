@@ -4617,3 +4617,47 @@ body.is-client .slide{padding-bottom:calc(52px + env(safe-area-inset-bottom,0px)
 .copy-mini,.prow-jump,.pdf-btn,.custom-add,.custom-presets .chip-custom,.sb-pdf,.sb-exit,
 .tab,.hg-card,.menu-toggle,.living-row,.mmp-row,.pdf-name-opt{min-height:44px;}
 .prow-jump,.copy-mini,.chip,.quick,.seg-btn{padding-top:10px;padding-bottom:10px;}
+
+/* =========================================================
+   v7.4 — 1~5종 종별 입력 · 뇌·심장 주요치료비 · 개인정보 마스킹 패널
+   ========================================================= */
+.tier5-group .tier5-sum{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;justify-content:space-between;
+  margin:6px 0 10px;padding:9px 12px;border-radius:12px;background:var(--line-2);}
+.tier5-sum span{font-size:12px;color:var(--ink-2);}
+.tier5-sum b{font-size:16px;font-weight:800;color:var(--navy-700);letter-spacing:-.01em;}
+.tier5-sum em{font-style:normal;margin-left:6px;font-size:11px;color:var(--muted);}
+.tier5-sum .ts-rec{font-size:11px;color:var(--muted);}
+.tier5-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;}
+.tier5-cell{display:flex;flex-direction:column;gap:4px;padding:8px 6px 6px;border:1px solid var(--line);border-radius:10px;background:#fff;}
+.tier5-cell.is-core{border-color:#bcd6cf;background:#f4fbf8;}
+.t5-label{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--muted);}
+.t5-label em{font-style:normal;padding:1px 4px;border-radius:4px;background:var(--point-soft);color:var(--ok);font-size:9px;font-weight:800;}
+.tier5-cell input{width:100%;min-width:0;padding:6px 4px;border:1px solid var(--line);border-radius:7px;
+  text-align:right;font-size:13px;font-weight:700;color:var(--navy-700);font-variant-numeric:tabular-nums;}
+.tier5-cell input:focus{outline:2px solid #9ed9cc;outline-offset:1px;border-color:#9ed9cc;}
+.tier5-cell i.unit{font-style:normal;font-size:9px;color:var(--muted);text-align:right;}
+.tier5-detail{margin:8px 0 0;font-size:11px;color:var(--ink-2);line-height:1.5;}
+.tier5-note{margin:4px 0 0;font-size:11px;color:var(--muted);line-height:1.55;}
+@media (max-width:520px){
+  .tier5-grid{gap:4px;}
+  .tier5-cell{padding:7px 4px 5px;}
+  .tier5-cell input{font-size:12px;padding:6px 2px;}
+  .t5-label{font-size:9px;}
+}
+.main-group{border:1px dashed #cddced;border-radius:14px;padding:10px 12px 12px;background:#fbfdff;}
+.main-group .part-head{margin-bottom:6px;}
+.main-shared{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 10px;border-radius:10px;
+  background:#fff;border:1px solid var(--line);font-size:11px;font-weight:600;color:var(--ink-2);}
+.main-shared input{width:16px;height:16px;}
+.main-cross{margin:8px 0 0;padding:8px 10px;border-radius:10px;background:var(--gold-soft);color:#7a5c1e;font-size:11px;line-height:1.5;}
+
+/* PDF·텍스트 검수 — 자동 추출 마스킹 고객정보 */
+.imp-pii{margin:2px 0 12px;padding:12px 14px;border-radius:14px;border:1px solid #cfe4de;background:linear-gradient(180deg,#f6fcfa,#eef8f5);}
+.pii-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--navy-700);}
+.pii-head .eyebrow{color:var(--ok);}
+.pii-head em{font-style:normal;font-size:11px;font-weight:500;color:var(--muted);}
+.pii-line{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:9px 0 0;}
+.pii-line i{font-style:normal;color:var(--muted);font-size:11px;}
+.pii-chip{padding:5px 10px;border-radius:999px;background:#fff;border:1px solid #cfe4de;
+  font-size:13px;font-weight:800;color:var(--navy-700);font-variant-numeric:tabular-nums;}
+.pii-note{margin:9px 0 0;font-size:11px;line-height:1.55;color:var(--ink-2);}

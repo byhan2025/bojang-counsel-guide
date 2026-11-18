@@ -37,6 +37,30 @@ const NEURO_TREAT_SUBS = [
   { key: 'icu', label: '중환자실 입원비', hint: '중환자실 치료 일당', factor: 0.5 }
 ];
 
+/* v7.4 — 뇌·심장 치료비를 두 묶음으로 분리합니다.
+   ① 단독 치료비(treat) : 혈전용해제 / 수술(관혈·비관혈) / 중환자실 — 각각 따로 가입된 담보
+   ② 주요치료비(main)   : 특정순환계질환(3~5종) 주요치료비처럼 한 담보로 묶여 지급되는 치료비
+   주요치료비는 '단독 치료비' 칸에 섞지 않고 자기 칸(state.cov.brain.main)에 담되,
+   점수·충족도에는 단독 치료비 축(혈전용해·수술)에 권장 비율로 반영합니다(중환자실 제외).
+   값이 없으면 종전 점수와 100% 같습니다(회귀 없음). */
+const NEURO_MAIN_QUICK = [0, 500, 1000, 2000, 3000];
+const NEURO_MAIN_CONF = {
+  brain: {
+    key: 'main', label: '뇌·순환계 주요치료비',
+    hint: '특정순환계질환(3~5종)·뇌혈관 주요치료비 (통합형)',
+    presets: ['특정순환계질환(3~5종) 주요치료비', '뇌혈관 주요치료비', '뇌심 주요치료비'],
+    note: '한 담보가 여러 치료(혈전용해·수술)에 지급되는 통합형입니다. 단독 치료비와 중복 지급 여부는 약관으로 확인합니다.'
+  },
+  heart: {
+    key: 'main', label: '심장·순환계 주요치료비',
+    hint: '특정순환계질환(3~5종)·심장 주요치료비 (통합형)',
+    presets: ['특정순환계질환(3~5종) 주요치료비', '심장 주요치료비', '뇌심 주요치료비'],
+    note: '뇌·심장 공통 담보명이면 한 번만 입력해도 두 축에 함께 반영됩니다.'
+  }
+};
+/* 1~5종 종 이름 — 화면·PDF 공통 */
+const TIER5_LABELS = ['1종', '2종', '3종', '4종', '5종'];
+
 /* v5.0 — 뇌·심장 진단비 금액 3단계 / 2단계 (실무 누락 보완)
    실무에서는 같은 뇌·심장이라도 범위별로 담보가 따로 가입돼 있는 경우가 많습니다.
    · 안쪽 담보는 바깥 담보에 포함되고, 진단 시 금액은 겹쳐서 합산 지급됩니다.
@@ -86,25 +110,25 @@ const PRIORITY = [
     ]
   },
   {
-    key: 'brain', rank: 2, name: '뇌', sub: '뇌혈관 · 치료비 3종', unit: '만원',
+    key: 'brain', rank: 2, name: '뇌', sub: '뇌혈관 · 단독 치료비 + 주요치료비', unit: '만원',
     rec: { '20': 2000, '30': 2000, '40': 2000, '50': 2000, '60': 2000, '70': 2000 },
     tiers: { min: 1000, rec: 2000, enough: 3000 },
     tierNote: '최소 1,000 · 권장 2,000 · 3,000은 참고 상한(과권장 금지)',
     weight: 22,
     parts: [
       { key: 'dx', type: 'dxset', label: '뇌 진단비 3단계', hint: '뇌혈관질환 · 뇌졸중 · 뇌출혈 각각 입력', weight: 0.55, subs: BRAIN_DX_SUBS, min: NEURO_DX_MIN, max: NEURO_DX_MAX, step: 500, quick: NEURO_DX_QUICK, core: 'vascular', tiers: { min: 1000, rec: 2000, enough: 3000 } },
-      { key: 'treat', type: 'group', label: '뇌 주요치료비 3종', hint: '혈전용해제 · 수술 · 중환자실', weight: 0.45, subs: NEURO_TREAT_SUBS, min: NEURO_TREAT_MIN, max: NEURO_TREAT_MAX, step: 500, quick: NEURO_TREAT_QUICK }
+      { key: 'treat', type: 'group', label: '① 단독 치료비 3종', hint: '혈전용해제 · 수술(관혈·비관혈) · 중환자실', weight: 0.45, subs: NEURO_TREAT_SUBS, min: NEURO_TREAT_MIN, max: NEURO_TREAT_MAX, step: 500, quick: NEURO_TREAT_QUICK }
     ]
   },
   {
-    key: 'heart', rank: 3, name: '심장', sub: '허혈성심장 · 치료비 3종', unit: '만원',
+    key: 'heart', rank: 3, name: '심장', sub: '허혈성심장 · 단독 치료비 + 주요치료비', unit: '만원',
     rec: { '20': 2000, '30': 2000, '40': 2000, '50': 2000, '60': 2000, '70': 2000 },
     tiers: { min: 1000, rec: 2000, enough: 3000 },
     tierNote: '최소 1,000 · 권장 2,000 · 3,000은 참고 상한(과권장 금지)',
     weight: 18,
     parts: [
       { key: 'dx', type: 'dxset', label: '심장 진단비 2단계', hint: '허혈성심장질환 · 급성심근경색 각각 입력', weight: 0.55, subs: HEART_DX_SUBS, min: NEURO_DX_MIN, max: NEURO_DX_MAX, step: 500, quick: NEURO_DX_QUICK, core: 'ischemic', tiers: { min: 1000, rec: 2000, enough: 3000 } },
-      { key: 'treat', type: 'group', label: '심장 주요치료비 3종', hint: '혈전용해제 · 수술 · 중환자실', weight: 0.45, subs: NEURO_TREAT_SUBS, min: NEURO_TREAT_MIN, max: NEURO_TREAT_MAX, step: 500, quick: NEURO_TREAT_QUICK }
+      { key: 'treat', type: 'group', label: '① 단독 치료비 3종', hint: '혈전용해제 · 수술(관혈·비관혈) · 중환자실', weight: 0.45, subs: NEURO_TREAT_SUBS, min: NEURO_TREAT_MIN, max: NEURO_TREAT_MAX, step: 500, quick: NEURO_TREAT_QUICK }
     ]
   },
   {
@@ -113,11 +137,13 @@ const PRIORITY = [
     weight: 15,
     parts: [
       { key: 'disease', type: 'amount', label: '질병수술비(일반·매회)', hint: '수술 1회당 정액', weight: 0.18, factor: 0.2, step: 10, quick: [0, 30, 50, 100, 200] },
-      { key: 'disease15', type: 'amount', label: '질병 1~5종 수술비', hint: '1종 기준액', weight: 0.18, factor: 0.6, step: 50, quick: [0, 100, 300, 500, 1000] },
+      /* v7.4 — 1~5종을 종별로 나눠 입력합니다. 점수는 종전과 같이 1종 기준액(disease15)으로 계산합니다.
+         종별 금액은 disease15Tiers 에 함께 저장되고, 1종 값이 disease15(대표값)와 자동으로 맞춰집니다. */
+      { key: 'disease15', type: 'amount', tiers5: true, label: '질병 1~5종 수술비', hint: '종별 금액 · 1종이 기준액', weight: 0.18, factor: 0.6, step: 50, quick: [0, 10, 20, 50, 100, 300, 500, 1000] },
       { key: 'diseaseNdae', type: 'amount', label: '질병 N대 수술비', hint: '21·22·30·33대 등 질환별', weight: 0.20, factor: 1, step: 100, quick: [0, 300, 500, 1000, 2000] },
       { key: 'diseaseNonPay', type: 'amount', label: '비급여 질병 수술비', hint: '비급여 1~5종 / 비급여 N대', weight: 0.16, factor: 1, step: 100, quick: [0, 300, 500, 1000, 2000] },
       { key: 'injury', type: 'amount', label: '일반 상해수술비', hint: '사고 수술 1회당', weight: 0.14, factor: 0.2, step: 10, quick: [0, 30, 50, 100, 200] },
-      { key: 'injury15', type: 'amount', label: '상해 1~5종 수술비', hint: '1종 기준액', weight: 0.14, factor: 0.6, step: 50, quick: [0, 100, 300, 500, 1000] }
+      { key: 'injury15', type: 'amount', tiers5: true, label: '상해 1~5종 수술비', hint: '종별 금액 · 1종이 기준액', weight: 0.14, factor: 0.6, step: 50, quick: [0, 10, 20, 50, 100, 300, 500, 1000] }
     ]
   },
   {

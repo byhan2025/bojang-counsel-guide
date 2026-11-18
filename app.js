@@ -23,9 +23,9 @@
     disc: {},
     cov: {
       cancer: { general: 5000, similar: 1000, treatment: { surgery: 1000, drug: 1500, radio: 600, icu: 0, extra: 500 }, recur: true },
-      brain: { dx: { vascular: 2000, stroke: 2000, bleed: 1000 }, treat: { lysis: 1000, surgery: 1500, icu: 0 } },
-      heart: { dx: { ischemic: 2000, ami: 1000 }, treat: { lysis: 0, surgery: 1500, icu: 500 } },
-      surgery: { disease: 50, disease15: 300, diseaseNdae: 500, diseaseNonPay: 0, injury: 50, injury15: 300 },
+      brain: { dx: { vascular: 2000, stroke: 2000, bleed: 1000 }, treat: { lysis: 1000, surgery: 1500, icu: 0 }, main: 0, mainShared: false },
+      heart: { dx: { ischemic: 2000, ami: 1000 }, treat: { lysis: 0, surgery: 1500, icu: 500 }, main: 0, mainShared: false },
+      surgery: { disease: 50, disease15: 300, disease15Tiers: { '1': 300, '2': 0, '3': 0, '4': 0, '5': 0 }, diseaseNdae: 500, diseaseNonPay: 0, injury: 50, injury15: 300, injury15Tiers: { '1': 300, '2': 0, '3': 0, '4': 0, '5': 0 } },
       care: { daily: 10, nDaily: 0, basis: 'time', family: 'conditional', nursing: true, ltc: false, mode: 'normal' },
       /* v7.2 — 6번째 생활·실손 참고 축 (점수·색 판정 제외) */
       living: { deathInjury: 0, deathDisease: 0, disabilityInjury: 0, disabilityDisease: 0, driverFine: 0, driverLawyer: 0, driverSupport: 0, driverInjury: 0, liability: 0, fire: 0, fracture: 0, burn: 0, er: 0, inpatientInjury: 0, inpatientDisease: 0, silsonDeduct: 0, silsonNonPay: false, toothCare: false, toothProsthetic: false },
@@ -43,9 +43,9 @@
     contracts: [], family: [], disc: {},
     cov: {
       cancer: { general: 0, similar: 0, treatment: { surgery: 0, drug: 0, radio: 0, icu: 0, extra: 0 }, recur: false },
-      brain: { dx: { vascular: 0, stroke: 0, bleed: 0 }, treat: { lysis: 0, surgery: 0, icu: 0 } },
-      heart: { dx: { ischemic: 0, ami: 0 }, treat: { lysis: 0, surgery: 0, icu: 0 } },
-      surgery: { disease: 0, disease15: 0, diseaseNdae: 0, diseaseNonPay: 0, injury: 0, injury15: 0 },
+      brain: { dx: { vascular: 0, stroke: 0, bleed: 0 }, treat: { lysis: 0, surgery: 0, icu: 0 }, main: 0, mainShared: false },
+      heart: { dx: { ischemic: 0, ami: 0 }, treat: { lysis: 0, surgery: 0, icu: 0 }, main: 0, mainShared: false },
+      surgery: { disease: 0, disease15: 0, disease15Tiers: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 }, diseaseNdae: 0, diseaseNonPay: 0, injury: 0, injury15: 0, injury15Tiers: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 } },
       care: { daily: 0, nDaily: 0, basis: 'unknown', family: 'conditional', nursing: false, ltc: false, mode: 'normal' },
       living: { deathInjury: 0, deathDisease: 0, disabilityInjury: 0, disabilityDisease: 0, driverFine: 0, driverLawyer: 0, driverSupport: 0, driverInjury: 0, liability: 0, fire: 0, fracture: 0, burn: 0, er: 0, inpatientInjury: 0, inpatientDisease: 0, silsonDeduct: 0, silsonNonPay: false, toothCare: false, toothProsthetic: false },
       custom: { cancer: [], brain: [], heart: [], surgery: [], care: [] }
@@ -513,6 +513,71 @@
       </div>`;
   }
 
+  /* v7.4 — 1~5종 종별 입력 (질병·상해). 대표값(1종)은 종전 칸과 같은 disease15/injury15 입니다. */
+  function tier5RowHTML(item, part) {
+    const ev = BojangModel.evalItem(state, item);
+    const pr = ev.parts.find((p) => p.key === part.key) || { rec: 0, val: 0, fill: 0, stage: null };
+    const t = BojangModel.tier5Obj(state, part.key);
+    const labels = (typeof TIER5_LABELS !== 'undefined' && TIER5_LABELS.length) ? TIER5_LABELS : ['1종', '2종', '3종', '4종', '5종'];
+    const sum = [1, 2, 3, 4, 5].reduce((a, i) => a + (Number(t[String(i)]) || 0), 0);
+    const have = [1, 2, 3, 4, 5].filter((i) => Number(t[String(i)]) > 0).length;
+    const stageTone = pr.stage ? (pr.stage.code === 'none' ? 'gap' : pr.stage.code === 'low' ? 'warn' : pr.stage.code === 'min' ? 'need' : 'ok') : 'gap';
+    return `
+      <div class="part tier5-group" data-part="${part.key}">
+        <div class="part-head">
+          <div class="part-label"><strong>${part.label}</strong><span>종별로 따로 입력 · 점수는 1종 기준</span></div>
+          <div class="part-side">${pr.stage ? `<span class="mini-badge tone-${stageTone}">${pr.stage.label}</span>` : ''}${partBadge(item.key, part)}</div>
+        </div>
+        <div class="tier5-sum">
+          <span>1~5종 합계 <b>${won(sum)}</b>만원<em>${have}/5종 입력</em></span>
+          <span class="ts-rec">1종 기준 권장 ${won(pr.rec)}만원</span>
+        </div>
+        <div class="tier5-grid">
+          ${[1, 2, 3, 4, 5].map((i) => `
+            <label class="tier5-cell${i === 1 ? ' is-core' : ''}" data-tier-cell="${i}">
+              <span class="t5-label">${labels[i - 1]}${i === 1 ? '<em>기준</em>' : ''}</span>
+              <input type="number" inputmode="numeric" min="0" max="100000" step="${part.step || 50}"
+                     data-item="${item.key}" data-part="${part.key}" data-tier="${i}"
+                     value="${Number(t[String(i)]) || ''}" placeholder="0" aria-label="${esc(part.label)} ${labels[i - 1]} (만원)">
+              <i class="unit">만원</i>
+            </label>`).join('')}
+        </div>
+        <p class="tier5-detail" data-tier5-detail="${part.key}">${esc(BojangModel.tier5Detail(state, part.key))}</p>
+        <p class="tier5-note">1종(내시경·카테터 등 소액) → 5종(개두·개흉·개복 고액). 같은 수술도 보험사 분류표에 따라 종수가 다르니 증권 분류표를 확인하세요.</p>
+      </div>`;
+  }
+
+  /* v7.4 — 뇌·심장 ② 주요치료비(통합형) 입력 칸 */
+  function mainRiderHTML(item) {
+    if (item.key !== 'brain' && item.key !== 'heart') return '';
+    const conf = (typeof NEURO_MAIN_CONF !== 'undefined' && NEURO_MAIN_CONF[item.key]) || { label: '주요치료비', hint: '', presets: [], note: '' };
+    const quick = (typeof NEURO_MAIN_QUICK !== 'undefined') ? NEURO_MAIN_QUICK : [0, 500, 1000, 2000, 3000];
+    const val = BojangModel.mainOf(state, item.key);
+    const shared = BojangModel.mainSharedOf(state, item.key);
+    const other = item.key === 'brain' ? 'heart' : 'brain';
+    const sib = BojangModel.mainOf(state, other);
+    const cross = !val && sib > 0 && BojangModel.mainSharedOf(state, other);
+    return `
+      <div class="part main-group" data-part="main">
+        <div class="part-head">
+          <div class="part-label"><strong>② ${esc(conf.label)}</strong><span>${esc(conf.hint)}</span></div>
+          <div class="part-side">${val > 0 ? `<span class="mini-badge tone-ok">${won(val)}만원</span>` : (cross ? '<span class="mini-badge tone-need">공통 반영</span>' : '')}</div>
+        </div>
+        <div class="input-row">
+          <span class="di-tag">직접입력</span>
+          <input type="number" inputmode="numeric" min="0" max="100000" step="100" data-main="${item.key}"
+                 value="${val || ''}" placeholder="0" aria-label="${esc(conf.label)} (만원)">
+          <span class="unit">만원</span>
+        </div>
+        <div class="quick-row">
+          ${quick.map((q) => `<button type="button" class="quick" data-main-set="${q}" data-main-key="${item.key}">${q === 0 ? '없음' : won(q)}</button>`).join('')}
+          <label class="main-shared"><input type="checkbox" data-main-shared="${item.key}" ${shared ? 'checked' : ''}> 뇌·심장 공통</label>
+        </div>
+        ${cross ? `<p class="main-cross">뇌·심장 공통 담보 — ${other === 'heart' ? '심장' : '뇌'}에 입력한 주요치료비 ${won(sib)}만원이 이 축(혈전용해·수술)에도 반영됩니다.</p>` : ''}
+        <p class="tier5-note">${esc(conf.note || '')} 단독 치료비와의 중복 지급 여부는 약관으로 확인합니다.</p>
+      </div>`;
+  }
+
   function scaleRowHTML(item, part) {
     const cur = cv(item, part) || 'none';
     return `
@@ -685,7 +750,7 @@
 
   function cardHTML(item, extra) {
     const r = BojangModel.evalItem(state, item);
-    const rowOf = (p) => p.type === 'amount' ? amountRowHTML(item, p)
+    const rowOf = (p) => p.type === 'amount' ? (p.tiers5 ? tier5RowHTML(item, p) : amountRowHTML(item, p))
       : p.type === 'group' ? groupRowHTML(item, p)
         : p.type === 'dxset' ? dxRowHTML(item, p)
           : p.type === 'scale' ? scaleRowHTML(item, p) : boolRowHTML(item, p);
@@ -697,6 +762,7 @@
           <span class="badge badge-${r.level}">${r.label}</span>
         </div>
         ${item.parts.map(rowOf).join('')}
+        ${mainRiderHTML(item)}
         ${extra || ''}
         ${customBlockHTML(item.key)}
       </div>`;
@@ -817,7 +883,7 @@
   }
 
   function bindCoverageInputs() {
-    $$('#wiz-panels input[type="number"][data-item]').forEach((input) => {
+    $$('#wiz-panels input[type="number"][data-item]:not([data-tier])').forEach((input) => {
       input.addEventListener('input', () => {
         const it = input.dataset.item, pt = input.dataset.part, sb = input.dataset.sub;
         const v = clamp(Number(input.value || 0), 0, 100000);
@@ -857,6 +923,52 @@
     $$('#wiz-panels input[type="checkbox"][data-item]').forEach((cb) => {
       cb.addEventListener('change', () => {
         state.cov[cb.dataset.item][cb.dataset.part] = cb.checked;
+        refreshBadges(); saveSession();
+      });
+    });
+    /* v7.4 — 1~5종 종별 입력 · 대표값(1종) 동기화 */
+    $$('#wiz-panels input[type="number"][data-tier]').forEach((input) => {
+      input.addEventListener('input', () => {
+        const field = input.dataset.part, tier = String(Number(input.dataset.tier));
+        const sg = state.cov.surgery || (state.cov.surgery = {});
+        const box = (sg[field + 'Tiers'] && typeof sg[field + 'Tiers'] === 'object') ? sg[field + 'Tiers'] : (sg[field + 'Tiers'] = {});
+        box[tier] = clamp(Number(input.value || 0), 0, 100000);
+        BojangModel.syncTier5(sg);
+        const host = input.closest('.tier5-group');
+        if (host) {
+          const t = BojangModel.tier5Obj(state, field);
+          const sum = [1, 2, 3, 4, 5].reduce((a, i) => a + (Number(t[String(i)]) || 0), 0);
+          const have = [1, 2, 3, 4, 5].filter((i) => Number(t[String(i)]) > 0).length;
+          const b = $('.tier5-sum b', host); if (b) b.textContent = won(sum);
+          const em = $('.tier5-sum em', host); if (em) em.textContent = `${have}/5종 입력`;
+          const dt = $('[data-tier5-detail]', host); if (dt) dt.textContent = BojangModel.tier5Detail(state, field);
+        }
+        refreshBadges(); saveSession();
+      });
+    });
+    /* v7.4 — 뇌·심장 주요치료비(②) 입력 */
+    $$('#wiz-panels input[type="number"][data-main]').forEach((input) => {
+      input.addEventListener('input', () => {
+        const key = input.dataset.main;
+        state.cov[key].main = clamp(Number(input.value || 0), 0, 100000);
+        refreshBadges(); saveSession();
+      });
+    });
+    $$('#wiz-panels [data-main-set]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const key = b.dataset.mainKey, v = Number(b.dataset.mainSet);
+        state.cov[key].main = clamp(v, 0, 100000);
+        const input = $(`input[data-main="${key}"]`);
+        if (input) input.value = v || '';
+        renderCoverageCards();
+        refreshBadges(); saveSession();
+        if (state.analyzed) analyze();
+      });
+    });
+    $$('#wiz-panels [data-main-shared]').forEach((cb) => {
+      cb.addEventListener('change', () => {
+        const key = cb.dataset.mainShared;
+        state.cov[key].mainShared = !!cb.checked;
         refreshBadges(); saveSession();
       });
     });
@@ -2084,6 +2196,18 @@
   function applyImport(items, meta) {
     meta = meta || {};
     let applied = 0;
+    /* v7.4 — PDF에서 자동 추출한 마스킹 고객정보(이름·성별·생년월일·연령대)를 기본정보에 채웁니다.
+       이름은 이미 가운데가 x로 마스킹된 값만 들어옵니다(원문 이름은 저장하지 않음). */
+    if (meta.client && typeof meta.client === 'object') {
+      const c = meta.client;
+      if (c.name) state.client.name = String(c.name).replace(/\s+/g, '').slice(0, 12);
+      if (c.birth) state.client.birth = String(c.birth).slice(0, 10);
+      if (c.gender === '남' || c.gender === '여') state.gender = c.gender;
+      if (c.ageBand && ['20', '30', '40', '50', '60', '70'].indexOf(String(c.ageBand)) >= 0) {
+        state.age = String(c.ageBand); state.ageAuto = true;
+      }
+      applied += 1;
+    }
     (items || []).forEach((it) => {
       if (!it || it.apply === false) return;
       if (it.field === 'monthlyPremium') {
@@ -2119,6 +2243,22 @@
       }
       const n = Number(it.value);
       if (!isFinite(n) || n < 0) return;
+      /* v7.4 — 1~5종 종별 금액: 대표값(1종)과 종별 표를 함께 저장합니다 */
+      const tierField = (it.field === 'surgery.disease15') ? 'disease15' : (it.field === 'surgery.injury15') ? 'injury15' : null;
+      if (tierField) {
+        const sg = state.cov.surgery || (state.cov.surgery = {});
+        if (it.tiers && typeof it.tiers === 'object') {
+          const box = {};
+          [1, 2, 3, 4, 5].forEach((i) => { box[String(i)] = Math.max(0, Number(it.tiers[String(i)] || it.tiers[i] || 0) || 0); });
+          sg[tierField + 'Tiers'] = box;
+        } else {
+          sg[tierField + 'Tiers'] = { '1': n, '2': 0, '3': 0, '4': 0, '5': 0 };
+        }
+        sg[tierField] = n;
+        BojangModel.syncTier5(sg);
+        applied++;
+        return;
+      }
       BojangImport.setByPath(state.cov, it.field, n);
       applied++;
     });
@@ -3197,6 +3337,8 @@
     /* v5.9 — 이전 버전 localStorage 상담 이력을 IndexedDB 로 옮깁니다 */
     try { if (window.BojangStore) await window.BojangStore.migrate(); } catch (e) { /* noop */ }
     await loadSession();
+    /* v7.4 — 종별(1~5종) 칸·주요치료비 칸을 시작 상태에서도 항상 만들고 대표값을 맞춥니다 */
+    try { BojangModel.normalizeState(state); } catch (e) { /* noop */ }
 
     renderClientFields();
     renderSegments();
