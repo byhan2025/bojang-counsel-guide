@@ -21,8 +21,8 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(ROOT, "dist")
 
 SCRIPTS = [
-    "version.js", "security.js", "storage-idb.js", "content.js", "dambo-dictionary.js",
-    "jobgrades.js", "ocr.js", "playbook.js", "model.js", "pdfkit.js", "qr.js", "qrscan.js", "report.js", "client.js",
+    "version.js", "security.js", "storage-idb.js", "content.js", "content-evidence.js", "dambo-dictionary.js",
+    "jobgrades.js", "ocr.js", "playbook.js", "model.js", "priority.js", "pdfkit.js", "qr.js", "qrscan.js", "report.js", "client.js",
     "live.js", "tools.js", "aftercare.js", "claimcheck.js", "publicdata.js", "memofill.js", "monetize.js", "backend.js", "smartkey.js",
     "import-parser.js", "inputhub.js", "app.js",
 ]
@@ -154,20 +154,18 @@ def build(protect=True):
     html = html.replace('<link rel="icon" href="./icons/icon-192.png" sizes="192x192">',
                         '<link rel="icon" href="%s" sizes="192x192">' % icon_192)
 
+    # v7.5 — 스크립트 태그를 하나씩 인라인으로 바꿉니다(신규 모듈이 늘어도 깨지지 않게).
+    first_at = -1
+    for name in SCRIPTS:
+        tag = '<script src="./%s"></script>' % name
+        assert tag in html, "script tag not found: " + name
+        if first_at < 0:
+            first_at = html.index(tag)
     bundle = "\n".join("<script>\n%s\n</script>" % sources[name] for name in SCRIPTS)
-    old = ('<script src="./version.js"></script>\n<script src="./security.js"></script>\n'
-           '<script src="./storage-idb.js"></script>\n'
-           '<script src="./content.js"></script>\n<script src="./dambo-dictionary.js"></script>\n'
-           '<script src="./jobgrades.js"></script>\n<script src="./ocr.js"></script>\n'
-           '<script src="./playbook.js"></script>\n<script src="./model.js"></script>\n<script src="./pdfkit.js"></script>\n'
-           '<script src="./qr.js"></script>\n<script src="./report.js"></script>\n<script src="./client.js"></script>\n<script src="./live.js"></script>\n<script src="./tools.js"></script>\n'
-           '<script src="./aftercare.js"></script>\n<script src="./claimcheck.js"></script>\n<script src="./publicdata.js"></script>\n<script src="./memofill.js"></script>\n'
-           '<script src="./monetize.js"></script>\n<script src="./backend.js"></script>\n'
-           '<script src="./qrscan.js"></script>\n<script src="./smartkey.js"></script>\n'
-           '<script src="./import-parser.js"></script>\n<script src="./inputhub.js"></script>\n<script src="./app.js"></script>')
-    assert old in html, "script tag block not found"
-    html = html.replace(old, bundle)
-
+    for name in SCRIPTS:
+        html = html.replace('<script src="./%s"></script>' % name, "\x00", 1)
+    html = html.replace("\x00", "")
+    html = html[: first_at] + bundle + html[first_at:]
     digest = hashlib.sha256(html.encode("utf-8")).hexdigest()[:12]
     html = html.replace("</head>", "<!-- build %s · protected=%s -->\n</head>" % (digest, str(protect).lower()), 1)
 

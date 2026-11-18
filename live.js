@@ -11,8 +11,8 @@
   const STAGES = [
     { key: 'open', label: '오프닝', title: '오프닝 — 첫 3분', desc: '인사 · 목적 · 시간 약속 · 허락. 팔지 않는다는 신호를 먼저 줍니다.' },
     { key: 'read', label: '진단 설명', title: '진단 설명 — 숫자 하나부터', desc: '점수 → 도넛 → 5대 판정 순서. 세부 표는 나중에 펼칩니다.' },
-    { key: 'plan', label: '우선순위 플랜', title: '우선순위 플랜 — 1순위부터', desc: '질문 → 화법 → 함정 → 설계 권장안. 한 칸씩만 다룹니다.' },
-    { key: 'objection', label: '반론 돌파', title: '반론 돌파 — 먼저 꺼내게', desc: '공감 → 환기 → 대안. 반론은 막는 것이 아니라 확인하는 것입니다.' },
+    { key: 'plan', label: '먼저 확인할 항목', title: '먼저 확인할 항목 — 이 고객 순서', desc: '비용 근거 → 코드 → 사례 → 3안. 한 칸씩만 다룹니다.' },
+    { key: 'objection', label: '반론 카드', title: '반론 카드 15 — 한 줄 대응', desc: '대응 1문장 + 붙일 근거. 판정이 아니라 확인 후보입니다.' },
     { key: 'close', label: '클로징', title: '클로징 — 요약 · 결정 · 약속', desc: '7분 안에 끝냅니다. 더 설명하지 않습니다.' }
   ];
 
@@ -81,6 +81,10 @@
   /* =========================================================
      단계별 렌더
      ========================================================= */
+  function planOf(m) {
+    try { return root.BojangPriority ? root.BojangPriority.allocation(m) : null; } catch (e) { return null; }
+  }
+
   function render() {
     const host = $('#live-body');
     if (!host) return;
@@ -130,86 +134,134 @@
   /* ---------- 2. 진단 설명 ---------- */
   function stageRead(m) {
     const dn = m.counts;
+    const plan = planOf(m);
+    const f = plan && plan.first;
     let h = `<div class="live-stage">`;
     h += `<div class="live-kpis">
       <div class="live-kpi"><span>종합 등급</span><strong>${m.letter}</strong><em>${m.score}점 · ${m.grade.label}</em></div>
       <div class="live-kpi"><span>충분 / 점검</span><strong>${dn.enough} · ${dn.check}</strong><em>항목 ${dn.total}개 중</em></div>
-      <div class="live-kpi"><span>부족 / 없음</span><strong>${dn.short} · ${dn.none}</strong><em>먼저 채울 곳</em></div>
+      <div class="live-kpi"><span>보완 후보 / 없음</span><strong>${dn.short} · ${dn.none}</strong><em>먼저 확인할 곳</em></div>
       <div class="live-kpi"><span>월 보험료</span><strong>${won(m.premium)}</strong><em>만원 · 연 ${won(m.annual)}만원</em></div>
     </div>`;
-    h += `<div class="live-card hl"><h3>한 문장으로</h3>
-      <p>${name0(m)}은(는) 지금 <b>${m.letter} 등급</b>이고, ${m.first ? `<b>${m.first.item.rank}순위 ${m.first.item.name}이 ${m.first.pct}%</b>로 가장 비어 있습니다.` : '5대 담보가 모두 기준선을 넘었습니다.'} 나머지는 유지하면서 이 한 칸부터 채우면 됩니다.</p>
-      ${scriptBox(`${m.client.name}님은 지금 ${m.letter} 등급이고, ${m.first ? `${m.first.item.rank}순위 ${m.first.item.name}이 ${m.first.pct}%로 가장 비어 있습니다.` : '5대 담보가 모두 기준선을 넘었습니다.'} 나머지는 그대로 두고 이 한 칸부터 채우면 됩니다.`)}</div>`;
-    h += `<div class="live-sub">5대 판정 — 이 순서로</div>`;
-    m.rows.forEach((r) => {
-      h += `<button type="button" class="live-pri" data-pri="${r.item.key}">
-        <span class="lp-rank">${r.item.rank}</span>
-        <span class="lp-main"><span class="lp-name">${r.item.name}</span><span class="lp-sum">${r.summary}</span></span>
-        <span class="lp-pct">${r.pct}%</span>
-        <span class="lp-badge ${r.level}">${r.label}</span>
+    h += `<div class="live-card hl"><h3>3초 결론</h3>
+      <p>${name0(m)}은(는) 지금 <b>${m.letter} 등급(${m.score}점)</b>이고, 먼저 확인할 항목은 <b>${f ? `${f.name}(${f.pct}%)` : '없음 — 유지 점검'}</b>입니다. 나머지는 그대로 두고 이 한 칸부터 봅니다.</p>
+      ${scriptBox(f ? `${m.client.name}님은 ${m.letter} 등급(${m.score}점)이고, 먼저 확인할 항목은 ${f.name} ${f.pct}%입니다. 나머지는 그대로 두고 이 한 칸부터 채우면 됩니다.` : `${m.client.name}님은 5대 담보가 모두 기준선을 넘었습니다. 오늘은 금액을 올리지 않고 지급 조건만 확인하겠습니다.`)}</div>`;
+    h += `<div class="live-sub">먼저 확인할 3카드</div>`;
+    h += `<div class="live-card"><div class="live-list">
+      <div class="live-li"><i></i><span><b>① 한 칸</b> — ${f && f.gaps[0] ? `${f.gaps[0].label} ${won(f.gaps[0].need)}만원 부족` : '금액은 기준선 이상'}</span></div>
+      <div class="live-li"><i></i><span><b>② 범위·코드</b> — ${rangeLine(m)}</span></div>
+      <div class="live-li"><i></i><span><b>③ 재원·제도</b> — ${(S.flags || {}).savings ? '적립·중복 특약 재배치부터' : `실손 ${S.silson === 'none' ? '없음' : S.silson + '세대'} · 산정특례·상한제 확인`}</span></div>
+    </div></div>`;
+    h += `<div class="live-sub">5대 판정 — 이 고객 순서</div>`;
+    (plan ? plan.order : m.rows.map((r) => ({ key: r.item.key, name: r.item.name, pct: r.pct, hold: false, row: r, order: r.item.rank }))).forEach((e) => {
+      const row = e.row || m.rows.find((r) => r.item.key === e.key);
+      h += `<button type="button" class="live-pri" data-pri="${e.key}">
+        <span class="lp-rank">${e.hold ? 'H' : e.order}</span>
+        <span class="lp-main"><span class="lp-name">${e.name}</span><span class="lp-sum">${row.summary}</span></span>
+        <span class="lp-pct">${e.pct}%</span>
+        <span class="lp-badge ${row.level}">${e.hold ? '유지·조건' : row.label}</span>
       </button>`;
     });
-    h += `<div class="live-card"><h3>보여주는 순서</h3>
-      ${PLAN_OPEN.presentOrder.map((p) => `<div class="live-li"><i></i><span><b>${p.t}</b> — ${p.d}</span></div>`).join('')}</div>`;
-    h += `<div class="live-note">고객이 끼어들면 <b>그 자리에서 멈춥니다.</b> 끼어든 지점이 고객이 가장 신경 쓰는 지점입니다.</div>`;
+    h += `<div class="live-note">이 순서는 앱의 <b>기본 상담 순서</b>입니다. 고객이 먼저 꺼낸 걱정·청구 질문과 실제 증권 공백에 따라 설계사가 조정합니다. 보장·지급 여부를 판정하지 않습니다.</div>`;
     h += `</div>`;
     return h;
+  }
+  function rangeLine(m) {
+    const out = [];
+    try {
+      if (root.BojangPriority && root.BojangPriority.rangeGap(m, 'heart')) out.push('심장 범위 공백');
+      if (root.BojangPriority && root.BojangPriority.rangeGap(m, 'brain')) out.push('뇌혈관 범위 공백');
+    } catch (e) { /* 무시 */ }
+    if (!out.length) out.push(`실손 ${S.silson === 'none' ? '없음' : S.silson + '세대'}`);
+    return out.join(' · ') + ' — 코드 카드에서 확인';
   }
   function name0(m) { return m.client.name + '님'; }
 
-  /* ---------- 3. 우선순위 플랜 ---------- */
+  /* ---------- 3. 먼저 확인할 항목 ---------- */
   function stagePlan(m) {
+    const plan = planOf(m);
+    const list = plan ? plan.order : m.rows.map((r) => ({ key: r.item.key, name: r.item.name, order: r.item.rank, pct: r.pct, hold: false, row: r, gaps: r.gaps, touch: { code: '확인형' } }));
     let h = `<div class="live-stage">`;
-    h += `<div class="live-note">1순위부터 차례로 엽니다. <b>한 번에 두 개를 설명하지 않습니다.</b> 결정은 한 칸씩 받습니다.</div>`;
-    m.rows.forEach((row, i) => {
+    h += `<div class="live-note">이 고객 순서대로 엽니다. <b>한 번에 두 개를 설명하지 않습니다.</b> 결정은 한 칸씩 받습니다.</div>`;
+    list.forEach((e, i) => {
       const open = i === openPri;
+      const row = e.row || m.rows.find((r) => r.item.key === e.key);
       h += `<button type="button" class="live-pri ${open ? 'is-open' : ''}" data-open-pri="${i}">
-        <span class="lp-rank">${row.item.rank}</span>
-        <span class="lp-main"><span class="lp-name">${row.item.name}</span><span class="lp-sum">${row.summary}</span></span>
-        <span class="lp-pct">${row.pct}%</span>
-        <span class="lp-badge ${row.level}">${row.label}</span>
+        <span class="lp-rank">${e.hold ? 'H' : e.order}</span>
+        <span class="lp-main"><span class="lp-name">${e.name}</span><span class="lp-sum">${row.summary}</span></span>
+        <span class="lp-pct">${e.pct}%</span>
+        <span class="lp-badge ${row.level}">${e.hold ? '유지·조건' : (e.touch ? e.touch.code : row.label)}</span>
       </button>`;
-      if (open) h += `<div class="live-pri-body">${planBody(m, row)}</div>`;
+      if (open) h += `<div class="live-pri-body">${e.hold ? holdBody(m, row) : planBody(m, row, e)}</div>`;
     });
     h += `</div>`;
     return h;
   }
 
-  function planBody(m, row) {
-    const pb = PLAYBOOK[row.item.key];
+  function costBlock(key) {
+    const E = root.BojangEvidence;
+    if (!E || !E.COSTS[key]) return '';
+    const c = E.COSTS[key];
+    const r0 = c.rows[0];
+    if (!r0) return '';
+    return `<div class="live-list">
+      <div class="live-li"><i></i><span><b>${r0.label} ${r0.code}</b> — 1인당 ${won(r0.value)}만원${r0.days ? ` · 평균 ${r0.days}일` : ''}</span></div>
+      ${(c.extra || []).slice(0, 1).map((x) => `<div class="live-li"><i></i><span>${x.label}: <b>${x.value}</b></span></div>`).join('')}
+      <div class="live-li"><i></i><span style="font-size:12.5px;color:#5b7a74;">출처 ${c.src}</span></div>
+    </div>`;
+  }
+
+  function planBody(m, row, e) {
+    const E = root.BojangEvidence;
     const name = m.client.name;
     let h = '';
-    // 판독
     h += `<div class="live-card hl"><h3>① 지금 상태</h3>
       <p>${row.summary}</p>
-      ${row.gaps.length ? `<div class="live-list">${row.gaps.map((g) => `<div class="live-li"><i></i><span>${g.label}: <b>${won(g.val)}만원</b> → 권장 ${won(g.rec)}만원 <b>(${won(g.need)}만원 부족)</b></span></div>`).join('')}</div>` : '<p>금액은 기준선을 넘었습니다. 세부 조건(코드・지급 횟수)을 확인합니다.</p>'}
-    </div>`;
-    // 왜
-    h += `<div class="live-card"><h3>② 왜 이 순서인가</h3><p>${pb.why}</p>
-      ${pb.facts.map((f) => `<div class="live-li"><i></i><span>${f}</span></div>`).join('')}
-      ${scriptBox(pb.talk[0], { tag: '설명 화법' })}</div>`;
-    // 질문
-    h += `<div class="live-card"><h3>③ 이렇게 물어보세요</h3>
-      ${pb.questions.map((q, i) => `<div class="live-script live-ask"><div class="ls-tag">질문 ${i + 1}</div><p>${q.q}</p>
-        <p style="font-size:12.5px;color:#5b7a74;margin-top:4px;">의도 — ${q.why}<br>기대 — ${q.expect}</p></div>`).join('')}
-    </div>`;
-    // 함정
-    h += `<div class="live-card"><h3>④ 증권에서 확인할 함정</h3>
-      ${pb.traps.map((t, i) => `<div class="live-script live-warn"><div class="ls-tag">${i + 1}. ${t.title}</div>
-        <p style="font-size:12.5px;">확인 — ${t.watch}</p>
-        <p style="font-size:12.5px;color:#7a4f12;">말 — ${stripTags(t.script).replace(/^"|"$/g, '')}</p></div>`).join('')}
-    </div>`;
-    // 설계
-    h += `<div class="live-card"><h3>⑤ 설계 권장안</h3>${designTable(m, row)}</div>`;
-    // 반론
-    h += `<div class="live-card"><h3>⑥ 예상 반론</h3>
-      ${pb.objections.map((o) => `<div class="live-script"><div class="ls-tag">${o.trigger}</div>
-        <p style="font-size:12.5px;"><b>공감</b> ${o.empathy}</p>
-        <p style="font-size:12.5px;"><b>환기</b> ${o.awaken}</p>
-        <p style="font-size:12.5px;"><b>대안</b> ${o.alternative}</p></div>`).join('')}
-    </div>`;
+      ${row.gaps.length ? `<div class="live-list">${row.gaps.slice(0, 3).map((g) => `<div class="live-li"><i></i><span>${g.label}: <b>${won(g.val)}만원</b> → 기준 ${won(g.rec)}만원 <b>(${won(g.need)}만원 부족)</b></span></div>`).join('')}</div>` : '<p>금액은 기준선을 넘었습니다. 세부 조건(코드・지급 횟수)을 확인합니다.</p>'}
+      ${scriptBox(judgeLike(m, row, e))}</div>`;
+    h += `<div class="live-card"><h3>② 비용 근거 — 왜 이 금액인가</h3>${costBlock(e.key)}</div>`;
+    if (E && E.BANDS[e.key]) {
+      h += `<div class="live-card"><h3>③ 코드·구조에서 갈리는 지점</h3>
+        <div class="live-list">${E.BANDS[e.key].points.map((p) => `<div class="live-li"><i></i><span>${p}</span></div>`).join('')}</div>
+        <p style="font-size:12.5px;color:#5b7a74;margin-top:6px;">코드 해석은 약관 분류표 기준이며 지급 판정이 아닙니다.</p></div>`;
+    }
+    const cs = E ? E.byArea(e.key)[0] : null;
+    if (cs) {
+      h += `<div class="live-card"><h3>④ 사례 — ${cs.type}</h3>
+        <p><b>${cs.title}</b></p>
+        <div class="live-list">
+          <div class="live-li"><i></i><span>상황 ${cs.fact}</span></div>
+          <div class="live-li"><i></i><span>결과 ${cs.result}</span></div>
+          <div class="live-li"><i></i><span><b>갈린 이유</b> ${cs.reason}</span></div>
+          <div class="live-li"><i></i><span style="font-size:12.5px;color:#5b7a74;">출처 ${cs.source}</span></div>
+        </div></div>`;
+    }
+    h += `<div class="live-card"><h3>⑤ 3안 — 금액은 고객이</h3>${designTable(m, row)}</div>`;
+    if (E) {
+      const objs = (e.objections || []).map((id) => E.objection(id)).filter(Boolean);
+      if (objs.length) {
+        h += `<div class="live-card"><h3>⑥ 예상 반론</h3>
+          <div class="live-list">${objs.map((o) => `<div class="live-li"><i></i><span><b>${o.q}</b> — ${o.a} <span style="color:#5b7a74;">(${o.ev})</span></span></div>`).join('')}</div></div>`;
+      }
+    }
     h += `<div class="live-note">다음 단계로 넘어가기 전 확인 — <b>${name}님이 "${row.item.name}이 비어 있다"는 것을 자기 말로 확인했는가.</b></div>`;
     return h;
+  }
+
+  function holdBody(m, row) {
+    return `<div class="live-card hl"><h3>유지 · 조건 확인</h3>
+      <p><b>${row.pct}%</b> — 금액은 기준선을 넘었습니다. 추가 가입은 과보장이 될 수 있어 권하지 않고, 지급 조건·중복·갱신만 확인합니다.</p>
+      <div class="live-list">
+        <div class="live-li"><i></i><span>담보명의 코드 범위를 증권에서 확인</span></div>
+        <div class="live-li"><i></i><span>같은 이름 특약 2개 이상인지(중복) 확인</span></div>
+        <div class="live-li"><i></i><span>갱신 시점·만기(80·90세) 확인</span></div>
+      </div></div>`;
+  }
+
+  function judgeLike(m, row, e) {
+    const g = row.gaps[0];
+    const base = `${m.client.name}님 ${row.item.name}은 지금 기준의 ${row.pct}%입니다.`;
+    return g ? `${base} 먼저 확인할 한 칸은 ${g.label} ${won(g.need)}만원입니다.` : `${base} 금액은 기준선 위이니 지급 조건(코드·횟수)을 확인하겠습니다.`;
   }
 
   function designTable(m, row) {
@@ -255,25 +307,28 @@
     return `<div class="live-list">${rows.map((r) => `<div class="live-li"><i></i><span>${r[0]}: <b>${r[1]}</b> → ${r[2]}</span></div>`).join('')}</div>`;
   }
 
-  /* ---------- 4. 반론 ---------- */
+  /* ---------- 4. 반론 카드 ---------- */
   function stageObjection(m) {
+    const E = root.BojangEvidence;
+    const plan = planOf(m);
+    const f = plan && plan.first;
+    const list = E ? E.OBJECTIONS : [];
     let h = `<div class="live-stage">`;
-    h += `<div class="live-note">고객이 말하기 전에 <b>내가 먼저 꺼내도 됩니다.</b> "혹시 보험료가 부담되실까 봐 먼저 말씀드리면…"</div>`;
-    REBUTTALS.forEach((o, i) => {
+    h += `<div class="live-note">고객이 말하기 전에 <b>내가 먼저 꺼내도 됩니다.</b> 대응 1문장 + 붙일 근거만 봅니다. 판정이 아니라 확인 후보입니다.</div>`;
+    list.forEach((o, i) => {
       const open = i === openObj;
       h += `<div class="live-obj">
         <button type="button" class="live-obj-head" data-open-obj="${i}">
-          <strong>${o.trigger}</strong><span class="caret">${open ? '−' : '+'}</span>
+          <strong>${o.q}</strong><span class="caret">${open ? '−' : '+'}</span>
         </button>
         ${open ? `<div class="live-obj-body">
-          <div class="live-step"><span class="st e">공감</span><p>${o.empathy}</p></div>
-          <div class="live-step"><span class="st a">환기</span><p>${o.awaken}</p></div>
-          <div class="live-step"><span class="st o">대안</span><p>${o.alternative}</p></div>
-          <div class="live-script live-ask"><div class="ls-tag">전환 멘트</div><p>${o.close}</p></div>
+          <div class="live-step"><span class="st o">대응</span><p>${o.a}</p></div>
+          <div class="live-step"><span class="st e">근거</span><p>${o.ev}</p></div>
+          <div class="live-step"><span class="st a">이 고객</span><p>${f ? `${f.name} ${f.pct}% · 먼저 확인할 항목` : '5대 기준선 이상'}</p></div>
         </div>` : ''}
       </div>`;
     });
-    h += `<div class="live-note">반론이 <b>세 번 반복되면 오늘은 멈춥니다.</b> "오늘은 여기까지 정리해서 보내드리겠습니다"가 다음 통화를 만듭니다.</div>`;
+    h += `<div class="live-note">근거 출처 — 통계청 2024 사망원인통계 / 심평원 뇌혈관질환 진료현황(2023) / 건보공단 2025 주요수술·노인장기요양 통계연보(2026) / 산정특례 리플릿 / 금융위 5세대 실손 안내(2026.5.6). 반론이 <b>세 번 반복되면 오늘은 멈춥니다.</b></div>`;
     h += `</div>`;
     return h;
   }

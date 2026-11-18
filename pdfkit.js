@@ -558,7 +558,17 @@
       });
       let cy = y + headH;
       rows.forEach((row, ri) => {
-        const rh = o.rowHeight ? o.rowHeight(row) : rowH;
+        /* v7.5 — 셀 글자가 잘리지 않도록 행 높이를 내용에 맞춰 늘립니다(최소 rowH).
+           설계사용 30장에서만 기본 적용하고(페이지가 넘치지 않는 범위), 1장·10장은 종전 동작을 유지합니다. */
+        let fit = 0;
+        if (o.autoRow == null ? this.autoRowDefault : o.autoRow) row.forEach((cell, ci) => {
+          const cellObj = (cell && typeof cell === 'object') ? cell : { text: cell };
+          if (cellObj.badge || cellObj.fill) return;
+          const cw0 = widths[ci];
+          const lines = cellObj.text != null && String(cellObj.text).length > 0 ? this.wrap(cellObj.text, cw0 - padX * 2 - 2, size, cellObj.weight) : [];
+          fit = Math.max(fit, lines.length * size * 1.28 + 3);
+        });
+        const rh = Math.max(o.rowHeight ? o.rowHeight(row) : rowH, fit);
         if (o.zebra !== false) this.rect(x, cy, w, rh, { fill: ri % 2 ? (o.zebraFill || C.sky2) : '#fff' });
         else this.rect(x, cy, w, rh, { fill: '#fff' });
         this.line(x, cy + rh, x + w, cy + rh, { color: C.line2 });
@@ -883,7 +893,7 @@
       s.suppressBrandSlogan = !!opts.watermark;
       try { drawers[i](s, i); } catch (e) { console.error('page ' + (i + 1) + ' draw error', e); throw e; }
       if (opts.collect) opts.collect.push({ page: i + 1, contentBottom: Math.round(s.contentBottom || 0), limit: Math.round(s.limit) });
-      if (opts.memo !== false && i > 0 && s.contentBottom && s.contentBottom < s.H - 130) {
+      if (opts.memo !== false && !s.noMemo && i > 0 && s.contentBottom && s.contentBottom < s.H - 130) {
         try { s.memoBand(opts.memoLabels, opts.memoMax); } catch (e) { console.warn('memo', e); }
       }
       if (opts.watermark) {
