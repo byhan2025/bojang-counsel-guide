@@ -685,10 +685,12 @@
           const scred = Number(cred.byKey[sp.key] || 0) || 0;
           const scross = Number((cred.crossByKey || {})[sp.key] || 0) || 0;
           const smain = Number(mainC.byKey[sp.key] || 0) || 0;
+          /* 형제(뇌↔심장) 공유 주요치료비는 충족도에는 넣지만 금액 합계에는 한 번만 셈합니다 */
+          const smainOwn = mainC.fromSibling ? 0 : smain;
           const eff = sval + scred + scross + smain;
           const sfill = srec > 0 ? clamp(eff / srec, 0, 1) : 0;
           return {
-            key: sp.key, label: sp.label, hint: sp.hint, rec: srec, val: sval, custom: scred, cross: scross, main: smain, own: sval + scred + smain, eff, fill: sfill,
+            key: sp.key, label: sp.label, hint: sp.hint, rec: srec, val: sval, custom: scred, cross: scross, main: smain, own: sval + scred + smainOwn, eff, fill: sfill,
             pct: Math.round(sfill * 100), level: partLevel(sfill, eff), part: sp,
             min: p.min || 500, max: p.max || 3000
           };
