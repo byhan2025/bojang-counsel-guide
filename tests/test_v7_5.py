@@ -40,7 +40,35 @@ TMP = os.path.join(SHOTS, "tmp")
 os.makedirs(SHOTS, exist_ok=True)
 os.makedirs(TMP, exist_ok=True)
 sys.path.insert(0, "/workspace/reports/bojang-guide")
-from harness import start_server
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    from harness import start_server
+except ImportError:  # 워크스페이스 하네스가 없는 곳(CI): 저장소 안 정적 서버로 대체
+    import functools
+    import http.server
+    import socket
+    import socketserver
+    import threading
+
+    def start_server(root=ROOT):
+        class Quiet(http.server.SimpleHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+        handler = functools.partial(Quiet, directory=root)
+        socketserver.TCPServer.allow_reuse_address = True
+        for _ in range(30):
+            s = socket.socket()
+            s.bind(("127.0.0.1", 0))
+            port = s.getsockname()[1]
+            s.close()
+            try:
+                httpd = socketserver.TCPServer(("127.0.0.1", port), handler)
+            except OSError:
+                continue
+            threading.Thread(target=httpd.serve_forever, daemon=True).start()
+            return httpd, "http://127.0.0.1:%d" % port
+        raise RuntimeError("server start failed")
 
 results = []
 
